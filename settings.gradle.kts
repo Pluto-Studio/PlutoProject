@@ -56,3 +56,7 @@ include("server-selector")
 include("server-selector:paper")
 include("server-selector:shared")
 include("server-selector:velocity")
+
+include("railway")
+include("railway:api")
+include("railway:paper")
