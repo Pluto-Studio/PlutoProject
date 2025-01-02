@@ -43,7 +43,7 @@ object DemoWorldListener : Listener, KoinComponent {
         player.world.demoWorldOptions?.let {
             if (player.hasPermission(DEMO_WORLD_BYPASS)) return
             player.world.demoWorldSpawnpoint?.let { location -> player.teleport(location) }
-            player.health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH)!!.value
+            player.health = player.getAttribute(Attribute.MAX_HEALTH)!!.value
             player.foodLevel = 20
             player.saturation = 5.0F
             player.exhaustion = 0.0F

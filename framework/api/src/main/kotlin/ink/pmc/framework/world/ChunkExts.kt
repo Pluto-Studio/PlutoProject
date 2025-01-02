@@ -20,13 +20,13 @@ fun Chunk.ensureThreadSafe(block: Chunk.() -> Unit) {
 fun <T> Chunk.addTicket(type: TicketType<T>, x: Int, z: Int, level: Int, identifier: T) {
     val handle = (this.world as CraftWorld).handle.chunkSource
     val distanceManager = handle.chunkMap.distanceManager
-    val holder = distanceManager.chunkHolderManager
+    val holder = distanceManager.`moonrise$getChunkHolderManager`()
     holder.addTicketAtLevel(type, x, z, level, identifier)
 }
 
 fun <T> Chunk.removeTicket(type: TicketType<T>, x: Int, z: Int, level: Int, identifier: T) {
     val handle = (this.world as CraftWorld).handle.chunkSource
     val distanceManager = handle.chunkMap.distanceManager
-    val holder = distanceManager.chunkHolderManager
+    val holder = distanceManager.`moonrise$getChunkHolderManager`()
     holder.removeTicketAtLevel(type, x, z, level, identifier)
 }

@@ -63,7 +63,7 @@ object LobbyListener : Listener, KoinComponent {
             player.inventory.addToFirstHotbarSlot(ServerSelectorItem)
         }
         player.teleportAsync(lobbyWorldSpawn)
-        player.health = player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value ?: error("Unexpected")
+        player.health = player.getAttribute(Attribute.MAX_HEALTH)?.value ?: error("Unexpected")
         player.foodLevel = 20
         player.saturation = 20f
         player.clearActivePotionEffects()

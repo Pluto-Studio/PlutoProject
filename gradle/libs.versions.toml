@@ -22,9 +22,9 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-coroutine-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutine" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-paper-api = { module = "io.papermc.paper:paper-api", version = "1.21-R0.1-SNAPSHOT" }
+paper-api = { module = "io.papermc.paper:paper-api", version = "1.21.4-R0.1-SNAPSHOT" }
 velocity-api = { module = "com.velocitypowered:velocity-api", version = "3.4.0-SNAPSHOT" }
-velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-449" }
+velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-454" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.0.0-alpha.12" }
 gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
 mongodb-kotlin = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodb" }

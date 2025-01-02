@@ -16,7 +16,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-val paperDevBundleVer = "1.21.1-R0.1-SNAPSHOT"
+val paperDevBundleVer = "1.21.4-R0.1-SNAPSHOT"
 extra["paperDevBundleVer"] = paperDevBundleVer
 
 fun kotlin(s: String): String {
