@@ -5,4 +5,5 @@ plugins {
 dependencies {
     api(projects.featureVelocityApi)
     api(projects.featureCommon)
+    ksp(projects.frameworkCommon)
 }

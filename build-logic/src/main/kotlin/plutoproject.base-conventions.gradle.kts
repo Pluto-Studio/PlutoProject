@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     kotlin("kapt")
+    id("com.google.devtools.ksp")
 }
 
 group = "ink.pmc.plutoproject"

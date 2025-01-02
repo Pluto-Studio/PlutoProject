@@ -19,6 +19,7 @@ compose = "1.7.0-alpha02"
 voyager = "1.1.0-beta03"
 hoplite = "2.9.0"
 gremlin = "0.0.6"
+ksp = "2.1.0-1.0.29"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta4" }
@@ -35,6 +36,7 @@ paperweight-userdev = { group = "io.papermc.paperweight", name = "paperweight-us
 compose = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose" }
 compose-compiler = { group = "org.jetbrains.kotlin.plugin.compose", name = "org.jetbrains.kotlin.plugin.compose.gradle.plugin", version.ref = "kotlin" }
 protobuf = { group = "com.google.protobuf", name = "protobuf-gradle-plugin", version.ref = "protobuf-plugin" }
+ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 
 # Language
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -73,6 +75,7 @@ commons-math = { module = "org.apache.commons:commons-math3", version = "3.6.1" 
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version = "4.2.1" }
 aedile = { module = "com.sksamuel.aedile:aedile-core", version = "1.3.1" }
 guava = { module = "com.google.guava:guava", version = "33.4.0-jre" }
+ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 
 # External Minecraft
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
