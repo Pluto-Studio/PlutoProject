@@ -46,8 +46,8 @@ abstract class CommonFeatureManager : FeatureManager {
             path.push(id)
             visited.add(id)
 
-            graph.predecessors(id).forEach { predecessors ->
-                dfs(predecessors)
+            graph.predecessors(id).forEach { predecessor ->
+                dfs(predecessor)
             }
 
             path.pop()
@@ -98,6 +98,7 @@ abstract class CommonFeatureManager : FeatureManager {
             val metadata = getMetadataFromManifest(it) ?: error("Metadata of feature $it not found")
             val feature = createAndInitFeature(metadata)
             feature.onLoad()
+            feature.updateState(State.LOADED)
             logger.info("Loaded $it")
             _loadedFeatures.add(feature)
         }

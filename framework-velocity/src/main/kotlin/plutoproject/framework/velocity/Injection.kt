@@ -8,9 +8,11 @@ import org.incendo.cloud.kotlin.coroutines.annotations.installCoroutineSupport
 import org.incendo.cloud.velocity.VelocityCommandManager
 import org.koin.dsl.module
 import plutoproject.framework.common.api.bridge.Bridge
+import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.options.OptionsUpdateNotifier
 import plutoproject.framework.common.playerdb.DatabaseNotifier
 import plutoproject.framework.velocity.bridge.ProxyBridge
+import plutoproject.framework.velocity.feature.VelocityFeatureManager
 import plutoproject.framework.velocity.util.command.PlatformAnnotationParser
 import plutoproject.framework.velocity.util.command.PlatformCommandManager
 import plutoproject.framework.velocity.util.plugin
@@ -33,4 +35,5 @@ val FrameworkVelocityModule = module {
     single<PlatformAnnotationParser> {
         AnnotationParser(get<PlatformCommandManager>(), CommandSource::class.java).installCoroutineSupport()
     }
+    single<FeatureManager> { VelocityFeatureManager() }
 }
