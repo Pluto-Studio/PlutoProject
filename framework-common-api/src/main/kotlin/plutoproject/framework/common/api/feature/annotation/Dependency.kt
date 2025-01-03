@@ -1,5 +1,7 @@
 package plutoproject.framework.common.api.feature.annotation
 
+import plutoproject.framework.common.api.feature.Load
+
 @Target()
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Dependency(

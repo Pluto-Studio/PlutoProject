@@ -1,7 +1,7 @@
-package plutoproject.framework.common.feature.metadata
+package plutoproject.framework.common.api.feature.metadata
 
 import kotlinx.serialization.Serializable
-import plutoproject.framework.common.api.feature.annotation.Load
+import plutoproject.framework.common.api.feature.Load
 
 @Serializable
 data class DependencyMetadata(

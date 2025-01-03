@@ -10,10 +10,10 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import plutoproject.framework.common.api.feature.annotation.Load
-import plutoproject.framework.common.api.feature.annotation.Platform
-import plutoproject.framework.common.feature.metadata.DependencyMetadata
-import plutoproject.framework.common.feature.metadata.FeatureMetadata
+import plutoproject.framework.common.api.feature.Load
+import plutoproject.framework.common.api.feature.Platform
+import plutoproject.framework.common.api.feature.metadata.DependencyMetadata
+import plutoproject.framework.common.api.feature.FeatureMetadata
 import java.io.OutputStreamWriter
 
 private const val ANNOTATION_CLASS_NAME = "plutoproject.framework.common.api.feature.annotation.Feature"

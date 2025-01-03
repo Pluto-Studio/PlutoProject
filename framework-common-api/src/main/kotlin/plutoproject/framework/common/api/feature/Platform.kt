@@ -1,4 +1,4 @@
-package plutoproject.framework.common.api.feature.annotation
+package plutoproject.framework.common.api.feature
 
 enum class Platform(val platformManifestFileName: String) {
     PAPER("paper-features"),

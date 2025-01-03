@@ -5,7 +5,10 @@ import java.nio.file.Path
 import java.util.logging.Logger
 
 interface Feature<S : Any, P : Any> {
-    var server: S
+    val id: String
+    val state: State
+    val platform: Platform
+    val server: S
     val plugin: P
     val logger: Logger
     val dataFolder: File

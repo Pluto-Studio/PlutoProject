@@ -1,7 +1,7 @@
 package plutoproject.feature.paper.test
 
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.feature.annotation.Platform
+import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.paper.api.feature.PaperFeature
 
 @Feature(
