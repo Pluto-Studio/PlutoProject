@@ -1,5 +1,5 @@
 package plutoproject.framework.common.api.feature
 
-enum class State {
-    UNINITIALIZED, INITIALIZED, LOADED, ENABLED, DISABLED
+enum class State(val stage: Int) {
+    UNINITIALIZED(0), INITIALIZED(1), LOADED(2), ENABLED(3), DISABLED(4)
 }

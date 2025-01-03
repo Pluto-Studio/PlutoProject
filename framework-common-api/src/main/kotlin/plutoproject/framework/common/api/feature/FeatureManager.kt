@@ -1,22 +1,30 @@
 package plutoproject.framework.common.api.feature
 
+import plutoproject.framework.common.util.inject.inlinedGet
+
 interface FeatureManager {
+    companion object : FeatureManager by inlinedGet()
+
     val manifestMetadata: List<FeatureMetadata>
     val loadedFeatures: List<Feature<*, *>>
 
     fun getMetadataFromManifest(id: String): FeatureMetadata?
 
-    fun isFeatureLoaded(id: String): Boolean
+    fun getFeatureState(id: String): State?
 
-    fun isFeatureLoaded(metadata: FeatureManager): Boolean
+    fun getFeatureState(metadata: FeatureMetadata): State?
 
-    fun loadFeature(metadata: FeatureMetadata): Feature<*, *>
+    fun getFeature(id: String): Feature<*, *>?
 
-    fun loadFeatures(metadata: Iterable<FeatureManager>)
+    fun getFeature(metadata: FeatureMetadata): Feature<*, *>?
 
-    fun enableFeature(metadata: FeatureMetadata): Feature<*, *>
+    fun loadFeature(metadata: FeatureMetadata)
 
-    fun reloadFeature(metadata: FeatureMetadata): Feature<*, *>
+    fun loadFeatures(metadata: Iterable<FeatureMetadata>)
 
-    fun disableFeature(metadata: FeatureMetadata): Feature<*, *>
+    fun enableFeature(metadata: FeatureMetadata)
+
+    fun reloadFeature(metadata: FeatureMetadata)
+
+    fun disableFeature(metadata: FeatureMetadata)
 }
