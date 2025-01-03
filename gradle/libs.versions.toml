@@ -7,8 +7,10 @@ nightconfig = "3.8.1"
 mccoroutine = "2.20.0"
 bytebuddy = "1.15.10"
 protobuf = "3.25.3"
+protobuf-plugin = "0.9.4"
 grpc = "1.68.2"
 grpc-kotlin = "1.4.1"
+paperweight-userdev = "1.7.4"
 resource-factory = "1.2.0"
 cloud = "2.0.0"
 cloud-minecraft = "2.0.0-beta.10"
@@ -16,15 +18,33 @@ koin = "3.6.0-Beta5"
 compose = "1.7.0-alpha02"
 voyager = "1.1.0-beta03"
 hoplite = "2.9.0"
+gremlin = "0.0.6"
+ksp = "2.1.0-1.0.29"
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta4" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
+resourceFactory-paper = { id = "xyz.jpenilla.resource-factory-paper-convention", version.ref = "resource-factory" }
+resourceFactory-velocity = { id = "xyz.jpenilla.resource-factory-velocity-convention", version.ref = "resource-factory" }
 
 [libraries]
+# Plugins
+kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
+gremlin-gradle = { group = "xyz.jpenilla", name = "gremlin-gradle", version.ref = "gremlin" }
+paperweight-userdev = { group = "io.papermc.paperweight", name = "paperweight-userdev", version.ref = "paperweight-userdev" }
+compose = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose" }
+compose-compiler = { group = "org.jetbrains.kotlin.plugin.compose", name = "org.jetbrains.kotlin.plugin.compose.gradle.plugin", version.ref = "kotlin" }
+protobuf = { group = "com.google.protobuf", name = "protobuf-gradle-plugin", version.ref = "protobuf-plugin" }
+ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
+
+# Language
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-coroutine-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutine" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-paper-api = { module = "io.papermc.paper:paper-api", version = "1.21-R0.1-SNAPSHOT" }
-velocity-api = { module = "com.velocitypowered:velocity-api", version = "3.4.0-SNAPSHOT" }
-velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-449" }
+
+# External
 okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.0.0-alpha.12" }
 gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
 mongodb-kotlin = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodb" }
@@ -34,65 +54,112 @@ catppuccin = { module = "com.catppuccin:catppuccin-palette", version = "1.0.0" }
 nightconfig-core = { module = "com.electronwill.night-config:core", version.ref = "nightconfig" }
 nightconfig-toml = { module = "com.electronwill.night-config:toml", version.ref = "nightconfig" }
 nightconfig-hocon = { module = "com.electronwill.night-config:hocon", version.ref = "nightconfig" }
-cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }
-cloud-velocity = { module = "org.incendo:cloud-velocity", version.ref = "cloud-minecraft" }
-cloud-coroutines = { module = "org.incendo:cloud-kotlin-coroutines", version.ref = "cloud" }
-cloud-extensions = { module = "org.incendo:cloud-kotlin-extensions", version.ref = "cloud" }
-cloud-annotations = { module = "org.incendo:cloud-annotations", version.ref = "cloud" }
-cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-annotations", version.ref = "cloud" }
-cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
-mccoroutine-bukkit-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-bukkit-api", version.ref = "mccoroutine" }
-mccoroutine-bukkit-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core", version.ref = "mccoroutine" }
-mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
-mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
 bytebuddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "bytebuddy" }
-spark-api = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
-protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
 protobuf-kotlin = { group = "com.google.protobuf", name = "protobuf-kotlin", version.ref = "protobuf" }
 grpc-protobuf = { group = "io.grpc", name = "grpc-protobuf", version.ref = "grpc" }
 grpc-okhttp = { group = "io.grpc", name = "grpc-okhttp", version.ref = "grpc" }
 grpc-stub = { group = "io.grpc", name = "grpc-stub", version.ref = "grpc" }
 grpc-kotlin-stub = { group = "io.grpc", name = "grpc-kotlin-stub", version.ref = "grpc-kotlin" }
+protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
 protoc-gen-grpc-java = { group = "io.grpc", name = "protoc-gen-grpc-java", version.ref = "grpc" }
 protoc-gen-grpc-kotlin = { group = "io.grpc", name = "protoc-gen-grpc-kotlin", version.ref = "grpc-kotlin" }
-adventure-kt = { module = "ink.pmc.advkt:core", version = "1.0.0-20240615.071613-4" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines", version.ref = "koin" }
-koin-compose = { module = "io.insert-koin:koin-compose", version = "3.6.0-alpha1" }
 classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.177" }
-vault-api = { module = "com.github.MilkBowl:VaultAPI", version = "1.7" }
 voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
-anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.1-SNAPSHOT" }
-coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
 hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
 hoplite-hocon = { module = "com.sksamuel.hoplite:hoplite-hocon", version.ref = "hoplite" }
 commons-math = { module = "org.apache.commons:commons-math3", version = "3.6.1" }
 geoip2 = { module = "com.maxmind.geoip2:geoip2", version = "4.2.1" }
 aedile = { module = "com.sksamuel.aedile:aedile-core", version = "1.3.1" }
+guava = { module = "com.google.guava:guava", version = "33.4.0-jre" }
+ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
+
+# External Minecraft
+sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
+vaultApi = { module = "com.github.MilkBowl:VaultAPI", version = "1.7" }
+coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
+
+# Platform - Common
+adventureKt = { module = "ink.pmc.advkt:core", version = "1.0.0-SNAPSHOT" }
+cloud-coroutines = { module = "org.incendo:cloud-kotlin-coroutines", version.ref = "cloud" }
+cloud-extensions = { module = "org.incendo:cloud-kotlin-extensions", version.ref = "cloud" }
+cloud-annotations = { module = "org.incendo:cloud-annotations", version.ref = "cloud" }
+cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-annotations", version.ref = "cloud" }
+cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
+gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
+
+# Platform - Paper
+paper-api = { module = "io.papermc.paper:paper-api", version = "1.21.1-R0.1-SNAPSHOT" }
+cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }
+mccoroutine-bukkit-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-bukkit-api", version.ref = "mccoroutine" }
+mccoroutine-bukkit-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core", version.ref = "mccoroutine" }
+
+# Platform - Velocity
+velocity-api = { module = "com.velocitypowered:velocity-api", version = "3.4.0-SNAPSHOT" }
+velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-449" }
+cloud-velocity = { module = "org.incendo:cloud-velocity", version.ref = "cloud-minecraft" }
+mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
+mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
 
 [bundles]
-kotlin = ["kotlin-stdlib", "kotlin-reflect", "kotlinx-coroutine-core", "kotlinx-serialization"]
-nightconfig = ["nightconfig-core", "nightconfig-toml", "nightconfig-hocon"]
-cloud = ["cloud-paper", "cloud-velocity", "cloud-coroutines", "cloud-extensions", "cloud-annotations", "cloud-annotations-coroutines", "cloud-minecraft-extras"]
-mccoroutine = ["mccoroutine-bukkit-api", "mccoroutine-bukkit-core", "mccoroutine-velocity-api", "mccoroutine-velocity-core"]
-bytebuddy = ["bytebuddy", "bytebuddy-agent"]
-protobuf = ["protobuf-kotlin"]
-grpc = ["grpc-protobuf", "grpc-okhttp", "grpc-stub", "grpc-kotlin-stub"]
-mongodb = ["mongodb-kotlin", "mongodb-kotlin-bson"]
-koin = ["koin-core", "koin-core-coroutines", "koin-compose"]
-voyager = ["voyager-navigator", "voyager-screenmodel"]
-hoplite = ["hoplite-core", "hoplite-hocon"]
-
-[plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
-shadow = { id = "io.github.goooler.shadow", version = "8.1.8" }
-protobuf = { id = "com.google.protobuf", version = "0.9.4" }
-paperweight-userdev = { id = "io.papermc.paperweight.userdev", version = "1.7.4" }
-resource-factory-bukkit = { id = "xyz.jpenilla.resource-factory-bukkit-convention", version.ref = "resource-factory" }
-resource-factory-velocity = { id = "xyz.jpenilla.resource-factory-velocity-convention", version.ref = "resource-factory" }
-jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+language = [
+    "kotlin-stdlib",
+    "kotlin-reflect",
+    "kotlinx-coroutine-core",
+    "kotlinx-serialization"
+]
+mongodb = [
+    "mongodb-kotlin",
+    "mongodb-kotlin-bson"
+]
+nightconfig = [
+    "nightconfig-core",
+    "nightconfig-toml",
+    "nightconfig-hocon"
+]
+bytebuddy = [
+    "bytebuddy",
+    "bytebuddy-agent"
+]
+protobuf = [
+    "protobuf-kotlin"
+]
+grpc = [
+    "grpc-protobuf",
+    "grpc-okhttp",
+    "grpc-stub",
+    "grpc-kotlin-stub"
+]
+koin = [
+    "koin-core",
+    "koin-core-coroutines"
+]
+voyager = [
+    "voyager-navigator",
+    "voyager-screenmodel"
+]
+hoplite = [
+    "hoplite-core",
+    "hoplite-hocon"
+]
+commons = [
+    "commons-math"
+]
+cloud = [
+    "cloud-coroutines",
+    "cloud-extensions",
+    "cloud-annotations",
+    "cloud-annotations-coroutines",
+    "cloud-minecraft-extras"
+]
+mccoroutine-paper = [
+    "mccoroutine-bukkit-api",
+    "mccoroutine-bukkit-core"
+]
+mccoroutine-velocity = [
+    "mccoroutine-velocity-api",
+    "mccoroutine-velocity-core"
+]

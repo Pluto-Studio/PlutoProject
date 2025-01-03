@@ -1,0 +1,214 @@
+syntax = "proto3";
+package plutoproject.framework.proto.bridge;
+
+import "google/protobuf/empty.proto";
+
+service BridgeRpc {
+  rpc MonitorNotification(google.protobuf.Empty) returns (stream Notification);
+  rpc RegisterServer(ServerInfo) returns (ServerRegistrationResult);
+  rpc Heartbeat(HeartbeatMessage) returns (HeartbeatResult);
+  rpc SyncData(ServerInfo) returns (DataSyncResult);
+
+  rpc OperatePlayer(PlayerOperation) returns (PlayerOperationResult);
+  rpc AckPlayerOperation(PlayerOperationAck) returns (CommonResult);
+  rpc UpdatePlayerInfo(PlayerInfo) returns (CommonResult);
+
+  rpc OperateWorld(WorldOperation) returns (WorldOperationResult);
+  rpc AckWorldOperation(WorldOperationAck) returns (CommonResult);
+  rpc UpdateWorldInfo(WorldInfo) returns (CommonResult);
+  rpc LoadWorld(WorldInfo) returns (CommonResult);
+  rpc UnloadWorld(WorldLoad) returns (CommonResult);
+}
+
+message CommonResult {
+  oneof status {
+    bool ok = 1;
+    bool missing_fields = 2;
+  }
+}
+
+message TitleInfo {
+  int64 fade_in_ms = 1;
+  int64 stay_ms = 2;
+  int64 fade_out_ms = 3;
+  string main_title = 4;
+  string sub_title = 5;
+}
+
+message SoundInfo {
+  string key = 1;
+  string source = 2;
+  float volume = 3;
+  float pitch = 4;
+}
+
+message ServerInfo {
+  string id = 1;
+  optional string group = 2;
+  oneof type {
+    bool proxy = 3;
+    bool backend = 4;
+  }
+  repeated PlayerInfo players = 5;
+  repeated WorldInfo worlds = 6;
+}
+
+message WorldInfo {
+  string server = 1;
+  string name = 2;
+  optional string alias = 3;
+  LocationInfo spawn_point = 4;
+}
+
+message LocationInfo {
+  string server = 1;
+  string world = 2;
+  double x = 3;
+  double y = 4;
+  double z = 5;
+  float yaw = 6;
+  float pitch = 7;
+}
+
+message PlayerInfo {
+  string server = 1;
+  string unique_id = 2;
+  string name = 3;
+  oneof type {
+    bool proxy = 4;
+    bool backend = 5;
+  }
+  optional WorldInfo world = 6;
+  optional LocationInfo location = 7;
+}
+
+message HeartbeatMessage {
+  string server = 1;
+}
+
+message HeartbeatResult {
+  oneof status {
+    bool ok = 1;
+    bool not_registered = 2;
+    bool missing_fields = 3;
+  }
+}
+
+message DataSyncResult {
+  oneof status {
+    bool ok = 1;
+    bool not_registered = 2;
+    bool missing_fields = 3;
+  }
+  repeated ServerInfo servers = 4;
+}
+
+message WorldLoad {
+  string server = 1;
+  string world = 2;
+}
+
+message PlayerDisconnect {
+  string unique_id = 1;
+}
+
+message Notification {
+  oneof content {
+    // Server
+    ServerInfo server_registration = 1;
+    ServerInfo server_info_update = 2;
+    string server_offline = 3;
+    string server_online = 4;
+
+    // Player
+    PlayerOperation player_operation = 5;
+    PlayerInfo player_info_update = 6;
+    PlayerInfo player_switch_server = 7;
+    PlayerInfo player_join = 8;
+    PlayerDisconnect player_disconnect = 9;
+
+    // World
+    WorldOperation world_operation = 10;
+    WorldInfo world_info_update = 11;
+    WorldInfo world_load = 12;
+    WorldLoad world_unload = 13;
+  }
+}
+
+message ServerRegistrationResult {
+  oneof status {
+    bool ok = 1;
+    bool missing_fields = 2;
+  }
+  repeated ServerInfo servers = 3;
+}
+
+message PlayerOperation {
+  string id = 1;
+  string executor = 2;
+  string player_uuid = 3;
+  oneof content {
+    google.protobuf.Empty info_lookup = 6;
+    string send_message = 7;
+    TitleInfo show_title = 8;
+    SoundInfo play_sound = 9;
+    LocationInfo teleport = 10;
+    string perform_command = 11;
+    string switch_server = 12;
+  }
+}
+
+message WorldOperation {
+  string id = 1;
+  string executor = 2;
+  string server = 3;
+  string world = 4;
+  oneof content {
+    bool placeholder = 5;
+  }
+}
+
+message WorldOperationAck {
+  string id = 1;
+  string server = 2;
+  string world = 3;
+  oneof status {
+    bool ok = 4;
+    bool unsupported = 5;
+    bool missing_fields = 6;
+  }
+}
+
+message WorldOperationResult {
+  oneof status {
+    bool ok = 1;
+    bool server_offline = 2;
+    bool world_not_found = 3;
+    bool timeout = 4;
+    bool unsupported = 5;
+    bool missing_fields = 6;
+  }
+}
+
+message PlayerOperationAck {
+  string id = 1;
+  oneof status {
+    bool ok = 2;
+    bool unsupported = 3;
+    bool missing_fields = 4;
+  }
+  optional PlayerInfo info_lookup = 5;
+}
+
+message PlayerOperationResult {
+  oneof status {
+    bool ok = 1;
+    bool player_offline = 2;
+    bool server_offline = 3;
+    bool world_not_found = 4;
+    bool timeout = 5;
+    bool unsupported = 6;
+    bool missing_fields = 7;
+  }
+  optional PlayerInfo info_lookup = 8;
+}

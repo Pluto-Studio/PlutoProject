@@ -1,0 +1,14 @@
+syntax = "proto3";
+package plutoproject.framework.proto.playerdb;
+
+import "google/protobuf/empty.proto";
+
+message DatabaseIdentifier {
+  string server_id = 1;
+  string uuid = 2;
+}
+
+service PlayerDBRpc {
+  rpc Notify(DatabaseIdentifier) returns (google.protobuf.Empty);
+  rpc MonitorNotify(google.protobuf.Empty) returns (stream DatabaseIdentifier);
+}

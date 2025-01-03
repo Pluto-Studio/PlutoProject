@@ -1,3 +1,0 @@
-bukkitPluginYaml {
-    softDepend.add("Vault")
-}

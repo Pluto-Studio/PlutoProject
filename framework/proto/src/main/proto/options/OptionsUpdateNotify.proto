@@ -1,7 +1,0 @@
-syntax = "proto3";
-package ink.pmc.framework.options.proto;
-
-message OptionsUpdateNotify {
-  string server_id = 1;
-  string player = 2;
-}

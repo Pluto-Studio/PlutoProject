@@ -1,0 +1,10 @@
+syntax = "proto3";
+package plutoproject.framework.proto.options;
+
+import "options/OptionsUpdateNotify.proto";
+import "google/protobuf/empty.proto";
+
+service OptionsRpc {
+  rpc NotifyOptionsUpdate(OptionsUpdateNotify) returns (google.protobuf.Empty);
+  rpc MonitorOptionsUpdate(google.protobuf.Empty) returns (stream OptionsUpdateNotify);
+}

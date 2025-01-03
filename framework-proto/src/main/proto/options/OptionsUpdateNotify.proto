@@ -1,0 +1,7 @@
+syntax = "proto3";
+package plutoproject.framework.proto.options;
+
+message OptionsUpdateNotify {
+  string server_id = 1;
+  string player = 2;
+}

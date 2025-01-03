@@ -1,3 +1,5 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         mavenCentral()
@@ -14,13 +16,7 @@ plugins {
 
 rootProject.name = "plutoproject"
 
-include("framework")
-include("framework:api")
-include("framework:velocity")
-include("framework:paper")
-include("framework:shared")
-include("framework:proto")
-
+/*
 include("misc")
 include("misc:api")
 include("misc:paper")
@@ -56,3 +52,25 @@ include("server-selector")
 include("server-selector:paper")
 include("server-selector:shared")
 include("server-selector:velocity")
+*/
+includeBuild("build-logic")
+include("catalog")
+
+include("framework-common-api")
+include("framework-paper-api")
+include("framework-velocity-api")
+include("framework-common")
+include("framework-paper")
+include("framework-velocity")
+include("framework-proto")
+
+include("feature-common-api")
+include("feature-paper-api")
+include("feature-velocity-api")
+include("feature-common")
+include("feature-paper")
+include("feature-velocity")
+include("feature-proto")
+
+include("platform-paper")
+include("platform-velocity")
