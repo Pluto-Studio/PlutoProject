@@ -18,13 +18,13 @@ val LocalPlayer: ProvidableCompositionLocal<Player> =
 @Suppress("UNUSED")
 interface GuiScope<T> {
     val isDisposed: Boolean
-    val isPendingRefresh: MutableStateFlow<Boolean>
+    val isBeingRefresh: MutableStateFlow<Boolean>
     val owner: Player
     val coroutineScope: CoroutineScope
     val rootNode: T
     val nodeApplier: Applier<T>
 
-    fun setPendingRefreshIfNeeded(state: Boolean)
+    fun setBeingRefresh(state: Boolean)
 
     fun dispose()
 }

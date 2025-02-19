@@ -39,8 +39,8 @@ object InventoryListener : Listener {
         val holder = inventory.holder as? GuiInventoryHolder ?: return
         val scope = holder.scope
 
-        if (scope.isPendingRefresh.value) {
-            scope.setPendingRefreshIfNeeded(false)
+        if (scope.isBeingRefresh.value) {
+            scope.setBeingRefresh(false)
             return
         }
 

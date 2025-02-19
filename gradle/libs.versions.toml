@@ -20,6 +20,7 @@ voyager = "1.1.0-beta03"
 hoplite = "2.9.0"
 gremlin = "0.0.6"
 ksp = "2.1.0-1.0.29"
+packetevents = "2.7.0"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta4" }
@@ -83,6 +84,8 @@ anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.4-SNAPSHOT" }
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
 vaultApi = { module = "com.github.MilkBowl:VaultAPI", version = "1.7" }
 coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
+packetevents-paper = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
+packetevents-velocity = { module = "com.github.retrooper:packetevents-velocity", version.ref = "packetevents" }
 
 # Platform - Common
 adventureKt = { module = "ink.pmc.advkt:core", version = "1.0.0-SNAPSHOT" }

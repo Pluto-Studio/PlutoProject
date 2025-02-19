@@ -11,6 +11,7 @@ configurations.compileOnly {
 
 tasks.withType<WriteDependencySet> {
     relocate("com.google.protobuf", "libs.com.google.protobuf")
+    relocate("com.github.retrooper.packetevents", "libs.com.github.retrooper.packetevents")
     outputFileName = when {
         withPaperEnvironment -> "paper-dependencies.txt"
         withVelocityEnvironment -> "velocity-dependencies.txt"

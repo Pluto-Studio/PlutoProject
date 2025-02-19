@@ -37,7 +37,7 @@ fun Inventory(
 
     LaunchedEffect(player) {
         withSync {
-            scope.setPendingRefreshIfNeeded(true)
+            scope.setBeingRefresh(true)
             player.openInventory(inventory)
         }
     }

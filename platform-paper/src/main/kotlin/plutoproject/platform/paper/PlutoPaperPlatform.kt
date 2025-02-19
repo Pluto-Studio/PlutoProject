@@ -1,6 +1,8 @@
 package plutoproject.platform.paper
 
+import com.github.retrooper.packetevents.PacketEvents
 import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
 import plutoproject.framework.common.FrameworkCommonModule
 import plutoproject.framework.common.api.feature.FeatureManager
@@ -35,6 +37,7 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
         configureKoin {
             modules(FrameworkCommonModule, FrameworkPaperModule)
         }
+        loadPacketEvents()
         loadFrameworkModules()
         FeatureManager.loadAll()
     }
@@ -44,6 +47,23 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
             .getDeclaredField("libraryLoader")
             .apply { isAccessible = true }
             .get(this) as URLClassLoader
+
+    private fun loadPacketEvents() {
+        val instance = SpigotPacketEventsBuilder.build(this)
+        instance.settings.apply {
+            checkForUpdates(false)
+        }
+        PacketEvents.setAPI(instance)
+        PacketEvents.getAPI().load()
+    }
+
+    private fun enablePacketEvents() {
+        PacketEvents.getAPI().init()
+    }
+
+    private fun disablePacketEvents() {
+        PacketEvents.getAPI().terminate()
+    }
 
     private fun preload() {
         logger.info("Preloading resources to improve runtime performance...")
@@ -68,6 +88,7 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
     }
 
     override fun onEnable() {
+        enablePacketEvents()
         enableFrameworkModules()
         FeatureManager.enableAll()
     }
@@ -75,6 +96,7 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
     override fun onDisable() {
         FeatureManager.disableAll()
         disableFrameworkModules()
+        disablePacketEvents()
         shutdownCoroutineEnvironment()
     }
 }

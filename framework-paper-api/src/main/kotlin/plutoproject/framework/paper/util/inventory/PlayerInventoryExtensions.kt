@@ -6,7 +6,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 
 fun PlayerInventory.addItemOrDrop(vararg items: ItemStack): Map<Int, ItemStack> {
-    val player = holder as? Player? ?: error("Cannot get holder player")
+    val player = holder as? Player? ?: error("Cannot get holder player" )
     val left = addItem(*items)
     val location = player.location
     val world = player.world

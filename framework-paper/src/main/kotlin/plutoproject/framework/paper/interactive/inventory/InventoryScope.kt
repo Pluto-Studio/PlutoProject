@@ -29,7 +29,7 @@ class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<In
             renderExceptionCallback(it)
         }
     }
-    override val isPendingRefresh: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val isBeingRefresh: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private val clickHandler = object : ClickHandler {
         val rootNode = nodeApplier.current
@@ -79,13 +79,13 @@ class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<In
         dispose()
     }
 
-    override fun setPendingRefreshIfNeeded(state: Boolean) {
-        if (state && !isPendingRefresh.value && owner.openInventory.topInventory.holder is GuiInventoryHolder) {
-            isPendingRefresh.value = true
+    override fun setBeingRefresh(state: Boolean) {
+        if (state && !isBeingRefresh.value && owner.openInventory.topInventory.holder is GuiInventoryHolder) {
+            isBeingRefresh.value = true
             return
         }
-        if (!state && isPendingRefresh.value) {
-            isPendingRefresh.value = false
+        if (!state && isBeingRefresh.value) {
+            isBeingRefresh.value = false
             return
         }
     }
@@ -94,7 +94,7 @@ class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<In
         if (isDisposed) return
         runSync {
             if (!owner.isOnline) return@runSync
-            setPendingRefreshIfNeeded(true) // 防止 dispose 在事件中再次被调用造成 StackOverflowError
+            setBeingRefresh(true) // 防止 dispose 在事件中再次被调用造成 StackOverflowError
             owner.closeInventory()
         }
         super.dispose()

@@ -27,3 +27,13 @@ suspend fun Player.switchServer(name: String) {
 fun Player.switchServerAsync(name: String) = runAsyncIO {
     switchServer(name)
 }
+
+private val containerCounterField = ServerPlayer::class.java.getDeclaredField("containerCounter")
+
+fun Player.nextContainerId(): Int {
+    val serverPlayer = toNmsPlayer()
+    val curr = containerCounterField.get(serverPlayer) as Int
+    val incremented = curr + 1
+    containerCounterField.set(serverPlayer, incremented)
+    return incremented
+}

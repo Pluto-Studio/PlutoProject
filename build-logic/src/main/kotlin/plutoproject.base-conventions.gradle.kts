@@ -28,6 +28,7 @@ repositories {
     maven("https://maven.playpro.com/")
     maven("https://repo.opencollab.dev/main/")
     maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.codemc.io/repository/maven-releases/")
 }
 
 configurations.all {
