@@ -76,7 +76,7 @@ geoip2 = { module = "com.maxmind.geoip2:geoip2", version = "4.2.1" }
 aedile = { module = "com.sksamuel.aedile:aedile-core", version = "1.3.1" }
 guava = { module = "com.google.guava:guava", version = "33.4.0-jre" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
-okio = { group = "com.squareup.okio", name = "okio", version = "3.10.0" }
+okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.4-SNAPSHOT" }
 
 # External Minecraft
