@@ -47,7 +47,6 @@ object BridgeRpc : BridgeRpcCoroutineImplBase(), KoinComponent {
 
     override fun monitorNotification(request: Empty): Flow<Notification> {
         debugInfo("BridgeRpc - monitorNotification called")
-        notify
         return notify
     }
 
