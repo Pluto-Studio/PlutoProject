@@ -6,9 +6,11 @@ import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
 import org.bukkit.entity.Player
+import plutoproject.framework.common.api.bridge.ResultWrapper
 import plutoproject.framework.common.api.bridge.server.BridgeServer
 import plutoproject.framework.common.api.bridge.world.BridgeLocation
 import plutoproject.framework.common.api.bridge.world.BridgeWorld
+import plutoproject.framework.common.bridge.exception.PlayerOperationResultWrapper
 import plutoproject.framework.common.bridge.internalBridge
 import plutoproject.framework.common.bridge.player.RemoteBackendPlayer
 import plutoproject.framework.paper.bridge.bridgeStub
@@ -29,36 +31,45 @@ class BackendLocalPlayer(private val actual: Player, server: BridgeServer) : Rem
     override var world: BridgeWorld?
         get() = server.getWorld(actual.world.name) ?: BackendLocalWorld(actual.world, server)
         set(_) = error("Unsupported")
-    override val location: Deferred<BridgeLocation>
-        get() = CompletableDeferred(actual.location.createBridge())
+    override val location: Deferred<ResultWrapper<BridgeLocation>>
+        get() = CompletableDeferred(
+            PlayerOperationResultWrapper(
+                actual.location.createBridge(),
+                PlayerOperationResult.StatusCase.OK, name, server.id, false
+            )
+        )
     override var isOnline: Boolean
         get() = actual.isOnline
         set(_) {}
 
-    override suspend fun teleport(location: BridgeLocation) {
+    override suspend fun teleport(location: BridgeLocation): ResultWrapper<Unit> {
         if (location.server == internalBridge.local) {
             actual.teleportSuspend(location.createBukkit())
-            return
+            return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
         }
-        super.teleport(location)
+        return super.teleport(location)
     }
 
-    override suspend fun sendMessage(message: Component) {
+    override suspend fun sendMessage(message: Component): ResultWrapper<Unit> {
         actual.sendMessage(message)
+        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
     }
 
-    override suspend fun showTitle(title: Title) {
+    override suspend fun showTitle(title: Title): ResultWrapper<Unit> {
         actual.showTitle(title)
+        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
     }
 
-    override suspend fun playSound(sound: Sound) {
+    override suspend fun playSound(sound: Sound): ResultWrapper<Unit> {
         actual.playSound(sound)
+        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
     }
 
-    override suspend fun performCommand(command: String) {
+    override suspend fun performCommand(command: String): ResultWrapper<Unit> {
         actual.withSync {
             actual.performCommand(command)
         }
+        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
     }
 
     override suspend fun operatePlayer(request: PlayerOperation): PlayerOperationResult {

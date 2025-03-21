@@ -8,7 +8,6 @@ import plutoproject.framework.common.bridge.world.BridgeLocationImpl
 import plutoproject.framework.common.bridge.world.createInfo
 import plutoproject.framework.common.util.Empty
 import plutoproject.framework.common.util.coroutine.runAsync
-import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult
 import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult.StatusCase.OK
 import plutoproject.framework.proto.bridge.playerOperation
 import java.util.*
@@ -36,9 +35,6 @@ abstract class RemoteBackendPlayer : RemotePlayer() {
                 else -> PlayerOperationResultWrapper(null, result.statusCase, name, server.id, true)
             }
         }
-
-    private fun wrapResultWithoutValue(result: PlayerOperationResult): ResultWrapper<Unit> =
-        PlayerOperationResultWrapper(Unit, result.statusCase!!, name, server.id, result.statusCase!! != OK)
 
     override suspend fun teleport(location: BridgeLocation): ResultWrapper<Unit> {
         val result = operatePlayer(playerOperation {
