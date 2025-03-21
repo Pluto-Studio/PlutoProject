@@ -1,20 +1,20 @@
 package plutoproject.framework.common.bridge.player
 
 import kotlinx.coroutines.Deferred
+import plutoproject.framework.common.api.bridge.ResultWrapper
 import plutoproject.framework.common.api.bridge.world.BridgeLocation
-import plutoproject.framework.common.bridge.throwRemoteWorldNotFound
-import plutoproject.framework.common.bridge.warn
+import plutoproject.framework.common.bridge.exception.PlayerOperationResultWrapper
 import plutoproject.framework.common.bridge.world.BridgeLocationImpl
 import plutoproject.framework.common.bridge.world.createInfo
 import plutoproject.framework.common.util.Empty
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult
-import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult.StatusCase.*
+import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult.StatusCase.OK
 import plutoproject.framework.proto.bridge.playerOperation
 import java.util.*
 
 abstract class RemoteBackendPlayer : RemotePlayer() {
-    override val location: Deferred<BridgeLocation>
+    override val location: Deferred<ResultWrapper<BridgeLocation>>
         get() = runAsync {
             val result = operatePlayer(playerOperation {
                 id = UUID.randomUUID().toString()
@@ -27,54 +27,46 @@ abstract class RemoteBackendPlayer : RemotePlayer() {
                 OK -> {
                     check(info.hasLocation()) { "PlayerInfo missing required field" }
                     val loc = info.location
-                    BridgeLocationImpl(server, world!!, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
+                    PlayerOperationResultWrapper(
+                        BridgeLocationImpl(server, world!!, loc.x, loc.y, loc.z, loc.yaw, loc.pitch),
+                        result.statusCase, name, server.id, false
+                    )
                 }
 
-                else -> throw checkNoReturnResult(result) ?: error("Unexpected")
+                else -> PlayerOperationResultWrapper(null, result.statusCase, name, server.id, true)
             }
         }
 
+    private fun wrapResultWithoutValue(result: PlayerOperationResult): ResultWrapper<Unit> =
+        PlayerOperationResultWrapper(Unit, result.statusCase!!, name, server.id, result.statusCase!! != OK)
 
-    private fun checkNoReturnResult(result: PlayerOperationResult): IllegalStateException? {
-        return when (result.statusCase!!) {
-            OK -> null
-            PLAYER_OFFLINE -> error("Player offline: $name")
-            SERVER_OFFLINE -> error("Remote server offline: ${server.id}")
-            WORLD_NOT_FOUND -> throwRemoteWorldNotFound("${world?.name}", server.id)
-            UNSUPPORTED -> error("Unsupported")
-            TIMEOUT -> error("Player operation timeout: $name")
-            MISSING_FIELDS -> error("Missing fields")
-            STATUS_NOT_SET -> error("Received a PlayerOperationResult without status (player: $name")
-        }
-    }
-
-    override suspend fun teleport(location: BridgeLocation) {
+    override suspend fun teleport(location: BridgeLocation): ResultWrapper<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = location.server.id
             playerUuid = uniqueId.toString()
             teleport = location.createInfo()
         })
-        checkNoReturnResult(result)?.let { warn { throw it } }
+        return wrapResultWithoutValue(result)
     }
 
-    override suspend fun performCommand(command: String) {
+    override suspend fun performCommand(command: String): ResultWrapper<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = server.id
             playerUuid = uniqueId.toString()
             performCommand = command
         })
-        checkNoReturnResult(result)?.let { warn { throw it } }
+        return wrapResultWithoutValue(result)
     }
 
-    override suspend fun switchServer(server: String) {
+    override suspend fun switchServer(server: String): ResultWrapper<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = this@RemoteBackendPlayer.server.id
             playerUuid = uniqueId.toString()
             switchServer = server
         })
-        checkNoReturnResult(result)?.let { warn { throw it } }
+        return wrapResultWithoutValue(result)
     }
 }
