@@ -66,7 +66,7 @@ protoc-gen-grpc-java = { group = "io.grpc", name = "protoc-gen-grpc-java", versi
 protoc-gen-grpc-kotlin = { group = "io.grpc", name = "protoc-gen-grpc-kotlin", version.ref = "grpc-kotlin" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines", version.ref = "koin" }
-classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.177" }
+classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
 voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
 hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
