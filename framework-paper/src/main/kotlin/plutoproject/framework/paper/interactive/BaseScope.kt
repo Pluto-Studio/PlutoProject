@@ -46,8 +46,10 @@ abstract class BaseScope<T>(
 
         coroutineScope.launch {
             while (!isDisposed) {
-                frameClock.sendFrame(System.nanoTime())
-                delay(10)
+                if (hasFrameWaiters) {
+                    frameClock.sendFrame(System.nanoTime())
+                }
+                delay(20)
             }
         }
     }
