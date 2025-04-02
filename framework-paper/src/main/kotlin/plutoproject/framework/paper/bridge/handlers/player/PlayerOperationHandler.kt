@@ -32,7 +32,7 @@ object PlayerOperationHandler : NotificationHandler {
                     id = request.playerOperation.id
                     ok = true
                     infoLookup = localPlayer.createInfoWithoutLocation().toBuilder().apply {
-                        location = localPlayer.location.await().valueOrThrow.createInfo()
+                        location = localPlayer.location.await().getOrThrow().createInfo()
                     }.build()
                 })
                 checkCommonResult(result)

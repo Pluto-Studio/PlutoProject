@@ -1,6 +1,6 @@
 package plutoproject.framework.common.bridge
 
-import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.*
+import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.CommonResult
 import java.util.logging.Level
 
 fun warn(block: () -> Nothing) {
@@ -63,10 +63,6 @@ fun throwLocalWorldNotFound(name: String): Nothing {
     error("Local world not found: $name")
 }
 
-fun throwPlayerOperationTimeout(player: String): Nothing {
-    error("Player operation timeout: $player")
-}
-
 fun throwMissingFields(): Nothing {
     error("Missing fields")
 }
@@ -84,18 +80,5 @@ fun checkCommonResult(result: CommonResult) {
         CommonResult.StatusCase.OK -> {}
         CommonResult.StatusCase.MISSING_FIELDS -> warn { throwMissingFields() }
         CommonResult.StatusCase.STATUS_NOT_SET -> warn { throwStatusNotSet("CommonResult") }
-    }
-}
-
-fun checkPlayerOperationResult(request: PlayerOperation, result: PlayerOperationResult) {
-    when (result.statusCase!!) {
-        PlayerOperationResult.StatusCase.OK -> {}
-        PlayerOperationResult.StatusCase.PLAYER_OFFLINE -> warn { throwPlayerNotFound(request.playerUuid) }
-        PlayerOperationResult.StatusCase.SERVER_OFFLINE -> warn { throwServerNotFound(request.executor) }
-        PlayerOperationResult.StatusCase.WORLD_NOT_FOUND -> warn { throwWorldNotFound() }
-        PlayerOperationResult.StatusCase.TIMEOUT -> warn { throwPlayerOperationTimeout(request.playerUuid) }
-        PlayerOperationResult.StatusCase.UNSUPPORTED -> warn { error("Unsupported") }
-        PlayerOperationResult.StatusCase.MISSING_FIELDS -> warn { throwMissingFields() }
-        PlayerOperationResult.StatusCase.STATUS_NOT_SET -> warn { throwStatusNotSet("PlayerOperationResult") }
     }
 }

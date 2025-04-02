@@ -3,10 +3,8 @@ package plutoproject.framework.velocity.bridge.player
 import com.velocitypowered.api.proxy.Player
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
-import plutoproject.framework.common.api.bridge.ResultWrapper
 import plutoproject.framework.common.api.bridge.server.BridgeServer
 import plutoproject.framework.common.api.bridge.world.BridgeWorld
-import plutoproject.framework.common.bridge.exception.PlayerOperationResultWrapper
 import plutoproject.framework.common.bridge.player.RemoteBackendPlayer
 import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperation
 import plutoproject.framework.proto.bridge.BridgeRpcOuterClass.PlayerOperationResult
@@ -24,14 +22,14 @@ class ProxyRemoteBackendPlayer(
         get() = actual.isActive
         set(_) {}
 
-    override suspend fun sendMessage(message: Component): ResultWrapper<Unit> {
+    override suspend fun sendMessage(message: Component): Result<Unit> {
         actual.sendMessage(message)
-        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
+        return Result.success(Unit)
     }
 
-    override suspend fun showTitle(title: Title): ResultWrapper<Unit> {
+    override suspend fun showTitle(title: Title): Result<Unit> {
         actual.showTitle(title)
-        return PlayerOperationResultWrapper(Unit, PlayerOperationResult.StatusCase.OK, name, server.id, false)
+        return Result.success(Unit)
     }
 
     override suspend fun operatePlayer(request: PlayerOperation): PlayerOperationResult {

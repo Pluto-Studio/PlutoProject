@@ -68,7 +68,7 @@ abstract class AbstractBridgeCommand<T> {
         list.forEachIndexed { index, it ->
             var loc: BridgeLocation? = null
             if (!it.serverType.isProxy) {
-                loc = it.location.await().valueOrThrow
+                loc = it.location.await().getOrNull()
             }
             component = component.append(component {
                 text("- ") with mochaSubtext0

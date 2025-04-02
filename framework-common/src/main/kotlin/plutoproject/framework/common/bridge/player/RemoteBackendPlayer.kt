@@ -1,9 +1,8 @@
 package plutoproject.framework.common.bridge.player
 
 import kotlinx.coroutines.Deferred
-import plutoproject.framework.common.api.bridge.ResultWrapper
+import plutoproject.framework.common.api.bridge.player.PlayerOperationType
 import plutoproject.framework.common.api.bridge.world.BridgeLocation
-import plutoproject.framework.common.bridge.exception.PlayerOperationResultWrapper
 import plutoproject.framework.common.bridge.world.BridgeLocationImpl
 import plutoproject.framework.common.bridge.world.createInfo
 import plutoproject.framework.common.util.Empty
@@ -13,7 +12,7 @@ import plutoproject.framework.proto.bridge.playerOperation
 import java.util.*
 
 abstract class RemoteBackendPlayer : RemotePlayer() {
-    override val location: Deferred<ResultWrapper<BridgeLocation>>
+    override val location: Deferred<Result<BridgeLocation>>
         get() = runAsync {
             val result = operatePlayer(playerOperation {
                 id = UUID.randomUUID().toString()
@@ -26,43 +25,44 @@ abstract class RemoteBackendPlayer : RemotePlayer() {
                 OK -> {
                     check(info.hasLocation()) { "PlayerInfo missing required field" }
                     val loc = info.location
-                    PlayerOperationResultWrapper(
-                        BridgeLocationImpl(server, world!!, loc.x, loc.y, loc.z, loc.yaw, loc.pitch),
-                        result.statusCase, name, server.id, false
+                    wrapProtoResult(
+                        PlayerOperationType.INFO_LOOKUP,
+                        result,
+                        BridgeLocationImpl(server, world!!, loc.x, loc.y, loc.z, loc.yaw, loc.pitch)
                     )
                 }
 
-                else -> PlayerOperationResultWrapper(null, result.statusCase, name, server.id, true)
+                else -> wrapProtoResult(PlayerOperationType.INFO_LOOKUP, result, null)
             }
         }
 
-    override suspend fun teleport(location: BridgeLocation): ResultWrapper<Unit> {
+    override suspend fun teleport(location: BridgeLocation): Result<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = location.server.id
             playerUuid = uniqueId.toString()
             teleport = location.createInfo()
         })
-        return wrapResultWithoutValue(result)
+        return wrapProtoResult(PlayerOperationType.TELEPORT, result, Unit)
     }
 
-    override suspend fun performCommand(command: String): ResultWrapper<Unit> {
+    override suspend fun performCommand(command: String): Result<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = server.id
             playerUuid = uniqueId.toString()
             performCommand = command
         })
-        return wrapResultWithoutValue(result)
+        return wrapProtoResult(PlayerOperationType.PERFORM_COMMAND, result, Unit)
     }
 
-    override suspend fun switchServer(server: String): ResultWrapper<Unit> {
+    override suspend fun switchServer(server: String): Result<Unit> {
         val result = operatePlayer(playerOperation {
             id = UUID.randomUUID().toString()
             executor = this@RemoteBackendPlayer.server.id
             playerUuid = uniqueId.toString()
             switchServer = server
         })
-        return wrapResultWithoutValue(result)
+        return wrapProtoResult(PlayerOperationType.SWITCH_SERVER, result, Unit)
     }
 }
