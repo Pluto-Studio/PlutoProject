@@ -101,7 +101,7 @@ mccoroutine-bukkit-core = { module = "com.github.shynixn.mccoroutine:mccoroutine
 
 # Platform - Velocity
 velocity-api = { module = "com.velocitypowered:velocity-api", version = "3.4.0-SNAPSHOT" }
-velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-454" }
+velocity = { module = "com.velocitypowered:velocity", version = "3.4.0-495" }
 cloud-velocity = { module = "org.incendo:cloud-velocity", version.ref = "cloud-minecraft" }
 mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
 mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
