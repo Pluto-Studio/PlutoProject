@@ -16,6 +16,8 @@ object SetHomeCommand {
     @Permission("essentials.sethome")
     suspend fun CommandSender.sethome(@Greedy name: String?) = ensurePlayer {
         val list = HomeManager.list(this)
+        val preferredHome = HomeManager.getPreferredHome(this)
+        val isDefaultHome = name == null && preferredHome == null
         val actualName = name ?: "home"
         if (list.size >= HomeManager.maxHomes && !hasPermission(HOME_LIMIT_BYPASS_PERMISSION)) {
             sendMessage(COMMAND_SETHOME_FAILED_REACH_LIMIT)
@@ -30,7 +32,11 @@ object SetHomeCommand {
             return
         }
         runAsync {
-            HomeManager.create(this@ensurePlayer, actualName, location)
+            val home = HomeManager.create(this@ensurePlayer, actualName, location)
+            if (isDefaultHome) {
+                home.setPreferred(true)
+                home.update()
+            }
         }
         sendMessage(COMMAND_SETHOME_SUCCEED.replace("<name>", actualName))
     }

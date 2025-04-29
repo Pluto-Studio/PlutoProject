@@ -19,7 +19,7 @@ val ILLEGAL_LOCATION = component {
     text("无法在此处坐下，请检查是否有实体方块以及足够的空间") with mochaMaroon
 }
 
-val ALREADY_OTHER_PLAYER_SIT_DOWN_TITLE = title {
+val LOCATION_OCCUPIED_BY_OTHER_TITLE = title {
     mainTitle {
         text(" ")
     }

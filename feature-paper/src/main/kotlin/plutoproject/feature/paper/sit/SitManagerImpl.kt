@@ -40,8 +40,8 @@ class SitManagerImpl : SitManager {
         }
 
         if (sitLoc.sitter != null) {
-            player.showTitle(ALREADY_OTHER_PLAYER_SIT_DOWN_TITLE)
-            player.playSound(ALREADY_OTHER_PLAYER_SIT_DOWN_SOUND)
+            player.showTitle(LOCATION_OCCUPIED_BY_OTHER_TITLE)
+            player.playSound(LOCATION_OCCUPIED_BY_OTHER_SOUND)
             return
         }
 

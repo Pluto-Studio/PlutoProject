@@ -19,14 +19,16 @@ object HomeCommand {
     @Permission("essentials.home")
     suspend fun CommandSender.home(@Argument("home", parserName = "home") home: Home?) = ensurePlayer {
         if (home == null) {
+            val homes = HomeManager.list(this)
             val preferred = HomeManager.getPreferredHome(this)
-            if (preferred == null) {
+            val picked = if (homes.size == 1) homes.first() else preferred
+            if (picked == null) {
                 startScreen(HomeListScreen(this))
                 playSound(SoundConstants.UI.paging)
                 return
             }
-            preferred.teleportSuspend(this)
-            sendMessage(COMMAND_HOME_SUCCEED.replace("<name>", preferred.name))
+            picked.teleportSuspend(this)
+            sendMessage(COMMAND_HOME_SUCCEED.replace("<name>", picked.name))
             return
         }
         home.teleportSuspend(this)
