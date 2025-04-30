@@ -8,7 +8,7 @@ import org.koin.core.component.KoinComponent
 import plutoproject.framework.common.api.options.OptionsManager
 
 @Suppress("UNUSED", "UNUSED_PARAMETER", "UnusedReceiverParameter")
-object OptionsListener : KoinComponent {
+object OptionsPlayerListener : KoinComponent {
     @Subscribe(order = PostOrder.FIRST)
     suspend fun PostLoginEvent.e() {
         OptionsManager.getOptions(player.uniqueId)

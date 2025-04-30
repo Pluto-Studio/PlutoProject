@@ -20,7 +20,7 @@ import org.incendo.cloud.context.CommandContext
 import org.incendo.cloud.context.CommandInput
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.framework.common.api.profile.MojangProfileFetcher
+import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
@@ -73,7 +73,7 @@ object HeadCommand : KoinComponent {
                 }
                 runCatching {
                     withTimeout(10.seconds) {
-                        MojangProfileFetcher.fetch(targetName)?.uuid
+                        MojangProfileFetcher.fetchByName(targetName)?.uuid
                     }
                 }.onFailure {
                     if (it !is TimeoutCancellationException) throw it

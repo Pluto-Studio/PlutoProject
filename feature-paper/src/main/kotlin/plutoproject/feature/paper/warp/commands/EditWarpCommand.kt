@@ -22,6 +22,7 @@ import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.framework.paper.api.profile.lookupProfile
 import plutoproject.framework.paper.util.command.ensurePlayer
 import kotlin.jvm.optionals.getOrNull
 
@@ -169,13 +170,22 @@ object EditWarpCommand {
         @Argument("warp", parserName = "warp-without-alias") warp: Warp,
         founder: OfflinePlayer,
     ) {
-        warp.founderId = founder.uniqueId
+        val profile = founder.lookupProfile()
+        if (profile == null) {
+            send {
+                text("未找到玩家 ") with mochaMaroon
+                text("${founder.name ?: founder.uniqueId.toString()} ") with mochaText
+                text("的数据，请检查玩家名是否正确") with mochaMaroon
+            }
+            return
+        }
+        warp.founderId = profile.uuid
         warp.update()
         send {
             text("已将地标 ") with mochaPink
             text("${warp.name} ") with mochaText
             text("的设立人修改为 ") with mochaPink
-            text(founder.name ?: founder.uniqueId.toString()) with mochaText
+            text(profile.name) with mochaText
         }
     }
 

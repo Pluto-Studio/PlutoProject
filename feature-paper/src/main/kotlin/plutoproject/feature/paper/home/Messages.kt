@@ -106,6 +106,12 @@ val COMMAND_DELHOME_SUCCEED = component {
     text("的家") with mochaPink
 }
 
+val COMMAND_HOMES_PLAYER_NOT_FOUND = component {
+    text("未找到玩家 ") with mochaMaroon
+    text("<name> ") with mochaText
+    text("的数据，请检查玩家名是否正确") with mochaMaroon
+}
+
 val COMMAND_HOMES_PLAYER_HAS_NO_HOME = component {
     text("玩家 ") with mochaMaroon
     text("<player> ") with mochaText

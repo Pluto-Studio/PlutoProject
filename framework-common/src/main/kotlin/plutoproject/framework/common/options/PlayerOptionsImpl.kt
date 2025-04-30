@@ -63,7 +63,7 @@ class PlayerOptionsImpl(
     }
 
     override suspend fun reload() {
-        val model = checkNotNull(repo.findById(player)) { "Options reloading failed: Cannot fetch model" }
+        val model = checkNotNull(repo.findById(player)) { "Options reloading failed: Cannot fetchByName model" }
         entriesMap.clear()
         model.entries.forEach {
             val entry = createEntryFromModel(it)

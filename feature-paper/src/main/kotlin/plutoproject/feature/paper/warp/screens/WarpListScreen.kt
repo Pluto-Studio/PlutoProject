@@ -12,7 +12,7 @@ import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.api.warp.WarpCategory
 import plutoproject.feature.paper.api.warp.WarpManager
-import plutoproject.framework.common.api.profile.ProfileCache
+import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.splitLines
 import plutoproject.framework.common.util.chat.palettes.*
@@ -51,7 +51,7 @@ class WarpListScreen : FilterListMenu<Warp, WarpFilter, WarpListScreenModel>(
         if (obj.founder != null) {
             LaunchedEffect(obj) {
                 founderName = obj.founderId?.let {
-                    ProfileCache.getByUuid(it)?.rawName
+                    ProfileLookup.lookupByUuid(it)?.name
                 }
             }
         }

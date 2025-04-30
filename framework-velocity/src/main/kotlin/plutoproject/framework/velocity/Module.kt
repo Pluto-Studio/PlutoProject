@@ -9,10 +9,10 @@ import plutoproject.framework.velocity.bridge.BridgeCommand
 import plutoproject.framework.velocity.bridge.BridgePlayerListener
 import plutoproject.framework.velocity.bridge.BridgeRpc
 import plutoproject.framework.velocity.bridge.registerBridgeExceptionHandlers
-import plutoproject.framework.velocity.options.OptionsListener
+import plutoproject.framework.velocity.options.OptionsPlayerListener
 import plutoproject.framework.velocity.options.proto.OptionsRpc
 import plutoproject.framework.velocity.playerdb.proto.PlayerDBRpc
-import plutoproject.framework.velocity.profile.ProfileCacheListener
+import plutoproject.framework.velocity.profile.ProfilePlayerListener
 import plutoproject.framework.velocity.rpc.RpcCommand
 import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.command.CommandManager
@@ -29,9 +29,9 @@ fun loadFrameworkModules() {
 }
 
 private fun registerListeners() = server.eventManager.apply {
-    registerSuspend(plugin, OptionsListener)
+    registerSuspend(plugin, OptionsPlayerListener)
     registerSuspend(plugin, BridgePlayerListener)
-    registerSuspend(plugin, ProfileCacheListener)
+    registerSuspend(plugin, ProfilePlayerListener)
 }
 
 private fun registerCommands() {

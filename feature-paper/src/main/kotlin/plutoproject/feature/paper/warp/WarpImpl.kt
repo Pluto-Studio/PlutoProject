@@ -7,10 +7,8 @@ import kotlinx.coroutines.Deferred
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.util.Ticks
-import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.koin.core.component.KoinComponent
@@ -22,9 +20,12 @@ import plutoproject.feature.paper.api.warp.WarpTeleportEvent
 import plutoproject.feature.paper.api.warp.WarpType
 import plutoproject.feature.paper.home.loadFailed
 import plutoproject.feature.paper.teleport.TELEPORT_SUCCEED_SOUND
+import plutoproject.framework.common.api.profile.Profile
+import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.runAsyncIO
 import plutoproject.framework.common.util.coroutine.withDefault
 import plutoproject.framework.common.util.data.convertToUuid
 import plutoproject.framework.common.util.time.formatDate
@@ -41,8 +42,8 @@ class WarpImpl(private val model: WarpModel) : Warp, KoinComponent {
     override val name: String = model.name
     override var alias: String? = model.alias
     override var founderId = model.founder?.convertToUuid()
-    override val founder: Deferred<OfflinePlayer>?
-        get() = founderId?.let { runAsync { Bukkit.getOfflinePlayer(it) } }
+    override val founder: Deferred<Profile>?
+        get() = founderId?.let { runAsyncIO { ProfileLookup.lookupByUuid(it)!! } }
     override var icon: Material? = model.icon
     override var category: WarpCategory? = model.category
     override var description: Component? =

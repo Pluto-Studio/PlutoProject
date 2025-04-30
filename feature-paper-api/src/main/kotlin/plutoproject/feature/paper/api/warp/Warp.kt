@@ -4,9 +4,9 @@ import kotlinx.coroutines.Deferred
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus.Internal
+import plutoproject.framework.common.api.profile.Profile
 import java.time.Instant
 import java.util.*
 
@@ -16,7 +16,7 @@ interface Warp {
     val name: String
     var alias: String?
     var founderId: UUID?
-    val founder: Deferred<OfflinePlayer>?
+    val founder: Deferred<Profile>?
     var icon: Material?
     var category: WarpCategory?
     var description: Component?

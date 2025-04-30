@@ -10,7 +10,7 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.framework.common.api.profile.MojangProfileFetcher
+import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaPink
@@ -38,7 +38,7 @@ object WhitelistCommand : KoinComponent {
         }
         val data = try {
             withTimeout(10.seconds) {
-                MojangProfileFetcher.fetch(name)
+                MojangProfileFetcher.fetchByName(name)
             }
         } catch (e: TimeoutCancellationException) {
             send {
