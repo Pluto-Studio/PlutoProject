@@ -2,6 +2,7 @@ package plutoproject.feature.paper.status
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import org.koin.dsl.module
+import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
@@ -27,5 +28,6 @@ class StatusFeature : PaperFeature() {
         }
         AnnotationParser.parse(StatusCommand)
         server.pluginManager.registerSuspendingEvents(StatusListener, plugin)
+        MenuManager.registerButton(StatusButtonDescriptor) { Status() }
     }
 }
