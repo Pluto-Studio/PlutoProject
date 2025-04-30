@@ -86,7 +86,7 @@ fun getPromptMessage() = component {
             text("服务器目前负载中等") with mochaYellow without italic()
             newline()
             text("- ") with mochaSubtext0 without italic()
-            text("建议关闭不在使用的机器、酌情降低跑图速度、离开村民交易所等多实体场景") with mochaYellow without italic()
+            text("建议关闭不在使用的机器、酌情降低跑图速度") with mochaYellow without italic()
         }
 
         LoadLevel.HIGH -> {
@@ -94,7 +94,7 @@ fun getPromptMessage() = component {
             text("服务器目前已过载") with mochaMaroon without italic()
             newline()
             text("- ") with mochaSubtext0 without italic()
-            text("请关闭正在运行的机器、暂缓跑图、离开村民交易所等多实体场景") with mochaMaroon without italic()
+            text("请关闭正在运行的机器、暂缓跑图") with mochaMaroon without italic()
         }
     }
 }
