@@ -4,7 +4,7 @@ import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.warp.screens.WarpListScreen
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
 
@@ -14,6 +14,6 @@ object WarpsCommand {
     @Permission("essentials.warps")
     fun CommandSender.warps() = ensurePlayer {
         startScreen(WarpListScreen())
-        playSound(SoundConstants.UI.paging)
+        playSound(UI_PAGING_SOUND)
     }
 }

@@ -11,7 +11,7 @@ object SuicideCommand {
     suspend fun CommandSender.suicide() = ensurePlayer {
         withSync {
             this@ensurePlayer.health = 0.0
-            this@ensurePlayer.sendMessage(SUICIDE)
+            this@ensurePlayer.sendMessage(SUICIDED)
         }
     }
 }

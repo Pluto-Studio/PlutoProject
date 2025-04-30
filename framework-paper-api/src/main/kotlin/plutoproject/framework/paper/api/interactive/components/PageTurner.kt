@@ -7,14 +7,14 @@ import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.paper.api.interactive.LocalPlayer
-import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.SeparatePageTunerMode.NEXT
 import plutoproject.framework.paper.api.interactive.components.SeparatePageTunerMode.PREVIOUS
+import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 
 enum class SeparatePageTunerMode {
     PREVIOUS, NEXT
@@ -57,7 +57,7 @@ fun SeparatePageTuner(
             if (clickType != ClickType.LEFT) {
                 return@clickable
             }
-            if (turn()) player.playSound(SoundConstants.UI.paging)
+            if (turn()) player.playSound(UI_PAGING_SOUND)
         }
     )
 }

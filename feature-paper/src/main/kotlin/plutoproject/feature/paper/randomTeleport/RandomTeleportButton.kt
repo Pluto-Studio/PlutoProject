@@ -11,7 +11,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.feature.paper.api.randomTeleport.RandomTeleportManager
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.ECONOMY_SYMBOL
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMauve
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
@@ -59,7 +59,7 @@ fun RandomTeleport() {
         return
     }
 
-    val economySymbol = economy.currencyNameSingular() ?: MessageConstants.ECONOMY_SYMBOL
+    val economySymbol = economy.currencyNameSingular() ?: ECONOMY_SYMBOL
     val balance = economy.getBalance(player)
     val requirement = RandomTeleportManager.getRandomTeleportOptions(world).cost
 

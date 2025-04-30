@@ -2,7 +2,7 @@ package plutoproject.feature.paper.daily
 
 import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.ECONOMY_SYMBOL
 import plutoproject.framework.common.util.chat.palettes.*
 
 val CHECK_IN_SUCCEED = component {
@@ -17,7 +17,7 @@ val ALREADY_CHECK_IN = component {
 
 val COIN_CLAIMED = component {
     text("今日到访获得 ") with mochaSubtext0
-    text("<amount>${MessageConstants.ECONOMY_SYMBOL}") with mochaText
+    text("<amount>${ECONOMY_SYMBOL}") with mochaText
 }
 
 val PLAYER_NOT_CHECKED_IN = component {

@@ -19,7 +19,7 @@ import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen.Au
 import plutoproject.feature.paper.serverSelector.transferServer
 import plutoproject.framework.common.api.bridge.Bridge
 import plutoproject.framework.common.api.options.OptionsManager
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
@@ -209,7 +209,7 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                     state = DISABLED
                 }
                 options.save()
-                player.playSound(SoundConstants.UI.succeed)
+                player.playSound(UI_SUCCEED_SOUND)
             }
         )
     }

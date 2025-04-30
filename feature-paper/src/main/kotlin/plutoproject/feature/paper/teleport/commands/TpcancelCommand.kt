@@ -7,7 +7,7 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.teleport.TeleportManager
 import plutoproject.feature.paper.teleport.*
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.util.command.ensurePlayer
 
@@ -19,7 +19,7 @@ object TpcancelCommand {
         val argRequest = player?.let { TeleportManager.getUnfinishedRequest(it) }
         if (player != null) {
             if (!hasPermission("essentials.tpcancel.other")) {
-                sendMessage(MessageConstants.noPermission)
+                sendMessage(PERMISSION_DENIED)
                 return
             }
             if (argRequest == null) {

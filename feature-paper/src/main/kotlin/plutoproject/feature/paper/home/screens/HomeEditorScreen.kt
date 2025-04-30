@@ -12,7 +12,8 @@ import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_INVALID_SOUND
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
@@ -282,7 +283,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                         val material = cursor?.type
                         if (material == null) {
                             state = SetIconState.NO_ITEM
-                            player.playSound(SoundConstants.UI.invalid)
+                            player.playSound(UI_INVALID_SOUND)
                             coroutineScope.launch {
                                 delay(1.seconds)
                                 state = SetIconState.NONE
@@ -298,7 +299,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                             player.inventory.addItemOrDrop(carriedItem!!)
                         }
                         state = SetIconState.SUCCEED
-                        player.playSound(SoundConstants.UI.succeed)
+                        player.playSound(UI_SUCCEED_SOUND)
                         coroutineScope.launch {
                             delay(1.seconds)
                             state = SetIconState.NONE
@@ -310,7 +311,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                         home.update()
                         current = null
                         state = SetIconState.SUCCEED
-                        player.playSound(SoundConstants.UI.succeed)
+                        player.playSound(UI_SUCCEED_SOUND)
                         coroutineScope.launch {
                             delay(1.seconds)
                             state = SetIconState.NONE

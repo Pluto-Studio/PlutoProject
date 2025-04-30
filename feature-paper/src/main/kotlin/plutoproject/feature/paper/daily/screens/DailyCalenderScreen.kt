@@ -13,7 +13,8 @@ import org.bukkit.inventory.meta.SkullMeta
 import plutoproject.feature.paper.api.daily.Daily
 import plutoproject.feature.paper.api.daily.DailyHistory
 import plutoproject.feature.paper.daily.*
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.palettes.mochaFlamingo
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
@@ -158,7 +159,7 @@ class DailyCalenderScreen : InteractiveScreen() {
                                 }
                             }
                             state = 1
-                            player.playSound(SoundConstants.UI.succeed)
+                            player.playSound(UI_SUCCEED_SOUND)
                         }
                     }
 
@@ -188,18 +189,18 @@ class DailyCalenderScreen : InteractiveScreen() {
                     ClickType.LEFT -> {
                         if (!(model.canGoPrevious())) return@clickable
                         model.goPrevious()
-                        whoClicked.playSound(SoundConstants.UI.paging)
+                        whoClicked.playSound(UI_PAGING_SOUND)
                     }
 
                     ClickType.RIGHT -> {
                         model.goNext()
-                        whoClicked.playSound(SoundConstants.UI.paging)
+                        whoClicked.playSound(UI_PAGING_SOUND)
                     }
 
                     ClickType.SHIFT_LEFT -> {
                         if (model.yearMonth == model.realTime) return@clickable
                         model.backNow()
-                        whoClicked.playSound(SoundConstants.UI.paging)
+                        whoClicked.playSound(UI_PAGING_SOUND)
                     }
 
                     else -> {}

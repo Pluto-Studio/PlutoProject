@@ -5,7 +5,7 @@ import org.incendo.cloud.annotations.Command
 import plutoproject.feature.paper.api.daily.Daily
 import plutoproject.feature.paper.daily.ALREADY_CHECK_IN
 import plutoproject.feature.paper.daily.screens.DailyCalenderScreen
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
 
@@ -19,7 +19,7 @@ object CheckInCommand {
             return@ensurePlayer
         }
         user.checkIn()
-        playSound(SoundConstants.UI.succeed)
+        playSound(UI_SUCCEED_SOUND)
     }
 
     @Command("checkin gui")

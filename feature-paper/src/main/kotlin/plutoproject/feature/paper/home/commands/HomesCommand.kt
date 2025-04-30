@@ -9,7 +9,7 @@ import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.COMMAND_HOMES_PLAYER_HAS_NO_HOME
 import plutoproject.feature.paper.home.HOME_LOOKUP_OTHER_PERMISSION
 import plutoproject.feature.paper.home.screens.HomeListScreen
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -25,7 +25,7 @@ object HomesCommand {
         val actualPlayer = selectPlayer(this, player)!!
         if (this != actualPlayer) {
             if (!hasPermission(HOME_LOOKUP_OTHER_PERMISSION)) {
-                sendMessage(MessageConstants.noPermission)
+                sendMessage(PERMISSION_DENIED)
                 return
             }
             if (!HomeManager.hasHome(actualPlayer)) {

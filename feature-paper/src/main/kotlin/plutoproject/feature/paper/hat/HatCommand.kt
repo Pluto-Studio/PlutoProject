@@ -7,7 +7,7 @@ import org.bukkit.inventory.ItemStack
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.command.selectPlayer
@@ -49,7 +49,7 @@ object HatCommand {
         }
         if (this != target) {
             if (!hasPermission("essentials.hat.other")) {
-                sendMessage(MessageConstants.noPermission)
+                sendMessage(PERMISSION_DENIED)
                 return
             }
             if (target.hatItem != null) {

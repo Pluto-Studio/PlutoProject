@@ -6,7 +6,7 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
@@ -47,7 +47,7 @@ fun Wiki() {
             player.sendMessage(component {
                 text("点此打开星社百科") with mochaLavender with underlined() with openUrl("https://wiki.plutomc.club/")
             })
-            player.playSound(SoundConstants.message)
+            player.playSound(MESSAGE_SOUND)
             player.withSync {
                 player.closeInventory()
             }

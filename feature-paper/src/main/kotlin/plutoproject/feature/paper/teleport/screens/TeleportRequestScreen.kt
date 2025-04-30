@@ -18,7 +18,7 @@ import plutoproject.feature.paper.api.teleport.TeleportDirection
 import plutoproject.feature.paper.api.teleport.TeleportManager
 import plutoproject.feature.paper.teleport.COMMAND_TPAHERE_SUCCEED
 import plutoproject.feature.paper.teleport.COMMAND_TPA_SUCCEED
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.chat.toFormattedComponent
 import plutoproject.framework.common.util.time.ticks
@@ -131,7 +131,7 @@ class TeleportRequestScreen : ListMenu<Player, TeleportRequestScreenModel>() {
                         player.closeInventory()
                     }
                 }
-                player.playSound(SoundConstants.UI.succeed)
+                player.playSound(UI_SUCCEED_SOUND)
                 player.sendMessage(
                     message
                         .replace("<player>", obj.name)

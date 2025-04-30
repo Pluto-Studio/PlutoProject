@@ -6,7 +6,7 @@ import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.PLAYER_ONLY_COMMAND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.command.selectPlayer
@@ -14,7 +14,7 @@ import plutoproject.framework.paper.util.coroutine.withSync
 
 private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = withSync {
     val actualPlayer = selectPlayer(this@gm, player) ?: run {
-        sendMessage(MessageConstants.nonPlayer)
+        sendMessage(PLAYER_ONLY_COMMAND)
         return@withSync
     }
     val mode = when (gameMode) {

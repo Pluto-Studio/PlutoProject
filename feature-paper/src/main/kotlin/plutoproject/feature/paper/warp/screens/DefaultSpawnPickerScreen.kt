@@ -16,7 +16,7 @@ import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.api.warp.WarpCategory
 import plutoproject.feature.paper.api.warp.WarpManager
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.splitLines
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.time.formatDate
@@ -138,7 +138,7 @@ class DefaultSpawnPickerScreen : ListMenu<Warp, DefaultSpawnPickerScreenModel>()
                                 player.closeInventory()
                             }
                         }
-                        player.playSound(SoundConstants.UI.succeed)
+                        player.playSound(UI_SUCCEED_SOUND)
                     }
 
                     else -> {}

@@ -5,7 +5,7 @@ import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.randomTeleport.RandomTeleportManager
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.toFormattedString
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -19,7 +19,7 @@ object RtpCommand {
     fun CommandSender.rtp(world: World?) = ensurePlayer {
         val actualWorld = world ?: this.world
         if (actualWorld == world && !hasPermission(RANDOM_TELEPORT_SPECIFIC_PERMISSION)) {
-            sendMessage(MessageConstants.noPermission)
+            sendMessage(PERMISSION_DENIED)
             return
         }
         if (!RandomTeleportManager.isEnabled(actualWorld)) {

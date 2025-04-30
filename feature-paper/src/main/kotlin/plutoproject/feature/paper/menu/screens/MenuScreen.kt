@@ -22,7 +22,7 @@ import plutoproject.feature.paper.menu.Button
 import plutoproject.feature.paper.menu.MenuConfig
 import plutoproject.feature.paper.menu.Page
 import plutoproject.feature.paper.menu.repositories.UserRepository
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
@@ -125,7 +125,7 @@ class MenuScreen : InteractiveScreen(), KoinComponent {
                 if (clickType != ClickType.LEFT) return@clickable
                 if (screenModel.currentPageId == descriptor.id) return@clickable
                 screenModel.currentPageId = descriptor.id
-                player.playSound(SoundConstants.UI.paging)
+                player.playSound(UI_PAGING_SOUND)
             }
         )
     }

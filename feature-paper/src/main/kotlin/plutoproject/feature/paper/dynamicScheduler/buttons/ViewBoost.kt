@@ -13,7 +13,7 @@ import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.dynamicScheduler.DynamicScheduler
 import plutoproject.feature.paper.api.dynamicScheduler.DynamicViewDistanceState
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
@@ -135,13 +135,13 @@ fun ViewBoost() {
             when (state) {
                 DynamicViewDistanceState.ENABLED -> {
                     DynamicScheduler.setViewDistance(player, false)
-                    player.playSound(SoundConstants.UI.succeed)
+                    player.playSound(UI_SUCCEED_SOUND)
                     state = DynamicViewDistanceState.DISABLED
                 }
 
                 DynamicViewDistanceState.DISABLED -> {
                     DynamicScheduler.setViewDistance(player, true)
-                    player.playSound(SoundConstants.UI.succeed)
+                    player.playSound(UI_SUCCEED_SOUND)
                     state = DynamicViewDistanceState.ENABLED
                 }
 

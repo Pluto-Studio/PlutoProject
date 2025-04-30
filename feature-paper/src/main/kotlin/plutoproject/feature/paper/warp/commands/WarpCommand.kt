@@ -8,7 +8,6 @@ import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.warp.COMMAND_WARP_SUCCEED
 import plutoproject.feature.paper.warp.COMMAND_WARP_SUCCEED_ALIAS
 import plutoproject.feature.paper.warp.screens.WarpListScreen
-import plutoproject.framework.common.util.chat.SoundConstants
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -20,7 +19,6 @@ object WarpCommand {
     suspend fun CommandSender.warp(@Argument("warp", parserName = "warp") warp: Warp?) = ensurePlayer {
         if (warp == null) {
             startScreen(WarpListScreen())
-            playSound(SoundConstants.UI.paging)
             return
         }
         warp.teleportSuspend(this)

@@ -8,7 +8,6 @@ import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.COMMAND_HOME_SUCCEED
 import plutoproject.feature.paper.home.screens.HomeListScreen
-import plutoproject.framework.common.util.chat.SoundConstants
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -24,7 +23,6 @@ object HomeCommand {
             val picked = if (homes.size == 1) homes.first() else preferred
             if (picked == null) {
                 startScreen(HomeListScreen(this))
-                playSound(SoundConstants.UI.paging)
                 return
             }
             picked.teleportSuspend(this)

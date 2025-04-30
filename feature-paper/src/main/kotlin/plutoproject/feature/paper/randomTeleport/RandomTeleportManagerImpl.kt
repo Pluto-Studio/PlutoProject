@@ -23,7 +23,7 @@ import plutoproject.feature.paper.api.teleport.TeleportManager
 import plutoproject.feature.paper.teleport.TELEPORT_FAILED_SOUND
 import plutoproject.feature.paper.teleport.TELEPORT_FAILED_TITLE
 import plutoproject.feature.paper.teleport.TeleportConfig
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.ECONOMY_SYMBOL
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.toCurrencyFormattedString
 import plutoproject.framework.common.util.chat.toFormattedComponent
@@ -299,8 +299,8 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
             val opt = options ?: defaultOpt
 
             val economy = vaultHook?.economy
-            val plural = economy?.currencyNamePlural() ?: MessageConstants.ECONOMY_SYMBOL
-            val singular = economy?.currencyNameSingular() ?: MessageConstants.ECONOMY_SYMBOL
+            val plural = economy?.currencyNamePlural() ?: ECONOMY_SYMBOL
+            val singular = economy?.currencyNameSingular() ?: ECONOMY_SYMBOL
             val cost = opt.cost
             val symbol = if (cost <= 1) singular else plural
             var costed = false

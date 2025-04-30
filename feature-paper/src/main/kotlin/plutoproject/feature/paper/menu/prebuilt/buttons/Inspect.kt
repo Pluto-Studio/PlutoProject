@@ -11,7 +11,7 @@ import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.feature.paper.menu.hooks.CO_NEAR_COMMAND
 import plutoproject.feature.paper.menu.hooks.isCoreProtectAvailable
 import plutoproject.feature.paper.menu.hooks.isInspecting
-import plutoproject.framework.common.util.chat.SoundConstants
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
@@ -83,12 +83,12 @@ fun Inspect() {
                 ClickType.LEFT -> {
                     player.isInspecting = !isInspecting
                     isInspecting = !isInspecting
-                    player.playSound(SoundConstants.UI.succeed)
+                    player.playSound(UI_SUCCEED_SOUND)
                     return@clickable
                 }
 
                 ClickType.RIGHT -> {
-                    player.playSound(SoundConstants.UI.succeed)
+                    player.playSound(UI_SUCCEED_SOUND)
                     player.withSync {
                         player.performCommand(CO_NEAR_COMMAND)
                         player.closeInventory()

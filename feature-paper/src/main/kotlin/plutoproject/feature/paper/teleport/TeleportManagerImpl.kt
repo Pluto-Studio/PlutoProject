@@ -16,7 +16,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.teleport.*
 import plutoproject.feature.paper.api.teleport.events.TeleportEvent
-import plutoproject.framework.common.util.chat.MessageConstants
+import plutoproject.framework.common.util.chat.UNUSUAL_ISSUE_OCCURRED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.title.replaceSubTitle
 import plutoproject.framework.common.util.chat.toFormattedComponent
@@ -450,7 +450,7 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
             task.cancel()
             if (prompt) {
                 player.showTitle(TELEPORT_FAILED_TIMEOUT_TITLE)
-                player.sendMessage(MessageConstants.unusualIssue)
+                player.sendMessage(UNUSUAL_ISSUE_OCCURRED)
                 player.playSound(TELEPORT_FAILED_SOUND)
             }
         }
