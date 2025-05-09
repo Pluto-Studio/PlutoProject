@@ -400,7 +400,7 @@ fun isBlossom(block: Block): Boolean {
     val data = block.blockData
     val type = block.type
 
-    if (data is PinkPetals) {
+    if (data is FlowerBed) {
         return true
     }
 
