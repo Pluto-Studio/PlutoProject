@@ -45,7 +45,7 @@ fun Wiki() {
         modifier = Modifier.clickable {
             if (clickType != ClickType.LEFT) return@clickable
             player.sendMessage(component {
-                text("点此打开星社百科") with mochaLavender with underlined() with openUrl("https://wiki.plutomc.club/")
+                text("点此打开星社百科") with mochaLavender with underlined() with openUrl("https://wiki.pmc.ink/")
             })
             player.playSound(MESSAGE_SOUND)
             player.withSync {
