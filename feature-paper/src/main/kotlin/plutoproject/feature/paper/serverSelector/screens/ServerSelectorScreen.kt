@@ -4,7 +4,6 @@ import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
-import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
@@ -17,7 +16,6 @@ import plutoproject.feature.paper.serverSelector.Server
 import plutoproject.feature.paper.serverSelector.ServerSelectorConfig
 import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen.AutoJoinState.*
 import plutoproject.feature.paper.serverSelector.transferServer
-import plutoproject.framework.common.api.bridge.Bridge
 import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
@@ -36,7 +34,6 @@ import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxWidth
 import plutoproject.framework.paper.api.interactive.modifiers.height
 import plutoproject.framework.paper.util.coroutine.withSync
-import kotlin.time.Duration.Companion.seconds
 
 private val titles = arrayOf(
     "开始新的征程！",
@@ -92,24 +89,11 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
     @Composable
     private fun Server(server: Server, ingredient: Ingredient) {
         val player = LocalPlayer.current
-        var bridgeServer by remember(server) { mutableStateOf(Bridge.getServer(server.bridgeId)) }
-        var isOnline by remember(server) { mutableStateOf(bridgeServer?.isOnline ?: false) }
-        var playerCount by remember(server) { mutableStateOf(bridgeServer?.playerCount ?: 0) }
-        LaunchedEffect(server) {
-            while (true) {
-                delay(1.seconds)
-                val current = Bridge.getServer(server.bridgeId)
-                if (bridgeServer != current) {
-                    bridgeServer = current
-                }
-                isOnline = bridgeServer?.isOnline ?: false
-                playerCount = if (isOnline) bridgeServer!!.playerCount else 0
-            }
-        }
         Item(
             material = ingredient.material,
             name = server.displayName.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE),
             lore = buildList {
+                /*
                 if (isOnline) {
                     add(component {
                         text("• 在线 ") with mochaGreen without italic()
@@ -122,21 +106,20 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                     })
                 }
                 add(Component.empty())
+                 */
                 addAll(server.description.map {
                     it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
                 })
-                if (isOnline) {
-                    add(Component.empty())
-                    add(component {
-                        text("左键 ") with mochaLavender without italic()
-                        text("传送至此处") with mochaText without italic()
-                    })
-                }
+                add(Component.empty())
+                add(component {
+                    text("左键 ") with mochaLavender without italic()
+                    text("传送至此处") with mochaText without italic()
+                })
             },
             modifier = Modifier.clickable {
                 if (clickType != ClickType.LEFT) return@clickable
-                if (!isOnline) return@clickable
-                runAsync { player.transferServer(server.bridgeId) }
+                // if (!isOnline) return@clickable
+                runAsync { player.transferServer(server.serverId) }
                 withSync { player.closeInventory() }
             }
         )

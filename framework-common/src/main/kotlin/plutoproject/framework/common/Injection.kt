@@ -10,7 +10,6 @@ import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.api.rpc.RpcClient
 import plutoproject.framework.common.api.rpc.RpcServer
-import plutoproject.framework.common.config.BridgeConfig
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
 import plutoproject.framework.common.feature.FeatureManagerImpl
@@ -51,7 +50,6 @@ private fun getPlutoConfig(): PlutoConfig {
 val FrameworkCommonModule = module {
     single<PlutoConfig> { getPlutoConfig() }
     single<FeatureManager> { FeatureManagerImpl() }
-    single<BridgeConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "bridge") }
     single<ProviderConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "provider") }
     single<RpcConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "rpc") }
     single<Provider> { ProviderImpl() }
