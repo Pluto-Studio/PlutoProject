@@ -39,7 +39,7 @@ data class Ingredient(
 )
 
 data class Server(
-    val bridgeId: String,
+    val serverId: String,
     val menuIcon: String,
     val name: String,
     val displayName: Component = Component.text(name),
