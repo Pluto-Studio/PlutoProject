@@ -9,8 +9,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-group = "ink.pmc.plutoproject"
-version = "1.5.0"
+group = "club.plutoproject"
+version = "1.5.1"
 
 val dependencyExtension =
     dependencies.extensions.create<PlutoDependencyHandlerExtension>(
