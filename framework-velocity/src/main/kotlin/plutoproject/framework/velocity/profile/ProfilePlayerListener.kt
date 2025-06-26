@@ -1,7 +1,8 @@
 package plutoproject.framework.velocity.profile
 
+import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
-import com.velocitypowered.api.event.connection.LoginEvent
+import com.velocitypowered.api.event.connection.PostLoginEvent
 import org.bson.types.ObjectId
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -12,8 +13,8 @@ import plutoproject.framework.common.profile.ProfileRepository
 object ProfilePlayerListener : KoinComponent {
     private val repo by inject<ProfileRepository>()
 
-    @Subscribe()
-    suspend fun LoginEvent.e() {
+    @Subscribe(order = PostOrder.LAST)
+    suspend fun PostLoginEvent.e() {
         val model = repo.findByUniqueId(player.uniqueId)
         if (model == null) {
             repo.save(ProfileModel(ObjectId(), player.uniqueId, player.username))
