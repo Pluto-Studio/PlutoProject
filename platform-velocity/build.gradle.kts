@@ -13,5 +13,6 @@ velocityPluginJson {
     id = "plutoproject"
     name = "PlutoProject"
     main = "plutoproject.platform.velocity.PlutoVelocityBootstrap"
-    authors = listOf("nostalfinals", "PlutoProject Contributors")
+    authors = listOf("Pluto Studio")
+    description = "Framework and feature components for PlutoProject server."
 }
