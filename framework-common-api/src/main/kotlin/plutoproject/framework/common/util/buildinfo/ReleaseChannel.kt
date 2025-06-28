@@ -1,4 +1,4 @@
-package plutoproject.framework.common.util.environment
+package plutoproject.framework.common.util.buildinfo
 
 enum class ReleaseChannel {
     STABLE, DEVELOPMENT

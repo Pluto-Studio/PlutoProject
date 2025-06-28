@@ -10,6 +10,7 @@ import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.api.rpc.RpcClient
 import plutoproject.framework.common.api.rpc.RpcServer
+import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
 import plutoproject.framework.common.feature.FeatureManagerImpl
@@ -24,10 +25,11 @@ import plutoproject.framework.common.provider.ProviderImpl
 import plutoproject.framework.common.rpc.RpcClientImpl
 import plutoproject.framework.common.rpc.RpcServerImpl
 import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
+import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.environment.frameworkDataFolder
-import plutoproject.framework.common.util.jvm.extractFileFromJar
 import plutoproject.framework.common.util.environment.pluginDataFolder
+import plutoproject.framework.common.util.jvm.extractFileFromJar
 
 inline fun <reified T : Any> getModuleConfig(resourcePrefix: String, id: String): T {
     val file = frameworkDataFolder.resolve(id).resolve("config.conf")
@@ -62,4 +64,5 @@ val FrameworkCommonModule = module {
     single<OptionDescriptorFactory> { OptionDescriptorFactoryImpl() }
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
+    single<BuildInfo> { BuildInfoImpl() }
 }

@@ -3,9 +3,9 @@ package plutoproject.feature.paper.status
 import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Entity
+import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.chat.BRANDING
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.environment.*
 import plutoproject.framework.common.util.roundTo2
 import plutoproject.framework.common.util.time.formatDate
 import plutoproject.framework.common.util.time.formatTime
@@ -117,13 +117,13 @@ val OPERATION_HIDE_VERSION_MESSAGE = component {
 
 fun getVersionMessage(timezone: ZoneId) = component {
     raw(BRANDING) without italic()
-    text(" $plutoProjectReleaseName") with mochaText without italic()
+    text(" ${BuildInfo.releaseName}") with mochaText without italic()
     newline()
-    text("提交 $plutoProjectGitCommit，分支 $plutoProjectGitBranch") with mochaText without italic()
+    text("提交 ${BuildInfo.gitCommit}，分支 ${BuildInfo.gitBranch}") with mochaText without italic()
     newline()
-    val date = ZonedDateTime.ofInstant(plutoProjectBuildTime, timezone)
+    val date = ZonedDateTime.ofInstant(BuildInfo.buildTime, timezone)
     text("于 ${date.formatDate()} ${date.formatTime()} 构建") with mochaText without italic()
-    if (plutoProjectReleaseChannel == ReleaseChannel.DEVELOPMENT) {
+    if (!BuildInfo.isStable) {
         newline()
         newline()
         text("⚠ 警告") with mochaYellow without italic()
