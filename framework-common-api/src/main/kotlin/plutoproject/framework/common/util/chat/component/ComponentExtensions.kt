@@ -47,9 +47,7 @@ fun Component.splitLines(): Iterable<Component> {
         }
         children().forEach { child ->
             if (child == Component.newline()) {
-                if (curr != Component.empty()) {
-                    add(curr)
-                }
+                add(curr)
                 curr = Component.empty()
                 return@forEach
             }

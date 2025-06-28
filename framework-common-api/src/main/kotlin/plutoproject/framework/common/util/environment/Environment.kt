@@ -4,8 +4,9 @@ import plutoproject.framework.common.PlutoConfig
 import plutoproject.framework.common.util.PlatformType
 import plutoproject.framework.common.util.inject.Koin
 import java.io.File
+import java.net.JarURLConnection
 import java.time.Instant
-import java.util.jar.Manifest
+import java.util.jar.JarFile
 
 lateinit var platformType: PlatformType
 lateinit var serverThread: Thread
@@ -16,17 +17,40 @@ lateinit var frameworkDataFolder: File
 val serverName: String
     get() = Koin.get<PlutoConfig>().serverName
 
-fun readManifestAttribute(attribute: String): String {
-    val manifestStream = PlutoConfig::class.java.classLoader
-        .getResourceAsStream("META-INF/MANIFEST.MF") ?: error("Missing manifest file")
-    val manifest = Manifest(manifestStream)
-    return manifest.mainAttributes.getValue(attribute)
+/*
+* Velocity 里通过 PluginClassLoader 获取 Manifest 居然会获取到 Velocity 自身的。。。
+* 这里判断一下是不是我们的 Jar。
+*/
+private fun readManifestAttribute(attribute: String): String {
+    val identityFile = "plutoproject_jar_identity"
+    val loader = ReleaseChannel::class.java.classLoader
+    val resources = loader.getResources("META-INF/MANIFEST.MF")
+
+    resources.asSequence().forEach { url ->
+        val jarConnection = url.openConnection() as? JarURLConnection ?: return@forEach
+        val jarFileUrl = jarConnection.jarFileURL
+        JarFile(jarFileUrl.toURI().path).use { jar ->
+            if (jar.getEntry(identityFile) == null) {
+                return@forEach
+            }
+            jar.manifest?.mainAttributes?.let { attrs ->
+                val value = attrs.getValue(attribute)
+                if (value != null) {
+                    return value
+                } else {
+                    error("Attribute '$attribute' not found in manifest of $jarFileUrl")
+                }
+            } ?: error("Manifest missing in $jarFileUrl")
+        }
+    }
+
+    error("Cannot find manifest with identity file '$identityFile'")
 }
 
 val plutoProjectVersion: String = readManifestAttribute("PlutoProject-Version")
 val plutoProjectReleaseName: String = readManifestAttribute("PlutoProject-Release-Name")
 val plutoProjectReleaseChannel: ReleaseChannel =
-    ReleaseChannel.valueOf(readManifestAttribute("PlutoProject-Release-Channel"))
+    ReleaseChannel.valueOf(readManifestAttribute("PlutoProject-Release-Channel").uppercase())
 val plutoProjectGitCommit: String = readManifestAttribute("PlutoProject-Git-Commit")
 val plutoProjectGitBranch: String = readManifestAttribute("PlutoProject-Git-Branch")
 val plutoProjectBuildTime: Instant = Instant.ofEpochMilli(readManifestAttribute("PlutoProject-Build-Time").toLong())
