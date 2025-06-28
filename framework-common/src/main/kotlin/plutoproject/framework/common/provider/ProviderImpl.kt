@@ -7,7 +7,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.config.ProviderConfig
-import plutoproject.framework.common.util.getFrameworkModuleDataFolder
+import plutoproject.framework.common.util.environment.getFrameworkModuleDataFolder
 
 class ProviderImpl : Provider, KoinComponent {
     private val config by inject<ProviderConfig>()

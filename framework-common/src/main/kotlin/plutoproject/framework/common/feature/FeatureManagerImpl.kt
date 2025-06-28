@@ -8,10 +8,10 @@ import org.koin.core.component.get
 import plutoproject.framework.common.api.feature.*
 import plutoproject.framework.common.api.feature.metadata.AbstractFeature
 import plutoproject.framework.common.PlutoConfig
-import plutoproject.framework.common.util.featureDataFolder
+import plutoproject.framework.common.util.environment.featureDataFolder
 import plutoproject.framework.common.util.jvm.findClass
 import plutoproject.framework.common.util.jvm.getResourceAsStreamFromJar
-import plutoproject.framework.common.util.platformType
+import plutoproject.framework.common.util.environment.platformType
 import java.io.File
 import java.util.*
 import java.util.logging.Logger
