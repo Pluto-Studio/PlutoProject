@@ -5,7 +5,7 @@ import org.koin.core.component.KoinComponent
 import plutoproject.feature.paper.api.teleport.*
 import plutoproject.feature.paper.api.teleport.events.RequestStateChangeEvent
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.serverThread
+import plutoproject.framework.common.util.environment.serverThread
 import java.time.Instant
 import java.util.*
 

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import plutoproject.framework.common.util.LoggerKt;
 import plutoproject.framework.common.util.PlatformType;
 import plutoproject.framework.velocity.dependency.DependenciesImpl;
-import plutoproject.framework.velocity.util.PlatformKt;
+import plutoproject.framework.velocity.util.EnvironmentKt;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -36,15 +36,15 @@ public class PlutoVelocityBootstrap {
             @DataDirectory Path dataDirectoryPath
     ) {
         loadDependencies(logger, getCachePath(dataDirectoryPath));
-        PlatformKt.setPlugin(plugin);
+        EnvironmentKt.setPlugin(plugin);
         final SuspendingPluginContainer suspendingPlugin = new SuspendingPluginContainer(plugin, server, LoggerFactory.getLogger("PlutoProject/MCCoroutine"));
         suspendingPlugin.initialize(this);
-        PlatformKt.setSuspendingPlugin(suspendingPlugin);
-        PlatformKt.setServer(server);
+        EnvironmentKt.setSuspendingPlugin(suspendingPlugin);
+        EnvironmentKt.setServer(server);
         LoggerKt.setLogger(logger);
-        plutoproject.framework.common.util.PlatformKt.setPlatformType(PlatformType.VELOCITY);
-        plutoproject.framework.common.util.PlatformKt.setServerThread(Thread.currentThread());
-        plutoproject.framework.common.util.PlatformKt.initPluginDataFolder(dataDirectoryPath.toFile());
+        plutoproject.framework.common.util.environment.EnvironmentKt.setPlatformType(PlatformType.VELOCITY);
+        plutoproject.framework.common.util.environment.EnvironmentKt.setServerThread(Thread.currentThread());
+        plutoproject.framework.common.util.environment.EnvironmentKt.initPluginDataFolder(dataDirectoryPath.toFile());
         platform = new PlutoVelocityPlatform();
         platform.load();
     }

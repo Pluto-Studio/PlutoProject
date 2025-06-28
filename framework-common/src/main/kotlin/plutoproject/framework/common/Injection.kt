@@ -25,9 +25,9 @@ import plutoproject.framework.common.rpc.RpcClientImpl
 import plutoproject.framework.common.rpc.RpcServerImpl
 import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.frameworkDataFolder
+import plutoproject.framework.common.util.environment.frameworkDataFolder
 import plutoproject.framework.common.util.jvm.extractFileFromJar
-import plutoproject.framework.common.util.pluginDataFolder
+import plutoproject.framework.common.util.environment.pluginDataFolder
 
 inline fun <reified T : Any> getModuleConfig(resourcePrefix: String, id: String): T {
     val file = frameworkDataFolder.resolve(id).resolve("config.conf")
