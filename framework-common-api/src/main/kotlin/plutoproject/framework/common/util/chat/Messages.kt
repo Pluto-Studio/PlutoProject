@@ -6,7 +6,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 
 val BRANDING = component {
-    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 ᴘʀᴏᴊᴇᴄᴛ</gradient>")
+    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 Project</gradient>")
 }
 
 const val ECONOMY_SYMBOL = "\uD83C\uDF1F"
