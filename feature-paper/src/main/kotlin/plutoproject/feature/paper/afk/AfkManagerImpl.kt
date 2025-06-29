@@ -57,13 +57,13 @@ class AfkManagerImpl : AfkManager, KoinComponent {
             }
             afkSet.add(player)
             if (manually) addManually(player)
-            Bukkit.broadcast(PLAYER_AFK_ENTER_ANNOUNCEMENT.replace("<player>", player.name))
+            Bukkit.broadcast(PLAYER_ENTER_AFK_BROADCAST.replace("<player>", player.name))
             return
         }
 
         if (!state && isAfk(player)) {
             afkSet.remove(player)
-            Bukkit.broadcast(PLAYER_AFK_EXIT_ANNOUNCEMENT.replace("<player>", player.name))
+            Bukkit.broadcast(PLAYER_EXIT_AFK_BROADCAST.replace("<player>", player.name))
             removeManually(player)
             return
         }

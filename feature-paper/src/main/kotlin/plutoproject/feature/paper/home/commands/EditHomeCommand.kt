@@ -18,27 +18,27 @@ object EditHomeCommand {
     @Permission("essentials.edithome")
     fun CommandSender.prefer(@Argument("home", parserName = "home") home: Home) = ensurePlayer {
         if (home.isPreferred) {
-            sendMessage(COMMAND_EDITHOME_ALREADY_PREFERRED.replace("<name>", home.name))
+            sendMessage(COMMAND_EDITHOME_FAILED_ALREADY_PREFERRED.replace("<name>", home.name))
             return
         }
         runAsync {
             home.setPreferred(true)
         }
-        sendMessage(COMMAND_EDITHOME_PREFER_SUCCEED.replace("<name>", home.name))
+        sendMessage(COMMAND_EDITHOME_PREFER.replace("<name>", home.name))
     }
 
     @Command("edithome <home> star")
     @Permission("essentials.edithome")
     fun CommandSender.star(@Argument("home", parserName = "home") home: Home) = ensurePlayer {
         if (home.isStarred) {
-            sendMessage(COMMAND_EDITHOME_ALREADY_STARRED.replace("<name>", home.name))
+            sendMessage(COMMAND_EDITHOME_FAILED_ALREADY_STARRED.replace("<name>", home.name))
             return
         }
         runAsync {
             home.isStarred = true
             home.update()
         }
-        sendMessage(COMMAND_EDITHOME_STAR_SUCCEED.replace("<name>", home.name))
+        sendMessage(COMMAND_EDITHOME_STAR.replace("<name>", home.name))
     }
 
     @Command("edithome <home> rename <name>")
@@ -48,14 +48,14 @@ object EditHomeCommand {
         @Argument("name") @Greedy name: String
     ) = ensurePlayer {
         if (name.length > HomeManager.nameLengthLimit) {
-            sendMessage(COMMAND_SETHOME_FAILED_LENGTN_LIMIT)
+            sendMessage(COMMAND_SETHOME_FAILED_NAME_LENGTH_LIMIT)
             return
         }
         runAsync {
             home.name = name
             home.update()
         }
-        sendMessage(COMMAND_EDITHOME_RENAME_SUCCEED.replace("<new_name>", name))
+        sendMessage(COMMAND_EDITHOME_RENAME.replace("<new_name>", name))
     }
 
     @Command("edithome <home> move")
@@ -65,6 +65,6 @@ object EditHomeCommand {
             home.location = location
             home.update()
         }
-        sendMessage(COMMAND_EDITHOME_MOVE_SUCCEED.replace("<name>", home.name))
+        sendMessage(COMMAND_EDITHOME_MOVE.replace("<name>", home.name))
     }
 }

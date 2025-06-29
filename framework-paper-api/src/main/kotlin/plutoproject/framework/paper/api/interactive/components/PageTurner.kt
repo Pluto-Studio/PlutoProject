@@ -34,7 +34,7 @@ fun SeparatePageTuner(
     Item(
         material = icon,
         name = component {
-            text("第 $current/$total 页") with mochaText without italic()
+            text("第 $current/$total 页") with mochaText
         },
         lore = buildList {
             addAll(description)
@@ -42,13 +42,13 @@ fun SeparatePageTuner(
             add(component {
                 when (mode) {
                     PREVIOUS -> {
-                        text("左键 ") with mochaLavender without italic()
-                        text("上一页") with mochaText without italic()
+                        text("左键 ") with mochaLavender
+                        text("上一页") with mochaText
                     }
 
                     NEXT -> {
-                        text("左键 ") with mochaLavender without italic()
-                        text("下一页") with mochaText without italic()
+                        text("左键 ") with mochaLavender
+                        text("下一页") with mochaText
                     }
                 }
             })

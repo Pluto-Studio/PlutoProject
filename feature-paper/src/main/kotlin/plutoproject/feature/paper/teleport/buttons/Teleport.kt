@@ -34,25 +34,25 @@ fun Teleport() {
     Item(
         material = Material.ENDER_PEARL,
         name = component {
-            text("定向传送") with mochaGreen without italic()
+            text("定向传送") with mochaGreen
         },
         lore = if (!hasUnfinishedTpRequest) buildList {
             add(component {
-                text("拜访世界中的其他玩家") with mochaSubtext0 without italic()
+                text("拜访世界中的其他玩家") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("左键 ") with mochaLavender without italic()
-                text("发起传送请求") with mochaText without italic()
+                text("左键 ") with mochaLavender
+                text("发起传送请求") with mochaText
             })
         } else buildList {
             add(component {
-                text("你还有未完成的传送请求") with mochaSubtext0 without italic()
+                text("你还有未完成的传送请求") with mochaSubtext0
             })
             add(component {
-                text("可使用 ") with mochaSubtext0 without italic()
-                text("/tpcancel ") with mochaLavender without italic()
-                text("来取消") with mochaSubtext0 without italic()
+                text("可使用 ") with mochaSubtext0
+                text("/tpcancel ") with mochaLavender
+                text("来取消") with mochaSubtext0
             })
         },
         enchantmentGlint = hasUnfinishedTpRequest,

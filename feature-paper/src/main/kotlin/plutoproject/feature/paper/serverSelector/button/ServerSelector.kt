@@ -29,16 +29,16 @@ fun ServerSelector() {
     Item(
         material = Material.COMPASS,
         name = component {
-            text("选择服务器") with mochaText without italic()
+            text("选择服务器") with mochaText
         },
         lore = buildList {
             add(component {
-                text("踏上新的旅途吧~") with mochaSubtext0 without italic()
+                text("踏上新的旅途吧~") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("左键 ") with mochaLavender without italic()
-                text("选择服务器") with mochaText without italic()
+                text("左键 ") with mochaLavender
+                text("选择服务器") with mochaText
             })
         },
         modifier = Modifier.clickable {

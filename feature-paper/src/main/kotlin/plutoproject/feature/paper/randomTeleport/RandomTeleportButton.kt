@@ -53,7 +53,7 @@ fun RandomTeleport() {
         NotAvailable(
             material = Material.AMETHYST_SHARD,
             name = component {
-                text("神奇水晶") with mochaMauve without italic()
+                text("神奇水晶") with mochaMauve
             }
         )
         return
@@ -84,47 +84,47 @@ fun RandomTeleport() {
     Item(
         material = Material.AMETHYST_SHARD,
         name = component {
-            text("神奇水晶") with mochaMauve without italic()
+            text("神奇水晶") with mochaMauve
         },
         lore = when (state) {
             RandomTeleportState.AVAILABLE -> buildList {
                 add(component {
-                    text("具有魔力的紫水晶") with mochaSubtext0 without italic()
+                    text("具有魔力的紫水晶") with mochaSubtext0
                 })
                 add(component {
-                    text("可以带你去世界上的另一个角落") with mochaSubtext0 without italic()
+                    text("可以带你去世界上的另一个角落") with mochaSubtext0
                 })
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("进行随机传送 ") with mochaText without italic()
-                    text("($teleportCostMessage)") with mochaSubtext0 without italic()
+                    text("左键 ") with mochaLavender
+                    text("进行随机传送 ") with mochaText
+                    text("($teleportCostMessage)") with mochaSubtext0
                 })
             }
 
             RandomTeleportState.NOT_AVAILABLE -> buildList {
                 add(component {
-                    text("该世界未启用随机传送") with mochaSubtext0 without italic()
+                    text("该世界未启用随机传送") with mochaSubtext0
                 })
             }
 
             RandomTeleportState.COIN_NOT_ENOUGH -> buildList {
                 add(component {
-                    text("货币不足") with mochaSubtext0 without italic()
+                    text("货币不足") with mochaSubtext0
                 })
                 add(component {
-                    text("进行随机传送需要 ") with mochaSubtext0 without italic()
-                    text(teleportCostMessage) with mochaText without italic()
+                    text("进行随机传送需要 ") with mochaSubtext0
+                    text(teleportCostMessage) with mochaText
                 })
             }
 
             RandomTeleportState.IN_COOLDOWN -> buildList {
                 add(component {
-                    text("传送冷却中...") with mochaSubtext0 without italic()
+                    text("传送冷却中...") with mochaSubtext0
                 })
                 add(component {
-                    text("还剩 ") with mochaSubtext0 without italic()
-                    text(cooldownRemaining.toFormattedString()) with mochaText without italic()
+                    text("还剩 ") with mochaSubtext0
+                    text(cooldownRemaining.toFormattedString()) with mochaText
                 })
             }
         },

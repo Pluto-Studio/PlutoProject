@@ -3,7 +3,6 @@ package plutoproject.feature.paper.daily.screens
 import androidx.compose.runtime.*
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
@@ -16,6 +15,7 @@ import plutoproject.feature.paper.daily.*
 import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
+import plutoproject.framework.common.util.chat.component.replaceInComponent
 import plutoproject.framework.common.util.chat.palettes.mochaFlamingo
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
@@ -53,7 +53,7 @@ class DailyCalenderScreen : InteractiveScreen() {
         }
         CompositionLocalProvider(localModel provides model) {
             Menu(
-                title = CALENDAR_TITLE.replace("<time>", currentDate.formatDate()),
+                title = UI_CALENDAR_TITLE.replace("<time>", currentDate.formatDate()),
                 rows = 6,
                 leftBorder = false,
                 rightBorder = false,
@@ -74,7 +74,7 @@ class DailyCalenderScreen : InteractiveScreen() {
                             Item(
                                 material = Material.CHEST_MINECART,
                                 name = component {
-                                    text("正在加载...") with mochaSubtext0 without italic()
+                                    text("正在加载...") with mochaSubtext0
                                 }
                             )
                         }
@@ -119,28 +119,25 @@ class DailyCalenderScreen : InteractiveScreen() {
             itemStack = head.clone().apply {
                 amount = date.dayOfMonth
                 editMeta {
-                    it.displayName(CALENDAR_DAY.replace("<time>", date.formatDate()))
+                    it.displayName(UI_CALENDAR_DAY_DATE.replace("<date>", date.formatDate()))
                     it.lore(
                         when {
-                            state == 0 && date == now -> CALENDAR_DAY_LORE.replace(
+                            state == 0 && date == now -> UI_CALENDAR_DAY_LORE_TODAY_NOT_CHECKED_IN.replaceInComponent(
                                 "<reward>",
                                 Component.text("${model.user?.getReward()?.trimmedString() ?: -1}")
                             ).toList()
 
-                            state == 0 && date.isBefore(now) -> CALENDAR_DAY_LORE_PAST
+                            state == 0 && date.isBefore(now) -> UI_CALENDAR_DAY_LORE_PAST_NOT_CHECKED_IN
                             state == 1 -> history?.let { history ->
                                 val lore =
-                                    if (history.rewarded > 0) CALENDAR_DAY_LORE_CHECKED_IN_REWARDED else CALENDAR_DAY_LORE_ALREADY_CHECKED_IN
-                                lore.replace(
-                                    "<time>",
-                                    Component.text(
-                                        LocalDateTime.ofInstant(history.createdAt, player.timezone.toZoneId())
-                                            .formatTime()
-                                    )
-                                ).replace("<reward>", history.rewarded.trimmedString())
+                                    if (history.rewarded > 0) UI_CALENDAR_DAY_LORE_CHECKED_IN_REWARD else UI_CALENDAR_DAY_LORE_CHECKED_IN
+                                val time =
+                                    LocalDateTime.ofInstant(history.createdAt, player.timezone.toZoneId()).formatTime()
+                                lore.replaceInComponent("<time>", Component.text(time))
+                                    .replaceInComponent("<reward>", history.rewarded.trimmedString())
                             }?.toList() ?: emptyList()
 
-                            date.isAfter(now) -> CALENDAR_DAY_LORE_FEATURE
+                            date.isAfter(now) -> UI_CALENDAR_DAY_LORE_FEATURE
                             else -> error("Unreachable")
                         }
                     )
@@ -174,13 +171,13 @@ class DailyCalenderScreen : InteractiveScreen() {
     private fun Navigate() {
         val model = localModel.current
         val lore = when {
-            model.yearMonth == model.realTime -> CALENDAR_NAVIGATION_LORE
-            model.canGoPrevious() -> CALENDAR_NAVIGATION_LORE_CAN_RESET
-            else -> CALENDAR_NAVIGATION_LORE_PREV_REACHED
+            model.yearMonth == model.realTime -> UI_CALENDAR_NAVIGATION_LORE_TODAY
+            model.canGoPrevious() -> UI_CALENDAR_NAVIGATION_LORE_DIFFERENT_DAY
+            else -> UI_CALENDAR_NAVIGATION_LORE_PREVIOUS_LIMIT_REACHED
         }
         Item(
             material = Material.ARROW,
-            name = CALENDAR_NAVIGATION
+            name = UI_CALENDAR_NAVIGATION
                 .replace("<year>", model.yearMonth.year)
                 .replace("<month>", model.yearMonth.month.value),
             lore = lore,
@@ -217,14 +214,14 @@ class DailyCalenderScreen : InteractiveScreen() {
         Item(
             itemStack = ItemStack(Material.PLAYER_HEAD) {
                 displayName {
-                    text(player.name) with mochaFlamingo without italic()
+                    text(player.name) with mochaFlamingo
                 }
                 lore {
-                    text("本月已到访 ") with mochaSubtext0 without italic()
-                    text("${model.checkInDays} ") with mochaText without italic()
-                    text("天，连续 ") with mochaSubtext0 without italic()
-                    text("${model.accumulatedDays} ") with mochaText without italic()
-                    text("天") with mochaSubtext0 without italic()
+                    text("本月已到访 ") with mochaSubtext0
+                    text("${model.checkInDays} ") with mochaText
+                    text("天，连续 ") with mochaSubtext0
+                    text("${model.accumulatedDays} ") with mochaText
+                    text("天") with mochaSubtext0
                 }
                 meta {
                     this as SkullMeta

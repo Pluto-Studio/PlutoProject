@@ -96,13 +96,13 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                 /*
                 if (isOnline) {
                     add(component {
-                        text("• 在线 ") with mochaGreen without italic()
-                        text("${bridgeServer?.playerCount} ") with mochaText without italic()
-                        text("名玩家") with mochaSubtext0 without italic()
+                        text("• 在线 ") with mochaGreen
+                        text("${bridgeServer?.playerCount} ") with mochaText
+                        text("名玩家") with mochaSubtext0
                     })
                 } else {
                     add(component {
-                        text("× 离线") with mochaMaroon without italic()
+                        text("× 离线") with mochaMaroon
                     })
                 }
                 add(Component.empty())
@@ -112,8 +112,8 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                 })
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("传送至此处") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("传送至此处") with mochaText
                 })
             },
             modifier = Modifier.clickable {
@@ -148,35 +148,35 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
             material = Material.TRIPWIRE_HOOK,
             name = when (state) {
                 LOADING -> component {
-                    text("正在加载...") with mochaSubtext0 without italic()
+                    text("正在加载...") with mochaSubtext0
                 }
 
                 ENABLED -> component {
-                    text("自动传送 ") with mochaText without italic()
-                    text("开") with mochaGreen without italic()
+                    text("自动传送 ") with mochaText
+                    text("开") with mochaGreen
                 }
 
                 DISABLED -> component {
-                    text("自动传送 ") with mochaText without italic()
-                    text("关") with mochaMaroon without italic()
+                    text("自动传送 ") with mochaText
+                    text("关") with mochaMaroon
                 }
             },
             enchantmentGlint = state == ENABLED,
             lore = if (state == LOADING) emptyList() else buildList {
                 add(component {
-                    text("下次进入时，自动传送上次选择的服务器") with mochaSubtext0 without italic()
+                    text("下次进入时，自动传送上次选择的服务器") with mochaSubtext0
                 })
                 add(component {
-                    text("若需返回此大厅，请使用 ") with mochaSubtext0 without italic()
-                    text("/lobby") with mochaLavender without italic()
+                    text("若需返回此大厅，请使用 ") with mochaSubtext0
+                    text("/lobby") with mochaLavender
                 })
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
+                    text("左键 ") with mochaLavender
                     if (state == DISABLED) {
-                        text("开启功能") with mochaText without italic()
+                        text("开启功能") with mochaText
                     } else {
-                        text("关闭功能") with mochaText without italic()
+                        text("关闭功能") with mochaText
                     }
                 })
             },

@@ -28,7 +28,7 @@ fun Balance() {
         NotAvailable(
             material = Material.SUNFLOWER,
             name = component {
-                text("货币") with mochaYellow without italic()
+                text("货币") with mochaYellow
             }
         )
         return
@@ -36,17 +36,17 @@ fun Balance() {
     Item(
         material = Material.SUNFLOWER,
         name = component {
-            text("货币") with mochaYellow without italic()
+            text("货币") with mochaYellow
         },
         lore = buildList {
             add(component {
                 val balance = economy.getBalance(player).trimmedString()
                 val economySymbol = economy.currencyNameSingular()
-                text("你的余额: ") with mochaSubtext0 without italic()
-                text("$balance$economySymbol") with mochaText without italic()
+                text("你的余额: ") with mochaSubtext0
+                text("$balance$economySymbol") with mochaText
             })
             add(component {
-                text("可在「礼记」中到访来获取货币") with mochaSubtext0 without italic()
+                text("可在「礼记」中到访来获取货币") with mochaSubtext0
             })
         }
     )

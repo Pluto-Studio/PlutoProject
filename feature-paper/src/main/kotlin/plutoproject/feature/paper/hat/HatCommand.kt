@@ -44,7 +44,7 @@ object HatCommand {
     suspend fun CommandSender.hat(@Argument("player") player: Player?) = ensurePlayer {
         val target = selectPlayer(this, player)!!
         if (handItem.type == Material.AIR) {
-            sendMessage(COMMAND_HAT_FAILED_EMPTY_HAND)
+            sendMessage(COMMAND_HAT_FAILED_NO_ITEM)
             return
         }
         if (this != target) {
@@ -58,13 +58,13 @@ object HatCommand {
             }
             target.hat(handItem)
             clearHand()
-            sendMessage(COMMAND_HAT_OTHER_SUCCEED.replace("<player>", target.name))
+            sendMessage(COMMAND_HAT_OTHER.replace("<player>", target.name))
             return
         }
         val keepHatItem = hatItem
         hat(handItem)
         clearHand()
         if (keepHatItem != null) hand(keepHatItem)
-        sendMessage(COMMAND_HAT_SUCCEED)
+        sendMessage(COMMAND_HAT)
     }
 }

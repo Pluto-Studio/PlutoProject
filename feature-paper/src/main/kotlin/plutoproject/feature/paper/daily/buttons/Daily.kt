@@ -24,12 +24,12 @@ val DailyButtonDescriptor = ButtonDescriptor {
 }
 
 private val dailyOperation = component {
-    text("左键 ") with mochaLavender without italic()
-    text("打开礼记日历") with mochaText without italic()
+    text("左键 ") with mochaLavender
+    text("打开礼记日历") with mochaText
 }
 
 private val dailyIntroduction = component {
-    text("时光与点滴足迹") with mochaSubtext0 without italic()
+    text("时光与点滴足迹") with mochaSubtext0
 }
 
 private enum class DailyState {
@@ -48,20 +48,20 @@ fun Daily() {
     Item(
         material = Material.NAME_TAG,
         name = component {
-            text("礼记") with mochaPink without italic()
+            text("礼记") with mochaPink
         },
         lore = buildList {
             when (state) {
                 LOADING -> add(component {
-                    text("正在加载...") with mochaSubtext0 without italic()
+                    text("正在加载...") with mochaSubtext0
                 })
 
                 NOT_CHECKED_IN -> add(component {
-                    text("× 今日尚未到访") with mochaYellow without italic()
+                    text("× 今日尚未到访") with mochaYellow
                 })
 
                 CHECKED_IN -> add(component {
-                    text("√ 今日已到访") with mochaGreen without italic()
+                    text("√ 今日已到访") with mochaGreen
                 })
             }
             add(dailyIntroduction)

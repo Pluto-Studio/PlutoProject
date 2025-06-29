@@ -7,8 +7,8 @@ import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.feature.paper.home.COMMAND_HOMES_PLAYER_HAS_NO_HOME
-import plutoproject.feature.paper.home.COMMAND_HOMES_PLAYER_NOT_FOUND
+import plutoproject.feature.paper.home.COMMAND_HOMES_FAILED_PLAYER_HAS_NO_HOME
+import plutoproject.feature.paper.home.COMMAND_HOMES_FAILED_PLAYER_NOT_FOUND
 import plutoproject.feature.paper.home.HOME_LOOKUP_OTHER_PERMISSION
 import plutoproject.feature.paper.home.screens.HomeListScreen
 import plutoproject.framework.common.util.chat.PERMISSION_DENIED
@@ -34,12 +34,12 @@ object HomesCommand {
             val profile = actualPlayer.lookupProfile()
             if (profile == null) {
                 val nameOrUuid = actualPlayer.name ?: actualPlayer.uniqueId.toString()
-                sendMessage(COMMAND_HOMES_PLAYER_NOT_FOUND.replace("<name>", nameOrUuid))
+                sendMessage(COMMAND_HOMES_FAILED_PLAYER_NOT_FOUND.replace("<name>", nameOrUuid))
                 return
             }
             val other = Bukkit.getOfflinePlayer(profile.uuid)
             if (!HomeManager.hasHome(other)) {
-                sendMessage(COMMAND_HOMES_PLAYER_HAS_NO_HOME.replace("<player>", profile.name))
+                sendMessage(COMMAND_HOMES_FAILED_PLAYER_HAS_NO_HOME.replace("<player>", profile.name))
                 return
             }
             startScreen(HomeListScreen(other))

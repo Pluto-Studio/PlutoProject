@@ -22,7 +22,7 @@ object LobbyCommand : KoinComponent {
     suspend fun CommandSource.lobby() = ensurePlayer {
         if (currentServer.getOrNull()?.serverInfo?.name == config.transferServer) {
             send {
-                text("无法在此处使用该命令") with mochaMaroon without italic()
+                text("无法在此处使用该命令") with mochaMaroon
             }
             return@ensurePlayer
         }

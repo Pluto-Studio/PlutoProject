@@ -8,6 +8,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import plutoproject.framework.common.util.chat.component.explicitRemoveItalic
 
 typealias MetaModifier = ItemMeta.() -> Unit
 
@@ -62,8 +63,8 @@ class ItemStackDsl(private var material: Material, private val amount: Int) {
         ItemStack(material, amount)
             .apply {
                 editMeta {
-                    it.displayName(displayName)
-                    it.lore(this@ItemStackDsl.lore)
+                    it.displayName(displayName?.explicitRemoveItalic())
+                    it.lore(this@ItemStackDsl.lore.map { comp -> comp.explicitRemoveItalic() })
                     it.metaModifier()
                 }
                 addEnchantments(this@ItemStackDsl.enchantments)

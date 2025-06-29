@@ -20,7 +20,7 @@ object SetHomeCommand {
         val isDefaultHome = name == null && preferredHome == null
         val actualName = name ?: "home"
         if (list.size >= HomeManager.maxHomes && !hasPermission(HOME_LIMIT_BYPASS_PERMISSION)) {
-            sendMessage(COMMAND_SETHOME_FAILED_REACH_LIMIT)
+            sendMessage(COMMAND_SETHOME_FAILED_AMOUNT_LIMIT)
             return
         }
         if (HomeManager.has(this, actualName)) {
@@ -28,7 +28,7 @@ object SetHomeCommand {
             return
         }
         if (actualName.length > HomeManager.nameLengthLimit) {
-            sendMessage(COMMAND_SETHOME_FAILED_LENGTN_LIMIT)
+            sendMessage(COMMAND_SETHOME_FAILED_NAME_LENGTH_LIMIT)
             return
         }
         runAsync {
@@ -38,6 +38,6 @@ object SetHomeCommand {
                 home.update()
             }
         }
-        sendMessage(COMMAND_SETHOME_SUCCEED.replace("<name>", actualName))
+        sendMessage(COMMAND_SETHOME.replace("<name>", actualName))
     }
 }

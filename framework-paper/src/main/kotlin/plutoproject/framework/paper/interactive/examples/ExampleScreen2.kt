@@ -50,14 +50,14 @@ class ExampleScreen2 : InteractiveScreen() {
                 repeat(9) {
                     Item(
                         material = Material.GRAY_STAINED_GLASS_PANE,
-                        name = component { text("占位符") with mochaSubtext0 without italic() }
+                        name = component { text("占位符") with mochaSubtext0 }
                     )
                 }
             }
             Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Start) {
                 Item(
                     material = Material.RED_STAINED_GLASS_PANE,
-                    name = component { text("返回上一页") with mochaRed without italic() },
+                    name = component { text("返回上一页") with mochaRed },
                     modifier = Modifier.clickable {
                         navigator.pop()
                     }
@@ -68,7 +68,7 @@ class ExampleScreen2 : InteractiveScreen() {
             Row(modifier = Modifier.fillMaxWidth().height(1), horizontalArrangement = Arrangement.Center) {
                 Item(
                     material = Material.APPLE,
-                    name = component { text("获取一个苹果") with mochaRed without italic() },
+                    name = component { text("获取一个苹果") with mochaRed },
                     modifier = Modifier.clickable {
                         player.withSync {
                             player.inventory.addItem(ItemStack(Material.APPLE))
@@ -82,7 +82,7 @@ class ExampleScreen2 : InteractiveScreen() {
             repeat(9) {
                 Item(
                     material = Material.GRAY_STAINED_GLASS_PANE,
-                    name = component { text("占位符") with mochaSubtext0 without italic() }
+                    name = component { text("占位符") with mochaSubtext0 }
                 )
             }
         }
