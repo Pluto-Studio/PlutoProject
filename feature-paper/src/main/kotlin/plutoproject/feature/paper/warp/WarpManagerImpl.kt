@@ -29,8 +29,8 @@ import kotlin.time.Duration
 class WarpManagerImpl : WarpManager, KoinComponent {
     private val config by inject<WarpConfig>()
     private val repo by inject<WarpRepository>()
-    private val preferredSpawnKey = "essentials.${serverName}.warp.preferred_spawn"
-    private val collectionKey = "essentials.${serverName}.warp.collection"
+    private val preferredSpawnKey = "essentials.$serverName.warp.preferred_spawn"
+    private val collectionKey = "essentials.$serverName.warp.collection"
     private val cache = cacheBuilder<UUID, Warp?> { // null 值不会被存储到缓存
         refreshAfterWrite = Duration.parse("5m")
     }.build {

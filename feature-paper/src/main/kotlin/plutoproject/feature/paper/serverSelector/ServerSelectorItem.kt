@@ -24,16 +24,16 @@ object ServerSelectorItem : ItemStack(Material.COMPASS) {
     init {
         editMeta {
             it.displayName(component {
-                text("选择服务器") with mochaText without italic()
+                text("选择服务器") with mochaText
             })
             it.lore(buildList {
                 add(component {
-                    text("踏上新的旅途吧~") with mochaSubtext0 without italic()
+                    text("踏上新的旅途吧~") with mochaSubtext0
                 })
                 add(Component.empty())
                 add(component {
-                    text("手持右键 ") with mochaLavender without italic()
-                    text("选择服务器") with mochaText without italic()
+                    text("手持右键 ") with mochaLavender
+                    text("选择服务器") with mochaText
                 })
             })
             it.setEnchantmentGlintOverride(true)

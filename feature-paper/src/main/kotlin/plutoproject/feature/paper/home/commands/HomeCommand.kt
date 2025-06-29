@@ -6,7 +6,7 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.feature.paper.home.COMMAND_HOME_SUCCEED
+import plutoproject.feature.paper.home.COMMAND_HOME
 import plutoproject.feature.paper.home.screens.HomeListScreen
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.api.interactive.startScreen
@@ -26,10 +26,10 @@ object HomeCommand {
                 return
             }
             picked.teleportSuspend(this)
-            sendMessage(COMMAND_HOME_SUCCEED.replace("<name>", picked.name))
+            sendMessage(COMMAND_HOME.replace("<name>", picked.name))
             return
         }
         home.teleportSuspend(this)
-        sendMessage(COMMAND_HOME_SUCCEED.replace("<name>", home.name))
+        sendMessage(COMMAND_HOME.replace("<name>", home.name))
     }
 }

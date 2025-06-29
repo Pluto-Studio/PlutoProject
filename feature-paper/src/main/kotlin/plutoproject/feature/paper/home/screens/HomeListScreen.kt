@@ -58,13 +58,13 @@ class HomeListScreen(private val viewing: OfflinePlayer) : ListMenu<Home, HomeLi
         Item(
             material = Material.OAK_SIGN,
             name = component {
-                text("创建家") with mochaText without italic()
+                text("创建家") with mochaText
             },
             lore = listOf(
                 Component.empty(),
                 component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("在当前位置创建家") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("在当前位置创建家") with mochaText
                 }
             ),
             modifier = Modifier.clickable {
@@ -90,35 +90,35 @@ class HomeListScreen(private val viewing: OfflinePlayer) : ListMenu<Home, HomeLi
                 else -> Material.PAPER
             },
             name = component {
-                text(obj.name) with mochaYellow without italic()
+                text(obj.name) with mochaYellow
             },
             lore = buildList {
                 add(component {
                     val time = ZonedDateTime.ofInstant(obj.createdAt, player.timezone.toZoneId()).formatDate()
-                    text("设于 $time") with mochaSubtext0 without italic()
+                    text("设于 $time") with mochaSubtext0
                 })
                 add(component {
                     val world = obj.location.world.aliasOrName
                     val x = obj.location.blockX
                     val y = obj.location.blockY
                     val z = obj.location.blockZ
-                    text("$world $x, $y, $z") with mochaSubtext0 without italic()
+                    text("$world $x, $y, $z") with mochaSubtext0
                 })
                 if (obj.isPreferred) add(component {
-                    text("√ 首选的家") with mochaGreen without italic()
+                    text("√ 首选的家") with mochaGreen
                 })
                 if (obj.isStarred) add(component {
-                    text("✨ 收藏的家") with mochaYellow without italic()
+                    text("✨ 收藏的家") with mochaYellow
                 })
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("传送到该位置") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("传送到该位置") with mochaText
                 })
                 if (player != viewing) return@buildList
                 add(component {
-                    text("右键 ") with mochaLavender without italic()
-                    text("编辑家") with mochaText without italic()
+                    text("右键 ") with mochaLavender
+                    text("编辑家") with mochaText
                 })
             },
             enchantmentGlint = obj.isPreferred || obj.isStarred,

@@ -263,7 +263,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
         if (!prompt) {
             return
         }
-        val message = if (!costed) RANDOM_TELEPORT_SUCCEED else RANDOM_TELEPORT_SUCCEED_COST
+        val message = if (!costed) RANDOM_TELEPORTED else RANDOM_TELEPORTED_WITH_COST
         player.sendMessage(
             message
                 .replace(
@@ -330,8 +330,8 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
                 cache.location
             } else {
                 if (prompt) {
-                    player.showTitle(RANDOM_TELEPORT_SEARCHING_TITLE)
-                    player.playSound(RANDOM_TELEPORT_SEARCHING_SOUND)
+                    player.showTitle(RANDOM_TELEPORT_SEARCH_TITLE)
+                    player.playSound(RANDOM_TELEPORT_SEARCH_SOUND)
                 }
                 val random = random(world, opt)
                 attempts = random.attempts
@@ -342,7 +342,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
                 if (prompt) {
                     player.showTitle(TELEPORT_FAILED_TITLE)
                     player.playSound(TELEPORT_FAILED_SOUND)
-                    player.sendMessage(RANDOM_TELEPORT_SEARCHING_FAILED)
+                    player.sendMessage(RANDOM_TELEPORT_SEARCH_FAILED)
                 }
                 inTeleport.remove(player)
                 return@withDefault

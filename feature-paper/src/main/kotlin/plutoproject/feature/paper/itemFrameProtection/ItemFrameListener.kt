@@ -48,7 +48,7 @@ object ItemFrameListener : Listener {
         if (!itemFrame.isProtected) return
         if (itemFrame.protector == player || player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) return
 
-        player.sendActionBar(ITEMFRAME_PROTECTED_ON_ACTION.replace("<player>", itemFrame.protectorName))
+        player.sendActionBar(ITEMFRAME_PROTECTED.replace("<player>", itemFrame.protectorName))
         isCancelled = true
     }
 
@@ -61,7 +61,7 @@ object ItemFrameListener : Listener {
         if (remover !is Player) return
         if (frame.protector == remover || remover.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) return
 
-        remover.sendActionBar(ITEMFRAME_PROTECTED_ON_ACTION.replace("<player>", frame.protectorName))
+        remover.sendActionBar(ITEMFRAME_PROTECTED.replace("<player>", frame.protectorName))
         isCancelled = true
     }
 }

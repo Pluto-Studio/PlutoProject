@@ -33,7 +33,7 @@ fun Inspect() {
         NotAvailable(
             material = Material.ENDER_EYE,
             name = component {
-                text("观察模式") with mochaText without italic()
+                text("观察模式") with mochaText
             }
         )
         return
@@ -41,40 +41,40 @@ fun Inspect() {
     Item(
         material = Material.ENDER_EYE,
         name = if (!isInspecting) component {
-            text("观察模式 ") with mochaText without italic()
-            text("关") with mochaMaroon without italic()
+            text("观察模式 ") with mochaText
+            text("关") with mochaMaroon
         } else component {
-            text("观察模式 ") with mochaText without italic()
-            text("开") with mochaGreen without italic()
+            text("观察模式 ") with mochaText
+            text("开") with mochaGreen
         },
         lore = if (!isInspecting) buildList {
             add(component {
-                text("将周围的变化一览无余") with mochaSubtext0 without italic()
+                text("将周围的变化一览无余") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("左键 ") with mochaLavender without italic()
-                text("开启观察模式") with mochaText without italic()
+                text("左键 ") with mochaLavender
+                text("开启观察模式") with mochaText
             })
             add(component {
-                text("右键 ") with mochaLavender without italic()
-                text("观察四周变化") with mochaText without italic()
+                text("右键 ") with mochaLavender
+                text("观察四周变化") with mochaText
             })
         } else buildList {
             add(component {
-                text("将周围的变化一览无余") with mochaSubtext0 without italic()
+                text("将周围的变化一览无余") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("观察模式已开启") with mochaSubtext0 without italic()
+                text("观察模式已开启") with mochaSubtext0
             })
             add(component {
-                text("使用左键或右键点击来观察变化") with mochaSubtext0 without italic()
+                text("使用左键或右键点击来观察变化") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("左键 ") with mochaLavender without italic()
-                text("关闭观察模式") with mochaText without italic()
+                text("左键 ") with mochaLavender
+                text("关闭观察模式") with mochaText
             })
         },
         enchantmentGlint = isInspecting,

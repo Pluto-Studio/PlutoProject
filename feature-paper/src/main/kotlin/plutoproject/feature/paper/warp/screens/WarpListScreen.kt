@@ -59,49 +59,49 @@ class WarpListScreen : FilterListMenu<Warp, WarpFilter, WarpListScreenModel>(
             material = obj.icon ?: Material.PAPER,
             name = component {
                 if (obj.alias != null) {
-                    text("${obj.alias} ") with mochaYellow without italic()
-                    text("(${obj.name})") with mochaSubtext0 without italic()
+                    text("${obj.alias} ") with mochaYellow
+                    text("(${obj.name})") with mochaSubtext0
                 } else {
-                    text(obj.name) with mochaYellow without italic()
+                    text(obj.name) with mochaYellow
                 }
             },
             enchantmentGlint = isInCollection,
             lore = buildList {
                 if (isInCollection) {
                     add(component {
-                        text("✨ 已收藏") with mochaYellow without italic()
+                        text("✨ 已收藏") with mochaYellow
                     })
                 }
                 when (obj.category) {
                     WarpCategory.MACHINE -> add(component {
-                        text("\uD83D\uDD27 机械类") with mochaTeal without italic()
+                        text("\uD83D\uDD27 机械类") with mochaTeal
                     })
 
                     WarpCategory.ARCHITECTURE -> add(component {
-                        text("\uD83D\uDDFC 建筑类") with mochaFlamingo without italic()
+                        text("\uD83D\uDDFC 建筑类") with mochaFlamingo
                     })
 
                     WarpCategory.TOWN -> add(component {
-                        text("\uD83D\uDE84 城镇类") with mochaPeach without italic()
+                        text("\uD83D\uDE84 城镇类") with mochaPeach
                     })
 
                     null -> {}
                 }
                 if (founderName != null) {
                     add(component {
-                        text("由 $founderName") with mochaSubtext0 without italic()
+                        text("由 $founderName") with mochaSubtext0
                     })
                 }
                 add(component {
                     val time = ZonedDateTime.ofInstant(obj.createdAt, player.timezone.toZoneId()).formatDate()
-                    text("设于 $time") with mochaSubtext0 without italic()
+                    text("设于 $time") with mochaSubtext0
                 })
                 add(component {
                     val world = obj.location.world.aliasOrName
                     val x = obj.location.blockX
                     val y = obj.location.blockY
                     val z = obj.location.blockZ
-                    text("$world $x, $y, $z") with mochaSubtext0 without italic()
+                    text("$world $x, $y, $z") with mochaSubtext0
                 })
                 obj.description?.let {
                     add(Component.empty())
@@ -112,15 +112,15 @@ class WarpListScreen : FilterListMenu<Warp, WarpFilter, WarpListScreenModel>(
                 }
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("前往此处") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("前往此处") with mochaText
                 })
                 add(component {
-                    text("右键 ") with mochaLavender without italic()
+                    text("右键 ") with mochaLavender
                     if (!isInCollection) {
-                        text("收藏") with mochaText without italic()
+                        text("收藏") with mochaText
                     } else {
-                        text("取消收藏") with mochaText without italic()
+                        text("取消收藏") with mochaText
                     }
                 })
             },

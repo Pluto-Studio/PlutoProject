@@ -16,6 +16,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.teleport.*
 import plutoproject.feature.paper.api.teleport.events.TeleportEvent
+import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.UNUSUAL_ISSUE_OCCURRED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.title.replaceSubTitle
@@ -316,7 +317,7 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
         destination.sendMessage(message)
         destination.sendMessage(TELEPORT_EXPIRE.replace("<expire>", options.expireAfter.toFormattedComponent()))
         destination.sendMessage(getTeleportOperationMessage(request))
-        destination.playSound(TELEPORT_REQUEST_RECEIVED_SOUND)
+        destination.playSound(MESSAGE_SOUND)
 
         if (teleportRequests.size == config.maxRequestsStored) {
             teleportRequests.removeAt(0).cancel()

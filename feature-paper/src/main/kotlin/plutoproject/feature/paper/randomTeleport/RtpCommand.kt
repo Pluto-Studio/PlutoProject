@@ -23,7 +23,7 @@ object RtpCommand {
             return
         }
         if (!RandomTeleportManager.isEnabled(actualWorld)) {
-            sendMessage(COMMAND_RTP_WORLD_NOT_ENABLED)
+            sendMessage(COMMAND_RTP_FAILED_WORLD_NOT_ENABLED)
             return
         }
         RandomTeleportManager.getCooldown(this)?.also {

@@ -11,6 +11,7 @@ import plutoproject.feature.paper.api.teleport.TeleportManager
 import plutoproject.feature.paper.teleport.*
 import plutoproject.feature.paper.teleport.screens.TeleportRequestScreen
 import plutoproject.framework.common.api.feature.FeatureManager
+import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.toFormattedComponent
 import plutoproject.framework.paper.api.interactive.startScreen
@@ -84,5 +85,5 @@ private fun handleTpa(source: Player, destination: Player?, direction: TeleportD
     oldRequest?.let {
         source.sendMessage(TELEPORT_REQUEST_AUTO_CANCEL.replace("<player>", oldRequest.destination.name))
     }
-    source.playSound(TELEPORT_REQUEST_RECEIVED_SOUND)
+    source.playSound(MESSAGE_SOUND)
 }
