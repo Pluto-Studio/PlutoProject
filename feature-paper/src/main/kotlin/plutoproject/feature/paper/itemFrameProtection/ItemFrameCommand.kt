@@ -77,7 +77,7 @@ private fun Player.handleOperation(operation: Operation) {
     val entity = getTargetEntity(range.toInt())
 
     if (entity == null || entity !is ItemFrame) {
-        sendMessage(COMMAND_ITEMFRAME_FAILED_NO_FRAME)
+        sendMessage(COMMAND_ITEMFRAME_FAILED_NO_ITEMFRAME)
         return
     }
 
@@ -85,30 +85,30 @@ private fun Player.handleOperation(operation: Operation) {
 
     fun ItemFrame.handleInvisible() {
         if (isProtected && protector != player && !player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) {
-            player.sendMessage(ITEMFRAME_PROTECTED_ON_ACTION.replace("<player>", protectorName))
+            player.sendMessage(ITEMFRAME_PROTECTED.replace("<player>", protectorName))
             return
         }
         if (!inv) {
             inv = true
-            player.sendMessage(COMMAND_ITEMFRAME_INV_ON_SUCCEED)
+            player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_ON_INVISBLE)
             return
         }
         inv = false
-        player.sendMessage(COMMAND_ITEMFRAME_INV_OFF_SUCCEED)
+        player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_OFF_INVISBLE)
     }
 
     fun ItemFrame.handleProtect() {
         if (isProtected && protector != player && !player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) {
-            player.sendMessage(ITEMFRAME_PROTECTED_ON_ACTION.replace("<player>", protectorName))
+            player.sendMessage(ITEMFRAME_PROTECTED.replace("<player>", protectorName))
             return
         }
         if (!protect) {
             setProtect(true, player)
-            player.sendMessage(COMMAND_ITEMFRAME_PROTECTION_ON_SUCCEED)
+            player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_ON_PROTECTION)
             return
         }
         setProtect(false, player)
-        player.sendMessage(COMMAND_ITEMFRAME_PROTECTION_OFF_SUCCEED)
+        player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_OFF_PROTECTION)
         return
     }
 

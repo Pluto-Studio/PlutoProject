@@ -40,11 +40,11 @@ val WORK_IN_PROGRESS = component {
 }
 
 val UI_CLOSE = component {
-    text("关闭") with mochaMaroon without italic()
+    text("关闭") with mochaMaroon
 }
 
 val UI_BACK = component {
-    text("返回") with mochaYellow without italic()
+    text("返回") with mochaYellow
 }
 
 val UI_BACK_OPERATION = component {

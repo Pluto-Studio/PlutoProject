@@ -24,7 +24,7 @@ fun ExampleComposable() {
                 Item(
                     material = Material.PAPER,
                     name = component {
-                        text("测试物品") with mochaText without italic()
+                        text("测试物品") with mochaText
                     },
                     modifier = Modifier.clickable {
                         whoClicked.send {

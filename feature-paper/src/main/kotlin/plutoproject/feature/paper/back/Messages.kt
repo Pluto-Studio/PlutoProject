@@ -13,6 +13,6 @@ val COMMAND_BACK_FAILED_NO_LOCATION = component {
     text("进行一段时间游玩后位置才会被记录") with mochaSubtext0
 }
 
-val COMMAND_BACK_SUCCEED = component {
+val COMMAND_BACK = component {
     text("已回到你先前的位置") with mochaPink
 }

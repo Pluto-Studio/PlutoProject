@@ -6,7 +6,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.koin.core.component.KoinComponent
 import plutoproject.feature.paper.api.daily.Daily
-import plutoproject.feature.paper.daily.PLAYER_NOT_CHECKED_IN
+import plutoproject.feature.paper.daily.NOT_CHECKED_IN_TODAY
 import plutoproject.feature.paper.daily.checkCheckInDate
 import java.time.LocalDate
 
@@ -15,7 +15,7 @@ object PlayerListener : Listener, KoinComponent {
     @EventHandler
     suspend fun PlayerJoinEvent.e() {
         fun sendPrompt() {
-            player.sendMessage(PLAYER_NOT_CHECKED_IN)
+            player.sendMessage(NOT_CHECKED_IN_TODAY)
         }
 
         val user = Daily.getUser(player) ?: run {

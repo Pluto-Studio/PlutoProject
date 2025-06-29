@@ -27,13 +27,13 @@ val HomeButtonDescriptor = ButtonDescriptor {
 }
 
 private val homeDesc = component {
-    text("为你指明归家路的一盏灯") with mochaSubtext0 without italic()
+    text("为你指明归家路的一盏灯") with mochaSubtext0
 }
 
 
 private val homeOpenList = component {
-    text("右键 ") with mochaLavender without italic()
-    text("打开家列表") with mochaText without italic()
+    text("右键 ") with mochaLavender
+    text("打开家列表") with mochaText
 }
 
 
@@ -58,12 +58,12 @@ fun Home() {
     Item(
         material = Material.LANTERN,
         name = component {
-            text("明灯") with mochaYellow without italic()
+            text("明灯") with mochaYellow
         },
         lore = when (preferredHomeState) {
             is PreferredHomeState.Loading -> buildList {
                 add(component {
-                    text("正在加载...") with mochaSubtext0 without italic()
+                    text("正在加载...") with mochaSubtext0
                 })
             }
 
@@ -71,8 +71,8 @@ fun Home() {
                 add(homeDesc)
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("传送至首选的家") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("传送至首选的家") with mochaText
                 })
                 add(homeOpenList)
             }
@@ -81,10 +81,10 @@ fun Home() {
                 add(homeDesc)
                 add(Component.empty())
                 add(component {
-                    text("你还没有首选的家") with mochaSubtext0 without italic()
+                    text("你还没有首选的家") with mochaSubtext0
                 })
                 add(component {
-                    text("请在编辑家页面中点击「设为首选」") with mochaSubtext0 without italic()
+                    text("请在编辑家页面中点击「设为首选」") with mochaSubtext0
                 })
                 add(Component.empty())
                 add(homeOpenList)

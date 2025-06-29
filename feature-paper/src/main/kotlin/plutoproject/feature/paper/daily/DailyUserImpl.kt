@@ -52,7 +52,7 @@ class DailyUserImpl(model: DailyUserModel) : DailyUser, KoinComponent {
         accumulatedDays++
         historyRepo.saveOrUpdate(history)
         update()
-        player.player?.sendMessage(CHECK_IN_SUCCEED.replace("<acc>", accumulatedDays))
+        player.player?.sendMessage(CHECK_IN.replace("<acc>", accumulatedDays))
         performReward(reward)
         return DailyHistoryImpl(history).also { Daily.loadHistory(it) }
     }

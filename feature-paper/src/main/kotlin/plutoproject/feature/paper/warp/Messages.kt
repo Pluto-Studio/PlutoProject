@@ -103,48 +103,44 @@ val UI_VIEWER_LOADING_TITLE = component {
 }
 
 val UI_VIEWER_LOADING = component {
-    text("正在加载数据...") with mochaSubtext0 without italic()
+    text("正在加载数据...") with mochaSubtext0
 }
 
 val UI_VIEWER_EMPTY = component {
-    text("这里空空如也") with mochaText without italic()
+    text("这里空空如也") with mochaText
 }
 
 val VIEWER_PAGING = component {
-    text("页 <curr>/<total>") with mochaText without italic()
+    text("页 <curr>/<total>") with mochaText
 }
 
 val VIEWING_PAGE_LORE = listOf(
     Component.empty(),
     component {
-        text("左键 ") with mochaLavender without italic()
-        text("下一页") with mochaText without italic()
+        text("左键 ") with mochaLavender
+        text("下一页") with mochaText
     },
     component {
-        text("右键 ") with mochaLavender without italic()
-        text("上一页") with mochaText without italic()
+        text("右键 ") with mochaLavender
+        text("上一页") with mochaText
     }
 )
-
-val VIEWER_PAGING_SOUND = sound {
-    key(Key.key("item.book.page_turn"))
-}
 
 val UI_WARP_TITLE = component {
     text("地标")
 }
 
 val UI_WARP_ITEM_NAME = component {
-    text("<name>") with mochaPink without italic()
+    text("<name>") with mochaPink
 }
 
 val UI_WARP_ITEM_NAME_ALIAS = component {
-    text("<alias> ") with mochaPink without italic()
-    text("(<name>)") with mochaSubtext0 without italic()
+    text("<alias> ") with mochaPink
+    text("(<name>)") with mochaSubtext0
 }
 
 private val UI_WARP_ITEM_LORE_LOC = component {
-    text("<world> <x>, <y>, <z>") with mochaSubtext0 without italic()
+    text("<world> <x>, <y>, <z>") with mochaSubtext0
 }
 
 fun getUIWarpButtonLore(warp: Warp): List<Component> {
@@ -161,14 +157,14 @@ fun getUIWarpButtonLore(warp: Warp): List<Component> {
         },
         Component.empty(),
         component {
-            text("左键 ") with mochaLavender without italic()
-            text("传送到该位置") with mochaText without italic()
+            text("左键 ") with mochaLavender
+            text("传送到该位置") with mochaText
         },
     )
 }
 
 val UI_WARP_EMPTY_LORE = listOf(
-    component { text("服务器未设置地标") with mochaSubtext0 without italic() }
+    component { text("服务器未设置地标") with mochaSubtext0 }
 )
 
 val COMMAND_SPAWN_FAILED_NOT_SET = component {

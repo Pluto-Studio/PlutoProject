@@ -18,19 +18,19 @@ private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = with
         return@withSync
     }
     val mode = when (gameMode) {
-        GameMode.SURVIVAL -> GM_SURVIVAL
-        GameMode.CREATIVE -> GM_CREATIVE
-        GameMode.ADVENTURE -> GM_ADVENTURE
-        GameMode.SPECTATOR -> GM_SPECTATOR
+        GameMode.SURVIVAL -> SURVIVAL
+        GameMode.CREATIVE -> CREATIVE
+        GameMode.ADVENTURE -> ADVENTURE
+        GameMode.SPECTATOR -> SPECTATOR
     }
     if (this != actualPlayer && actualPlayer.gameMode == gameMode) {
-        sendMessage(COMMAND_GM_OTHER_FAILED)
+        sendMessage(COMMAND_GM_OTHER_FAILED_SAME_GAMEMODE)
         return@withSync
     }
     if (this != actualPlayer) {
         actualPlayer.gameMode = gameMode
         sendMessage(
-            COMMAND_GM_OTHER_SUCCEED
+            COMMAND_GM_OTHER
                 .replace("<player>", actualPlayer.name)
                 .replace("<gamemode>", mode)
         )
@@ -38,11 +38,11 @@ private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = with
     }
     ensurePlayer {
         if (this.gameMode == gameMode) {
-            sendMessage(COMMAND_GM_FAILED)
+            sendMessage(COMMAND_GM_FAILED_SAME_GAMEMODE)
             return@withSync
         }
         this.gameMode = gameMode
-        sendMessage(COMMAND_GM_SUCCEED.replace("<gamemode>", mode))
+        sendMessage(COMMAND_GM.replace("<gamemode>", mode))
     }
 }
 

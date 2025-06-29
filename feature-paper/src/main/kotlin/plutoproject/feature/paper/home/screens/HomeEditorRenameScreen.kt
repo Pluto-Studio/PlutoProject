@@ -13,6 +13,8 @@ import org.bukkit.Material
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
+import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.coroutine.runAsync
@@ -70,11 +72,11 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
             output = ItemStack(Material.PAPER) {
                 lore(
                     when (state) {
-                        RenameState.NONE -> getUIHomeEditorRenameSaveButtonLore(home)
-                        RenameState.INVALID -> UI_HOME_EDITOR_RENAME_SAVE_INVALID_LORE
-                        RenameState.TOO_LONG -> UI_HOME_EDITOR_RENAME_SAVE_TOO_LONG
-                        RenameState.EXISTED -> UI_HOME_EDITOR_RENAME_SAVE_EXISTED
-                        RenameState.SUCCEED -> UI_HOME_EDITOR_RENAME_SAVED
+                        RenameState.NONE -> getUIHomeEditorRenameSaveLore(home)
+                        RenameState.INVALID -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_INVALID_LORE
+                        RenameState.TOO_LONG -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_LENGTH_LIMIT_LORE
+                        RenameState.EXISTED -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_EXISTED_LORE
+                        RenameState.SUCCEED -> UI_HOME_EDITOR_RENAME_SAVED_LORE
                     }
                 )
                 meta {
@@ -98,14 +100,14 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                         val input = r.text
 
                         if (input.length > HomeManager.nameLengthLimit) {
-                            player.playSound(UI_HOME_EDITOR_RENAME_INVALID_SOUND)
+                            player.playSound(UI_FAILED_SOUND)
                             stateTransition(RenameState.TOO_LONG)
                             return@Anvil emptyList()
                         }
 
                         coroutineScope.launch {
                             if (HomeManager.has(player, input)) {
-                                player.playSound(UI_HOME_EDITOR_RENAME_INVALID_SOUND)
+                                player.playSound(UI_FAILED_SOUND)
                                 stateTransition(RenameState.EXISTED)
                                 return@launch
                             }
@@ -116,7 +118,7 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                             }
 
                             stateTransition(RenameState.SUCCEED, true)
-                            player.playSound(UI_HOME_EDIT_SUCCEED_SOUND)
+                            player.playSound(UI_SUCCEED_SOUND)
                         }
 
                         emptyList()

@@ -3,6 +3,7 @@ package plutoproject.framework.common.util.chat.component
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextReplacementConfig
 import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextDecoration
 
 fun Component.replace(pattern: String, str: String): Component {
     val replaceConfig = TextReplacementConfig.builder()
@@ -36,6 +37,10 @@ fun Component.replaceColor(original: TextColor, new: TextColor): Component {
         .fold(updatedComponent.children(emptyList())) { comp, child ->
             comp.append(child.replaceColor(original, new))
         }
+}
+
+fun Component.explicitRemoveItalic(): Component {
+    return decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
 }
 
 fun Component.splitLines(): Iterable<Component> {

@@ -15,11 +15,11 @@ val PRESS_KEY_TO_STAND = component {
     text(" 键起身") with mochaPink
 }
 
-val ILLEGAL_LOCATION = component {
+val SIT_FAILED_ILLEGAL_LOCATION = component {
     text("无法在此处坐下，请检查是否有实体方块以及足够的空间") with mochaMaroon
 }
 
-val LOCATION_OCCUPIED_BY_OTHER_TITLE = title {
+val SIT_FAILED_LOCATION_OCCUPIED_BY_OTHERS = title {
     mainTitle {
         text(" ")
     }

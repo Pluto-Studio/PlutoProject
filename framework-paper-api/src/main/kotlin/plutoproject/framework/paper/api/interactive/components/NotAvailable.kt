@@ -20,10 +20,10 @@ fun NotAvailable(
         name = name,
         lore = buildList {
             add(component {
-                text("因服务器内部问题，此功能不可用") with mochaMaroon without italic()
+                text("因服务器内部问题，此功能不可用") with mochaMaroon
             })
             add(component {
-                text("请将其反馈给管理组以便我们尽快解决") with mochaSubtext0 without italic()
+                text("请将其反馈给管理组以便我们尽快解决") with mochaSubtext0
             })
         }
     )

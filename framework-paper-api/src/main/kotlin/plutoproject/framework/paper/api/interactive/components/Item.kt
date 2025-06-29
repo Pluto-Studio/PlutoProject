@@ -5,8 +5,9 @@ import androidx.compose.runtime.remember
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import plutoproject.framework.paper.api.interactive.layout.Layout
+import plutoproject.framework.common.util.chat.component.explicitRemoveItalic
 import plutoproject.framework.paper.api.interactive.canvas.Canvas
+import plutoproject.framework.paper.api.interactive.layout.Layout
 import plutoproject.framework.paper.api.interactive.measuring.MeasureResult
 import plutoproject.framework.paper.api.interactive.measuring.Renderer
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
@@ -15,6 +16,13 @@ import plutoproject.framework.paper.api.interactive.node.BaseInventoryNode
 
 @Composable
 fun Item(itemStack: ItemStack, modifier: Modifier = Modifier) {
+    val explicitRemovedItalic = itemStack.clone()
+        .apply {
+            editMeta { meta ->
+                meta.displayName(meta.displayName()?.explicitRemoveItalic())
+                meta.lore(meta.lore()?.map { comp -> comp.explicitRemoveItalic() })
+            }
+        }
     Layout(
         measurePolicy = { _, constraints ->
             MeasureResult(constraints.minWidth, constraints.minHeight) {}
@@ -23,7 +31,7 @@ fun Item(itemStack: ItemStack, modifier: Modifier = Modifier) {
             override fun Canvas.render(node: BaseInventoryNode) {
                 for (x in 0 until node.width)
                     for (y in 0 until node.height)
-                        set(x, y, itemStack)
+                        set(x, y, explicitRemovedItalic)
             }
         },
         modifier = Modifier.sizeIn(minWidth = 1, minHeight = 1).then(modifier)
@@ -46,8 +54,8 @@ fun Item(
     val item = remember(material, name, amount, lore) {
         ItemStack(material, amount).apply {
             editMeta {
-                it.displayName(rememberName)
-                it.lore(rememberLore)
+                it.displayName(rememberName.explicitRemoveItalic())
+                it.lore(rememberLore.map { comp -> comp.explicitRemoveItalic() })
                 it.isHideTooltip = isHideTooltip
                 it.setEnchantmentGlintOverride(enchantmentGlint)
             }

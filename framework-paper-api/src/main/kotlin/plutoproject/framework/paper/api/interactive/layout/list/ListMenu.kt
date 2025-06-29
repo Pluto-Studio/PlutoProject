@@ -92,7 +92,7 @@ abstract class ListMenu<E, M : ListMenuModel<E>> : InteractiveScreen() {
                     Item(
                         material = Material.CHEST_MINECART,
                         name = component {
-                            text("正在加载...") with mochaSubtext0 without italic()
+                            text("正在加载...") with mochaSubtext0
                         }
                     )
                 }
@@ -105,7 +105,7 @@ abstract class ListMenu<E, M : ListMenuModel<E>> : InteractiveScreen() {
                     Item(
                         material = Material.MINECART,
                         name = component {
-                            text("这里没有内容 :(") with mochaSubtext0 without italic()
+                            text("这里没有内容 :(") with mochaSubtext0
                         }
                     )
                 }

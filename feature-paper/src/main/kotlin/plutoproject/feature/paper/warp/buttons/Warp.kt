@@ -30,16 +30,16 @@ fun Warp() {
     Item(
         material = Material.MINECART,
         name = component {
-            text("巡回列车") with mochaSapphire without italic()
+            text("巡回列车") with mochaSapphire
         },
         lore = buildList {
             add(component {
-                text("参观其他玩家的机械、建筑与城镇") with mochaSubtext0 without italic()
+                text("参观其他玩家的机械、建筑与城镇") with mochaSubtext0
             })
             add(Component.empty())
             add(component {
-                text("左键 ") with mochaLavender without italic()
-                text("打开地标列表") with mochaText without italic()
+                text("左键 ") with mochaLavender
+                text("打开地标列表") with mochaText
             })
         },
         modifier = Modifier.clickable {

@@ -2,14 +2,13 @@ package plutoproject.feature.paper.status
 
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
-import plutoproject.framework.common.util.chat.UI_SELECTOR_SOUND
+import plutoproject.framework.common.util.chat.UI_SELECT_SOUND
 import plutoproject.framework.common.util.chat.component.splitLines
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
@@ -45,13 +44,13 @@ fun Status() {
     Item(
         material = Material.BRUSH,
         name = component {
-            text("服务器信息") with mochaText without italic()
+            text("服务器信息") with mochaText
         },
         lore = buildList {
             if (!showVersionMessage) {
                 if (statusMessage == null) {
                     add(component {
-                        text("正在加载...") with mochaSubtext0 without italic()
+                        text("正在加载...") with mochaSubtext0
                     })
                     return@buildList
                 }
@@ -59,18 +58,18 @@ fun Status() {
                 add(Component.empty())
                 addAll(promptMessage.splitLines())
                 add(Component.empty())
-                add(OPERATION_SHOW_VERSION_MESSAGE)
+                add(BUTTON_SERVER_STATUS_OPERATION_SHOW_VERSION)
             } else {
                 addAll(getVersionMessage(timeZone).splitLines())
                 add(Component.empty())
-                add(OPERATION_HIDE_VERSION_MESSAGE)
+                add(BUTTON_SERVER_STATUS_OPERATION_HIDE_VERSION)
             }
         },
         modifier = Modifier.clickable {
             when (clickType) {
                 ClickType.LEFT -> {
                     showVersionMessage = !showVersionMessage
-                    player.playSound(UI_SELECTOR_SOUND)
+                    player.playSound(UI_SELECT_SOUND)
                 }
 
                 else -> {}

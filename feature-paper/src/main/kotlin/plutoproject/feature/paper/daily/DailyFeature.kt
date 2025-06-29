@@ -8,6 +8,7 @@ import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.feature.paper.api.menu.isMenuAvailable
 import plutoproject.feature.paper.daily.buttons.Daily
 import plutoproject.feature.paper.daily.buttons.DailyButtonDescriptor
+import plutoproject.feature.paper.daily.commands.DailyCalendarCommand
 import plutoproject.feature.paper.daily.commands.CheckInCommand
 import plutoproject.feature.paper.daily.listeners.PlayerListener
 import plutoproject.feature.paper.daily.repositories.DailyHistoryRepository
@@ -55,6 +56,7 @@ class DailyFeature : PaperFeature(), KoinComponent {
             modules(featureModule)
         }
         AnnotationParser.parse(CheckInCommand)
+        AnnotationParser.parse(DailyCalendarCommand)
         if (isMenuAvailable) {
             MenuManager.registerButton(DailyButtonDescriptor) { Daily() }
         }
