@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.dev_watermark
+package plutoproject.feature.paper.devWatermark
 
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature

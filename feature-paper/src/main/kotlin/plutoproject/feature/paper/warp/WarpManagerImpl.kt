@@ -18,7 +18,7 @@ import plutoproject.framework.common.api.playerdb.PlayerDB
 import plutoproject.framework.common.util.data.collection.subListOrNull
 import plutoproject.framework.common.util.data.convertToUuid
 import plutoproject.framework.common.util.data.convertToUuidOrNull
-import plutoproject.framework.common.util.environment.serverName
+import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.util.data.models.toModel
 import plutoproject.framework.paper.util.server
 import java.util.*

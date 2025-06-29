@@ -1,7 +1,6 @@
-package plutoproject.framework.common.util.environment
+package plutoproject.framework.common.util
 
 import plutoproject.framework.common.PlutoConfig
-import plutoproject.framework.common.util.PlatformType
 import plutoproject.framework.common.util.inject.Koin
 import java.io.File
 

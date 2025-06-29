@@ -20,7 +20,7 @@ import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.util.command.getKotlinMethodArgumentParserClass
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
-import plutoproject.framework.common.util.environment.serverName
+import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.command.CommandManager
