@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.dev_watermark
+package plutoproject.feature.paper.devWatermark
 
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text

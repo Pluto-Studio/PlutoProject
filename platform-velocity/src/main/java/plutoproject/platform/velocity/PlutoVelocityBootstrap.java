@@ -42,9 +42,9 @@ public class PlutoVelocityBootstrap {
         EnvironmentKt.setSuspendingPlugin(suspendingPlugin);
         EnvironmentKt.setServer(server);
         LoggerKt.setLogger(logger);
-        plutoproject.framework.common.util.environment.EnvironmentKt.setPlatformType(PlatformType.VELOCITY);
-        plutoproject.framework.common.util.environment.EnvironmentKt.setServerThread(Thread.currentThread());
-        plutoproject.framework.common.util.environment.EnvironmentKt.initPluginDataFolder(dataDirectoryPath.toFile());
+        plutoproject.framework.common.util.EnvironmentKt.setPlatformType(PlatformType.VELOCITY);
+        plutoproject.framework.common.util.EnvironmentKt.setServerThread(Thread.currentThread());
+        plutoproject.framework.common.util.EnvironmentKt.initPluginDataFolder(dataDirectoryPath.toFile());
         platform = new PlutoVelocityPlatform();
         platform.load();
     }

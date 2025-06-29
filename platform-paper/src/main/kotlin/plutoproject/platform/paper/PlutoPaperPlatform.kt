@@ -6,11 +6,11 @@ import plutoproject.framework.common.FrameworkCommonModule
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.PlatformType
 import plutoproject.framework.common.util.coroutine.shutdownCoroutineEnvironment
-import plutoproject.framework.common.util.environment.initPluginDataFolder
+import plutoproject.framework.common.util.initPluginDataFolder
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.common.util.jvm.loadClassesInPackages
-import plutoproject.framework.common.util.environment.platformType
-import plutoproject.framework.common.util.environment.serverThread
+import plutoproject.framework.common.util.platformType
+import plutoproject.framework.common.util.serverThread
 import plutoproject.framework.paper.FrameworkPaperModule
 import plutoproject.framework.paper.disableFrameworkModules
 import plutoproject.framework.paper.enableFrameworkModules

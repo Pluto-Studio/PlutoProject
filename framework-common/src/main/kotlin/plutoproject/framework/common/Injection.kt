@@ -27,8 +27,8 @@ import plutoproject.framework.common.rpc.RpcServerImpl
 import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
 import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.environment.frameworkDataFolder
-import plutoproject.framework.common.util.environment.pluginDataFolder
+import plutoproject.framework.common.util.frameworkDataFolder
+import plutoproject.framework.common.util.pluginDataFolder
 import plutoproject.framework.common.util.jvm.extractFileFromJar
 
 inline fun <reified T : Any> getModuleConfig(resourcePrefix: String, id: String): T {

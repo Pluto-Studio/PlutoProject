@@ -8,7 +8,7 @@ import org.bukkit.event.inventory.ClickType.*
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
-import plutoproject.framework.common.util.catchInteractiveException
+import plutoproject.framework.common.util.chat.catchInteractiveException
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.GuiInventoryHolder
 import plutoproject.framework.paper.api.interactive.click.ClickScope

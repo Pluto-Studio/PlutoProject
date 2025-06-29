@@ -5,7 +5,7 @@ import org.bukkit.Server
 import org.bukkit.craftbukkit.CraftServer
 import org.bukkit.plugin.java.JavaPlugin
 import plutoproject.framework.common.util.jvm.findClass
-import plutoproject.framework.common.util.environment.serverThread
+import plutoproject.framework.common.util.serverThread
 
 lateinit var plugin: JavaPlugin
 lateinit var server: Server

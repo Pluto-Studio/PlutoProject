@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.dev_watermark
+package plutoproject.feature.paper.devWatermark
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import org.bukkit.event.EventHandler
