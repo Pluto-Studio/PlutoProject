@@ -4,5 +4,8 @@ enum class SitResult {
     SUCCESS,
     ALREADY_SITTING,
     TARGET_OCCUPIED,
-    INVALID_TARGET
+    INVALID_TARGET;
+
+    val isSuccessful: Boolean
+        get() = this == SUCCESS
 }
