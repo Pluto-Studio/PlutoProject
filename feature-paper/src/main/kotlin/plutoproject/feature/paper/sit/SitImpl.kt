@@ -12,6 +12,7 @@ import plutoproject.feature.paper.api.sit.SitState.*
 import plutoproject.feature.paper.api.sit.events.PlayerSitOnBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromPlayerEvent
+import plutoproject.feature.paper.sit.strategies.*
 import plutoproject.framework.paper.util.plugin
 import kotlin.math.max
 import kotlin.reflect.KClass
@@ -24,7 +25,14 @@ class SitImpl : Sit {
 
     private val armorStandMarkerKey = NamespacedKey(plugin, "sit.armor_stand_marker")
     private val sitContexts = mutableMapOf<Player, SitContext>()
-    private val strategies = mutableMapOf<BlockSitStrategy, Int>()
+    private val strategies = mutableMapOf(
+        PistonBlockSitStrategy to Int.MIN_VALUE,
+        SlabBlockSitStrategy to Int.MAX_VALUE - 1,
+        StairBlockSitStrategy to Int.MAX_VALUE - 1,
+        CampfireBlockSitStrategy to Int.MAX_VALUE - 1,
+        ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
+        DefaultBlockSitStrategy to Int.MAX_VALUE,
+    )
 
     override fun getState(player: Player): SitState {
         val context = sitContexts[player] ?: return NOT_SITTING
@@ -227,6 +235,7 @@ class SitImpl : Sit {
     }
 
     override fun registerStrategy(strategy: BlockSitStrategy, priority: Int): Boolean {
+        require(priority >= 0) { "Priority must be greater or equal to 0." }
         if (strategies.keys.any { it::class == strategy::class }) {
             return false
         }
