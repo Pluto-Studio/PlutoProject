@@ -21,6 +21,8 @@ interface Sit {
 
     fun getSitterOn(block: Block): Player?
 
+    fun getSitterOn(blockLocation: Location): Player?
+
     fun gitSitterOn(player: Player): Player?
 
     fun getOptions(player: Player): SitOptions?

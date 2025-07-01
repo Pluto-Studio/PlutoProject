@@ -27,7 +27,7 @@ class SitImpl : Sit {
 
     override fun getState(player: Player): SitState {
         val context = sitContexts[player] ?: return NOT_SITTING
-        if (context.block != null && context.armorStand != null) {
+        if (context.blockLocation != null && context.armorStand != null) {
             return ON_BLOCK
         }
         if (context.targetPlayer != null) {
@@ -59,7 +59,7 @@ class SitImpl : Sit {
         if (!getState(player).isSittingOnBlock) {
             return null
         }
-        return sitContexts[player]!!.block
+        return sitContexts[player]!!.blockLocation!!.block
     }
 
     override fun getSittingPlayer(player: Player): Player? {
@@ -70,7 +70,11 @@ class SitImpl : Sit {
     }
 
     override fun getSitterOn(block: Block): Player? {
-        return sitContexts.entries.firstOrNull { it.value.block == block }?.key
+        return getSitterOn(block.location)
+    }
+
+    override fun getSitterOn(blockLocation: Location): Player? {
+        return sitContexts.entries.firstOrNull { it.value.blockLocation == blockLocation }?.key
     }
 
     override fun gitSitterOn(player: Player): Player? {
@@ -132,7 +136,7 @@ class SitImpl : Sit {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_ALREADY_SITTING, target, null)
             return SitFinalResult.FAILED_ALREADY_SITTING
         }
-        if (sitContexts.values.any { it.block == target }) {
+        if (sitContexts.values.any { it.blockLocation == target.location }) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_OCCUPIED, target, null)
             return SitFinalResult.FAILED_TARGET_OCCUPIED
         }
@@ -170,7 +174,7 @@ class SitImpl : Sit {
             sitter.playSitSound()
         }
 
-        sitContexts[sitter] = SitContext(target, target.boundingBox.maxY, null, armorStand, sitOptions)
+        sitContexts[sitter] = SitContext(targetLocation, null, armorStand, sitOptions)
         armorStand.addPassenger(sitter)
 
         return SitFinalResult.SUCCEED
@@ -190,7 +194,10 @@ class SitImpl : Sit {
         val state = getState(sitter)
         val standUpLocation = when (state) {
             NOT_SITTING -> return false
-            ON_BLOCK -> sitter.location.clone().apply { y = sitContexts[sitter]?.blockTopSurfaceY!! + 0.5 }
+            ON_BLOCK -> sitter.location.clone().apply {
+                y = sitContexts[sitter]!!.blockLocation!!.block.boundingBox.maxY + 0.5
+            }
+
             ON_PLAYER -> sitter.location
         }
 
