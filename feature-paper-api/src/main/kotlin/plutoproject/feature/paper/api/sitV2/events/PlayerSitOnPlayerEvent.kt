@@ -2,15 +2,15 @@ package plutoproject.feature.paper.api.sitV2.events
 
 import org.bukkit.entity.Player
 import org.bukkit.event.HandlerList
+import plutoproject.feature.paper.api.sitV2.SitAttemptResult
 import plutoproject.feature.paper.api.sitV2.SitOptions
-import plutoproject.feature.paper.api.sitV2.SitResult
 
 class PlayerSitOnPlayerEvent(
     player: Player,
     options: SitOptions,
-    result: SitResult,
+    attemptResult: SitAttemptResult,
     val sittingOn: Player,
-) : SitEvent(player, options, result) {
+) : SitEvent(player, options, attemptResult) {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()

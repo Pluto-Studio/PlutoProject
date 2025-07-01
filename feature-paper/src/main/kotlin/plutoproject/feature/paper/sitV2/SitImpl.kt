@@ -1,11 +1,17 @@
 package plutoproject.feature.paper.sitV2
 
-import org.bukkit.Location
-import org.bukkit.NamespacedKey
+import net.kyori.adventure.text.Component
+import org.bukkit.*
 import org.bukkit.block.Block
+import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
 import plutoproject.feature.paper.api.sitV2.*
+import plutoproject.feature.paper.api.sitV2.SitState.*
+import plutoproject.feature.paper.api.sitV2.events.PlayerSitOnBlockEvent
+import plutoproject.feature.paper.api.sitV2.events.PlayerStandUpFromBlockEvent
+import plutoproject.feature.paper.api.sitV2.events.PlayerStandUpFromPlayerEvent
 import plutoproject.framework.paper.util.plugin
 import kotlin.reflect.KClass
 
@@ -20,14 +26,33 @@ class SitImpl : Sit {
     private val strategies = mutableMapOf<BlockSitStrategy, Int>()
 
     override fun getState(player: Player): SitState {
-        val context = sitContexts[player] ?: return SitState.NOT_SITTING
+        val context = sitContexts[player] ?: return NOT_SITTING
         if (context.block != null && context.armorStand != null) {
-            return SitState.ON_BLOCK
+            return ON_BLOCK
         }
         if (context.targetPlayer != null) {
-            return SitState.ON_PLAYER
+            return ON_PLAYER
         }
         error("Unexpected")
+    }
+
+    private fun createArmorStand(location: Location): ArmorStand {
+        return location.world.spawn(location, ArmorStand::class.java).apply {
+            setGravity(false)
+            setAI(false)
+            setCanTick(false)
+            setCanMove(false)
+            isInvulnerable = true
+            // isInvisible = true
+            isCollidable = false
+            persistentDataContainer.set(armorStandMarkerKey, PersistentDataType.BOOLEAN, true)
+        }
+    }
+
+    private fun removeArmorStand(sitter: Player) {
+        val armorStand = sitContexts[sitter]?.armorStand!!
+        armorStand.removePassenger(sitter)
+        armorStand.remove()
     }
 
     override fun getSittingBlock(player: Player): Block? {
@@ -48,12 +73,136 @@ class SitImpl : Sit {
         return sitContexts[player]?.options
     }
 
-    override fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions): SitResult {
+    private fun callSitOnBlockEvent(
+        sitter: Player,
+        options: SitOptions,
+        attemptResult: SitAttemptResult,
+        sittingOn: Block,
+        strategy: BlockSitStrategy?
+    ): PlayerSitOnBlockEvent {
+        return PlayerSitOnBlockEvent(sitter, options, attemptResult, sittingOn, strategy).apply { callEvent() }
+    }
+
+    private fun callPlayerStandUpFromBlockEvent(sitter: Player): PlayerStandUpFromBlockEvent {
+        return PlayerStandUpFromBlockEvent(
+            sitter,
+            getOptions(sitter)!!,
+            getSittingBlock(sitter)!!
+        ).apply { callEvent() }
+    }
+
+    private fun callPlayerStandUpFromPlayerEvent(sitter: Player): PlayerStandUpFromPlayerEvent {
+        return PlayerStandUpFromPlayerEvent(
+            sitter,
+            getOptions(sitter)!!,
+            getSittingPlayer(sitter)!!
+        ).apply { callEvent() }
+    }
+
+    private fun Player.playSitSound() {
+        val leggings = inventory.leggings
+        val sound = if (leggings == null) {
+            Sound.ITEM_ARMOR_EQUIP_GENERIC
+        } else when (leggings.type) {
+            Material.LEATHER_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_LEATHER
+            Material.CHAINMAIL_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_CHAIN
+            Material.IRON_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_IRON
+            Material.GOLDEN_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_GOLD
+            Material.DIAMOND_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_DIAMOND
+            Material.NETHERITE_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_NETHERITE
+            else -> Sound.ITEM_ARMOR_EQUIP_GENERIC
+        }
+        world.playSound(location, sound, SoundCategory.BLOCKS, 1f, 1f)
+    }
+
+    override fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions): SitFinalResult {
+        check(Bukkit.isPrimaryThread()) { "Sit operation can only be performed on main thread." }
+
+        val targetLocation = target.location
+
+        if (getState(sitter).isSitting) {
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_ALREADY_SITTING, target, null)
+            return SitFinalResult.FAILED_ALREADY_SITTING
+        }
+        if (sitContexts.values.any { it.block == target }) {
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_OCCUPIED, target, null)
+            return SitFinalResult.FAILED_TARGET_OCCUPIED
+        }
+
+        val bodyBlock1 = targetLocation.clone().add(0.0, 1.0, 0.0).block
+        val bodyBlock2 = targetLocation.clone().add(0.0, 2.0, 0.0).block
+
+        if (!bodyBlock1.isPassable || !bodyBlock2.isPassable) {
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_BLOCKED_BY_BLOCKS, target, null)
+            return SitFinalResult.FAILED_BLOCKED_BY_BLOCKS
+        }
+
+        val strategy = getStrategy(target)
+
+        if (strategy == null) {
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_INVALID_TARGET, target, null)
+            return SitFinalResult.FAILED_INVALID_TARGET
+        }
+
+        val sitLocation = strategy.getSitLocation(sitter, target)
+        val sitDirection = strategy.getSitDirection(sitter, target)
+        val event = callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.SUCCEED, target, strategy)
+
+        if (event.isCancelled) {
+            return SitFinalResult.FAILED_CANCELLED_BY_PLUGIN
+        }
+
+        val armorStandLocation = sitLocation.clone().apply {
+            subtract(0.0, 2.0, 0.0)
+            yaw = sitDirection.yaw
+        }
+        val armorStand = createArmorStand(armorStandLocation)
+
+        if (sitOptions.playSitSound) {
+            sitter.playSitSound()
+        }
+
+        sitContexts[sitter] = SitContext(target, null, armorStand, sitOptions)
+        armorStand.addPassenger(sitter)
+
+        return SitFinalResult.SUCCEED
+    }
+
+    override fun sitOnBlock(sitter: Player, target: Location, sitOptions: SitOptions): SitFinalResult {
+        return sitOnBlock(sitter, target.block, sitOptions)
+    }
+
+    override fun sitOnPlayer(sitter: Player, target: Player, sitOptions: SitOptions): SitFinalResult {
         TODO("Not yet implemented")
     }
 
-    override fun sitOnBlock(sitter: Player, target: Location, sitOptions: SitOptions): SitResult {
-        TODO("Not yet implemented")
+    override fun standUp(sitter: Player): Boolean {
+        check(Bukkit.isPrimaryThread()) { "Stand up operation can only be performed on main thread." }
+
+        val state = getState(sitter)
+        val standUpLocation = when (state) {
+            NOT_SITTING -> return false
+            ON_BLOCK -> sitter.location.clone().add(0.0, 1.0, 0.0)
+            ON_PLAYER -> sitter.location
+        }
+
+        if (state.isSittingOnBlock && !callPlayerStandUpFromBlockEvent(sitter).isCancelled) {
+            removeArmorStand(sitter)
+        } else if (state.isSittingOnPlayer && !callPlayerStandUpFromPlayerEvent(sitter).isCancelled) {
+            getSittingPlayer(sitter)?.removePassenger(sitter)
+        } else {
+            return false
+        }
+
+        if (getOptions(sitter)!!.playSitSound) {
+            sitter.playSitSound()
+        }
+
+        sitter.teleport(standUpLocation)
+        sitContexts.remove(sitter)
+        sitter.sendActionBar(Component.empty())
+
+        return true
     }
 
     override fun isTemporaryArmorStand(entity: Entity): Boolean {

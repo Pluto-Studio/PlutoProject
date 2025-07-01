@@ -9,6 +9,8 @@ interface BlockSitStrategy {
 
     fun isAllowed(player: Player, block: Block): Boolean
 
+    fun sitOnRightClick(player: Player, block: Block): Boolean
+
     fun getSitLocation(player: Player, block: Block): Location
 
     fun getSitDirection(player: Player, block: Block): BlockSitDirection

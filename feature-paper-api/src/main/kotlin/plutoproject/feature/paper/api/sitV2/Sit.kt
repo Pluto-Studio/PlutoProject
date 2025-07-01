@@ -21,9 +21,13 @@ interface Sit {
 
     fun getOptions(player: Player): SitOptions?
 
-    fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions = SitOptions()): SitResult
+    fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions = SitOptions()): SitFinalResult
 
-    fun sitOnBlock(sitter: Player, target: Location, sitOptions: SitOptions = SitOptions()): SitResult
+    fun sitOnBlock(sitter: Player, target: Location, sitOptions: SitOptions = SitOptions()): SitFinalResult
+
+    fun sitOnPlayer(sitter: Player, target: Player, sitOptions: SitOptions = SitOptions()): SitFinalResult
+
+    fun standUp(sitter: Player): Boolean
 
     fun isTemporaryArmorStand(entity: Entity): Boolean
 

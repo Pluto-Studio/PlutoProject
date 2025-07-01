@@ -3,6 +3,7 @@ package plutoproject.feature.paper.sitV2
 import org.koin.dsl.module
 import plutoproject.feature.paper.api.sitV2.Sit
 import plutoproject.feature.paper.sitV2.listeners.ChunkListener
+import plutoproject.feature.paper.sitV2.listeners.PlayerListener
 import plutoproject.feature.paper.sitV2.listeners.TickListener
 import plutoproject.feature.paper.sitV2.strategies.SolidBlockSitStrategy
 import plutoproject.framework.common.api.feature.Platform
@@ -31,6 +32,7 @@ class SitV2Feature : PaperFeature() {
         AnnotationParser.parse(SitCommand)
         server.pluginManager.registerEvents(TickListener, plugin)
         server.pluginManager.registerEvents(ChunkListener, plugin)
+        server.pluginManager.registerEvents(PlayerListener, plugin)
     }
 
     private fun registerInternalStrategies() {
