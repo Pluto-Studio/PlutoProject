@@ -14,6 +14,10 @@ object StairBlockSitStrategy : BlockSitStrategy {
         return block.blockData is Stairs
     }
 
+    override fun isAllowed(block: Block): Boolean {
+        return true
+    }
+
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
         val stairs = block.blockData as Stairs
         return stairs.half == Bisected.Half.BOTTOM

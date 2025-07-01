@@ -141,13 +141,13 @@ class SitImpl : Sit {
         val bodyBlock2 = targetLocation.clone().add(0.0, 2.0, 0.0).block
 
         if (bodyBlock1.isCollidable || bodyBlock2.isCollidable) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_BLOCKED_BY_BLOCKS, target, null)
-            return SitFinalResult.FAILED_BLOCKED_BY_BLOCKS
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_BLOCKED_BY_BLOCKS, target, null)
+            return SitFinalResult.FAILED_TARGET_BLOCKED_BY_BLOCKS
         }
 
         val strategy = getStrategy(target)
 
-        if (strategy == null) {
+        if (strategy == null || !strategy.isAllowed(target)) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_INVALID_TARGET, target, null)
             return SitFinalResult.FAILED_INVALID_TARGET
         }
@@ -170,7 +170,7 @@ class SitImpl : Sit {
             sitter.playSitSound()
         }
 
-        sitContexts[sitter] = SitContext(target, null, armorStand, sitOptions)
+        sitContexts[sitter] = SitContext(target, target.boundingBox.maxY, null, armorStand, sitOptions)
         armorStand.addPassenger(sitter)
 
         return SitFinalResult.SUCCEED
@@ -190,7 +190,7 @@ class SitImpl : Sit {
         val state = getState(sitter)
         val standUpLocation = when (state) {
             NOT_SITTING -> return false
-            ON_BLOCK -> sitter.location.clone().apply { y = getSittingBlock(sitter)!!.boundingBox.maxY + 0.5 }
+            ON_BLOCK -> sitter.location.clone().apply { y = sitContexts[sitter]?.blockTopSurfaceY!! + 0.5 }
             ON_PLAYER -> sitter.location
         }
 

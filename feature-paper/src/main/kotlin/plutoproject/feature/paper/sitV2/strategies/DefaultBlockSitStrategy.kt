@@ -11,6 +11,10 @@ object DefaultBlockSitStrategy : BlockSitStrategy {
         return block.isSolid
     }
 
+    override fun isAllowed(block: Block): Boolean {
+        return true
+    }
+
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
         return false
     }

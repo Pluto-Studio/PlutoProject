@@ -10,8 +10,13 @@ import plutoproject.feature.paper.sitV2.STAND_UP_TIP
 object ServerListener : Listener {
     @EventHandler
     fun ServerTickEndEvent.e() {
-        Sit.sittingPlayers
-            .filter { Sit.getOptions(it)!!.showStandTip }
-            .forEach { it.sendActionBar(STAND_UP_TIP) }
+        Sit.sittingPlayers.forEach {
+            if (Sit.getOptions(it)!!.showStandTip) {
+                it.sendActionBar(STAND_UP_TIP)
+            }
+            if (!it.isInsideVehicle) {
+                Sit.standUp(it)
+            }
+        }
     }
 }

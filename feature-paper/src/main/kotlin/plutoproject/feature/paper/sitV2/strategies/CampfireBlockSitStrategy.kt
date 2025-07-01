@@ -12,6 +12,10 @@ object CampfireBlockSitStrategy : BlockSitStrategy {
         return block.blockData is Campfire
     }
 
+    override fun isAllowed(block: Block): Boolean {
+        return true
+    }
+
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
         val campfire = block.blockData as Campfire
         return !campfire.isLit

@@ -5,7 +5,7 @@ enum class SitAttemptResult {
     FAILED_ALREADY_SITTING,
     FAILED_TARGET_OCCUPIED,
     FAILED_INVALID_TARGET,
-    FAILED_BLOCKED_BY_BLOCKS;
+    FAILED_TARGET_BLOCKED_BY_BLOCKS;
 
     val isSucceed: Boolean
         get() = this == SUCCEED

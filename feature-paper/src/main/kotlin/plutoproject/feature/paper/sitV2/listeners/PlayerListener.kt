@@ -11,19 +11,37 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.EquipmentSlot
 import plutoproject.feature.paper.api.sitV2.Sit
 import plutoproject.feature.paper.api.sitV2.SitFinalResult.*
+import plutoproject.feature.paper.api.sitV2.events.PlayerStandUpFromBlockEvent
+import plutoproject.feature.paper.api.sitV2.events.PlayerStandUpFromPlayerEvent
 import plutoproject.feature.paper.sitV2.SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE
 import plutoproject.feature.paper.sitV2.SIT_FAILED_SOUND
 import plutoproject.feature.paper.sitV2.SIT_FAILED_TARGET_OCCUPIED_TITLE
 
 object PlayerListener : Listener {
+    private val standingUp = mutableSetOf<Player>()
+
     @EventHandler(priority = EventPriority.HIGHEST)
     fun EntityDismountEvent.e() {
         if (entity !is Player) return
         val player = entity as Player
         if (!Sit.getState(player).isSitting) return
+        if (standingUp.contains(player)) {
+            standingUp.remove(player)
+            return
+        }
 
         isCancelled = true
         Sit.standUp(player)
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    fun PlayerStandUpFromBlockEvent.e() {
+        standingUp.add(player)
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    fun PlayerStandUpFromPlayerEvent.e() {
+        standingUp.add(player)
     }
 
     @EventHandler
@@ -58,7 +76,7 @@ object PlayerListener : Listener {
             FAILED_ALREADY_SITTING -> null
             FAILED_TARGET_OCCUPIED -> SIT_FAILED_TARGET_OCCUPIED_TITLE
             FAILED_INVALID_TARGET -> null
-            FAILED_BLOCKED_BY_BLOCKS -> SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE
+            FAILED_TARGET_BLOCKED_BY_BLOCKS -> SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE
             FAILED_CANCELLED_BY_PLUGIN -> null
         }
 

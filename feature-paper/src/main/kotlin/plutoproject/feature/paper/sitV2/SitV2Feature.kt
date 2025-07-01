@@ -38,6 +38,7 @@ class SitV2Feature : PaperFeature() {
     }
 
     private fun registerInternalStrategies() {
+        Sit.registerStrategy(PistonBlockSitStrategy, Int.MIN_VALUE)
         Sit.registerStrategy(SlabBlockSitStrategy, Int.MAX_VALUE - 1)
         Sit.registerStrategy(StairBlockSitStrategy, Int.MAX_VALUE - 1)
         Sit.registerStrategy(CampfireBlockSitStrategy, Int.MAX_VALUE - 1)

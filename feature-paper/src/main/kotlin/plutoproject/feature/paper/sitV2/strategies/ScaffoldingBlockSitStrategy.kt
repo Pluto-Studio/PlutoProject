@@ -12,6 +12,10 @@ object ScaffoldingBlockSitStrategy : BlockSitStrategy {
         return block.blockData is Scaffolding
     }
 
+    override fun isAllowed(block: Block): Boolean {
+        return true
+    }
+
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
         return false
     }
