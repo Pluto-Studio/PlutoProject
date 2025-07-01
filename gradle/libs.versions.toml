@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.10"
+kotlin = "2.2.0"
 kotlinx-coroutine = "1.10.2"
 kotlinx-serialization = "1.7.3"
 mongodb = "5.4.0"
