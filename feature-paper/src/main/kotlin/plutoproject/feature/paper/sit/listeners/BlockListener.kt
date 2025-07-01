@@ -1,11 +1,13 @@
 package plutoproject.feature.paper.sit.listeners
 
 import org.bukkit.block.Block
+import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityExplodeEvent
+import org.bukkit.event.entity.EntitySpawnEvent
 import plutoproject.feature.paper.api.sit.Sit
 
 @Suppress("UnusedReceiverParameter")
@@ -50,6 +52,17 @@ object BlockListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun LeavesDecayEvent.e() {
         handleSeatBlockBreak(block)
+    }
+
+    private val entityFormBlocks = arrayOf(
+        EntityType.FALLING_BLOCK,
+        EntityType.TNT
+    )
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun EntitySpawnEvent.e() {
+        if (!entityFormBlocks.contains(entity.type)) return
+        handleSeatBlockBreak(location.block)
     }
 
     private fun handleSeatBlockBreak(block: Block) {
