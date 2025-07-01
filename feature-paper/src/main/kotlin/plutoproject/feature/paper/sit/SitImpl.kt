@@ -33,6 +33,7 @@ class SitImpl : Sit {
         ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
         DefaultBlockSitStrategy to Int.MAX_VALUE,
     )
+    private val internalStrategyClasses = strategies.keys.map { it::class }
 
     override fun getState(player: Player): SitState {
         val context = sitContexts[player] ?: return NOT_SITTING
@@ -244,6 +245,7 @@ class SitImpl : Sit {
     }
 
     override fun unregisterStrategy(strategyClass: KClass<out BlockSitStrategy>): Boolean {
+        require(!internalStrategyClasses.contains(strategyClass)) { "Internal strategy cannot be unregistered." }
         if (!strategies.keys.any { it::class == strategyClass }) {
             return false
         }
