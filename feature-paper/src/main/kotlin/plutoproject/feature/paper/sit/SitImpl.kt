@@ -28,7 +28,7 @@ class SitImpl : Sit {
 
     override fun getState(player: Player): SitState {
         val context = sitContexts[player] ?: return NOT_SITTING
-        if (context.blockLocation != null && context.armorStand != null) {
+        if (context.block != null && context.armorStand != null) {
             return ON_BLOCK
         }
         if (context.targetPlayer != null) {
@@ -60,7 +60,7 @@ class SitImpl : Sit {
         if (!getState(player).isSittingOnBlock) {
             return null
         }
-        return sitContexts[player]!!.blockLocation!!.block
+        return sitContexts[player]!!.block
     }
 
     override fun getSittingPlayer(player: Player): Player? {
@@ -71,11 +71,11 @@ class SitImpl : Sit {
     }
 
     override fun getSitterOn(block: Block): Player? {
-        return getSitterOn(block.location)
+        return sitContexts.entries.firstOrNull { it.value.block == block }?.key
     }
 
     override fun getSitterOn(blockLocation: Location): Player? {
-        return sitContexts.entries.firstOrNull { it.value.blockLocation == blockLocation }?.key
+        return getSitterOn(blockLocation.block)
     }
 
     override fun gitSitterOn(player: Player): Player? {
@@ -131,19 +131,17 @@ class SitImpl : Sit {
     override fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions): SitFinalResult {
         check(Bukkit.isPrimaryThread()) { "Sit operation can only be performed on main thread." }
 
-        val targetLocation = target.location
-
         if (getState(sitter).isSitting) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_ALREADY_SITTING, target, null)
             return SitFinalResult.FAILED_ALREADY_SITTING
         }
-        if (sitContexts.values.any { it.blockLocation == target.location }) {
+        if (sitContexts.values.any { it.block == target }) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_OCCUPIED, target, null)
             return SitFinalResult.FAILED_TARGET_OCCUPIED
         }
 
-        val bodyBlock1 = targetLocation.clone().add(0.0, 1.0, 0.0).block
-        val bodyBlock2 = targetLocation.clone().add(0.0, 2.0, 0.0).block
+        val bodyBlock1 = target.location.clone().add(0.0, 1.0, 0.0).block
+        val bodyBlock2 = target.location.clone().add(0.0, 2.0, 0.0).block
 
         if (bodyBlock1.isCollidable || bodyBlock2.isCollidable) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_BLOCKED_BY_BLOCKS, target, null)
@@ -175,7 +173,7 @@ class SitImpl : Sit {
             sitter.playSitSound()
         }
 
-        sitContexts[sitter] = SitContext(targetLocation, null, armorStand, sitOptions)
+        sitContexts[sitter] = SitContext(target, null, armorStand, sitOptions)
         armorStand.addPassenger(sitter)
 
         return SitFinalResult.SUCCEED
@@ -198,7 +196,7 @@ class SitImpl : Sit {
             NOT_SITTING -> return false
             ON_BLOCK -> sitter.location.clone().apply {
                 // 某些方块（MOVING_PISTON）的顶面高度不太正常...
-                val maxY = max(sitContext.blockLocation!!.block.boundingBox.maxY, sitContext.blockLocation.y)
+                val maxY = max(sitContext.block!!.boundingBox.maxY, sitContext.block.location.y)
                 y = maxY + 0.5
             }
 
