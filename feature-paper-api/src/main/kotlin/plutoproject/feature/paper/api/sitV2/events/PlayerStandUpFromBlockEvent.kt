@@ -1,16 +1,15 @@
 package plutoproject.feature.paper.api.sitV2.events
 
+import org.bukkit.block.Block
 import org.bukkit.entity.Player
 import org.bukkit.event.HandlerList
 import plutoproject.feature.paper.api.sitV2.SitOptions
-import plutoproject.feature.paper.api.sitV2.SitResult
 
-class PlayerSitOnPlayerEvent(
+class PlayerStandUpFromBlockEvent(
     player: Player,
     options: SitOptions,
-    result: SitResult,
-    val sittingOn: Player,
-) : SitEvent(player, options, result) {
+    val sittingOn: Block
+) : StandUpEvent(player, options) {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()
