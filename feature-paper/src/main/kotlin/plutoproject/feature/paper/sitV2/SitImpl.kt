@@ -57,9 +57,9 @@ class SitImpl : Sit {
     }
 
     override fun getStrategy(block: Block): BlockSitStrategy? =
-        strategyPriorityMap
-            .filter { it.key.match(block) }
-            .minByOrNull { it.value }?.key
+        strategyPriorityMap.entries
+            .sortedBy { it.value }
+            .firstOrNull { it.key.match(block) }?.key
 
     override fun getPriority(strategyClass: KClass<out BlockSitStrategy>): Int? {
         val strategy = registeredStrategies[strategyClass] ?: return null
