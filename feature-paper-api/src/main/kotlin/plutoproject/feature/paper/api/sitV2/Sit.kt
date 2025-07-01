@@ -4,6 +4,7 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Player
 import plutoproject.framework.common.util.inject.Koin
+import kotlin.reflect.KClass
 
 interface Sit {
     companion object : Sit by Koin.get()
@@ -24,11 +25,11 @@ interface Sit {
 
     fun registerStrategy(strategy: BlockSitStrategy, priority: Int = 0): Boolean
 
-    fun unregisterStrategy(strategy: BlockSitStrategy): Boolean
+    fun unregisterStrategy(strategyClass: KClass<out BlockSitStrategy>): Boolean
 
     fun getStrategy(block: Block): BlockSitStrategy?
 
-    fun getPriority(strategy: BlockSitStrategy): Int?
+    fun getPriority(strategyClass: KClass<out BlockSitStrategy>): Int?
 
-    fun isStrategyRegistered(strategy: BlockSitStrategy): Boolean
+    fun isStrategyRegistered(strategyClass: KClass<out BlockSitStrategy>): Boolean
 }
