@@ -13,6 +13,7 @@ import plutoproject.feature.paper.api.sit.events.PlayerSitOnBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromPlayerEvent
 import plutoproject.framework.paper.util.plugin
+import kotlin.math.max
 import kotlin.reflect.KClass
 
 class SitImpl : Sit {
@@ -192,10 +193,13 @@ class SitImpl : Sit {
         check(Bukkit.isPrimaryThread()) { "Stand up operation can only be performed on main thread." }
 
         val state = getState(sitter)
+        val sitContext = sitContexts[sitter]!!
         val standUpLocation = when (state) {
             NOT_SITTING -> return false
             ON_BLOCK -> sitter.location.clone().apply {
-                y = sitContexts[sitter]!!.blockLocation!!.block.boundingBox.maxY + 0.5
+                // 某些方块（MOVING_PISTON）的顶面高度不太正常...
+                val maxY = max(sitContext.blockLocation!!.block.boundingBox.maxY, sitContext.blockLocation.y)
+                y = maxY + 0.5
             }
 
             ON_PLAYER -> sitter.location
