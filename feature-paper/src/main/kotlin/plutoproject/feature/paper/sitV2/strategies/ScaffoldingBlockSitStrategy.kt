@@ -2,31 +2,25 @@ package plutoproject.feature.paper.sitV2.strategies
 
 import org.bukkit.Location
 import org.bukkit.block.Block
+import org.bukkit.block.data.type.Scaffolding
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sitV2.BlockSitDirection
 import plutoproject.feature.paper.api.sitV2.BlockSitStrategy
 
-object SolidBlockSitStrategy : BlockSitStrategy {
+object ScaffoldingBlockSitStrategy : BlockSitStrategy {
     override fun match(block: Block): Boolean {
-        return block.isSolid
+        return block.blockData is Scaffolding
     }
 
-    override fun isAllowed(player: Player, block: Block): Boolean {
-        return true
-    }
-
-    override fun sitOnRightClick(player: Player, block: Block): Boolean {
+    override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
         return false
     }
 
     override fun getSitLocation(player: Player, block: Block): Location {
-        return block.location.apply {
-            add(0.5, 0.0, 0.5)
-            y = block.boundingBox.maxY
-        }
+        return DefaultBlockSitStrategy.getSitLocation(player, block)
     }
 
     override fun getSitDirection(player: Player, block: Block): BlockSitDirection {
-        return BlockSitDirection.fromYaw(player.yaw)
+        return DefaultBlockSitStrategy.getSitDirection(player, block)
     }
 }

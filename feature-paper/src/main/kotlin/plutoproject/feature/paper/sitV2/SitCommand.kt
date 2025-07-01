@@ -1,18 +1,44 @@
 package plutoproject.feature.paper.sitV2
 
-import org.bukkit.block.BlockFace
+import org.bukkit.block.Block
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Command
 import plutoproject.feature.paper.api.sitV2.Sit
+import plutoproject.feature.paper.api.sitV2.SitFinalResult.*
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.withSync
 
 object SitCommand {
     @Command("sit")
     suspend fun CommandSender.sit() = ensurePlayer {
-        val target = location.block.getRelative(BlockFace.DOWN)
-        withSync {
-            println(Sit.sitOnBlock(this@ensurePlayer, target))
+        val target = getBlockStandingOn()
+        val result = withSync {
+            Sit.sitOnBlock(this@ensurePlayer, target)
         }
+
+        val message = when (result) {
+            SUCCEED -> COMMAND_SIT
+            FAILED_ALREADY_SITTING -> COMMAND_SIT_FAILED_ALREADY_SITTING
+            FAILED_TARGET_OCCUPIED -> COMMAND_SIT_FAILED_TARGET_OCCUPIED
+            FAILED_INVALID_TARGET -> COMMAND_SIT_FAILED_INVALID_TARGET
+            FAILED_BLOCKED_BY_BLOCKS -> COMMAND_SIT_FAILED_BLOCKED_BY_BLOCKS
+            FAILED_CANCELLED_BY_PLUGIN -> null
+        }
+
+        message?.let { sendMessage(it) }
+    }
+
+    private fun Player.getBlockStandingOn(): Block {
+        if (location.y % 1 != 0.0) {
+            val startY = location.blockY
+            val endY = startY - 2
+            for (y in startY downTo endY) {
+                val block = world.getBlockAt(location.blockX, y, location.blockZ)
+                if (block.type.isAir) continue
+                return block
+            }
+        }
+        return location.clone().subtract(0.0, 1.0, 0.0).block
     }
 }

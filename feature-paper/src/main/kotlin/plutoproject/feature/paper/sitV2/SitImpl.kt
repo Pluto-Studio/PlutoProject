@@ -43,7 +43,7 @@ class SitImpl : Sit {
             setCanTick(false)
             setCanMove(false)
             isInvulnerable = true
-            // isInvisible = true
+            isInvisible = true
             isCollidable = false
             persistentDataContainer.set(armorStandMarkerKey, PersistentDataType.BOOLEAN, true)
         }
@@ -67,6 +67,14 @@ class SitImpl : Sit {
             return null
         }
         return sitContexts[player]!!.targetPlayer
+    }
+
+    override fun getSitterOn(block: Block): Player? {
+        return sitContexts.entries.firstOrNull { it.value.block == block }?.key
+    }
+
+    override fun gitSitterOn(player: Player): Player? {
+        return sitContexts.entries.firstOrNull { it.value.targetPlayer == player }?.key
     }
 
     override fun getOptions(player: Player): SitOptions? {
@@ -132,7 +140,7 @@ class SitImpl : Sit {
         val bodyBlock1 = targetLocation.clone().add(0.0, 1.0, 0.0).block
         val bodyBlock2 = targetLocation.clone().add(0.0, 2.0, 0.0).block
 
-        if (!bodyBlock1.isPassable || !bodyBlock2.isPassable) {
+        if (bodyBlock1.isCollidable || bodyBlock2.isCollidable) {
             callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_BLOCKED_BY_BLOCKS, target, null)
             return SitFinalResult.FAILED_BLOCKED_BY_BLOCKS
         }
@@ -182,7 +190,7 @@ class SitImpl : Sit {
         val state = getState(sitter)
         val standUpLocation = when (state) {
             NOT_SITTING -> return false
-            ON_BLOCK -> sitter.location.clone().add(0.0, 1.0, 0.0)
+            ON_BLOCK -> sitter.location.clone().apply { y = getSittingBlock(sitter)!!.boundingBox.maxY + 0.5 }
             ON_PLAYER -> sitter.location
         }
 

@@ -7,7 +7,7 @@ import plutoproject.feature.paper.api.sitV2.Sit
 import plutoproject.feature.paper.sitV2.STAND_UP_TIP
 
 @Suppress("UnusedReceiverParameter")
-object TickListener : Listener {
+object ServerListener : Listener {
     @EventHandler
     fun ServerTickEndEvent.e() {
         Sit.sittingPlayers
