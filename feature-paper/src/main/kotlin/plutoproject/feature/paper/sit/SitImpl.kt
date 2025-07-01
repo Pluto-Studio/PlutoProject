@@ -236,7 +236,6 @@ class SitImpl : Sit {
     }
 
     override fun registerStrategy(strategy: BlockSitStrategy, priority: Int): Boolean {
-        require(priority >= 0) { "Priority must be greater or equal to 0." }
         if (strategies.keys.any { it::class == strategy::class }) {
             return false
         }
