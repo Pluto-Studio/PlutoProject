@@ -3,7 +3,6 @@ package plutoproject.feature.paper.sit.strategies
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace.*
-import org.bukkit.block.data.Bisected
 import org.bukkit.block.data.type.Stairs
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.BlockSitDirection
@@ -19,8 +18,7 @@ object StairBlockSitStrategy : BlockSitStrategy {
     }
 
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
-        val stairs = block.blockData as Stairs
-        return stairs.half == Bisected.Half.BOTTOM
+        return true
     }
 
     private val Stairs.Shape.isLeft: Boolean
