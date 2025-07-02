@@ -244,7 +244,6 @@ class SitImpl : Sit {
     }
 
     override fun unregisterStrategy(strategyClass: KClass<out BlockSitStrategy>): Boolean {
-        require(!internalStrategyClasses.contains(strategyClass)) { "Internal strategy cannot be unregistered." }
         if (!strategies.keys.any { it::class == strategyClass }) {
             return false
         }
