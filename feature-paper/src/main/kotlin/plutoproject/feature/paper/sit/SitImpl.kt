@@ -31,6 +31,7 @@ class SitImpl : Sit {
     private val strategies = mutableMapOf(
         SlabBlockSitStrategy to Int.MAX_VALUE - 1,
         StairBlockSitStrategy to Int.MAX_VALUE - 1,
+        CarpetBlockSitStrategy to Int.MAX_VALUE - 1,
         CampfireBlockSitStrategy to Int.MAX_VALUE - 1,
         ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
         DefaultBlockSitStrategy to Int.MAX_VALUE,
