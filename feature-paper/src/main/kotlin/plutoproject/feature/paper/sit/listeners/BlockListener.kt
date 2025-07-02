@@ -1,6 +1,9 @@
 package plutoproject.feature.paper.sit.listeners
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import org.bukkit.Material
 import org.bukkit.block.Block
+import org.bukkit.block.data.type.Piston
 import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -12,6 +15,8 @@ import plutoproject.feature.paper.api.sit.Sit
 
 @Suppress("UnusedReceiverParameter")
 object BlockListener : Listener {
+    private val extendedPistons = mutableSetOf<Block>()
+
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun BlockBreakEvent.e() {
         handleSeatBlockBreak(block)
@@ -40,13 +45,26 @@ object BlockListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun BlockPistonExtendEvent.e() {
         handleSeatBlockBreak(block)
+        extendedPistons += block
         blocks.forEach { handleSeatBlockBreak(it) }
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun BlockPistonRetractEvent.e() {
         handleSeatBlockBreak(block)
+        extendedPistons -= block
         blocks.forEach { handleSeatBlockBreak(it) }
+    }
+
+    @EventHandler
+    fun ServerTickEndEvent.e() {
+        if (extendedPistons.isEmpty()) return // 防止创建不必要的 ArrayList 对象
+        val retracted = extendedPistons.filter {
+            it.type != Material.MOVING_PISTON && !(it.blockData as Piston).isExtended
+        }
+        if (retracted.isEmpty()) return
+        extendedPistons.removeAll(retracted.toSet())
+        retracted.forEach { handleSeatBlockBreak(it) }
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

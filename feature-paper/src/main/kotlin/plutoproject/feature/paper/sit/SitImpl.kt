@@ -26,14 +26,13 @@ class SitImpl : Sit {
     private val armorStandMarkerKey = NamespacedKey(plugin, "sit.armor_stand_marker")
     private val sitContexts = mutableMapOf<Player, SitContext>()
     private val strategies = mutableMapOf(
-        PistonBlockSitStrategy to Int.MIN_VALUE,
+        // PistonBlockSitStrategy to Int.MIN_VALUE,
         SlabBlockSitStrategy to Int.MAX_VALUE - 1,
         StairBlockSitStrategy to Int.MAX_VALUE - 1,
         CampfireBlockSitStrategy to Int.MAX_VALUE - 1,
         ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
         DefaultBlockSitStrategy to Int.MAX_VALUE,
     )
-    private val internalStrategyClasses = strategies.keys.map { it::class }
 
     override fun getState(player: Player): SitState {
         val context = sitContexts[player] ?: return NOT_SITTING
@@ -200,12 +199,12 @@ class SitImpl : Sit {
         check(Bukkit.isPrimaryThread()) { "Stand up operation can only be performed on main thread." }
 
         val state = getState(sitter)
-        val sitContext = sitContexts[sitter]!!
+        val sitContext = sitContexts[sitter]
         val standUpLocation = when (state) {
             NOT_SITTING -> return false
             ON_BLOCK -> sitter.location.clone().apply {
                 // 某些方块（MOVING_PISTON）的顶面高度不太正常...
-                val maxY = max(sitContext.block!!.boundingBox.maxY, sitContext.block.location.y)
+                val maxY = max(sitContext!!.block!!.boundingBox.maxY, sitContext.block!!.location.y)
                 y = maxY + 0.5
             }
 

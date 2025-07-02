@@ -7,6 +7,7 @@ import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.BlockSitDirection
 import plutoproject.feature.paper.api.sit.BlockSitStrategy
 
+// 暂时没有启用
 object PistonBlockSitStrategy : BlockSitStrategy {
     private val pistonParts = arrayOf(
         Material.PISTON,
