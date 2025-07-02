@@ -8,7 +8,7 @@ import plutoproject.feature.paper.api.sit.BlockSitStrategy
 
 object DefaultBlockSitStrategy : BlockSitStrategy {
     override fun match(block: Block): Boolean {
-        return block.isSolid
+        return block.isCollidable
     }
 
     override fun isAllowed(block: Block): Boolean {
