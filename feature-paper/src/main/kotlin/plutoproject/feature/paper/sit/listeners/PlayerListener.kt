@@ -13,7 +13,7 @@ import plutoproject.feature.paper.api.sit.Sit
 import plutoproject.feature.paper.api.sit.SitFinalResult.*
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromPlayerEvent
-import plutoproject.feature.paper.sit.SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE
+import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
 import plutoproject.feature.paper.sit.SIT_FAILED_SOUND
 import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_OCCUPIED_TITLE
 
@@ -76,7 +76,7 @@ object PlayerListener : Listener {
             FAILED_ALREADY_SITTING -> null
             FAILED_TARGET_OCCUPIED -> SIT_FAILED_TARGET_OCCUPIED_TITLE
             FAILED_INVALID_TARGET -> null
-            FAILED_TARGET_BLOCKED_BY_BLOCKS -> SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE
+            FAILED_TARGET_BLOCKED_BY_BLOCKS -> SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
             FAILED_CANCELLED_BY_PLUGIN -> null
         }
 

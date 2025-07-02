@@ -31,8 +31,8 @@ val COMMAND_SIT_FAILED_INVALID_TARGET = component {
     text("无法在此处坐下") with mochaMaroon
 }
 
-val COMMAND_SIT_FAILED_BLOCKED_BY_BLOCKS = component {
-    text("此处被方块遮挡，无法坐下") with mochaMaroon
+val COMMAND_SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS = component {
+    text("此处被遮挡，无法坐下") with mochaMaroon
 }
 
 val SIT_FAILED_TARGET_OCCUPIED_TITLE = title {
@@ -49,12 +49,12 @@ val SIT_FAILED_TARGET_OCCUPIED_TITLE = title {
     }
 }
 
-val SIT_FAILED_BLOCKED_BY_BLOCKS_TITLE = title {
+val SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE = title {
     mainTitle {
         text(" ")
     }
     subTitle {
-        text("此处被方块遮挡，无法坐下") with mochaMaroon
+        text("此处被遮挡，无法坐下") with mochaMaroon
     }
     times {
         fadeIn(0.seconds)

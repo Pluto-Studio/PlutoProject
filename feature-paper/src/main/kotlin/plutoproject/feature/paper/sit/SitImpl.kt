@@ -7,6 +7,8 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.util.BoundingBox
+import org.bukkit.util.Vector
 import plutoproject.feature.paper.api.sit.*
 import plutoproject.feature.paper.api.sit.SitState.*
 import plutoproject.feature.paper.api.sit.events.PlayerSitOnBlockEvent
@@ -14,6 +16,7 @@ import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromPlayerEvent
 import plutoproject.feature.paper.sit.strategies.*
 import plutoproject.framework.paper.util.plugin
+import plutoproject.framework.paper.util.world.subtract
 import kotlin.math.max
 import kotlin.reflect.KClass
 
@@ -136,6 +139,17 @@ class SitImpl : Sit {
         world.playSound(location, sound, SoundCategory.BLOCKS, 1f, 1f)
     }
 
+    private fun BoundingBox.convertRelativeToAbsolute(base: Vector): BoundingBox {
+        return BoundingBox(
+            minX + base.x,
+            minY + base.y,
+            minZ + base.z,
+            maxX + base.x,
+            maxY + base.y,
+            maxZ + base.z
+        )
+    }
+
     override fun sitOnBlock(sitter: Player, target: Block, sitOptions: SitOptions): SitFinalResult {
         check(Bukkit.isPrimaryThread()) { "Sit operation can only be performed on main thread." }
 
@@ -148,14 +162,6 @@ class SitImpl : Sit {
             return SitFinalResult.FAILED_TARGET_OCCUPIED
         }
 
-        val bodyBlock1 = target.location.clone().add(0.0, 1.0, 0.0).block
-        val bodyBlock2 = target.location.clone().add(0.0, 2.0, 0.0).block
-
-        if (bodyBlock1.isCollidable || bodyBlock2.isCollidable) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_BLOCKED_BY_BLOCKS, target, null)
-            return SitFinalResult.FAILED_TARGET_BLOCKED_BY_BLOCKS
-        }
-
         val strategy = getStrategy(target)
 
         if (strategy == null || !strategy.isAllowed(target)) {
@@ -165,6 +171,29 @@ class SitImpl : Sit {
 
         val sitLocation = strategy.getSitLocation(sitter, target)
         val sitDirection = strategy.getSitDirection(sitter, target)
+
+        val minX = target.location.x
+        val minY = sitLocation.y
+        val minZ = target.location.z
+        val maxX = minX + 1
+        val maxY = minY + 1.5
+        val maxZ = minZ + 1
+
+        val corner1 = Vector(minX, minY, minZ)
+        val corner2 = Vector(maxX, maxY, maxZ)
+        val sitCollisionShape = BoundingBox.of(corner1, corner2)
+
+        val blockCollisionShape = target.collisionShape.boundingBoxes.map {
+            // 这玩意返回的 BoundingBox 里怎么是相对位置啊？？
+            it.convertRelativeToAbsolute(target.location.toVector())
+        }
+        val selfExcluded = sitCollisionShape.subtract(blockCollisionShape)
+
+        if (selfExcluded.any { target.world.hasCollisionsIn(it) }) {
+            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_BLOCKED_BY_BLOCKS, target, null)
+            return SitFinalResult.FAILED_TARGET_BLOCKED_BY_BLOCKS
+        }
+
         val event = callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.SUCCEED, target, strategy)
 
         if (event.isCancelled) {
