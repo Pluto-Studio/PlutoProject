@@ -5,6 +5,7 @@ import org.bukkit.block.Block
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.BlockSitDirection
 import plutoproject.feature.paper.api.sit.BlockSitStrategy
+import kotlin.math.max
 
 object DefaultBlockSitStrategy : BlockSitStrategy {
     override fun match(block: Block): Boolean {
@@ -22,7 +23,7 @@ object DefaultBlockSitStrategy : BlockSitStrategy {
     override fun getSitLocation(player: Player, block: Block): Location {
         return block.location.apply {
             add(0.5, 0.0, 0.5)
-            y = block.boundingBox.maxY
+            y = max(block.location.y, block.boundingBox.maxY) // 某些方块 (MOVING_PISTON) 的顶面高度返回 0
         }
     }
 
