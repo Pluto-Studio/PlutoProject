@@ -1,11 +1,12 @@
-package plutoproject.feature.paper.sit
+package plutoproject.feature.paper.sit.block
 
 import org.bukkit.block.Block
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Command
-import plutoproject.feature.paper.api.sit.Sit
+import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.SitFinalResult.*
+import plutoproject.feature.paper.sit.*
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.withSync
 
@@ -14,7 +15,7 @@ object SitCommand {
     suspend fun CommandSender.sit() = ensurePlayer {
         val target = getBlockStandingOn()
         val result = withSync {
-            Sit.sitOnBlock(this@ensurePlayer, target)
+            BlockSit.sit(this@ensurePlayer, target)
         }
 
         val message = when (result) {

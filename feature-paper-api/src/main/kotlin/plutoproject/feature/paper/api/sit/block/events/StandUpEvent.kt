@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.api.sit.events
+package plutoproject.feature.paper.api.sit.block.events
 
 import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable

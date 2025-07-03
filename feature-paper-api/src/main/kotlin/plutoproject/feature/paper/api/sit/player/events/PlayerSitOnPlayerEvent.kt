@@ -1,9 +1,10 @@
-package plutoproject.feature.paper.api.sit.events
+package plutoproject.feature.paper.api.sit.player.events
 
 import org.bukkit.entity.Player
 import org.bukkit.event.HandlerList
 import plutoproject.feature.paper.api.sit.SitAttemptResult
 import plutoproject.feature.paper.api.sit.SitOptions
+import plutoproject.feature.paper.api.sit.block.events.SitEvent
 
 class PlayerSitOnPlayerEvent(
     player: Player,

@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.sit.listeners
+package plutoproject.feature.paper.sit.block.listeners
 
 import org.bukkit.block.Block
 import org.bukkit.entity.EntityType
@@ -8,10 +8,10 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.entity.EntitySpawnEvent
-import plutoproject.feature.paper.api.sit.Sit
+import plutoproject.feature.paper.api.sit.block.BlockSit
 
 @Suppress("UnusedReceiverParameter")
-object BlockListener : Listener {
+object BlockSitBlockListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun BlockBreakEvent.e() {
         handleSeatBlockBreak(block)
@@ -54,7 +54,7 @@ object BlockListener : Listener {
     }
 
     private fun handleSeatBlockBreak(block: Block) {
-        val sitter = Sit.getSitterOn(block) ?: return
-        Sit.standUp(sitter)
+        val sitter = BlockSit.getSitter(block) ?: return
+        BlockSit.standUp(sitter)
     }
 }

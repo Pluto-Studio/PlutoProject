@@ -1,15 +1,14 @@
-package plutoproject.feature.paper.sit.strategies
+package plutoproject.feature.paper.sit.block.strategies
 
 import org.bukkit.Location
 import org.bukkit.block.Block
-import org.bukkit.block.data.type.Scaffolding
 import org.bukkit.entity.Player
-import plutoproject.feature.paper.api.sit.BlockSitDirection
-import plutoproject.feature.paper.api.sit.BlockSitStrategy
+import plutoproject.feature.paper.api.sit.block.BlockSitDirection
+import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
 
-object ScaffoldingBlockSitStrategy : BlockSitStrategy {
+object CarpetBlockSitStrategy : BlockSitStrategy {
     override fun match(block: Block): Boolean {
-        return block.blockData is Scaffolding
+        return block.type.name.lowercase().endsWith("_carpet")
     }
 
     override fun isAllowed(block: Block): Boolean {
@@ -17,7 +16,7 @@ object ScaffoldingBlockSitStrategy : BlockSitStrategy {
     }
 
     override fun shouldSitOnRightClick(player: Player, block: Block): Boolean {
-        return false
+        return true
     }
 
     override fun getSitLocation(player: Player, block: Block): Location {

@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.sit.listeners
+package plutoproject.feature.paper.sit.block.listeners
 
 import org.bukkit.Chunk
 import org.bukkit.entity.ArmorStand
@@ -6,9 +6,9 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
-import plutoproject.feature.paper.api.sit.Sit
+import plutoproject.feature.paper.api.sit.block.BlockSit
 
-object ChunkListener : Listener {
+object BlockSitChunkListener : Listener {
     @EventHandler
     fun ChunkUnloadEvent.e() {
         chunk.removeTemporaryArmorStands()
@@ -21,7 +21,7 @@ object ChunkListener : Listener {
 
     private fun Chunk.removeTemporaryArmorStands() {
         entities
-            .filter { it is ArmorStand && Sit.isTemporaryArmorStand(it) }
+            .filter { it is ArmorStand && BlockSit.isTemporarySeatEntity(it) }
             .forEach { it.remove() }
     }
 }

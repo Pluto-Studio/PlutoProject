@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.api.sit
+package plutoproject.feature.paper.api.sit.block
 
 sealed class BlockSitDirection(val yaw: Float) {
     data object South : BlockSitDirection(0.0f)

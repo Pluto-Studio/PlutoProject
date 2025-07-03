@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.api.sit
+package plutoproject.feature.paper.api.sit.block
 
 import org.bukkit.Location
 import org.bukkit.block.Block

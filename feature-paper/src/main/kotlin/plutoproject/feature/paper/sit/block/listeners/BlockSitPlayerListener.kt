@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.sit.listeners
+package plutoproject.feature.paper.sit.block.listeners
 
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -9,29 +9,29 @@ import org.bukkit.event.entity.EntityDismountEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.EquipmentSlot
-import plutoproject.feature.paper.api.sit.Sit
 import plutoproject.feature.paper.api.sit.SitFinalResult.*
-import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromBlockEvent
-import plutoproject.feature.paper.api.sit.events.PlayerStandUpFromPlayerEvent
-import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
+import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.block.events.PlayerStandUpFromBlockEvent
+import plutoproject.feature.paper.api.sit.player.events.PlayerStandUpFromPlayerEvent
 import plutoproject.feature.paper.sit.SIT_FAILED_SOUND
+import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
 import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_OCCUPIED_TITLE
 
-object PlayerListener : Listener {
+object BlockSitPlayerListener : Listener {
     private val standingUp = mutableSetOf<Player>()
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun EntityDismountEvent.e() {
         if (entity !is Player) return
         val player = entity as Player
-        if (!Sit.getState(player).isSitting) return
+        if (!BlockSit.isSitting(player)) return
         if (standingUp.contains(player)) {
             standingUp.remove(player)
             return
         }
 
         isCancelled = true
-        Sit.standUp(player)
+        BlockSit.standUp(player)
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -62,14 +62,14 @@ object PlayerListener : Listener {
         if (!action.isRightClick) return
         if (!player.inventory.itemInMainHand.type.isAir) return
         if (clickedBlock == null) return
-        if (Sit.getState(player).isSitting) return
+        if (BlockSit.isSitting(player)) return
 
-        val strategy = Sit.getStrategy(clickedBlock!!) ?: return
+        val strategy = BlockSit.getStrategy(clickedBlock!!) ?: return
         if (!strategy.shouldSitOnRightClick(player, clickedBlock!!)) return
 
         isCancelled = true
         player.swingMainHand()
-        val result = Sit.sitOnBlock(player, clickedBlock!!)
+        val result = BlockSit.sit(player, clickedBlock!!)
 
         val title = when (result) {
             SUCCEED -> null
@@ -87,7 +87,7 @@ object PlayerListener : Listener {
     }
 
     private fun handlePlayerStandUp(player: Player) {
-        if (!Sit.getState(player).isSitting) return
-        Sit.standUp(player)
+        if (!BlockSit.isSitting(player)) return
+        BlockSit.standUp(player)
     }
 }

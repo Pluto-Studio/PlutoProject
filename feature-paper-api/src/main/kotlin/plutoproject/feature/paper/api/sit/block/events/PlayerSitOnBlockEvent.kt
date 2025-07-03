@@ -1,14 +1,19 @@
-package plutoproject.feature.paper.api.sit.events
+package plutoproject.feature.paper.api.sit.block.events
 
+import org.bukkit.block.Block
 import org.bukkit.entity.Player
 import org.bukkit.event.HandlerList
+import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
+import plutoproject.feature.paper.api.sit.SitAttemptResult
 import plutoproject.feature.paper.api.sit.SitOptions
 
-class PlayerStandUpFromPlayerEvent(
+class PlayerSitOnBlockEvent(
     player: Player,
     options: SitOptions,
-    val sittingOn: Player
-) : StandUpEvent(player, options) {
+    attemptResult: SitAttemptResult,
+    val sittingOn: Block,
+    val sitStrategy: BlockSitStrategy?,
+) : SitEvent(player, options, attemptResult) {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()

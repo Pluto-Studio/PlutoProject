@@ -1,11 +1,11 @@
-package plutoproject.feature.paper.sit.strategies
+package plutoproject.feature.paper.sit.block.strategies
 
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.Slab
 import org.bukkit.entity.Player
-import plutoproject.feature.paper.api.sit.BlockSitDirection
-import plutoproject.feature.paper.api.sit.BlockSitStrategy
+import plutoproject.feature.paper.api.sit.block.BlockSitDirection
+import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
 
 object SlabBlockSitStrategy : BlockSitStrategy {
     override fun match(block: Block): Boolean {
