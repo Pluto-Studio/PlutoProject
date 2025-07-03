@@ -28,19 +28,19 @@ object MenuItem : ItemStack(Material.BOOK) {
             it.setEnchantmentGlintOverride(true)
             it.persistentDataContainer.set(key, PersistentDataType.BOOLEAN, true)
             it.displayName(component {
-                text("手账") with mochaText
+                text("手账") with mochaText without italic()
             })
             it.lore(buildList {
                 add(component {
-                    text("记录着未尽之事的书。") with mochaSubtext0
+                    text("记录着未尽之事的书。") with mochaSubtext0 without italic()
                 })
                 add(component {
-                    text("若不慎丢失的话，可以在工作台里再打造一本。") with mochaSubtext0
+                    text("若不慎丢失的话，可以在工作台里再打造一本。") with mochaSubtext0 without italic()
                 })
                 add(Component.empty())
                 add(component {
-                    text("手持右键 ") with mochaLavender
-                    text("打开手账") with mochaText
+                    text("手持右键 ") with mochaLavender without italic()
+                    text("打开手账") with mochaText without italic()
                 })
             })
         }
