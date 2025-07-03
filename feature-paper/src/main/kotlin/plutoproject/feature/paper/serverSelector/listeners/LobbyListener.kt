@@ -50,7 +50,11 @@ object LobbyListener : Listener, KoinComponent {
 
     @EventHandler
     fun PlayerJoinEvent.e() {
-        player.inventory.clear()
+        /*
+        if (!player.hasPermission(PROTECTION_BYPASS)) {
+            player.inventory.clear()
+        }
+        */
         if (!player.inventory.contents
                 .filterNotNull()
                 .any { it.isServerSelector }
@@ -67,6 +71,7 @@ object LobbyListener : Listener, KoinComponent {
         runAsync {
             player.showPromptTitle()
         }
+        // if (player.hasPermission(PROTECTION_BYPASS)) return
         player.gameMode = GameMode.ADVENTURE
     }
 
