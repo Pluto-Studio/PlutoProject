@@ -36,7 +36,7 @@ abstract class FilterListMenu<E, F : Any, M : FilterListMenuModel<E, F>>(
         val model = LocalListMenuModel.current
         Selector(
             title = component {
-                text("筛选") with mochaText without italic()
+                text("筛选") with mochaText
             },
             options = filters.values.toList(),
             goNext = model::internalNextFilter,

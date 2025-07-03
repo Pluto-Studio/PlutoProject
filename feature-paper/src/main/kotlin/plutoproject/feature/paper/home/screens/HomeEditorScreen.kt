@@ -3,7 +3,10 @@ package plutoproject.feature.paper.home.screens
 import androidx.compose.runtime.*
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import ink.pmc.advkt.component.*
+import ink.pmc.advkt.component.component
+import ink.pmc.advkt.component.replace
+import ink.pmc.advkt.component.text
+import ink.pmc.advkt.component.translatable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
@@ -12,7 +15,7 @@ import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
-import plutoproject.framework.common.util.chat.UI_INVALID_SOUND
+import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
@@ -55,7 +58,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 Star()
                 Rename()
                 SetIcon()
-                ChangeLocation()
+                Move()
                 ItemSpacer()
                 Delete()
             }
@@ -77,19 +80,19 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 delay(1.seconds)
                 state = newState
             }
-            player.playSound(UI_HOME_EDIT_SUCCEED_SOUND)
+            player.playSound(UI_SUCCEED_SOUND)
         }
 
         Item(
             material = Material.SUNFLOWER,
             name = when (state) {
-                PreferState.NOT_PREFERRED -> UI_HOME_PREFER
-                PreferState.PREFERRED -> UI_HOME_PREFER_UNSET
-                PreferState.SUCCEED -> UI_HOME_EDIT_SUCCEED
+                PreferState.NOT_PREFERRED -> UI_HOME_EDITOR_SET_PREFER
+                PreferState.PREFERRED -> UI_HOME_EDITOR_UNSET_PREFER
+                PreferState.SUCCEED -> UI_HOME_EDITOR_SAVED
             },
             lore = when (state) {
-                PreferState.NOT_PREFERRED -> UI_HOME_PREFER_LORE
-                PreferState.PREFERRED -> UI_HOME_PREFER_UNSET_LORE
+                PreferState.NOT_PREFERRED -> UI_HOME_EDITOR_SET_PREFER_LORE
+                PreferState.PREFERRED -> UI_HOME_EDITOR_UNSET_PREFER_LORE
                 PreferState.SUCCEED -> emptyList()
             },
             enchantmentGlint = state == PreferState.SUCCEED || state == PreferState.PREFERRED,
@@ -125,19 +128,19 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 delay(1.seconds)
                 state = newState
             }
-            player.playSound(UI_HOME_EDIT_SUCCEED_SOUND)
+            player.playSound(UI_SUCCEED_SOUND)
         }
 
         Item(
             material = Material.NETHER_STAR,
             name = when (state) {
-                StarState.NOT_STARRED -> UI_HOME_STAR
-                StarState.STARRED -> UI_HOME_STAR_UNSET
-                StarState.SUCCEED -> UI_HOME_EDIT_SUCCEED
+                StarState.NOT_STARRED -> UI_HOME_EDITOR_SET_STAR
+                StarState.STARRED -> UI_HOME_EDITOR_UNSET_STAR
+                StarState.SUCCEED -> UI_HOME_EDITOR_SAVED
             },
             lore = when (state) {
-                StarState.NOT_STARRED -> UI_HOME_STAR_LORE
-                StarState.STARRED -> UI_HOME_STAR_UNSET_LORE
+                StarState.NOT_STARRED -> UI_HOME_EDITOR_SET_STAR_LORE
+                StarState.STARRED -> UI_HOME_EDITOR_UNSET_STAR_LORE
                 StarState.SUCCEED -> emptyList()
             },
             enchantmentGlint = state == StarState.SUCCEED || state == StarState.STARRED,
@@ -171,8 +174,8 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
         val succeed by remember { mutableStateOf(false) }
         Item(
             material = Material.NAME_TAG,
-            name = if (!succeed) UI_HOME_RENAME else UI_HOME_EDIT_SUCCEED,
-            lore = if (!succeed) UI_HOME_RENAME_LORE else emptyList(),
+            name = if (!succeed) UI_HOME_EDITOR_RENAME else UI_HOME_EDITOR_SAVED,
+            lore = if (!succeed) UI_HOME_EDITOR_RENAME_LORE else emptyList(),
             enchantmentGlint = succeed,
             modifier = Modifier.clickable {
                 if (!home.isLoaded) return@clickable
@@ -185,21 +188,21 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
 
     @Composable
     @Suppress("FunctionName")
-    private fun ChangeLocation() {
+    private fun Move() {
         val player = LocalPlayer.current
         var succeed by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         Item(
             material = Material.COMPASS,
-            name = if (!succeed) UI_HOME_CHANGE_LOCATION else UI_HOME_EDIT_SUCCEED,
-            lore = if (!succeed) UI_HOME_CHANGE_LOCATION_LORE else emptyList(),
+            name = if (!succeed) UI_HOME_EDITOR_MOVE else UI_HOME_EDITOR_SAVED,
+            lore = if (!succeed) UI_HOME_EDITOR_MOVE_LORE else emptyList(),
             enchantmentGlint = succeed,
             modifier = Modifier.clickable {
                 if (!home.isLoaded) return@clickable
                 if (clickType != ClickType.LEFT || succeed) return@clickable
                 home.location = player.location
                 runAsync { home.update() }
-                whoClicked.playSound(UI_HOME_EDIT_SUCCEED_SOUND)
+                whoClicked.playSound(UI_SUCCEED_SOUND)
                 coroutineScope.launch {
                     succeed = true
                     delay(1.seconds)
@@ -216,14 +219,14 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
         val coroutineScope = rememberCoroutineScope()
         Item(
             material = Material.RED_STAINED_GLASS_PANE,
-            name = UI_HOME_DELETE,
-            lore = UI_HOME_DELETE_LORE,
+            name = UI_HOME_EDITOR_DELETE,
+            lore = UI_HOME_EDITOR_DELETE_LORE,
             modifier = Modifier.clickable {
                 if (!home.isLoaded) return@clickable
                 if (clickType != ClickType.SHIFT_LEFT) return@clickable
                 coroutineScope.launch {
                     HomeManager.remove(home.id)
-                    whoClicked.playSound(UI_HOME_EDITOR_REMOVE_SOUND)
+                    whoClicked.playSound(UI_HOME_EDITOR_DELETE_SOUND)
                     navigator.pop()
                 }
             }
@@ -240,36 +243,36 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
         Item(
             material = if (state == SetIconState.SUCCEED && current != null) current!! else Material.ITEM_FRAME,
             name = if (state == SetIconState.SUCCEED) component {
-                text("√ 已保存") with mochaGreen without italic()
+                text("√ 已保存") with mochaGreen
             } else component {
-                text("设置图标") with mochaText without italic()
+                text("设置图标") with mochaText
             },
             enchantmentGlint = state == SetIconState.SUCCEED,
             lore = when (state) {
                 SetIconState.NONE -> buildList {
                     add(component {
-                        text("将物品放置在此处以设置图标") with mochaSubtext0 without italic()
+                        text("将物品放置在此处以设置图标") with mochaSubtext0
                     })
                     if (current != null) {
                         add(component {
-                            text("当前设置 ") with mochaSubtext0 without italic()
-                            translatable(current!!.translationKey()) with mochaText without italic()
+                            text("当前设置 ") with mochaSubtext0
+                            translatable(current!!.translationKey()) with mochaText
                         })
                     }
                     add(Component.empty())
                     add(component {
-                        text("左键 ") with mochaLavender without italic()
-                        text("设置图标") with mochaText without italic()
+                        text("左键 ") with mochaLavender
+                        text("设置图标") with mochaText
                     })
                     add(component {
-                        text("Shift + 左键 ") with mochaLavender without italic()
-                        text("恢复默认") with mochaText without italic()
+                        text("Shift + 左键 ") with mochaLavender
+                        text("恢复默认") with mochaText
                     })
                 }
 
                 SetIconState.NO_ITEM -> buildList {
                     add(component {
-                        text("请将物品放置在此处") with mochaMaroon without italic()
+                        text("请将物品放置在此处") with mochaMaroon
                     })
                 }
 
@@ -283,7 +286,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                         val material = cursor?.type
                         if (material == null) {
                             state = SetIconState.NO_ITEM
-                            player.playSound(UI_INVALID_SOUND)
+                            player.playSound(UI_FAILED_SOUND)
                             coroutineScope.launch {
                                 delay(1.seconds)
                                 state = SetIconState.NONE

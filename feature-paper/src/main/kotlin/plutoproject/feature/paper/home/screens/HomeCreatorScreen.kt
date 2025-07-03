@@ -11,6 +11,8 @@ import net.wesjd.anvilgui.AnvilGUI.Slot.*
 import org.bukkit.Material
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
+import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
+import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
@@ -59,7 +61,7 @@ class HomeCreatorScreen : InteractiveScreen() {
         Anvil(
             title = UI_HOME_CREATOR_TITLE,
             left = ItemStack(Material.YELLOW_STAINED_GLASS_PANE) {
-                lore(UI_HOME_CREATOR_LEFT_LORE)
+                lore(UI_HOME_CREATOR_EXIT_LORE)
             },
             right = ItemStack(Material.GRAY_STAINED_GLASS_PANE) {
                 meta {
@@ -69,11 +71,11 @@ class HomeCreatorScreen : InteractiveScreen() {
             output = ItemStack(Material.PAPER) {
                 lore(
                     when (state) {
-                        0 -> getUIHomeCreatorOutputButtonLore(player.location)
-                        1 -> UI_HOME_EDITOR_RENAME_SAVE_INVALID_LORE
-                        2 -> UI_HOME_EDITOR_RENAME_SAVE_TOO_LONG
-                        3 -> UI_HOME_EDITOR_RENAME_SAVE_EXISTED
-                        4 -> UI_HOME_EDITOR_RENAME_SAVED
+                        0 -> getUIHomeCreatorOutputLore(player.location)
+                        1 -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_INVALID_LORE
+                        2 -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_LENGTH_LIMIT_LORE
+                        3 -> UI_HOME_EDITOR_RENAME_SAVE_FAILED_EXISTED_LORE
+                        4 -> UI_HOME_EDITOR_RENAME_SAVED_LORE
                         else -> error("Unsupported state")
                     }
                 )
@@ -95,14 +97,14 @@ class HomeCreatorScreen : InteractiveScreen() {
                         val input = r.text
 
                         if (input.length > HomeManager.nameLengthLimit) {
-                            player.playSound(UI_HOME_EDITOR_RENAME_INVALID_SOUND)
+                            player.playSound(UI_FAILED_SOUND)
                             stateTransition(2)
                             return@Anvil emptyList()
                         }
 
                         coroutineScope.launch {
                             if (HomeManager.has(player, input)) {
-                                player.playSound(UI_HOME_EDITOR_RENAME_INVALID_SOUND)
+                                player.playSound(UI_FAILED_SOUND)
                                 stateTransition(3)
                                 return@launch
                             }
@@ -112,7 +114,7 @@ class HomeCreatorScreen : InteractiveScreen() {
                             }
 
                             stateTransition(4, true)
-                            player.playSound(UI_HOME_EDIT_SUCCEED_SOUND)
+                            player.playSound(UI_SUCCEED_SOUND)
                         }
 
                         emptyList()

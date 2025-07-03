@@ -4,7 +4,6 @@ import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
-import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
@@ -17,7 +16,6 @@ import plutoproject.feature.paper.serverSelector.Server
 import plutoproject.feature.paper.serverSelector.ServerSelectorConfig
 import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen.AutoJoinState.*
 import plutoproject.feature.paper.serverSelector.transferServer
-import plutoproject.framework.common.api.bridge.Bridge
 import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
@@ -36,7 +34,6 @@ import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxWidth
 import plutoproject.framework.paper.api.interactive.modifiers.height
 import plutoproject.framework.paper.util.coroutine.withSync
-import kotlin.time.Duration.Companion.seconds
 
 private val titles = arrayOf(
     "开始新的征程！",
@@ -92,51 +89,37 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
     @Composable
     private fun Server(server: Server, ingredient: Ingredient) {
         val player = LocalPlayer.current
-        var bridgeServer by remember(server) { mutableStateOf(Bridge.getServer(server.bridgeId)) }
-        var isOnline by remember(server) { mutableStateOf(bridgeServer?.isOnline ?: false) }
-        var playerCount by remember(server) { mutableStateOf(bridgeServer?.playerCount ?: 0) }
-        LaunchedEffect(server) {
-            while (true) {
-                delay(1.seconds)
-                val current = Bridge.getServer(server.bridgeId)
-                if (bridgeServer != current) {
-                    bridgeServer = current
-                }
-                isOnline = bridgeServer?.isOnline ?: false
-                playerCount = if (isOnline) bridgeServer!!.playerCount else 0
-            }
-        }
         Item(
             material = ingredient.material,
             name = server.displayName.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE),
             lore = buildList {
+                /*
                 if (isOnline) {
                     add(component {
-                        text("• 在线 ") with mochaGreen without italic()
-                        text("${bridgeServer?.playerCount} ") with mochaText without italic()
-                        text("名玩家") with mochaSubtext0 without italic()
+                        text("• 在线 ") with mochaGreen
+                        text("${bridgeServer?.playerCount} ") with mochaText
+                        text("名玩家") with mochaSubtext0
                     })
                 } else {
                     add(component {
-                        text("× 离线") with mochaMaroon without italic()
+                        text("× 离线") with mochaMaroon
                     })
                 }
                 add(Component.empty())
+                 */
                 addAll(server.description.map {
                     it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
                 })
-                if (isOnline) {
-                    add(Component.empty())
-                    add(component {
-                        text("左键 ") with mochaLavender without italic()
-                        text("传送至此处") with mochaText without italic()
-                    })
-                }
+                add(Component.empty())
+                add(component {
+                    text("左键 ") with mochaLavender
+                    text("传送至此处") with mochaText
+                })
             },
             modifier = Modifier.clickable {
                 if (clickType != ClickType.LEFT) return@clickable
-                if (!isOnline) return@clickable
-                runAsync { player.transferServer(server.bridgeId) }
+                // if (!isOnline) return@clickable
+                runAsync { player.transferServer(server.serverId) }
                 withSync { player.closeInventory() }
             }
         )
@@ -165,35 +148,35 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
             material = Material.TRIPWIRE_HOOK,
             name = when (state) {
                 LOADING -> component {
-                    text("正在加载...") with mochaSubtext0 without italic()
+                    text("正在加载...") with mochaSubtext0
                 }
 
                 ENABLED -> component {
-                    text("自动传送 ") with mochaText without italic()
-                    text("开") with mochaGreen without italic()
+                    text("自动传送 ") with mochaText
+                    text("开") with mochaGreen
                 }
 
                 DISABLED -> component {
-                    text("自动传送 ") with mochaText without italic()
-                    text("关") with mochaMaroon without italic()
+                    text("自动传送 ") with mochaText
+                    text("关") with mochaMaroon
                 }
             },
             enchantmentGlint = state == ENABLED,
             lore = if (state == LOADING) emptyList() else buildList {
                 add(component {
-                    text("下次进入时，自动传送上次选择的服务器") with mochaSubtext0 without italic()
+                    text("下次进入时，自动传送上次选择的服务器") with mochaSubtext0
                 })
                 add(component {
-                    text("若需返回此大厅，请使用 ") with mochaSubtext0 without italic()
-                    text("/lobby") with mochaLavender without italic()
+                    text("若需返回此大厅，请使用 ") with mochaSubtext0
+                    text("/lobby") with mochaLavender
                 })
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
+                    text("左键 ") with mochaLavender
                     if (state == DISABLED) {
-                        text("开启功能") with mochaText without italic()
+                        text("开启功能") with mochaText
                     } else {
-                        text("关闭功能") with mochaText without italic()
+                        text("关闭功能") with mochaText
                     }
                 })
             },

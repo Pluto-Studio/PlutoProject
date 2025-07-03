@@ -81,25 +81,25 @@ class TeleportRequestScreen : ListMenu<Player, TeleportRequestScreenModel>() {
         Item(
             itemStack = ItemStack(Material.PLAYER_HEAD) {
                 displayName = if (model.isRequestSent) component {
-                    text("√ 已发送") with mochaGreen without italic()
+                    text("√ 已发送") with mochaGreen
                 } else component {
-                    text(obj.name) with mochaFlamingo without italic()
+                    text(obj.name) with mochaFlamingo
                 }
                 lore(
                     if (model.isRequestSent) {
                         emptyList()
                     } else buildList {
                         add(component {
-                            text("$world $x, $y, $z") with mochaSubtext0 without italic()
+                            text("$world $x, $y, $z") with mochaSubtext0
                         })
                         add(Component.empty())
                         add(component {
-                            text("左键 ") with mochaLavender without italic()
-                            text("请求传送至其位置") with mochaText without italic()
+                            text("左键 ") with mochaLavender
+                            text("请求传送至其位置") with mochaText
                         })
                         add(component {
-                            text("右键 ") with mochaLavender without italic()
-                            text("请求其传送至你这里") with mochaText without italic()
+                            text("右键 ") with mochaLavender
+                            text("请求其传送至你这里") with mochaText
                         })
                     }
                 )

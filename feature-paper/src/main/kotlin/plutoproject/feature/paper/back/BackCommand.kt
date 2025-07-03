@@ -16,6 +16,6 @@ object BackCommand {
             return@ensurePlayer
         }
         BackManager.backSuspend(this)
-        sendMessage(COMMAND_BACK_SUCCEED)
+        sendMessage(COMMAND_BACK)
     }
 }

@@ -76,14 +76,14 @@ class ExampleScreen1 : InteractiveScreen() {
                 repeat(9) {
                     Item(
                         material = Material.GRAY_STAINED_GLASS_PANE,
-                        name = component { text("占位符") with mochaSubtext0 without italic() }
+                        name = component { text("占位符") with mochaSubtext0 }
                     )
                 }
             }
             Row(horizontalArrangement = arrange, modifier = Modifier.fillMaxSize()) {
                 Item(
                     material = Material.RED_STAINED_GLASS_PANE,
-                    name = component { text("关闭菜单") with mochaMaroon without italic() },
+                    name = component { text("关闭菜单") with mochaMaroon },
                     modifier = Modifier.clickable {
                         withSync {
                             player.closeInventory()
@@ -92,14 +92,14 @@ class ExampleScreen1 : InteractiveScreen() {
                 )
                 Item(
                     material = Material.GREEN_STAINED_GLASS_PANE,
-                    name = component { text("去往下一页") with mochaGreen without italic() },
+                    name = component { text("去往下一页") with mochaGreen },
                     modifier = Modifier.clickable {
                         navigator.push(ExampleScreen2())
                     }
                 )
                 Item(
                     material = Material.YELLOW_STAINED_GLASS_PANE,
-                    name = component { text("切换排列方式") with mochaYellow without italic() },
+                    name = component { text("切换排列方式") with mochaYellow },
                     modifier = Modifier.clickable {
                         nextArrange()
                     }
@@ -111,18 +111,18 @@ class ExampleScreen1 : InteractiveScreen() {
             Row(modifier = Modifier.fillMaxWidth().height(1), horizontalArrangement = Arrangement.Center) {
                 Item(
                     material = Material.GREEN_STAINED_GLASS_PANE,
-                    name = component { text("增加点击次数") with mochaGreen without italic() },
+                    name = component { text("增加点击次数") with mochaGreen },
                     modifier = Modifier.clickable {
                         clicks++
                     }
                 )
                 Item(
                     material = Material.PAPER,
-                    name = component { text("你点击了 $clicks 下") with mochaPink without italic() }
+                    name = component { text("你点击了 $clicks 下") with mochaPink }
                 )
                 Item(
                     material = Material.RED_STAINED_GLASS_PANE,
-                    name = component { text("减少点击次数") with mochaRed without italic() },
+                    name = component { text("减少点击次数") with mochaRed },
                     modifier = Modifier.clickable {
                         if (clicks == 0) {
                             return@clickable
@@ -137,7 +137,7 @@ class ExampleScreen1 : InteractiveScreen() {
             repeat(9) {
                 Item(
                     material = Material.GRAY_STAINED_GLASS_PANE,
-                    name = component { text("占位符") with mochaSubtext0 without italic() }
+                    name = component { text("占位符") with mochaSubtext0 }
                 )
             }
         }

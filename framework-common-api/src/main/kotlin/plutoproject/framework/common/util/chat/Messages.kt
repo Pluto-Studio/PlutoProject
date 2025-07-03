@@ -6,7 +6,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 
 val BRANDING = component {
-    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 ᴘʀᴏᴊᴇᴄᴛ</gradient>")
+    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 Project</gradient>")
 }
 
 const val ECONOMY_SYMBOL = "\uD83C\uDF1F"
@@ -40,11 +40,11 @@ val WORK_IN_PROGRESS = component {
 }
 
 val UI_CLOSE = component {
-    text("关闭") with mochaMaroon without italic()
+    text("关闭") with mochaMaroon
 }
 
 val UI_BACK = component {
-    text("返回") with mochaYellow without italic()
+    text("返回") with mochaYellow
 }
 
 val UI_BACK_OPERATION = component {

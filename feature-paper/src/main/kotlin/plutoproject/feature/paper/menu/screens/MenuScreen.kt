@@ -117,8 +117,8 @@ class MenuScreen : InteractiveScreen(), KoinComponent {
                 if (screenModel.currentPageId == descriptor.id) return@buildList
                 add(Component.empty())
                 add(component {
-                    text("左键 ") with mochaLavender without italic()
-                    text("切换至此页面") with mochaText without italic()
+                    text("左键 ") with mochaLavender
+                    text("切换至此页面") with mochaText
                 })
             },
             modifier = Modifier.clickable {

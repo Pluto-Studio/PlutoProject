@@ -1,10 +1,7 @@
 package plutoproject.feature.paper.randomTeleport
 
 import ink.pmc.advkt.component.*
-import ink.pmc.advkt.sound.key
-import ink.pmc.advkt.sound.sound
 import ink.pmc.advkt.title.*
-import net.kyori.adventure.key.Key
 import net.kyori.adventure.util.Ticks
 import plutoproject.feature.paper.api.randomTeleport.RandomTeleportManager
 import plutoproject.framework.common.util.chat.palettes.*
@@ -12,7 +9,7 @@ import plutoproject.framework.common.util.chat.toFormattedComponent
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
-val RANDOM_TELEPORT_SUCCEED = component {
+val RANDOM_TELEPORTED = component {
     text("已将你传送到 ") with mochaPink
     text("<location>") with mochaText
     newline()
@@ -22,8 +19,8 @@ val RANDOM_TELEPORT_SUCCEED = component {
     text("<lastLookupTime>") with mochaText
 }
 
-val RANDOM_TELEPORT_SUCCEED_COST = component {
-    raw(RANDOM_TELEPORT_SUCCEED)
+val RANDOM_TELEPORTED_WITH_COST = component {
+    raw(RANDOM_TELEPORTED)
     text("，花费 ") with mochaSubtext0
     text("<amount><symbol>") with mochaText
 }
@@ -36,7 +33,7 @@ val RANDOM_TELEPORT_FAILED_BALANCE_NOT_ENOUGH = component {
     text("<balance> <symbol>") with mochaText
 }
 
-val RANDOM_TELEPORT_SEARCHING_TITLE = title {
+val RANDOM_TELEPORT_SEARCH_TITLE = title {
     times {
         fadeIn(Ticks.duration(5))
         stay(Duration.ofMinutes(1))
@@ -50,11 +47,7 @@ val RANDOM_TELEPORT_SEARCHING_TITLE = title {
     }
 }
 
-val RANDOM_TELEPORT_SEARCHING_SOUND = sound {
-    key(Key.key("entity.tnt.primed"))
-}
-
-val RANDOM_TELEPORT_SEARCHING_FAILED = component {
+val RANDOM_TELEPORT_SEARCH_FAILED = component {
     text("这次运气似乎不太好...") with mochaYellow
     newline()
     text("如果此问题总是发生，请报告给管理组") with mochaSubtext0
@@ -64,7 +57,7 @@ val RANDOM_TELEPORT_FAILED_IN_PROGRESS = component {
     text("你已有一个正在处理的随机传送操作，请不要着急") with mochaYellow
 }
 
-val COMMAND_RTP_WORLD_NOT_ENABLED = component {
+val COMMAND_RTP_FAILED_WORLD_NOT_ENABLED = component {
     text("该世界未启用随机传送") with mochaMaroon
 }
 
@@ -76,7 +69,7 @@ val COMMAND_RTP_COOLDOWN = component {
     text("后再试") with mochaSubtext0
 }
 
-val commandRtpStatus
+val COMMAND_RTP_STATUS
     get() = component {
         text("随机传送状态：") with mochaFlamingo
         newline()

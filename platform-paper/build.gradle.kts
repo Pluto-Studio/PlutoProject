@@ -15,8 +15,9 @@ paperPluginYaml {
     name = "PlutoProject"
     main = "plutoproject.platform.paper.PlutoPaperPlatform"
     loader = "plutoproject.platform.paper.PlutoPaperLoader"
-    apiVersion = "1.21.4"
-    authors = listOf("nostalfinals", "PlutoProject Contributors")
+    apiVersion = "1.21.7"
+    author = "Pluto Studio"
+    description = "A collection of framework and feature components for the PlutoProject server."
     dependencies {
         server(
             name = "spark",

@@ -168,10 +168,6 @@ val COMMAND_TPA_AFK = component {
     text("对方目前处于离开状态，可能无法及时查看请求") with mochaSubtext0
 }
 
-val TELEPORT_REQUEST_RECEIVED_SOUND = sound {
-    key(Key.key("block.decorated_pot.insert"))
-}
-
 private val TELEPORT_REQUEST_OPERATION = component {
     text("[× 取消]") with mochaYellow with showText { text("点击以取消") with mochaYellow } with runCommand("/plutoproject:tpcancel")
 }

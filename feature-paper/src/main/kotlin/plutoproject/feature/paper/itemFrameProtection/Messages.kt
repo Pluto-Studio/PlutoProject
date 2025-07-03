@@ -9,27 +9,27 @@ import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
 
 
-val COMMAND_ITEMFRAME_FAILED_NO_FRAME = component {
+val COMMAND_ITEMFRAME_FAILED_NO_ITEMFRAME = component {
     text("你需要对着一个物品展示框才可以这么做") with mochaMaroon
 }
 
-val COMMAND_ITEMFRAME_INV_ON_SUCCEED = component {
+val COMMAND_ITEMFRAME_TOGGLE_ON_INVISBLE = component {
     text("已将你面前的展示框隐藏") with mochaPink
 }
 
-val COMMAND_ITEMFRAME_INV_OFF_SUCCEED = component {
+val COMMAND_ITEMFRAME_TOGGLE_OFF_INVISBLE = component {
     text("已将你面前的展示框显现") with mochaPink
 }
 
-val COMMAND_ITEMFRAME_PROTECTION_ON_SUCCEED = component {
+val COMMAND_ITEMFRAME_TOGGLE_ON_PROTECTION = component {
     text("已将你面前的展示框保护") with mochaPink
 }
 
-val COMMAND_ITEMFRAME_PROTECTION_OFF_SUCCEED = component {
+val COMMAND_ITEMFRAME_TOGGLE_OFF_PROTECTION = component {
     text("已将你面前的展示框取消保护") with mochaPink
 }
 
-val ITEMFRAME_PROTECTED_ON_ACTION = component {
+val ITEMFRAME_PROTECTED = component {
     text("此展示框已被 ") with mochaSubtext0
     text("<player> ") with mochaText
     text("保护") with mochaSubtext0

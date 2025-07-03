@@ -6,7 +6,7 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.feature.paper.home.COMMAND_DELHOME_SUCCEED
+import plutoproject.feature.paper.home.COMMAND_DELHOME
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -19,7 +19,7 @@ object DelHomeCommand {
         runAsync {
             HomeManager.remove(home.id)
         }
-        sendMessage(COMMAND_DELHOME_SUCCEED.replace("<name>", home.name))
-        sendMessage(COMMAND_DELHOME_SUCCEED.replace("<name>", home.name))
+        sendMessage(COMMAND_DELHOME.replace("<name>", home.name))
+        sendMessage(COMMAND_DELHOME.replace("<name>", home.name))
     }
 }

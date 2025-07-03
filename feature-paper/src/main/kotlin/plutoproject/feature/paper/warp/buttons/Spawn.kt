@@ -13,7 +13,7 @@ import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.feature.paper.warp.screens.DefaultSpawnPickerScreen
-import plutoproject.framework.common.util.chat.component.replace
+import plutoproject.framework.common.util.chat.component.replaceInComponent
 import plutoproject.framework.common.util.chat.palettes.mochaFlamingo
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
@@ -54,12 +54,12 @@ fun Spawn() {
     Item(
         material = Material.COMPASS,
         name = component {
-            text("伊始之处") with mochaFlamingo without italic()
+            text("伊始之处") with mochaFlamingo
         },
         lore = when (preferredSpawnState) {
             is PreferredSpawnState.Loading -> buildList {
                 add(component {
-                    text("正在加载...") with mochaSubtext0 without italic()
+                    text("正在加载...") with mochaSubtext0
                 })
             }
 
@@ -67,38 +67,38 @@ fun Spawn() {
                 val spawn = (preferredSpawnState as PreferredSpawnState.Ready).spawn
                 val lore = buildList {
                     add(component {
-                        text("旅途的起点") with mochaSubtext0 without italic()
+                        text("旅途的起点") with mochaSubtext0
                     })
                     add(Component.empty())
                     add(component {
-                        text("左键 ") with mochaLavender without italic()
-                        text("回到主城") with mochaText without italic()
+                        text("左键 ") with mochaLavender
+                        text("回到主城") with mochaText
                     })
                     add(component {
-                        text("右键 ") with mochaLavender without italic()
-                        text("设置首选主城") with mochaText without italic()
+                        text("右键 ") with mochaLavender
+                        text("设置首选主城") with mochaText
                     })
                 }
                 val name = when (spawn.alias) {
-                    null -> component { text(spawn.name) with mochaText without italic() }
-                    else -> component { text(spawn.alias!!) with mochaText without italic() }
+                    null -> component { text(spawn.name) with mochaText }
+                    else -> component { text(spawn.alias!!) with mochaText }
                 }
                 val loc = spawn.let {
                     val world = it.location.world.aliasOrName
                     val x = it.location.blockX
                     val y = it.location.blockY
                     val z = it.location.blockZ
-                    component { text("$world $x, $y, $z") with mochaSubtext0 without italic() }
+                    component { text("$world $x, $y, $z") with mochaSubtext0 }
                 }
-                lore.replace("<spawn>", name).replace("<loc>", loc)
+                lore.replaceInComponent("<spawn>", name).replaceInComponent("<loc>", loc)
             }
 
             is PreferredSpawnState.None -> buildList {
                 add(component {
-                    text("你还没有首选的主城") with mochaSubtext0 without italic()
+                    text("你还没有首选的主城") with mochaSubtext0
                 })
                 add(component {
-                    text("右键点击来设置") with mochaSubtext0 without italic()
+                    text("右键点击来设置") with mochaSubtext0
                 })
             }
         }.toList(),

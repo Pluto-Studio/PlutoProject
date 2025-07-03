@@ -10,7 +10,7 @@ import org.incendo.cloud.context.CommandInput
 import org.incendo.cloud.parser.standard.StringParser
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.feature.paper.home.COMMAND_HOME_NOT_EXISTED
+import plutoproject.feature.paper.home.COMMAND_HOME_FAILED_NOT_EXISTED
 import plutoproject.framework.common.util.chat.component.replace
 import kotlin.jvm.optionals.getOrNull
 
@@ -33,7 +33,7 @@ object HomeCommons {
 
     @ExceptionHandler(HomeNotExistedException::class)
     fun CommandSender.homeNotFound(exception: HomeNotExistedException) {
-        sendMessage(COMMAND_HOME_NOT_EXISTED.replace("<name>", exception.name))
+        sendMessage(COMMAND_HOME_FAILED_NOT_EXISTED.replace("<name>", exception.name))
     }
 }
 

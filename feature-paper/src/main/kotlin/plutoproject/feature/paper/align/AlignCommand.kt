@@ -15,21 +15,21 @@ object AlignCommand {
     suspend fun CommandSender.align() = ensurePlayer {
         alignPos()
         alignView()
-        sendMessage(COMMAND_ALIGN_SUCCEED)
+        sendMessage(COMMAND_ALIGN)
     }
 
     @Command("align pos")
     @Permission("essentials.align.pos")
     suspend fun CommandSender.pos() = ensurePlayer {
         alignPos()
-        sendMessage(COMMAND_ALIGN_POS_SUCCEED)
+        sendMessage(COMMAND_ALIGN_POS)
     }
 
     @Command("align view")
     @Permission("essentials.align.view")
     suspend fun CommandSender.view() = ensurePlayer {
         alignView()
-        sendMessage(COMMAND_ALIGN_VIEW_SUCCEED)
+        sendMessage(COMMAND_ALIGN_VIEW)
     }
 
     private suspend fun Player.alignPos() {
