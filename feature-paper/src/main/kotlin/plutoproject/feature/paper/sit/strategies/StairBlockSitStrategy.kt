@@ -3,6 +3,7 @@ package plutoproject.feature.paper.sit.strategies
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace.*
+import org.bukkit.block.data.Bisected
 import org.bukkit.block.data.type.Stairs
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.BlockSitDirection
@@ -40,6 +41,10 @@ object StairBlockSitStrategy : BlockSitStrategy {
         val offsetY = -0.5
         var offsetZ = 0.0
 
+        if (stairs.half == Bisected.Half.TOP) {
+            return defaultLocation
+        }
+
         when (facing) {
             EAST -> {
                 offsetX = -0.25
@@ -69,9 +74,14 @@ object StairBlockSitStrategy : BlockSitStrategy {
     }
 
     override fun getSitDirection(player: Player, block: Block): BlockSitDirection {
+        val defaultDirection = DefaultBlockSitStrategy.getSitDirection(player, block)
         val stairs = block.blockData as Stairs
         val facing = stairs.facing
         val shape = stairs.shape
+
+        if (stairs.half == Bisected.Half.TOP) {
+            return defaultDirection
+        }
 
         return when (facing) {
             EAST -> {
