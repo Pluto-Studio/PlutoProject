@@ -1,6 +1,7 @@
 package plutoproject.feature.paper.randomTeleport
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
@@ -63,11 +64,29 @@ fun RandomTeleport() {
     val costMessage = "${cost}$economySymbol"
 
     var cooldownRemaining by remember { mutableStateOf(player.cooldownRemaining) }
+    var cooldownAnimationProgress by rememberSaveable { mutableStateOf(0) }
+    val cooldownAnimationIcon = when (cooldownAnimationProgress) {
+        0 -> Material.SMALL_AMETHYST_BUD
+        1 -> Material.MEDIUM_AMETHYST_BUD
+        2 -> Material.LARGE_AMETHYST_BUD
+        else -> error("Unexpected")
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
             delay(500)
             cooldownRemaining = player.cooldownRemaining
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            if (cooldownAnimationProgress < 2) {
+                cooldownAnimationProgress++
+            } else {
+                cooldownAnimationProgress = 0
+            }
         }
     }
 
@@ -79,7 +98,7 @@ fun RandomTeleport() {
     }
 
     Item(
-        material = Material.AMETHYST_SHARD,
+        material = if (state == RandomTeleportState.IN_COOLDOWN) cooldownAnimationIcon else Material.AMETHYST_SHARD,
         name = component {
             text("神奇水晶") with mochaMauve
         },
@@ -121,7 +140,7 @@ fun RandomTeleport() {
 
             RandomTeleportState.IN_COOLDOWN -> buildList {
                 add(component {
-                    text("传送冷却中...") with mochaSubtext0
+                    text("正在凝聚力量...") with mochaSubtext0
                 })
                 add(component {
                     text("还剩 ") with mochaSubtext0
