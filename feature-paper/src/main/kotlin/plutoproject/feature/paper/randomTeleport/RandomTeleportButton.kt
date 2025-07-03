@@ -2,7 +2,6 @@ package plutoproject.feature.paper.randomTeleport
 
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
@@ -17,7 +16,6 @@ import plutoproject.framework.common.util.chat.palettes.mochaMauve
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.toFormattedString
-import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
@@ -61,10 +59,9 @@ fun RandomTeleport() {
 
     val economySymbol = economy.currencyNameSingular() ?: ECONOMY_SYMBOL
     val balance = economy.getBalance(player)
-    val requirement = RandomTeleportManager.getRandomTeleportOptions(world).cost
+    val cost = RandomTeleportManager.getRandomTeleportOptions(world).cost
+    val costMessage = "${cost}$economySymbol"
 
-    val teleportCost = RandomTeleportManager.getRandomTeleportOptions(player.world).cost.trimmedString()
-    val teleportCostMessage = "$teleportCost$economySymbol"
     var cooldownRemaining by remember { mutableStateOf(player.cooldownRemaining) }
 
     LaunchedEffect(Unit) {
@@ -76,7 +73,7 @@ fun RandomTeleport() {
 
     val state = when {
         cooldownRemaining > ZERO -> RandomTeleportState.IN_COOLDOWN
-        !player.hasPermission(RANDOM_TELEPORT_COST_BYPASS_PERMISSION) && balance < requirement -> RandomTeleportState.COIN_NOT_ENOUGH
+        !player.hasPermission(RANDOM_TELEPORT_COST_BYPASS_PERMISSION) && balance < cost -> RandomTeleportState.COIN_NOT_ENOUGH
         !RandomTeleportManager.isEnabled(world) -> RandomTeleportState.NOT_AVAILABLE
         else -> RandomTeleportState.AVAILABLE
     }
@@ -97,8 +94,12 @@ fun RandomTeleport() {
                 add(Component.empty())
                 add(component {
                     text("左键 ") with mochaLavender
-                    text("进行随机传送 ") with mochaText
-                    text("($teleportCostMessage)") with mochaSubtext0
+                    if (cost > 0.0) {
+                        text("进行随机传送 ") with mochaText
+                        text("($costMessage)") with mochaSubtext0
+                    } else {
+                        text("进行随机传送") with mochaText
+                    }
                 })
             }
 
@@ -114,7 +115,7 @@ fun RandomTeleport() {
                 })
                 add(component {
                     text("进行随机传送需要 ") with mochaSubtext0
-                    text(teleportCostMessage) with mochaText
+                    text(costMessage) with mochaText
                 })
             }
 
