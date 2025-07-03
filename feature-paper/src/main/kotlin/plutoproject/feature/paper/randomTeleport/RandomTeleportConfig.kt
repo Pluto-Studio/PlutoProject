@@ -5,7 +5,7 @@ import kotlin.time.Duration
 
 data class RandomTeleportConfig(
     val cacheInterval: Int = 100,
-    val cooldown: Duration = Duration.parse("60s"),
+    val cooldown: Duration = Duration.parse("30s"),
     val default: Options = Options(),
     val worlds: Map<String, Options> = emptyMap(),
     val enabledWorlds: List<String> = listOf("world")
