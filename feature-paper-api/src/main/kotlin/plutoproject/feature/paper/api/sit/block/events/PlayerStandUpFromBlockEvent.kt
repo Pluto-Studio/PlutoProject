@@ -2,14 +2,16 @@ package plutoproject.feature.paper.api.sit.block.events
 
 import org.bukkit.block.Block
 import org.bukkit.entity.Player
+import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
+import org.bukkit.event.player.PlayerEvent
 import plutoproject.feature.paper.api.sit.SitOptions
 
 class PlayerStandUpFromBlockEvent(
-    player: Player,
-    options: SitOptions,
-    val sittingOn: Block
-) : StandUpEvent(player, options) {
+    val player: Player,
+    val options: SitOptions,
+    val seat: Block
+) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()
@@ -20,9 +22,13 @@ class PlayerStandUpFromBlockEvent(
 
     private var isCancelled = false
 
-    override fun getHandlers() = Companion.handlers
+    override fun getHandlers(): HandlerList {
+        return Companion.handlers
+    }
 
-    override fun isCancelled() = isCancelled
+    override fun isCancelled(): Boolean {
+        return isCancelled
+    }
 
     override fun setCancelled(cancel: Boolean) {
         isCancelled = cancel

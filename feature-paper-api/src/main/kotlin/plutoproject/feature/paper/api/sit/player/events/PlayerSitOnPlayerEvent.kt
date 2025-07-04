@@ -1,17 +1,18 @@
 package plutoproject.feature.paper.api.sit.player.events
 
 import org.bukkit.entity.Player
+import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
+import org.bukkit.event.player.PlayerEvent
 import plutoproject.feature.paper.api.sit.SitAttemptResult
 import plutoproject.feature.paper.api.sit.SitOptions
-import plutoproject.feature.paper.api.sit.block.events.SitEvent
 
 class PlayerSitOnPlayerEvent(
-    player: Player,
-    options: SitOptions,
-    attemptResult: SitAttemptResult,
-    val sittingOn: Player,
-) : SitEvent(player, options, attemptResult) {
+    val player: Player,
+    val options: SitOptions,
+    val attemptResult: SitAttemptResult,
+    val seat: Player,
+) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()
@@ -22,9 +23,13 @@ class PlayerSitOnPlayerEvent(
 
     private var isCancelled = false
 
-    override fun getHandlers() = Companion.handlers
+    override fun getHandlers(): HandlerList {
+        return Companion.handlers
+    }
 
-    override fun isCancelled() = isCancelled
+    override fun isCancelled(): Boolean {
+        return isCancelled
+    }
 
     override fun setCancelled(cancel: Boolean) {
         isCancelled = cancel
