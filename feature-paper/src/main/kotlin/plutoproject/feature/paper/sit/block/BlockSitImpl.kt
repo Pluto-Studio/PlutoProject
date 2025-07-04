@@ -9,9 +9,12 @@ import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Vector
-import plutoproject.feature.paper.api.sit.*
-import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.BlockSitAttemptResult
+import plutoproject.feature.paper.api.sit.BlockSitFinalResult
+import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
+import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
+import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 import plutoproject.feature.paper.api.sit.block.events.PlayerSitOnBlockEvent
 import plutoproject.feature.paper.api.sit.block.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.sit.block.strategies.*
@@ -20,14 +23,20 @@ import plutoproject.framework.paper.util.world.subtract
 import kotlin.math.max
 import kotlin.reflect.KClass
 
-class BlockSitImpl : BlockSit {
+class BlockSitImpl : InternalBlockSit {
     override val allStrategies: Collection<BlockSitStrategy>
         get() = strategies.keys
     override val sitters: Collection<Player>
         get() = sitContexts.keys
 
     private val seatEntityMarkerKey = NamespacedKey(plugin, "sit.block_sit_marker")
-    private val sitContexts = mutableMapOf<Player, BlockSitContext>()
+    override val sitContexts = mutableMapOf<Player, BlockSitContext>()
+
+    override fun isSeatEntityInUse(entity: ArmorStand): Boolean {
+        if (!isTemporarySeatEntity(entity)) return false
+        return sitContexts.values.any { it.seatEntity == entity }
+    }
+
     private val strategies = mutableMapOf(
         SlabBlockSitStrategy to Int.MAX_VALUE - 1,
         StairBlockSitStrategy to Int.MAX_VALUE - 1,
@@ -54,12 +63,6 @@ class BlockSitImpl : BlockSit {
         }
     }
 
-    private fun removeSeatEntity(sitter: Player) {
-        val seatEntity = sitContexts[sitter]?.seatEntity!!
-        seatEntity.removePassenger(sitter)
-        seatEntity.remove()
-    }
-
     override fun getSeat(player: Player): Block? {
         if (!isSitting(player)) {
             return null
@@ -67,12 +70,12 @@ class BlockSitImpl : BlockSit {
         return sitContexts[player]!!.block
     }
 
-    override fun getSitter(block: Block): Player? {
-        return sitContexts.entries.firstOrNull { it.value.block == block }?.key
+    override fun getSitter(seat: Block): Player? {
+        return sitContexts.entries.firstOrNull { it.value.block == seat }?.key
     }
 
-    override fun getSitter(blockLocation: Location): Player? {
-        return getSitter(blockLocation.block)
+    override fun getSitter(seat: Location): Player? {
+        return getSitter(seat.block)
     }
 
     override fun getOptions(player: Player): SitOptions? {
@@ -82,18 +85,23 @@ class BlockSitImpl : BlockSit {
     private fun callSitOnBlockEvent(
         sitter: Player,
         options: SitOptions,
-        attemptResult: SitAttemptResult,
-        sittingOn: Block,
+        cause: SitOnBlockCause,
+        attemptResult: BlockSitAttemptResult,
+        seat: Block,
         strategy: BlockSitStrategy?
     ): PlayerSitOnBlockEvent {
-        return PlayerSitOnBlockEvent(sitter, options, attemptResult, sittingOn, strategy).apply { callEvent() }
+        return PlayerSitOnBlockEvent(sitter, options, cause, attemptResult, seat, strategy).apply { callEvent() }
     }
 
-    private fun callPlayerStandUpFromBlockEvent(sitter: Player): PlayerStandUpFromBlockEvent {
+    private fun callPlayerStandUpFromBlockEvent(
+        sitter: Player,
+        cause: StandUpFromBlockCause
+    ): PlayerStandUpFromBlockEvent {
         return PlayerStandUpFromBlockEvent(
             sitter,
             getOptions(sitter)!!,
-            getSeat(sitter)!!
+            cause,
+            getSeat(sitter)!!,
         ).apply { callEvent() }
     }
 
@@ -124,27 +132,38 @@ class BlockSitImpl : BlockSit {
         )
     }
 
-    override fun sit(sitter: Player, target: Block, sitOptions: SitOptions): SitFinalResult {
+    override fun sit(
+        player: Player,
+        target: Block,
+        sitOptions: SitOptions,
+        cause: SitOnBlockCause
+    ): BlockSitFinalResult {
         check(Bukkit.isPrimaryThread()) { "Sit operation can only be performed on main thread." }
 
-        if (isSitting(sitter)) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_ALREADY_SITTING, target, null)
-            return SitFinalResult.FAILED_ALREADY_SITTING
+        if (isSitting(player)) {
+            val event = callSitOnBlockEvent(
+                player, sitOptions, cause, BlockSitAttemptResult.ALREADY_SITTING, target, null
+            )
+            return if (event.isCancelled) BlockSitFinalResult.CANCELLED_BY_PLUGIN else BlockSitFinalResult.ALREADY_SITTING
         }
         if (sitContexts.values.any { it.block == target }) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_OCCUPIED, target, null)
-            return SitFinalResult.FAILED_TARGET_OCCUPIED
+            val event = callSitOnBlockEvent(
+                player, sitOptions, cause, BlockSitAttemptResult.SEAT_OCCUPIED, target, null
+            )
+            return if (event.isCancelled) BlockSitFinalResult.CANCELLED_BY_PLUGIN else BlockSitFinalResult.SEAT_OCCUPIED
         }
 
         val strategy = getStrategy(target)
 
         if (strategy == null || !strategy.isAllowed(target)) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_INVALID_TARGET, target, null)
-            return SitFinalResult.FAILED_INVALID_TARGET
+            val event = callSitOnBlockEvent(
+                player, sitOptions, cause, BlockSitAttemptResult.INVALID_SEAT, target, null
+            )
+            return if (event.isCancelled) BlockSitFinalResult.CANCELLED_BY_PLUGIN else BlockSitFinalResult.INVALID_SEAT
         }
 
-        val sitLocation = strategy.getSitLocation(sitter, target)
-        val sitDirection = strategy.getSitDirection(sitter, target)
+        val sitLocation = strategy.getSitLocation(player, target)
+        val sitDirection = strategy.getSitDirection(player, target)
 
         val minX = target.location.x
         val minY = sitLocation.y
@@ -164,14 +183,16 @@ class BlockSitImpl : BlockSit {
         val selfExcluded = sitCollisionShape.subtract(blockCollisionShape)
 
         if (selfExcluded.any { target.world.hasCollisionsIn(it) }) {
-            callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.FAILED_TARGET_BLOCKED_BY_BLOCKS, target, null)
-            return SitFinalResult.FAILED_TARGET_BLOCKED_BY_BLOCKS
+            val event = callSitOnBlockEvent(
+                player, sitOptions, cause, BlockSitAttemptResult.BLOCKED_BY_BLOCKS, target, null
+            )
+            return if (event.isCancelled) BlockSitFinalResult.CANCELLED_BY_PLUGIN else BlockSitFinalResult.BLOCKED_BY_BLOCKS
         }
 
-        val event = callSitOnBlockEvent(sitter, sitOptions, SitAttemptResult.SUCCEED, target, strategy)
+        val event = callSitOnBlockEvent(player, sitOptions, cause, BlockSitAttemptResult.SUCCEED, target, strategy)
 
         if (event.isCancelled) {
-            return SitFinalResult.FAILED_CANCELLED_BY_PLUGIN
+            return BlockSitFinalResult.CANCELLED_BY_PLUGIN
         }
 
         val seatEntityLocation = sitLocation.clone().apply {
@@ -181,45 +202,55 @@ class BlockSitImpl : BlockSit {
         val seatEntity = createSeatEntity(seatEntityLocation)
 
         if (sitOptions.playSitSound) {
-            sitter.playSitSound()
+            player.playSitSound()
         }
 
-        sitContexts[sitter] = BlockSitContext(target, seatEntity, sitOptions)
-        seatEntity.addPassenger(sitter)
+        sitContexts[player] = BlockSitContext(target, seatEntity, sitOptions)
+        seatEntity.addPassenger(player)
 
-        return SitFinalResult.SUCCEED
+        return BlockSitFinalResult.SUCCEED
     }
 
-    override fun sit(sitter: Player, target: Location, sitOptions: SitOptions): SitFinalResult {
-        return sit(sitter, target.block, sitOptions)
+    override fun sit(
+        player: Player,
+        target: Location,
+        sitOptions: SitOptions,
+        cause: SitOnBlockCause
+    ): BlockSitFinalResult {
+        return sit(player, target.block, sitOptions, cause)
     }
 
-    override fun standUp(sitter: Player): Boolean {
+    private val ignoreCancelStandUpCauses = arrayOf(
+        StandUpFromBlockCause.QUIT,
+        StandUpFromBlockCause.FEATURE_DISABLE,
+    )
+
+    override fun standUp(player: Player, cause: StandUpFromBlockCause): Boolean {
         check(Bukkit.isPrimaryThread()) { "Stand up operation can only be performed on main thread." }
 
-        if (!isSitting(sitter)) {
+        if (!isSitting(player)) {
             return false
         }
 
-        val sitContext = sitContexts[sitter]
-        val standUpLocation = sitter.location.clone().apply {
+        val sitContext = sitContexts[player]!!
+        val standUpLocation = player.location.clone().apply {
             // 某些方块 (MOVING_PISTON) 的顶面高度返回 0
-            val maxY = max(sitContext!!.block.boundingBox.maxY, sitContext.block.location.y)
+            val maxY = max(sitContext.block.boundingBox.maxY, sitContext.block.location.y)
             y = maxY + 0.5
         }
 
-        if (callPlayerStandUpFromBlockEvent(sitter).isCancelled) {
+        if (callPlayerStandUpFromBlockEvent(player, cause).isCancelled && !ignoreCancelStandUpCauses.contains(cause)) {
             return false
         }
 
-        if (getOptions(sitter)!!.playSitSound) {
-            sitter.playSitSound()
+        if (getOptions(player)!!.playSitSound) {
+            player.playSitSound()
         }
 
-        removeSeatEntity(sitter)
-        sitter.teleport(standUpLocation)
-        sitContexts.remove(sitter)
-        sitter.sendActionBar(Component.empty())
+        sitContexts.remove(player)
+        sitContext.seatEntity.remove()
+        player.teleport(standUpLocation)
+        player.sendActionBar(Component.empty())
 
         return true
     }

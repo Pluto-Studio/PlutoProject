@@ -6,11 +6,13 @@ import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
 import plutoproject.feature.paper.api.sit.SitOptions
+import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 
 class PlayerStandUpFromBlockEvent(
-    val player: Player,
+    player: Player,
     val options: SitOptions,
-    val seat: Block
+    val cause: StandUpFromBlockCause,
+    val seat: Block,
 ) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")
     private companion object {

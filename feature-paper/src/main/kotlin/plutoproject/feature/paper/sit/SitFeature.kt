@@ -1,13 +1,13 @@
 package plutoproject.feature.paper.sit
 
+import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 import plutoproject.feature.paper.sit.block.BlockSitImpl
+import plutoproject.feature.paper.sit.block.InternalBlockSit
 import plutoproject.feature.paper.sit.block.SitCommand
-import plutoproject.feature.paper.sit.block.listeners.BlockSitBlockListener
-import plutoproject.feature.paper.sit.block.listeners.BlockSitChunkListener
-import plutoproject.feature.paper.sit.block.listeners.BlockSitPlayerListener
-import plutoproject.feature.paper.sit.block.listeners.BlockSitServerListener
+import plutoproject.feature.paper.sit.block.listeners.*
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.inject.configureKoin
@@ -23,7 +23,7 @@ import plutoproject.framework.paper.util.server
 @Suppress("UNUSED")
 class SitFeature : PaperFeature() {
     private val featureModule = module {
-        single<BlockSit> { BlockSitImpl() }
+        single { BlockSitImpl() } binds arrayOf(BlockSit::class, InternalBlockSit::class)
     }
 
     override fun onEnable() {
@@ -33,11 +33,17 @@ class SitFeature : PaperFeature() {
         initializeBlockSit()
     }
 
+    override fun onDisable() {
+        BlockSit.sitters.forEach {
+            BlockSit.standUp(it, StandUpFromBlockCause.FEATURE_DISABLE)
+        }
+    }
+
     private fun initializeBlockSit() {
         AnnotationParser.parse(SitCommand)
-        server.pluginManager.registerEvents(BlockSitServerListener, plugin)
-        server.pluginManager.registerEvents(BlockSitChunkListener, plugin)
-        server.pluginManager.registerEvents(BlockSitPlayerListener, plugin)
-        server.pluginManager.registerEvents(BlockSitBlockListener, plugin)
+        server.pluginManager.registerEvents(ServerListener, plugin)
+        server.pluginManager.registerEvents(ChunkListener, plugin)
+        server.pluginManager.registerEvents(PlayerListener, plugin)
+        server.pluginManager.registerEvents(BlockListener, plugin)
     }
 }

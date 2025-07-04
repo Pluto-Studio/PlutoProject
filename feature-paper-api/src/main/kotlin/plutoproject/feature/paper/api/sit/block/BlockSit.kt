@@ -4,7 +4,7 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import plutoproject.feature.paper.api.sit.SitFinalResult
+import plutoproject.feature.paper.api.sit.BlockSitFinalResult
 import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.framework.common.util.inject.Koin
 import kotlin.reflect.KClass
@@ -19,17 +19,17 @@ interface BlockSit {
 
     fun getSeat(player: Player): Block?
 
-    fun getSitter(block: Block): Player?
+    fun getSitter(seat: Block): Player?
 
-    fun getSitter(blockLocation: Location): Player?
+    fun getSitter(seat: Location): Player?
 
     fun getOptions(player: Player): SitOptions?
 
-    fun sit(sitter: Player, target: Block, sitOptions: SitOptions = SitOptions()): SitFinalResult
+    fun sit(player: Player, target: Block, sitOptions: SitOptions = SitOptions(), cause: SitOnBlockCause = SitOnBlockCause.PLUGIN): BlockSitFinalResult
 
-    fun sit(sitter: Player, target: Location, sitOptions: SitOptions = SitOptions()): SitFinalResult
+    fun sit(player: Player, target: Location, sitOptions: SitOptions = SitOptions(), cause: SitOnBlockCause = SitOnBlockCause.PLUGIN): BlockSitFinalResult
 
-    fun standUp(sitter: Player): Boolean
+    fun standUp(player: Player, cause: StandUpFromBlockCause = StandUpFromBlockCause.PLUGIN): Boolean
 
     fun isTemporarySeatEntity(entity: Entity): Boolean
 
