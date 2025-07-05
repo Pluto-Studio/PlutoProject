@@ -75,13 +75,8 @@ fun RandomTeleport() {
     LaunchedEffect(Unit) {
         while (true) {
             delay(500)
+            if (cooldownRemaining == player.cooldownRemaining) continue
             cooldownRemaining = player.cooldownRemaining
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
             if (cooldownAnimationProgress < 2) {
                 cooldownAnimationProgress++
             } else {
