@@ -45,5 +45,6 @@ class SitFeature : PaperFeature() {
         server.pluginManager.registerEvents(ChunkListener, plugin)
         server.pluginManager.registerEvents(PlayerListener, plugin)
         server.pluginManager.registerEvents(BlockListener, plugin)
+        server.pluginManager.registerEvents(EntityListener, plugin)
     }
 }

@@ -37,6 +37,10 @@ class BlockSitImpl : InternalBlockSit {
         return sitContexts.values.any { it.seatEntity == entity }
     }
 
+    override fun getSeatEntityOwner(entity: ArmorStand): Player? {
+        return sitContexts.entries.firstOrNull { it.value.seatEntity == entity }?.key
+    }
+
     private val strategies = mutableMapOf(
         SlabBlockSitStrategy to Int.MAX_VALUE - 1,
         StairBlockSitStrategy to Int.MAX_VALUE - 1,
@@ -50,17 +54,18 @@ class BlockSitImpl : InternalBlockSit {
         return sitContexts[player] != null
     }
 
-    private fun createSeatEntity(location: Location): ArmorStand {
-        return location.world.spawn(location, ArmorStand::class.java).apply {
-            setGravity(false)
-            setAI(false)
-            setCanTick(false)
-            setCanMove(false)
-            isInvulnerable = true
-            isInvisible = true
-            isCollidable = false
-            persistentDataContainer.set(seatEntityMarkerKey, PersistentDataType.BOOLEAN, true)
+    private fun createSeatEntity(location: Location): ArmorStand? {
+        val entity = location.world.spawn(location, ArmorStand::class.java) {
+            it.setGravity(false)
+            it.setAI(false)
+            it.setCanTick(false)
+            it.setCanMove(false)
+            it.isInvulnerable = true
+            it.isInvisible = true
+            it.isCollidable = false
+            it.persistentDataContainer.set(seatEntityMarkerKey, PersistentDataType.BOOLEAN, true)
         }
+        return if (entity.isValid) entity else null
     }
 
     override fun getSeat(player: Player): Block? {
@@ -199,15 +204,18 @@ class BlockSitImpl : InternalBlockSit {
             subtract(0.0, 2.0, 0.0)
             yaw = sitDirection.yaw
         }
-        val seatEntity = createSeatEntity(seatEntityLocation)
+        val seatEntity = createSeatEntity(seatEntityLocation) ?: return BlockSitFinalResult.CANCELLED_BY_PLUGIN
+
+        if (!seatEntity.addPassenger(player)) {
+            seatEntity.remove()
+            return BlockSitFinalResult.CANCELLED_BY_PLUGIN
+        }
 
         if (sitOptions.playSitSound) {
             player.playSitSound()
         }
 
         sitContexts[player] = BlockSitContext(target, seatEntity, sitOptions)
-        seatEntity.addPassenger(player)
-
         return BlockSitFinalResult.SUCCEED
     }
 
@@ -220,11 +228,6 @@ class BlockSitImpl : InternalBlockSit {
         return sit(player, target.block, sitOptions, cause)
     }
 
-    private val ignoreCancelStandUpCauses = arrayOf(
-        StandUpFromBlockCause.QUIT,
-        StandUpFromBlockCause.FEATURE_DISABLE,
-    )
-
     override fun standUp(player: Player, cause: StandUpFromBlockCause): Boolean {
         check(Bukkit.isPrimaryThread()) { "Stand up operation can only be performed on main thread." }
 
@@ -233,22 +236,23 @@ class BlockSitImpl : InternalBlockSit {
         }
 
         val sitContext = sitContexts[player]!!
+        val sitOptions = sitContext.options
         val standUpLocation = player.location.clone().apply {
             // 某些方块 (MOVING_PISTON) 的顶面高度返回 0
             val maxY = max(sitContext.block.boundingBox.maxY, sitContext.block.location.y)
             y = maxY + 0.5
         }
 
-        if (callPlayerStandUpFromBlockEvent(player, cause).isCancelled && !ignoreCancelStandUpCauses.contains(cause)) {
+        if (callPlayerStandUpFromBlockEvent(player, cause).isCancelled && cause.isCancellable) {
             return false
         }
 
-        if (getOptions(player)!!.playSitSound) {
+        if (sitOptions.playSitSound) {
             player.playSitSound()
         }
 
         sitContexts.remove(player)
-        sitContext.seatEntity.remove()
+        sitContext.seatEntity.remove() // remove 操作无法取消，无需判断是否成功
         player.teleport(standUpLocation)
         player.sendActionBar(Component.empty())
 

@@ -8,4 +8,6 @@ interface InternalBlockSit : BlockSit {
     val sitContexts: MutableMap<Player, BlockSitContext>
 
     fun isSeatEntityInUse(entity: ArmorStand): Boolean
+
+    fun getSeatEntityOwner(entity: ArmorStand): Player?
 }
