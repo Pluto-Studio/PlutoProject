@@ -4,10 +4,14 @@ import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
+import plutoproject.feature.paper.api.sit.player.PlayerSit
+import plutoproject.feature.paper.api.sit.player.PlayerStackDestroyCause
 import plutoproject.feature.paper.sit.block.BlockSitImpl
 import plutoproject.feature.paper.sit.block.InternalBlockSit
 import plutoproject.feature.paper.sit.block.SitCommand
 import plutoproject.feature.paper.sit.block.listeners.*
+import plutoproject.feature.paper.sit.player.InternalPlayerSit
+import plutoproject.feature.paper.sit.player.PlayerSitImpl
 import plutoproject.feature.paper.sit.player.PlayerSitOptionDescriptor
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
@@ -26,6 +30,7 @@ import plutoproject.framework.paper.util.server
 class SitFeature : PaperFeature() {
     private val featureModule = module {
         single { BlockSitImpl() } binds arrayOf(BlockSit::class, InternalBlockSit::class)
+        single { PlayerSitImpl() } binds arrayOf(PlayerSit::class, InternalPlayerSit::class)
     }
 
     override fun onEnable() {
@@ -61,6 +66,8 @@ class SitFeature : PaperFeature() {
     }
 
     private fun shutdownPlayerSit() {
-
+        PlayerSit.stacks.forEach {
+            PlayerSit.destroyStack(it, cause = PlayerStackDestroyCause.FEATURE_DISABLE)
+        }
     }
 }

@@ -12,9 +12,13 @@ interface PlayerSit {
 
     fun destroyStack(stack: PlayerStack, cause: PlayerStackDestroyCause = PlayerStackDestroyCause.PLUGIN): Boolean
 
-    fun getStack(player: Player): PlayerStack
+    fun getStack(player: Player): PlayerStack?
 
     fun isInStack(player: Player): Boolean
+
+    fun isCarrier(player: Player): Boolean
+
+    fun isPassenger(player: Player): Boolean
 
     suspend fun isFeatureEnabled(player: Player): Boolean
 }

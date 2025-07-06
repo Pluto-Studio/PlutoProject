@@ -9,28 +9,31 @@ import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Vector
-import plutoproject.feature.paper.api.sit.block.BlockSitAttemptResult
-import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult
 import plutoproject.feature.paper.api.sit.SitOptions
-import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
-import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
-import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
+import plutoproject.feature.paper.api.sit.block.*
 import plutoproject.feature.paper.api.sit.block.events.PlayerSitOnBlockEvent
 import plutoproject.feature.paper.api.sit.block.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.sit.block.strategies.*
+import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.world.subtract
 import kotlin.math.max
 import kotlin.reflect.KClass
 
 class BlockSitImpl : InternalBlockSit {
-    override val allStrategies: Collection<BlockSitStrategy>
-        get() = strategies.keys
-    override val sitters: Collection<Player>
-        get() = sitContexts.keys
-
     private val seatEntityMarkerKey = NamespacedKey(plugin, "sit.block_sit_marker")
+    private val strategies = mutableMapOf(
+        SlabBlockSitStrategy to Int.MAX_VALUE - 1,
+        StairBlockSitStrategy to Int.MAX_VALUE - 1,
+        CarpetBlockSitStrategy to Int.MAX_VALUE - 1,
+        CampfireBlockSitStrategy to Int.MAX_VALUE - 1,
+        ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
+        DefaultBlockSitStrategy to Int.MAX_VALUE,
+    )
+
     override val sitContexts = mutableMapOf<Player, BlockSitContext>()
+    override val allStrategies: Collection<BlockSitStrategy> = strategies.keys.toImmutable()
+    override val sitters: Collection<Player> = sitContexts.keys.toImmutable()
 
     override fun isSeatEntityInUse(entity: ArmorStand): Boolean {
         if (!isTemporarySeatEntity(entity)) return false
@@ -40,15 +43,6 @@ class BlockSitImpl : InternalBlockSit {
     override fun getSeatEntityOwner(entity: ArmorStand): Player? {
         return sitContexts.entries.firstOrNull { it.value.seatEntity == entity }?.key
     }
-
-    private val strategies = mutableMapOf(
-        SlabBlockSitStrategy to Int.MAX_VALUE - 1,
-        StairBlockSitStrategy to Int.MAX_VALUE - 1,
-        CarpetBlockSitStrategy to Int.MAX_VALUE - 1,
-        CampfireBlockSitStrategy to Int.MAX_VALUE - 1,
-        ScaffoldingBlockSitStrategy to Int.MAX_VALUE - 1,
-        DefaultBlockSitStrategy to Int.MAX_VALUE,
-    )
 
     override fun isSitting(player: Player): Boolean {
         return sitContexts[player] != null
