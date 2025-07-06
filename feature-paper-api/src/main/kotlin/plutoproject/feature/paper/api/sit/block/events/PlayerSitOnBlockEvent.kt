@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
-import plutoproject.feature.paper.api.sit.BlockSitAttemptResult
+import plutoproject.feature.paper.api.sit.block.BlockSitAttemptResult
 import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause

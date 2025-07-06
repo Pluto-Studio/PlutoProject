@@ -4,7 +4,7 @@ import org.bukkit.block.Block
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Command
-import plutoproject.feature.paper.api.sit.BlockSitFinalResult.*
+import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
 import plutoproject.feature.paper.sit.*

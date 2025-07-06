@@ -4,7 +4,6 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import plutoproject.feature.paper.api.sit.BlockSitFinalResult
 import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.framework.common.util.inject.Koin
 import kotlin.reflect.KClass

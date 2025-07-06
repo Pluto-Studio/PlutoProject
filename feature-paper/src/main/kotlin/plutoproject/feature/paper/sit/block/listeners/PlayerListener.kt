@@ -8,7 +8,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.inventory.EquipmentSlot
-import plutoproject.feature.paper.api.sit.BlockSitFinalResult.*
+import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
 import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause

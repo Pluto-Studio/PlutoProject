@@ -4,10 +4,16 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
+import plutoproject.feature.paper.api.sit.SitOptions
+import plutoproject.feature.paper.api.sit.player.PlayerStack
+import plutoproject.feature.paper.api.sit.player.PlayerStackQuitCause
 
-class PlayerCastOffPlayersEvent(
-    bottomPlayer: Player
-) : PlayerEvent(bottomPlayer), Cancellable {
+class PlayerStackQuitEvent(
+    player: Player,
+    val stack: PlayerStack,
+    val options: SitOptions,
+    val cause: PlayerStackQuitCause,
+) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()
@@ -25,6 +31,7 @@ class PlayerCastOffPlayersEvent(
     override fun isCancelled(): Boolean {
         return isCancelled
     }
+
 
     override fun setCancelled(cancel: Boolean) {
         isCancelled = cancel

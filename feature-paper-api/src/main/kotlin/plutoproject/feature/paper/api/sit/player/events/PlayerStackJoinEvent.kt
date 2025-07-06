@@ -5,11 +5,16 @@ import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
 import plutoproject.feature.paper.api.sit.SitOptions
+import plutoproject.feature.paper.api.sit.player.PlayerStack
+import plutoproject.feature.paper.api.sit.player.PlayerStackJoinAttemptResult
+import plutoproject.feature.paper.api.sit.player.PlayerStackJoinCause
 
-class PlayerStandUpFromPlayerEvent(
+class PlayerStackJoinEvent(
     player: Player,
+    val stack: PlayerStack,
     val options: SitOptions,
-    val seat: Player
+    val cause: PlayerStackJoinCause,
+    val attemptResult: PlayerStackJoinAttemptResult,
 ) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")
     private companion object {
@@ -28,6 +33,7 @@ class PlayerStandUpFromPlayerEvent(
     override fun isCancelled(): Boolean {
         return isCancelled
     }
+
 
     override fun setCancelled(cancel: Boolean) {
         isCancelled = cancel

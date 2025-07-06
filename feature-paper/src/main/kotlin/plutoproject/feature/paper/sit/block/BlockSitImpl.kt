@@ -9,8 +9,8 @@ import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Vector
-import plutoproject.feature.paper.api.sit.BlockSitAttemptResult
-import plutoproject.feature.paper.api.sit.BlockSitFinalResult
+import plutoproject.feature.paper.api.sit.block.BlockSitAttemptResult
+import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult
 import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.feature.paper.api.sit.block.BlockSitStrategy
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause

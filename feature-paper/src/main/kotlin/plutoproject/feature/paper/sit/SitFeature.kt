@@ -8,8 +8,10 @@ import plutoproject.feature.paper.sit.block.BlockSitImpl
 import plutoproject.feature.paper.sit.block.InternalBlockSit
 import plutoproject.feature.paper.sit.block.SitCommand
 import plutoproject.feature.paper.sit.block.listeners.*
+import plutoproject.feature.paper.sit.player.PlayerSitOptionDescriptor
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
+import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
@@ -31,12 +33,12 @@ class SitFeature : PaperFeature() {
             modules(featureModule)
         }
         initializeBlockSit()
+        initializePlayerSit()
     }
 
     override fun onDisable() {
-        BlockSit.sitters.forEach {
-            BlockSit.standUp(it, StandUpFromBlockCause.FEATURE_DISABLE)
-        }
+        shutdownBlockSit()
+        shutdownPlayerSit()
     }
 
     private fun initializeBlockSit() {
@@ -46,5 +48,19 @@ class SitFeature : PaperFeature() {
         server.pluginManager.registerEvents(PlayerListener, plugin)
         server.pluginManager.registerEvents(BlockListener, plugin)
         server.pluginManager.registerEvents(EntityListener, plugin)
+    }
+
+    private fun initializePlayerSit() {
+        OptionsManager.registerOptionDescriptor(PlayerSitOptionDescriptor)
+    }
+
+    private fun shutdownBlockSit() {
+        BlockSit.sitters.forEach {
+            BlockSit.standUp(it, StandUpFromBlockCause.FEATURE_DISABLE)
+        }
+    }
+
+    private fun shutdownPlayerSit() {
+
     }
 }
