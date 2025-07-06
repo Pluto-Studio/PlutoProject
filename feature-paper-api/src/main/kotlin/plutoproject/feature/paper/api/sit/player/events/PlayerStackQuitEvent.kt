@@ -4,14 +4,12 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.HandlerList
 import org.bukkit.event.player.PlayerEvent
-import plutoproject.feature.paper.api.sit.SitOptions
 import plutoproject.feature.paper.api.sit.player.PlayerStack
 import plutoproject.feature.paper.api.sit.player.PlayerStackQuitCause
 
 class PlayerStackQuitEvent(
     player: Player,
     val stack: PlayerStack,
-    val options: SitOptions,
     val cause: PlayerStackQuitCause,
 ) : PlayerEvent(player), Cancellable {
     @Suppress("UNUSED")

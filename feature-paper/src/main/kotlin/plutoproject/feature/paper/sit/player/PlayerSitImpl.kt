@@ -3,6 +3,8 @@ package plutoproject.feature.paper.sit.player
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.player.PlayerStack
 import plutoproject.feature.paper.api.sit.player.PlayerStackDestroyCause
+import plutoproject.feature.paper.api.sit.player.StackOptions
+import plutoproject.feature.paper.api.sit.player.events.PlayerStackCreateEvent
 import plutoproject.feature.paper.sit.player.contexts.CarrierSitContext
 import plutoproject.feature.paper.sit.player.contexts.PassengerSitContext
 import plutoproject.feature.paper.sit.player.contexts.PlayerSitContext
@@ -31,8 +33,20 @@ class PlayerSitImpl : InternalPlayerSit {
         internalStacks.remove(stack)
     }
 
-    override fun createStack(carrier: Player, initialPassenger: Player): PlayerStack? {
-        TODO("Not yet implemented")
+    private fun callStackCreateEvent(carrier: Player, options: StackOptions): PlayerStackCreateEvent {
+        return PlayerStackCreateEvent(carrier, options).apply { callEvent() }
+    }
+
+    override fun createStack(carrier: Player, options: StackOptions): PlayerStack? {
+        if (callStackCreateEvent(carrier, options).isCancelled) {
+            return null
+        }
+
+        val stack = PlayerStackImpl(carrier, options)
+        setContext(carrier, CarrierSitContext(stack = stack))
+        internalStacks.add(stack)
+
+        return stack
     }
 
     override fun destroyStack(stack: PlayerStack, cause: PlayerStackDestroyCause): Boolean {

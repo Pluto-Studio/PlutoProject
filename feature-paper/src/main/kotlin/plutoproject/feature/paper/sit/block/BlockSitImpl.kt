@@ -14,6 +14,7 @@ import plutoproject.feature.paper.api.sit.block.*
 import plutoproject.feature.paper.api.sit.block.events.PlayerSitOnBlockEvent
 import plutoproject.feature.paper.api.sit.block.events.PlayerStandUpFromBlockEvent
 import plutoproject.feature.paper.sit.block.strategies.*
+import plutoproject.feature.paper.sit.playSitSound
 import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.world.subtract
@@ -102,22 +103,6 @@ class BlockSitImpl : InternalBlockSit {
             cause,
             getSeat(sitter)!!,
         ).apply { callEvent() }
-    }
-
-    private fun Player.playSitSound() {
-        val leggings = inventory.leggings
-        val sound = if (leggings == null) {
-            Sound.ITEM_ARMOR_EQUIP_GENERIC
-        } else when (leggings.type) {
-            Material.LEATHER_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_LEATHER
-            Material.CHAINMAIL_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_CHAIN
-            Material.IRON_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_IRON
-            Material.GOLDEN_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_GOLD
-            Material.DIAMOND_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_DIAMOND
-            Material.NETHERITE_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_NETHERITE
-            else -> Sound.ITEM_ARMOR_EQUIP_GENERIC
-        }
-        world.playSound(location, sound, SoundCategory.BLOCKS, 1f, 1f)
     }
 
     private fun BoundingBox.convertRelativeToAbsolute(base: Vector): BoundingBox {

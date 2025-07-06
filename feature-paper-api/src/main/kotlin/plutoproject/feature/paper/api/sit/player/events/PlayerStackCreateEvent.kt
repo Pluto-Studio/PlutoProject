@@ -4,15 +4,9 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
-import plutoproject.feature.paper.api.sit.player.PlayerStack
 import plutoproject.feature.paper.api.sit.player.StackOptions
 
-class PlayerStackCreateEvent(
-    val stack: PlayerStack,
-    val options: StackOptions,
-    val carrier: Player,
-    val initialPassenger: Player,
-) : Event(), Cancellable {
+class PlayerStackCreateEvent(val carrier: Player, val options: StackOptions) : Event(), Cancellable {
     @Suppress("UNUSED")
     private companion object {
         private val handlers = HandlerList()

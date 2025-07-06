@@ -8,7 +8,7 @@ interface PlayerSit {
 
     val stacks: Collection<PlayerStack>
 
-    fun createStack(carrier: Player, initialPassenger: Player): PlayerStack?
+    fun createStack(carrier: Player, options: StackOptions = StackOptions()): PlayerStack?
 
     fun destroyStack(stack: PlayerStack, cause: PlayerStackDestroyCause = PlayerStackDestroyCause.PLUGIN): Boolean
 
