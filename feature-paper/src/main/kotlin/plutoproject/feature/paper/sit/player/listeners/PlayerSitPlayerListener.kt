@@ -25,23 +25,28 @@ object PlayerSitPlayerListener : Listener {
         if (hand != EquipmentSlot.HAND) return
         if (!player.inventory.itemInMainHand.type.isAir) return
         if (!PlayerSit.isFeatureEnabled(player)) return
-        if (PlayerSit.getStack(player) != null) return
+        if (PlayerSit.isPassenger(player)) return
 
         player.swingMainHand()
-        val carrier = rightClicked as Player
+        val target = rightClicked as Player
 
-        if (!PlayerSit.isFeatureEnabled(carrier)) {
+        if (!PlayerSit.isFeatureEnabled(target)) {
             player.showTitle(PLAYER_SIT_FAILED_CARRIER_FEATURE_DISABLED)
             player.playSound(SIT_FAILED_SOUND)
             return
         }
 
         isCancelled = true
-        val sitStack = PlayerSit.getStack(carrier) ?: PlayerSit.createStack(carrier) ?: return
 
-        if (!sitStack.addPlayerOnTop(player, cause = PlayerStackJoinCause.RIGHT_CLICK_ON_PLAYER).isSucceed) {
-            sitStack.destroy(cause = PlayerStackDestroyCause.RIGHT_CLICK_SIT_CANCELLED)
-            return
+        if (PlayerSit.isCarrier(player)) {
+            val sitStack = PlayerSit.getStack(player)!!
+            sitStack.addPlayerAtBottom(target, cause = PlayerStackJoinCause.RIGHT_CLICK_ON_PLAYER)
+        } else {
+            val sitStack = PlayerSit.getStack(target) ?: PlayerSit.createStack(target) ?: return
+            if (!sitStack.addPlayerOnTop(player, cause = PlayerStackJoinCause.RIGHT_CLICK_ON_PLAYER).isSucceed) {
+                sitStack.destroy(cause = PlayerStackDestroyCause.RIGHT_CLICK_SIT_CANCELLED)
+                return
+            }
         }
     }
 
