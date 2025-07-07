@@ -76,6 +76,7 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
         cause: PlayerStackJoinCause
     ): PlayerStackJoinFinalResult {
         check(isValid) { "PlayerStack instance already destroyed." }
+        check(index >= 0) { "Index must be greater or equal to 0." }
 
         println(" ")
         println("Begin addPlayer - index: $index, player: ${player.name}, options: $options, cause: $cause")
@@ -89,7 +90,7 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             return PlayerStackJoinFinalResult.ALREADY_IN
         }
 
-        if (player.isInsideVehicle && !player.leaveVehicle()) {
+        if (index > 0 && player.isInsideVehicle && !player.leaveVehicle()) {
             println("CANCELLED: Player ${player.name} is inside a vehicle, but leave vehicle operation was cancelled by other plugins")
             return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
         }
@@ -163,6 +164,9 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
                 return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
             }
             internalSit.setContext(player, PassengerSitContext(this, seatEntity, options))
+        } else {
+            println("There isn't a player below, make ${player.name} as the new carrier")
+            internalSit.setContext(player, CarrierSitContext(this))
         }
 
         if (options.playSitSound) {
@@ -204,6 +208,8 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
 
     override fun removePlayer(index: Int, cause: PlayerStackQuitCause): Boolean {
         check(isValid) { "PlayerStack instance already destroyed." }
+        check(index >= 0) { "Index must be greater or equal to 0." }
+
         println(" ")
         println("Begin removePlayer - index: $index, cause: $cause")
         println("Player at index $index is ${getPlayer(index)?.name}")
