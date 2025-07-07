@@ -8,13 +8,13 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.inventory.EquipmentSlot
-import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
 import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
-import plutoproject.feature.paper.sit.SIT_FAILED_SOUND
 import plutoproject.feature.paper.sit.BLOCK_SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
 import plutoproject.feature.paper.sit.BLOCK_SIT_FAILED_TARGET_OCCUPIED_TITLE
+import plutoproject.feature.paper.sit.SIT_FAILED_SOUND
 
 object BlockSitPlayerListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -48,6 +48,7 @@ object BlockSitPlayerListener : Listener {
 
     @EventHandler
     fun PlayerInteractEvent.e() {
+        if (player.isSneaking) return
         if (hand != EquipmentSlot.HAND) return
         if (!action.isRightClick) return
         if (!player.inventory.itemInMainHand.type.isAir) return
