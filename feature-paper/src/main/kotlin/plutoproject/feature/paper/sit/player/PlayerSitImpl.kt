@@ -1,6 +1,7 @@
 package plutoproject.feature.paper.sit.player
 
 import org.bukkit.NamespacedKey
+import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.entity.AreaEffectCloud
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
@@ -99,7 +100,8 @@ class PlayerSitImpl : InternalPlayerSit {
     }
 
     override fun isTemporarySeatEntity(entity: Entity): Boolean {
-        return entity.persistentDataContainer.has(seatEntityMarkerKey)
+        val nmsEntity = (entity as CraftEntity).handle
+        return nmsEntity is SeatEntity || entity.persistentDataContainer.has(seatEntityMarkerKey)
     }
 
     override suspend fun isFeatureEnabled(player: Player): Boolean {
