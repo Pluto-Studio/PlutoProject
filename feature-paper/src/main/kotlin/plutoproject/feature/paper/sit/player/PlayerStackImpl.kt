@@ -2,6 +2,7 @@ package plutoproject.feature.paper.sit.player
 
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.entity.AreaEffectCloud
 import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
@@ -49,15 +50,15 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
     }
 
     private fun createSeatEntity(location: Location): AreaEffectCloud? {
-        val entity = location.world.spawn(location, AreaEffectCloud::class.java) {
-            it.duration = Int.MAX_VALUE
-            it.radius = 0f
-            it.isInvisible = true
-            it.isInvulnerable = true
-            it.setGravity(false)
-            it.persistentDataContainer.set(internalSit.seatEntityMarkerKey, PersistentDataType.BOOLEAN, true)
+        val level = (location.world as CraftWorld).handle
+        val seatEntity = SeatEntity(location)
+        if (!level.addFreshEntity(seatEntity)) {
+            return null
         }
-        return if (entity.isValid) entity else null
+        val bukkitEntity = location.world.getEntity(seatEntity.uuid)!!.apply {
+            persistentDataContainer.set(internalSit.seatEntityMarkerKey, PersistentDataType.BOOLEAN, true)
+        }
+        return if (bukkitEntity.isValid) bukkitEntity as AreaEffectCloud else null
     }
 
     private fun callJoinEvent(
