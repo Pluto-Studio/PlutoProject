@@ -100,8 +100,7 @@ val MENU_PLAYER_SIT_FEATURE_DESC = listOf(
     component {
         text("通过 ") with mochaSubtext0
         keybind("key.use") with mochaLavender
-        text(" (空手) ") with mochaLavender
-        text("乘坐其他人") with mochaSubtext0
+        text(" 乘坐其他人") with mochaSubtext0
     },
     component {
         text("其他人也可以坐在你身上") with mochaSubtext0
