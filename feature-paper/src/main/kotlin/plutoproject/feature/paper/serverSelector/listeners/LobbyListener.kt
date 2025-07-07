@@ -22,8 +22,11 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
 import plutoproject.feature.common.serverSelector.UserRepository
+import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.player.PlayerSit
 import plutoproject.feature.paper.serverSelector.*
 import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen
+import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.coroutine.runAsync
@@ -201,6 +204,8 @@ object LobbyListener : Listener, KoinComponent {
     fun EntitySpawnEvent.e() {
         if (entity.world != lobbyWorld) return
         if (config.entitySpawning.whitelist.contains(entity.type)) return
+        val isSitEnabled = FeatureManager.isEnabled("sit")
+        if (isSitEnabled && (BlockSit.isTemporarySeatEntity(entity) || PlayerSit.isTemporarySeatEntity(entity))) return
         isCancelled = true
     }
 
