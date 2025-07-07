@@ -267,7 +267,9 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             }
         }
 
-        if (playerSitContext is PassengerSitContext && playerSitContext.options.playSitSound) {
+        if (playerSitContext is CarrierSitContext && options.playCastOffSound) {
+            playerAbove?.playSitSound()
+        } else if (playerSitContext is PassengerSitContext && playerSitContext.options.playSitSound) {
             player.playSitSound()
         }
         player.sendActionBar(Component.empty())
