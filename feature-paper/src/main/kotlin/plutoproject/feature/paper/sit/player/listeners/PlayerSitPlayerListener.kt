@@ -22,6 +22,7 @@ object PlayerSitPlayerListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     suspend fun PlayerInteractEntityEvent.e() {
         if (rightClicked !is Player) return
+        if (player.isSneaking) return
         if (hand != EquipmentSlot.HAND) return
         if (!player.inventory.itemInMainHand.type.isAir) return
         if (!PlayerSit.isFeatureEnabled(player)) return
