@@ -13,10 +13,10 @@ import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
 import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 import plutoproject.feature.paper.sit.SIT_FAILED_SOUND
-import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
-import plutoproject.feature.paper.sit.SIT_FAILED_TARGET_OCCUPIED_TITLE
+import plutoproject.feature.paper.sit.BLOCK_SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
+import plutoproject.feature.paper.sit.BLOCK_SIT_FAILED_TARGET_OCCUPIED_TITLE
 
-object PlayerListener : Listener {
+object BlockSitPlayerListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun EntityDismountEvent.e() {
         if (entity !is Player) return
@@ -64,9 +64,9 @@ object PlayerListener : Listener {
         val title = when (result) {
             SUCCEED -> null
             ALREADY_SITTING -> null
-            SEAT_OCCUPIED -> SIT_FAILED_TARGET_OCCUPIED_TITLE
+            SEAT_OCCUPIED -> BLOCK_SIT_FAILED_TARGET_OCCUPIED_TITLE
             INVALID_SEAT -> null
-            BLOCKED_BY_BLOCKS -> SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
+            BLOCKED_BY_BLOCKS -> BLOCK_SIT_FAILED_TARGET_BLOCKED_BY_BLOCKS_TITLE
             CANCELLED_BY_PLUGIN -> null
         }
 

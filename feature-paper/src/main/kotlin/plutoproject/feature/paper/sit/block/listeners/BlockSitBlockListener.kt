@@ -17,7 +17,7 @@ import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 import plutoproject.feature.paper.api.sit.block.events.SeatBreakEvent
 
 @Suppress("UnusedReceiverParameter")
-object BlockListener : Listener {
+object BlockSitBlockListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun BlockBreakEvent.e() {
         handleSeatBlockBreak(block, SeatBlockBreakCause.PLAYER)

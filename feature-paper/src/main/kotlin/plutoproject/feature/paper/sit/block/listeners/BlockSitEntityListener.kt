@@ -11,7 +11,7 @@ import org.koin.core.component.inject
 import plutoproject.feature.paper.api.sit.block.StandUpFromBlockCause
 import plutoproject.feature.paper.sit.block.InternalBlockSit
 
-object EntityListener : Listener, KoinComponent {
+object BlockSitEntityListener : Listener, KoinComponent {
     private val internalBlockSit by inject<InternalBlockSit>()
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

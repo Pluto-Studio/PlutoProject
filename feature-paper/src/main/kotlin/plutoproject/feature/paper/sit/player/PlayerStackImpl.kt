@@ -1,8 +1,10 @@
 package plutoproject.feature.paper.sit.player
 
+import net.kyori.adventure.text.Component
 import org.bukkit.Location
 import org.bukkit.entity.AreaEffectCloud
 import org.bukkit.entity.Player
+import org.bukkit.persistence.PersistentDataType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.sit.SitOptions
@@ -18,6 +20,7 @@ import plutoproject.framework.common.util.data.collection.toImmutable
 class PlayerStackImpl(carrier: Player, override val options: StackOptions) : PlayerStack, KoinComponent {
     private val internalSit by inject<InternalPlayerSit>()
     private val internalPlayers = mutableListOf(carrier)
+    private var isInDestroy = false
 
     override val carrier: Player
         get() = internalPlayers.first()
@@ -40,6 +43,11 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
         return internalPlayers.contains(player)
     }
 
+    override fun indexOf(player: Player): Int? {
+        val index = internalPlayers.indexOf(player)
+        return if (index >= 0) index else null
+    }
+
     private fun createSeatEntity(location: Location): AreaEffectCloud? {
         val entity = location.world.spawn(location, AreaEffectCloud::class.java) {
             it.duration = Int.MAX_VALUE
@@ -47,6 +55,7 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             it.isInvisible = true
             it.isInvulnerable = true
             it.setGravity(false)
+            it.persistentDataContainer.set(internalSit.seatEntityMarkerKey, PersistentDataType.BOOLEAN, true)
         }
         return if (entity.isValid) entity else null
     }
@@ -70,6 +79,7 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
 
         println(" ")
         println("Begin addPlayer - index: $index, player: ${player.name}, options: $options, cause: $cause")
+        println("Current internalPlayers: ${internalPlayers.map { it.name }}")
 
         if (contains(player)) {
             println("FAILED: Player ${player.name} already in this stack")
@@ -86,6 +96,12 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
 
         val currentPlayer = getPlayer(index)
         val playerBelow = getPlayer(index - 1)
+
+        InternalOperationMarker.apply {
+            markInOperation(player)
+            currentPlayer?.let { markInOperation(it) }
+            playerBelow?.let { markInOperation(it) }
+        }
 
         if (callJoinEvent(player, options, cause, PlayerStackJoinAttemptResult.SUCCESS).isCancelled) {
             return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
@@ -149,13 +165,18 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             internalSit.setContext(player, PassengerSitContext(this, seatEntity, options))
         }
 
-        internalPlayers.add(index, player)
-        println("Updated list: $internalPlayers")
-
         if (options.playSitSound) {
             player.playSitSound()
         }
 
+        InternalOperationMarker.apply {
+            unmarkInOperation(player)
+            currentPlayer?.let { unmarkInOperation(it) }
+            playerBelow?.let { unmarkInOperation(it) }
+        }
+
+        internalPlayers.add(index, player)
+        println("Current internalPlayers: ${internalPlayers.map { it.name }}")
         println("End addPlayer")
         println(" ")
         return PlayerStackJoinFinalResult.SUCCESS
@@ -185,11 +206,19 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
         check(isValid) { "PlayerStack instance already destroyed." }
         println(" ")
         println("Begin removePlayer - index: $index, cause: $cause")
-        println("Player at index $index is ${getPlayer(index)}")
+        println("Player at index $index is ${getPlayer(index)?.name}")
+        println("Current internalPlayers: ${internalPlayers.map { it.name }}")
 
         val player = getPlayer(index) ?: return false
         val playerAbove = getPlayer(index + 1)
         val playerBelow = getPlayer(index - 1)
+        val playerSitContext = internalSit.getContext(player)
+
+        InternalOperationMarker.apply {
+            markInOperation(player)
+            playerAbove?.let { markInOperation(it) }
+            playerBelow?.let { markInOperation(it) }
+        }
 
         if (callQuitEvent(player, cause).isCancelled && cause.isCancellable) {
             return false
@@ -197,9 +226,9 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
 
         if (playerBelow != null) {
             println("There is a player below: ${playerBelow.name}")
-            val playerSitContext = internalSit.getContext(player) as PassengerSitContext
-            val seatEntity = playerSitContext.seatEntity
-            if (!seatEntity.leaveVehicle()) {
+            val playerPassengerContext = playerSitContext as PassengerSitContext
+            val seatEntity = playerPassengerContext.seatEntity
+            if (seatEntity.isValid && seatEntity.isInsideVehicle && !seatEntity.leaveVehicle()) {
                 println("CANCELLED: ${player.name}'s seat entity leave vehicle operation was cancelled by other plugins")
                 return false
             }
@@ -208,16 +237,16 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
         }
 
         if (playerAbove != null) {
-            println("There is a player above: $playerAbove")
-            val playerAboveSitContext = internalSit.getContext(player) as PassengerSitContext
+            println("There is a player above: ${playerAbove.name}")
+            val playerAboveSitContext = internalSit.getContext(playerAbove) as PassengerSitContext
             val seatEntity = playerAboveSitContext.seatEntity
-            if (!seatEntity.leaveVehicle()) {
+            if (seatEntity.isValid && seatEntity.isInsideVehicle && !seatEntity.leaveVehicle()) {
                 println("CANCELLED: ${playerAbove.name}'s seat entity leave vehicle operation was cancelled by other plugins")
                 return false
             }
             if (internalSit.isCarrier(player)) {
                 println("${player.name} is carrier, make ${playerAbove.name} to be new carrier")
-                if (!playerAbove.leaveVehicle()) {
+                if (playerAbove.isInsideVehicle && !playerAbove.leaveVehicle()) {
                     println("CANCELLED: ${playerAbove.name} leave vehicle operation was cancelled by other plugins")
                     return false
                 }
@@ -232,17 +261,33 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             }
         }
 
+        if (playerSitContext is PassengerSitContext && playerSitContext.options.playSitSound) {
+            player.playSitSound()
+        }
+        player.sendActionBar(Component.empty())
+
+        InternalOperationMarker.apply {
+            unmarkInOperation(player)
+            playerAbove?.let { unmarkInOperation(it) }
+            playerBelow?.let { unmarkInOperation(it) }
+        }
         internalPlayers.remove(player)
         internalSit.removeContext(player)
 
-        if (internalPlayers.isEmpty()) {
+        if (internalPlayers.isEmpty() && !isInDestroy) {
             destroy(PlayerStackDestroyCause.NO_PLAYER_LEFT)
         }
 
+        println("Current internalPlayers: ${internalPlayers.map { it.name }}")
         println("End remove player")
         println(" ")
 
         return true
+    }
+
+    override fun removePlayer(player: Player, cause: PlayerStackQuitCause): Boolean {
+        val index = indexOf(player) ?: return false
+        return removePlayer(index, cause)
     }
 
     override fun removePlayerOnTop(cause: PlayerStackQuitCause): Boolean {
@@ -260,18 +305,26 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
     override fun destroy(cause: PlayerStackDestroyCause): Boolean {
         check(isValid) { "PlayerStack instance already destroyed." }
 
+        println("Begin destroy - cause: $cause")
+        isInDestroy = true
+
         if (callDestroyEvent(cause).isCancelled && cause.isCancellable) {
+            println("CANCELLED: destroy cancelled by other plugins")
             return false
         }
 
-        isValid = false
-
         while (internalPlayers.size > 0) {
+            println("There are ${internalPlayers.size} players left, remove them one by one")
             removePlayerOnTop(cause = PlayerStackQuitCause.STACK_DESTROY)
         }
 
+        isValid = false
+        isInDestroy = false
+        println("Mark invalid")
         internalSit.removeStack(this)
+        println("Remove stack")
         internalPlayers.clear()
+        println("Cleared players, now: ${internalPlayers.map { it.name }}")
 
         return true
     }

@@ -1,17 +1,17 @@
-package plutoproject.feature.paper.sit.block.listeners
+package plutoproject.feature.paper.sit.player.listeners
 
 import org.bukkit.Chunk
-import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.AreaEffectCloud
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.paper.sit.block.InternalBlockSit
+import plutoproject.feature.paper.sit.player.InternalPlayerSit
 
-object ChunkListener : Listener, KoinComponent {
-    private val internalBlockSit by inject<InternalBlockSit>()
+object PlayerSitChunkListener : Listener, KoinComponent {
+    private val internalSit by inject<InternalPlayerSit>()
 
     @EventHandler
     fun ChunkUnloadEvent.e() {
@@ -25,8 +25,8 @@ object ChunkListener : Listener, KoinComponent {
 
     private fun Chunk.removeTemporarySeatEntities() {
         entities
-            .filterIsInstance<ArmorStand>()
-            .filter { !internalBlockSit.isSeatEntityInUse(it) }
+            .filterIsInstance<AreaEffectCloud>()
+            .filter { !internalSit.isSeatEntityInUse(it) }
             .forEach { it.remove() }
     }
 }

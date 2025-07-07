@@ -17,6 +17,8 @@ interface PlayerStack {
 
     fun contains(player: Player): Boolean
 
+    fun indexOf(player: Player): Int?
+
     fun addPlayer(
         index: Int,
         player: Player,
@@ -37,6 +39,8 @@ interface PlayerStack {
     ): PlayerStackJoinFinalResult
 
     fun removePlayer(index: Int, cause: PlayerStackQuitCause = PlayerStackQuitCause.PLUGIN): Boolean
+
+    fun removePlayer(player: Player, cause: PlayerStackQuitCause = PlayerStackQuitCause.PLUGIN): Boolean
 
     fun removePlayerOnTop(cause: PlayerStackQuitCause = PlayerStackQuitCause.PLUGIN): Boolean
 
