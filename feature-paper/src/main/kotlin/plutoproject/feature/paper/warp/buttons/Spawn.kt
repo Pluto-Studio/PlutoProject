@@ -19,6 +19,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.paper.api.interactive.LocalPlayer
+import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
@@ -58,9 +59,7 @@ fun Spawn() {
         },
         lore = when (preferredSpawnState) {
             is PreferredSpawnState.Loading -> buildList {
-                add(component {
-                    text("正在加载...") with mochaSubtext0
-                })
+                add(Component.text("${spinnerAnimation()} 正在加载...").color(mochaSubtext0))
             }
 
             is PreferredSpawnState.Ready -> {

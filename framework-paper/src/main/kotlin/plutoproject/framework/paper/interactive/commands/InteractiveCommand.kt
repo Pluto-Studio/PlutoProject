@@ -5,6 +5,7 @@ import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.framework.paper.api.interactive.startInventory
+import plutoproject.framework.paper.interactive.examples.AnimationExampleScreen
 import plutoproject.framework.paper.interactive.examples.ExampleComposable
 import plutoproject.framework.paper.interactive.examples.ExampleScreen1
 import plutoproject.framework.paper.interactive.examples.ExampleScreen2
@@ -35,6 +36,14 @@ object InteractiveCommand {
     fun CommandSender.example3() = ensurePlayer {
         startInventory {
             ExampleComposable()
+        }
+    }
+
+    @Command("interactive animation_example")
+    @Permission(PERMISSION)
+    fun CommandSender.animationExample() = ensurePlayer {
+        startInventory {
+            Navigator(AnimationExampleScreen())
         }
     }
 }
