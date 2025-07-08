@@ -1,5 +1,7 @@
 package plutoproject.feature.paper.sit.player
 
+import io.papermc.paper.dialog.Dialog
+import io.papermc.paper.registry.data.dialog.DialogBase
 import org.bukkit.NamespacedKey
 import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.entity.AreaEffectCloud
