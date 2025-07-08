@@ -15,6 +15,7 @@ import plutoproject.feature.paper.daily.buttons.DailyState.*
 import plutoproject.feature.paper.daily.screens.DailyCalenderScreen
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.paper.api.interactive.LocalPlayer
+import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
@@ -52,9 +53,7 @@ fun Daily() {
         },
         lore = buildList {
             when (state) {
-                LOADING -> add(component {
-                    text("正在加载...") with mochaSubtext0
-                })
+                LOADING -> add(Component.text("${spinnerAnimation()} 正在加载...").color(mochaSubtext0))
 
                 NOT_CHECKED_IN -> add(component {
                     text("× 今日尚未到访") with mochaYellow

@@ -22,6 +22,7 @@ import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
+import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
 import plutoproject.framework.paper.api.interactive.canvas.Menu
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
@@ -147,9 +148,7 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
         Item(
             material = Material.TRIPWIRE_HOOK,
             name = when (state) {
-                LOADING -> component {
-                    text("正在加载...") with mochaSubtext0
-                }
+                LOADING -> Component.text("${spinnerAnimation()} 正在加载...").color(mochaSubtext0)
 
                 ENABLED -> component {
                     text("自动传送 ") with mochaText
