@@ -26,7 +26,7 @@ object PlayerSitChunkListener : Listener, KoinComponent {
     private fun Chunk.removeTemporarySeatEntities() {
         entities
             .filterIsInstance<AreaEffectCloud>()
-            .filter { !internalSit.isSeatEntityInUse(it) }
+            .filter { internalSit.isTemporarySeatEntity(it) && !internalSit.isSeatEntityInUse(it) }
             .forEach { it.remove() }
     }
 }

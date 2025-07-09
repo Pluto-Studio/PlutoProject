@@ -26,7 +26,7 @@ object BlockSitChunkListener : Listener, KoinComponent {
     private fun Chunk.removeTemporarySeatEntities() {
         entities
             .filterIsInstance<ArmorStand>()
-            .filter { !internalBlockSit.isSeatEntityInUse(it) }
+            .filter { internalBlockSit.isTemporarySeatEntity(it) && !internalBlockSit.isSeatEntityInUse(it) }
             .forEach { it.remove() }
     }
 }
