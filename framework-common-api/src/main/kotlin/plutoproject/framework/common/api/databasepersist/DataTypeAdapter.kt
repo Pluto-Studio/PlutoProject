@@ -1,5 +1,6 @@
 package plutoproject.framework.common.api.databasepersist
 
+import com.google.common.reflect.TypeToken
 import org.bson.BsonValue
 
 /**
@@ -7,11 +8,11 @@ import org.bson.BsonValue
  *
  * @param T 需要存储的对象类型
  */
-interface DataTypeAdapter<T> {
+interface DataTypeAdapter<T : Any> {
     /**
      * 需要存储的类型类
      */
-    val type: Class<T>
+    val type: TypeToken<T>
 
     /**
      * 将要存储的对象类型转换为 [BsonValue]

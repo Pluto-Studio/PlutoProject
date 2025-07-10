@@ -31,7 +31,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
-            require(entry.type.isAssignableFrom(adapter.type)) {
+            require(adapter.type.isSubtypeOf(entry.type)) {
                 "Type mismatch for entry with key $key: attempting to set type ${adapter.type}, but found ${entry.type} in memory."
             }
             loadedEntries.replace(key, (entry as MemoryEntry<T>).copy(value = value, wasChangedSinceLastSave = true))
@@ -56,7 +56,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
-            require(entry.type.isAssignableFrom(adapter.type)) {
+            require(adapter.type.isSubtypeOf(entry.type)) {
                 "Type mismatch for entry with key $key: attempting to get type ${adapter.type}, but found ${entry.type} in memory."
             }
             return entry.value as T
