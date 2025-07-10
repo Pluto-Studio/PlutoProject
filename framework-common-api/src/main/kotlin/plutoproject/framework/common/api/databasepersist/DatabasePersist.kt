@@ -3,6 +3,9 @@ package plutoproject.framework.common.api.databasepersist
 import plutoproject.framework.common.util.inject.Koin
 import java.util.*
 
+/**
+ * 玩家数据库容器 API
+ */
 interface DatabasePersist {
     companion object : DatabasePersist by Koin.get()
 
