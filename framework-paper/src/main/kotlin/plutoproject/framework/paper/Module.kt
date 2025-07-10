@@ -3,6 +3,8 @@ package plutoproject.framework.paper
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.api.rpc.RpcClient
+import plutoproject.framework.common.databasepersist.InternalDatabasePersist
+import plutoproject.framework.common.util.inject.Koin
 import plutoproject.framework.paper.api.interactive.GuiManager
 import plutoproject.framework.paper.interactive.GuiListener
 import plutoproject.framework.paper.interactive.commands.InteractiveCommand
@@ -45,6 +47,7 @@ private fun registerCommands() {
 fun disableFrameworkModules() {
     stopOptionsMonitor()
     stopPlayerDBMonitor()
+    Koin.get<InternalDatabasePersist>().close()
     GuiManager.disposeAll()
     Provider.close()
     RpcClient.stop()

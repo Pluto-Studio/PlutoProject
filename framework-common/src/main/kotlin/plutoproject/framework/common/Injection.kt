@@ -1,6 +1,8 @@
 package plutoproject.framework.common
 
+import org.koin.dsl.binds
 import org.koin.dsl.module
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.api.options.factory.OptionDescriptorFactory
@@ -13,6 +15,8 @@ import plutoproject.framework.common.api.rpc.RpcServer
 import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
+import plutoproject.framework.common.databasepersist.DatabasePersistImpl
+import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.feature.FeatureManagerImpl
 import plutoproject.framework.common.options.OptionDescriptorFactoryImpl
 import plutoproject.framework.common.options.OptionsManagerImpl
@@ -28,8 +32,8 @@ import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
 import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.frameworkDataFolder
-import plutoproject.framework.common.util.pluginDataFolder
 import plutoproject.framework.common.util.jvm.extractFileFromJar
+import plutoproject.framework.common.util.pluginDataFolder
 
 inline fun <reified T : Any> getModuleConfig(resourcePrefix: String, id: String): T {
     val file = frameworkDataFolder.resolve(id).resolve("config.conf")
@@ -65,4 +69,8 @@ val FrameworkCommonModule = module {
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
+    single { DatabasePersistImpl(Provider.getCollection("database_persist_containers")) } binds arrayOf(
+        DatabasePersist::class,
+        InternalDatabasePersist::class
+    )
 }
