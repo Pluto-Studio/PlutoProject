@@ -1,5 +1,6 @@
 package plutoproject.framework.common
 
+import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
@@ -15,6 +16,7 @@ import plutoproject.framework.common.api.rpc.RpcServer
 import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
+import plutoproject.framework.common.databasepersist.ContainerModel
 import plutoproject.framework.common.databasepersist.DatabasePersistImpl
 import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.feature.FeatureManagerImpl
@@ -69,8 +71,6 @@ val FrameworkCommonModule = module {
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
-    single { DatabasePersistImpl(Provider.getCollection("database_persist_containers")) } binds arrayOf(
-        DatabasePersist::class,
-        InternalDatabasePersist::class
-    )
+    single<MongoCollection<ContainerModel>> { Provider.getCollection("database_persist_containers") }
+    single { DatabasePersistImpl() } binds arrayOf(DatabasePersist::class, InternalDatabasePersist::class)
 }
