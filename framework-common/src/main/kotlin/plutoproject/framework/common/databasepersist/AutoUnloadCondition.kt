@@ -3,5 +3,5 @@ package plutoproject.framework.common.databasepersist
 import java.util.*
 
 interface AutoUnloadCondition {
-    fun shouldUnload(containerId: UUID, playerId: UUID): Boolean
+    fun shouldUnload(playerId: UUID): Boolean
 }

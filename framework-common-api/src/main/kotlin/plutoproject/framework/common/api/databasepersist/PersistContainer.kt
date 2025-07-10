@@ -7,11 +7,6 @@ import java.util.*
  */
 interface PersistContainer {
     /**
-     * 此数据容器的 ID
-     */
-    val containerId: UUID
-
-    /**
      * 此数据容器所属玩家的 ID
      */
     val playerId: UUID
@@ -20,10 +15,10 @@ interface PersistContainer {
      * 设置一个键值
      *
      * @param key 需要设置的键
-     * @param type 需要设置的值的类型适配器
+     * @param adapter 需要设置的值的类型适配器
      * @param value 需要设置的值
      */
-    fun <T> set(key: String, type: DataTypeAdapter<T>, value: T)
+    fun <T : Any> set(key: String, adapter: DataTypeAdapter<T>, value: T)
 
     /**
      * 删除一个键值
@@ -37,10 +32,10 @@ interface PersistContainer {
      * 获取一个键值
      *
      * @param key 需要获取的键
-     * @param type 需要获取的值的类型适配器
-     * @return 获取的值
+     * @param adapter 需要获取的值的类型适配器
+     * @return 若这个键存在则返回值，不存在则为 null
      */
-    suspend fun <T> get(key: String, type: DataTypeAdapter<T>): T
+    suspend fun <T : Any> get(key: String, adapter: DataTypeAdapter<T>): T?
 
     /**
      * 检查一个键是否存在

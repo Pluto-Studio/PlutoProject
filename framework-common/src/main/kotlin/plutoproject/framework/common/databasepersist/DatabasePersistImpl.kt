@@ -1,6 +1,5 @@
 package plutoproject.framework.common.databasepersist
 
-import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.delay
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -12,7 +11,6 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
-    private val collection by inject<MongoCollection<ContainerModel>>()
     private val loadedContainers = mutableConcurrentMapOf<UUID, PersistContainer>()
     private val containerLastUsedTimestamps = mutableConcurrentMapOf<PersistContainer, Instant>()
     private val autoUnloadCondition by inject<AutoUnloadCondition>()
@@ -34,7 +32,7 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
             val (id, container) = iterator.next()
             val lastUsed = getLastUsedTimestamp(container)
             if (lastUsed.plusSeconds(MAX_UNUSED_SECONDS).isBefore(currentTimestamp)
-                && autoUnloadCondition.shouldUnload(id, container.playerId)
+                && autoUnloadCondition.shouldUnload(id)
             ) {
                 iterator.remove()
                 containerLastUsedTimestamps.remove(container)
@@ -43,7 +41,12 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
     }
 
     override fun getContainer(playerId: UUID): PersistContainer {
-        TODO("Not yet implemented")
+        if (loadedContainers.contains(playerId)) {
+            return loadedContainers.getValue(playerId)
+        }
+        val container = PersistContainerImpl(playerId)
+        loadedContainers[playerId] = container
+        return container
     }
 
     override fun getLastUsedTimestamp(container: PersistContainer): Instant {

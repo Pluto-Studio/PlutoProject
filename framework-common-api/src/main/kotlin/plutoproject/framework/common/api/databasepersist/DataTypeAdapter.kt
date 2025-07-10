@@ -9,6 +9,11 @@ import org.bson.BsonValue
  */
 interface DataTypeAdapter<T> {
     /**
+     * 需要存储的类型类
+     */
+    val type: Class<T>
+
+    /**
      * 将要存储的对象类型转换为 [BsonValue]
      *
      * @param value 要存储的对象实例
