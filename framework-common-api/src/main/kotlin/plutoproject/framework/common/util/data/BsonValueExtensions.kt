@@ -3,7 +3,7 @@ package plutoproject.framework.common.util.data
 import org.bson.BsonDocument
 import org.bson.BsonValue
 
-fun BsonDocument.getNestedValue(path: String): BsonValue? {
+fun BsonDocument.getNested(path: String): BsonValue? {
     val parts = path.split(".")
     var currentValue: BsonValue = this
 
@@ -21,8 +21,7 @@ fun BsonDocument.getNestedValue(path: String): BsonValue? {
     return null
 }
 
-
-fun BsonDocument.setNestedValue(path: String, value: BsonValue) {
+fun BsonDocument.setNested(path: String, value: BsonValue) {
     val parts = path.split(".")
     var currentDoc = this.toBsonDocument()
 
@@ -42,14 +41,18 @@ fun BsonDocument.setNestedValue(path: String, value: BsonValue) {
     }
 }
 
-fun BsonDocument.containsNested(path: String): Boolean {
-    val parts = path.split(".")
-    var currentValue: BsonValue = this
-
-    for (part in parts) {
-        if (currentValue !is BsonDocument) return false
-        currentValue = currentValue[part] ?: return false
+fun BsonDocument.flatten(prefix: String = ""): BsonDocument {
+    val result = BsonDocument()
+    for ((key, value) in this) {
+        val fullKey = if (prefix.isEmpty()) key else "$prefix.$key"
+        when (value) {
+            is BsonDocument -> result += value.flatten(fullKey)
+            else -> result[fullKey] = value
+        }
     }
+    return result
+}
 
-    return true
+fun Map<String, BsonValue>.toBsonDocument(): BsonDocument {
+    return BsonDocument().also { it.putAll(this) }
 }

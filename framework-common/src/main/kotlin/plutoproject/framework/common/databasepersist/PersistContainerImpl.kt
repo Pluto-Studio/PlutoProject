@@ -2,8 +2,10 @@ package plutoproject.framework.common.databasepersist
 
 import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
-import com.mongodb.client.model.changestream.OperationType.*
+import com.mongodb.client.model.changestream.ChangeStreamDocument
+import com.mongodb.client.model.changestream.OperationType
 import org.bson.BsonDocument
+import org.bson.BsonValue
 import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -11,13 +13,16 @@ import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
 import plutoproject.framework.common.api.databasepersist.PersistContainer
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.util.data.collection.mutableConcurrentSetOf
-import plutoproject.framework.common.util.data.containsNested
-import plutoproject.framework.common.util.data.getNestedValue
+import plutoproject.framework.common.util.data.flatten
+import plutoproject.framework.common.util.data.getNested
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
-import plutoproject.framework.common.util.data.setNestedValue
+import plutoproject.framework.common.util.data.setNested
+import plutoproject.framework.common.util.data.toBsonDocument
+import plutoproject.framework.common.util.logger
 import plutoproject.framework.common.util.serverName
 import java.time.Instant
 import java.util.*
+import java.util.logging.Level
 
 class PersistContainerImpl(override val playerId: UUID) : PersistContainer, KoinComponent {
     private val databasePersist by inject<InternalDatabasePersist>()
@@ -33,40 +38,125 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
     init {
         changeStream.subscribe(playerId) { event ->
-            when (event.operationType) {
-                INSERT -> onFullDocumentChange(event.fullDocument!!)
-                UPDATE -> onFullDocumentChange(event.fullDocument!!)
-                REPLACE -> onPartialDocumentChange(
-                    event.updateDescription!!.updatedFields!!,
-                    event.updateDescription!!.removedFields!!
-                )
-
-                else -> error("Unexpected")
+            runCatching {
+                update(event)
+            }.onFailure {
+                logger.log(Level.SEVERE, "Exception caught while trying to update container $playerId", it)
             }
         }
     }
 
-    private fun updateMemoryEntries(changed: BsonDocument) {
-        loadedEntries
-            .filter { (key, _) -> changed.containsNested(key) }
-            .forEach { (key, entry) ->
-                val new = entry.copy(value = changed.getNestedValue(key)!!, wasChangedSinceLastSave = false)
-                loadedEntries.replace(key, new)
+    private fun update(event: ChangeStreamDocument<Document>) {
+        when (event.operationType) {
+            in FULL_DOCUMENT_OPERATION_TYPES -> {
+                val fullDocument = event.fullDocument?.getValue("data") as? BsonDocument ?: return
+                onFullDocumentChange(fullDocument.flatten())
             }
-        removedEntries.removeIf { key -> changed.containsKey(key) }
+
+            OperationType.UPDATE -> {
+                val updateDescription = event.updateDescription ?: return
+                val updatedFields = updateDescription.updatedFields?.entries
+                    ?.filter { it.key.startsWith("data.") }
+                    ?.associate { it.key.removePrefix("data.") to it.value }?.toBsonDocument() ?: return
+                val removedFields = updateDescription.removedFields?.map { it.removePrefix("data.") }
+                onPartialDocumentChange(updatedFields, removedFields ?: emptyList())
+            }
+
+            else -> error("Unexpected")
+        }
     }
 
-    private fun onFullDocumentChange(document: Document) {
-        updateMemoryEntries(document.toBsonDocument())
+    private fun updateMemoryEntries(data: BsonDocument) {
+        data.forEach { (key, value) ->
+            when {
+                // 完全匹配
+                loadedEntries.containsKey(key) -> updateIdenticalPathInMemory(key, value)
+                // 内存比数据库更深
+                loadedEntries.any { it.key.startsWith("$key.") } -> updateDeeperPathInMemory(key, value)
+                // 内存比数据库更浅
+                loadedEntries.any { key.startsWith("${it.key}.") } -> updateShallowerPathInMemory(key, value)
+            }
+        }
+    }
+
+    private fun updateIdenticalPathInMemory(key: String, value: BsonValue) {
+        check(isValid) { "PersistContainer instance already closed." }
+        val entry = loadedEntries.getValue(key)
+        val newEntry = entry.copy(value = value, wasChangedSinceLastSave = false)
+        loadedEntries.replace(key, newEntry)
+    }
+
+    private fun updateDeeperPathInMemory(key: String, value: BsonValue) {
+        check(isValid) { "PersistContainer instance already closed." }
+        val outerDocument = value as BsonDocument
+        loadedEntries.filterKeys { it.startsWith("$key.") }
+            .forEach { (deeperKey, entry) ->
+                val relativePath = deeperKey.removePrefix("$key.")
+                val changedValue = outerDocument.getNested(relativePath) ?: return@forEach
+                val updatedEntry = entry.copy(value = changedValue, wasChangedSinceLastSave = false)
+                loadedEntries.replace(deeperKey, updatedEntry)
+            }
+    }
+
+    private fun updateShallowerPathInMemory(key: String, value: BsonValue) {
+        check(isValid) { "PersistContainer instance already closed." }
+        loadedEntries.filterKeys { key.startsWith("$it.") }
+            .forEach { (shallowerKey, entry) ->
+                val relativePath = key.removePrefix("$shallowerKey.")
+                val outerDocument = entry.value as? BsonDocument ?: return@forEach
+                val updatedEntry = entry.copy(
+                    value = outerDocument.clone().apply { setNested(relativePath, value) },
+                    wasChangedSinceLastSave = false
+                )
+                loadedEntries.replace(shallowerKey, updatedEntry)
+            }
+    }
+
+    private fun removeIdenticalPathInMemory(key: String) {
+        check(isValid) { "PersistContainer instance already closed." }
+        loadedEntries.remove(key)
+    }
+
+    private fun removeDeeperPathInMemory(key: String) {
+        check(isValid) { "PersistContainer instance already closed." }
+        loadedEntries.keys.removeIf { it.startsWith("$key.") }
+    }
+
+    private fun removeShallowerPathInMemory(key: String) {
+        check(isValid) { "PersistContainer instance already closed." }
+        loadedEntries.filterKeys { key.startsWith("$it.") }
+            .forEach { (shallowerKey, entry) ->
+                val relativePath = key.removePrefix("$shallowerKey.")
+                val outerDocument = entry.value as? BsonDocument ?: return@forEach
+                val updatedEntry = entry.copy(
+                    value = outerDocument.clone().apply { remove(relativePath) },
+                    wasChangedSinceLastSave = false
+                )
+                loadedEntries.replace(shallowerKey, updatedEntry)
+            }
+    }
+
+    private fun onFullDocumentChange(document: BsonDocument) {
+        updateMemoryEntries(document)
+    }
+
+    private fun removeMemoryEntries(removed: List<String>) {
+        removed.forEach { key ->
+            when {
+                loadedEntries.containsKey(key) -> removeIdenticalPathInMemory(key)
+                loadedEntries.any { it.key.startsWith("$key.") } -> removeDeeperPathInMemory(key)
+                loadedEntries.any { key.startsWith("${it.key}.") } -> removeShallowerPathInMemory(key)
+            }
+        }
     }
 
     private fun onPartialDocumentChange(updated: BsonDocument, removed: List<String>) {
         updateMemoryEntries(updated)
-        removed.forEach { key -> loadedEntries.remove(key) }
+        removeMemoryEntries(removed)
     }
 
     override fun <T : Any> set(key: String, adapter: DataTypeAdapter<T>, value: T) {
-        check(isValid) { "PersistContainer instance already unloaded." }
+        check(isValid) { "PersistContainer instance already closed." }
         require(key.isValidKey) { "$key is not a valid key." }
         removedEntries.remove(key)
         databasePersist.setUsed(this)
@@ -85,12 +175,12 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override fun remove(key: String) {
-        loadedEntries.remove(key)
+        removeMemoryEntries(listOf(key))
         removedEntries += key
     }
 
     override suspend fun <T : Any> get(key: String, adapter: DataTypeAdapter<T>): T? {
-        check(isValid) { "PersistContainer instance already unloaded." }
+        check(isValid) { "PersistContainer instance already closed." }
         require(key.isValidKey) { "$key is not a valid key." }
         databasePersist.setUsed(this)
 
@@ -109,7 +199,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         val projection = Projections.include("data.$key")
         val document = repository.findByPlayerId(playerId, projection)
             ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return null
-        val value = document.getNestedValue("data.$key") ?: return null
+        val value = document.getNested("data.$key") ?: return null
         val entry = MemoryEntry(key, value, adapter, false)
 
         loadedEntries[key] = entry
@@ -117,7 +207,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override suspend fun contains(key: String): Boolean {
-        check(isValid) { "PersistContainer instance already unloaded." }
+        check(isValid) { "PersistContainer instance already closed." }
         require(key.isValidKey) { "$key is not a valid key." }
         databasePersist.setUsed(this)
 
@@ -132,12 +222,12 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         val document = repository.findByPlayerId(playerId, projection)
             ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return false
 
-        document.getNestedValue("data.$key") ?: return false
+        document.getNested("data.$key") ?: return false
         return true
     }
 
     override suspend fun save() {
-        check(isValid) { "PersistContainer instance already unloaded." }
+        check(isValid) { "PersistContainer instance already closed." }
         databasePersist.setUsed(this)
         val projection = Projections.include("playerId")
         val document = repository.findByPlayerId(playerId, projection)
@@ -146,7 +236,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
             val timestamp = Instant.now().toEpochMilli()
             val data = BsonDocument()
             loadedEntries.forEach { (key, entry) ->
-                data.setNestedValue(key, entry.value)
+                data.setNested(key, entry.value)
                 loadedEntries.replace(key, entry.copy(wasChangedSinceLastSave = false))
             }
             val model = ContainerModel(
@@ -183,7 +273,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override fun close() {
-        isValid = false
         changeStream.unsubscribe(playerId)
+        isValid = false
     }
 }
