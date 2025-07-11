@@ -12,8 +12,6 @@ import plutoproject.framework.paper.interactive.inventory.InventoryListener
 import plutoproject.framework.paper.options.PaperOptionsListener
 import plutoproject.framework.paper.options.startOptionsMonitor
 import plutoproject.framework.paper.options.stopOptionsMonitor
-import plutoproject.framework.paper.playerdb.startPlayerDBMonitor
-import plutoproject.framework.paper.playerdb.stopPlayerDBMonitor
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.hook.initHooks
 import plutoproject.framework.paper.util.plugin
@@ -29,7 +27,6 @@ fun enableFrameworkModules() {
     registerListeners()
     registerCommands()
     startOptionsMonitor()
-    startPlayerDBMonitor()
 }
 
 private fun registerListeners() = server.pluginManager.apply {
@@ -46,7 +43,6 @@ private fun registerCommands() {
 
 fun disableFrameworkModules() {
     stopOptionsMonitor()
-    stopPlayerDBMonitor()
     Koin.get<InternalDatabasePersist>().close()
     GuiManager.disposeAll()
     Provider.close()

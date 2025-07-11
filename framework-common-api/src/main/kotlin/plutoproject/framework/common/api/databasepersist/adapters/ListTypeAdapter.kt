@@ -27,5 +27,6 @@ sealed class ListTypeAdapter<T : Any>(private val innerType: DataTypeAdapter<T>)
     data object Short : ListTypeAdapter<kotlin.Short>(ShortTypeAdapter)
     data object Byte : ListTypeAdapter<kotlin.Byte>(ByteTypeAdapter)
     data object Char : ListTypeAdapter<kotlin.Char>(CharTypeAdapter)
+    data object UUID : ListTypeAdapter<java.util.UUID>(JavaUuidTypeAdapter)
     class Custom<T : Any>(innerType: DataTypeAdapter<T>) : ListTypeAdapter<T>(innerType)
 }

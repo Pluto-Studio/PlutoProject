@@ -7,7 +7,6 @@ import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.util.inject.Koin
 import plutoproject.framework.velocity.options.OptionsPlayerListener
 import plutoproject.framework.velocity.options.proto.OptionsRpc
-import plutoproject.framework.velocity.playerdb.proto.PlayerDBRpc
 import plutoproject.framework.velocity.profile.ProfilePlayerListener
 import plutoproject.framework.velocity.rpc.RpcCommand
 import plutoproject.framework.velocity.util.command.AnnotationParser
@@ -17,7 +16,6 @@ import plutoproject.framework.velocity.util.server
 fun loadFrameworkModules() {
     RpcServer.apply {
         addService(OptionsRpc)
-        addService(PlayerDBRpc)
     }
     Provider
 }
