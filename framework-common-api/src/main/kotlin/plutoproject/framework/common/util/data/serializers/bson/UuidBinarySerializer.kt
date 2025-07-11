@@ -14,7 +14,7 @@ import org.bson.codecs.kotlinx.BsonEncoder
 import java.util.*
 
 @OptIn(ExperimentalSerializationApi::class)
-object JavaUuidBinarySerializer : KSerializer<UUID> {
+object UuidBinarySerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("java_uuid_bson", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): UUID {
