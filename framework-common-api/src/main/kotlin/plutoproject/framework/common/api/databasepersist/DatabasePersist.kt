@@ -20,4 +20,15 @@ interface DatabasePersist {
      * @see PersistContainer
      */
     fun getContainer(playerId: UUID): PersistContainer
+
+    /**
+     * 卸载一个被加载到内存中的容器实例
+     *
+     * 所有未保存的值都会丢失。
+     *
+     * @param playerId 指定的容器玩家 [UUID]
+     * @return 若指定的容器在内存中且成功卸载则为 true，反之为 false
+     * @see PersistContainer.unload
+     */
+    fun unloadContainer(playerId: UUID): Boolean
 }

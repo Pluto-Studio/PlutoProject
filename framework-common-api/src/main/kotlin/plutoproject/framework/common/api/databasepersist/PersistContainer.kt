@@ -49,4 +49,11 @@ interface PersistContainer {
      * 将更改写入数据库
      */
     suspend fun save()
+
+    /**
+     * 从内存中卸载该容器
+     *
+     * 所有未保存的值都会丢失。
+     */
+    fun unload()
 }

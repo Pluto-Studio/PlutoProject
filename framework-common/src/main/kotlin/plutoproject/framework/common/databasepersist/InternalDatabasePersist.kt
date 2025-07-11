@@ -9,5 +9,7 @@ interface InternalDatabasePersist : DatabasePersist {
 
     fun setUsed(container: PersistContainer)
 
+    fun removeLoadedContainer(container: PersistContainer)
+
     fun close()
 }

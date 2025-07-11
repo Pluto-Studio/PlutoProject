@@ -23,6 +23,24 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         }
     }
 
+    override fun getContainer(playerId: UUID): PersistContainer {
+        check(isValid) { "DatabasePersist instance already closed." }
+        if (loadedContainers.contains(playerId)) {
+            return loadedContainers.getValue(playerId)
+        }
+        val container = PersistContainerImpl(playerId)
+        loadedContainers[playerId] = container
+        return container
+    }
+
+    override fun unloadContainer(playerId: UUID): Boolean {
+        if (!loadedContainers.contains(playerId)) {
+            return false
+        }
+        loadedContainers.getValue(playerId).unload()
+        return true
+    }
+
     private fun unloadUnusedContainers() {
         val currentTimestamp = Instant.now()
         val iterator = loadedContainers.entries.iterator()
@@ -40,15 +58,6 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         }
     }
 
-    override fun getContainer(playerId: UUID): PersistContainer {
-        if (loadedContainers.contains(playerId)) {
-            return loadedContainers.getValue(playerId)
-        }
-        val container = PersistContainerImpl(playerId)
-        loadedContainers[playerId] = container
-        return container
-    }
-
     override fun getLastUsedTimestamp(container: PersistContainer): Instant {
         return containerLastUsedTimestamps.getValue(container)
     }
@@ -57,8 +66,13 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         containerLastUsedTimestamps[container] = Instant.now()
     }
 
+    override fun removeLoadedContainer(container: PersistContainer) {
+        loadedContainers.remove(container.playerId)
+        containerLastUsedTimestamps.remove(container)
+    }
+
     override fun close() {
-        autoUnloadDaemonJob.cancel()
         isValid = false
+        autoUnloadDaemonJob.cancel()
     }
 }

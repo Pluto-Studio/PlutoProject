@@ -19,11 +19,13 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     private val repository by inject<ContainerRepository>()
     private val loadedEntries = mutableConcurrentMapOf<String, MemoryEntry<*>>()
     private val removedEntries = mutableConcurrentSetOf<String>()
+    private var isValid = true
 
     private val String.isValidKey: Boolean
         get() = !startsWith(".") && !endsWith(".")
 
     override fun <T : Any> set(key: String, adapter: DataTypeAdapter<T>, value: T) {
+        check(isValid) { "PersistContainer instance already unloaded." }
         require(key.isValidKey) { "$key is not a valid key." }
         removedEntries.remove(key)
         databasePersist.setUsed(this)
@@ -47,6 +49,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override suspend fun <T : Any> get(key: String, adapter: DataTypeAdapter<T>): T? {
+        check(isValid) { "PersistContainer instance already unloaded." }
         require(key.isValidKey) { "$key is not a valid key." }
         databasePersist.setUsed(this)
 
@@ -72,6 +75,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override suspend fun contains(key: String): Boolean {
+        check(isValid) { "PersistContainer instance already unloaded." }
         require(key.isValidKey) { "$key is not a valid key." }
         databasePersist.setUsed(this)
 
@@ -90,6 +94,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     override suspend fun save() {
+        check(isValid) { "PersistContainer instance already unloaded." }
         databasePersist.setUsed(this)
         val projection = Projections.include("playerId")
         val document = repository.findByPlayerId(playerId, projection)
@@ -127,5 +132,10 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
             }
 
         repository.updateDocument(playerId, Updates.combine(updates))
+    }
+
+    override fun unload() {
+        isValid = false
+        databasePersist.removeLoadedContainer(this)
     }
 }
