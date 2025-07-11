@@ -2,6 +2,7 @@ package plutoproject.framework.common.databasepersist
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.kotlin.client.coroutine.ChangeStreamFlow
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.Document
@@ -13,6 +14,10 @@ import java.util.*
 class ContainerRepository : KoinComponent {
     private val collection by inject<MongoCollection<ContainerModel>>()
     private val replaceOptions = ReplaceOptions().upsert(true)
+
+    fun openChangeStream(pipelines: List<Bson>): ChangeStreamFlow<Document> {
+        return collection.withDocumentClass<Document>().watch(pipelines)
+    }
 
     suspend fun findByPlayerId(playerId: UUID, projection: Bson): Document? {
         return collection

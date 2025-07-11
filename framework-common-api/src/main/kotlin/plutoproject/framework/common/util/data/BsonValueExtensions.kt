@@ -41,3 +41,15 @@ fun BsonDocument.setNestedValue(path: String, value: BsonValue) {
         }
     }
 }
+
+fun BsonDocument.containsNested(path: String): Boolean {
+    val parts = path.split(".")
+    var currentValue: BsonValue = this
+
+    for (part in parts) {
+        if (currentValue !is BsonDocument) return false
+        currentValue = currentValue[part] ?: return false
+    }
+
+    return true
+}

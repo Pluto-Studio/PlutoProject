@@ -7,5 +7,5 @@ data class MemoryEntry<T : Any>(
     val key: String,
     val value: BsonValue,
     val adapter: DataTypeAdapter<T>,
-    val wasChangedSinceLastSave: Boolean
+    val wasChangedSinceLastSave: Boolean,
 )

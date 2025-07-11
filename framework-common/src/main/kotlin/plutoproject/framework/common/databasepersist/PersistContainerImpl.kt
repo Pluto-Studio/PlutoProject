@@ -2,27 +2,67 @@ package plutoproject.framework.common.databasepersist
 
 import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
+import com.mongodb.client.model.changestream.OperationType.*
 import org.bson.BsonDocument
+import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
 import plutoproject.framework.common.api.databasepersist.PersistContainer
 import plutoproject.framework.common.util.data.collection.mutableConcurrentSetOf
+import plutoproject.framework.common.util.data.containsNested
 import plutoproject.framework.common.util.data.getNestedValue
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.common.util.data.setNestedValue
+import plutoproject.framework.common.util.serverName
 import java.time.Instant
 import java.util.*
 
 class PersistContainerImpl(override val playerId: UUID) : PersistContainer, KoinComponent {
     private val databasePersist by inject<InternalDatabasePersist>()
     private val repository by inject<ContainerRepository>()
+    private val changeStream by inject<DataChangeStream>()
+
     private val loadedEntries = mutableConcurrentMapOf<String, MemoryEntry<*>>()
     private val removedEntries = mutableConcurrentSetOf<String>()
     private var isValid = true
 
     private val String.isValidKey: Boolean
         get() = !startsWith(".") && !endsWith(".")
+
+    init {
+        changeStream.subscribe(playerId) { event ->
+            when (event.operationType) {
+                INSERT -> onFullDocumentChange(event.fullDocument!!)
+                UPDATE -> onFullDocumentChange(event.fullDocument!!)
+                REPLACE -> onPartialDocumentChange(
+                    event.updateDescription!!.updatedFields!!,
+                    event.updateDescription!!.removedFields!!
+                )
+
+                else -> error("Unexpected")
+            }
+        }
+    }
+
+    private fun updateMemoryEntries(changed: BsonDocument) {
+        loadedEntries
+            .filter { (key, _) -> changed.containsNested(key) }
+            .forEach { (key, entry) ->
+                val new = entry.copy(value = changed.getNestedValue(key)!!, wasChangedSinceLastSave = false)
+                loadedEntries.replace(key, new)
+            }
+        removedEntries.removeIf { key -> changed.containsKey(key) }
+    }
+
+    private fun onFullDocumentChange(document: Document) {
+        updateMemoryEntries(document.toBsonDocument())
+    }
+
+    private fun onPartialDocumentChange(updated: BsonDocument, removed: List<String>) {
+        updateMemoryEntries(updated)
+        removed.forEach { key -> loadedEntries.remove(key) }
+    }
 
     override fun <T : Any> set(key: String, adapter: DataTypeAdapter<T>, value: T) {
         check(isValid) { "PersistContainer instance already unloaded." }
@@ -110,6 +150,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
                 playerId = playerId,
                 createdAt = timestamp,
                 updatedAt = timestamp,
+                updatedByServer = serverName,
                 data = data
             )
             removedEntries.clear()
@@ -117,7 +158,11 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
             return
         }
 
-        val updates = mutableListOf(Updates.set("updatedAt", Instant.now().toEpochMilli()))
+        val updates = mutableListOf(
+            Updates.set("updatedAt", Instant.now().toEpochMilli()),
+            Updates.set("updatedByServer", serverName),
+            Updates.set("playerId", playerId)
+        )
 
         if (removedEntries.isNotEmpty()) {
             updates.addAll(removedEntries.map { key -> Updates.unset("data.$key") })
@@ -136,6 +181,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
     override fun unload() {
         isValid = false
+        changeStream.unsubscribe(playerId)
         databasePersist.removeLoadedContainer(this)
     }
 }

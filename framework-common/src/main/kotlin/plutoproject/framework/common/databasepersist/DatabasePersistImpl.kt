@@ -11,6 +11,7 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
+    private val changeStream by inject<DataChangeStream>()
     private val loadedContainers = mutableConcurrentMapOf<UUID, PersistContainer>()
     private val containerLastUsedTimestamps = mutableConcurrentMapOf<PersistContainer, Instant>()
     private val autoUnloadCondition by inject<AutoUnloadCondition>()
@@ -73,6 +74,8 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
 
     override fun close() {
         isValid = false
+        loadedContainers.values.toList().forEach { it.unload() }
         autoUnloadDaemonJob.cancel()
+        changeStream.close()
     }
 }

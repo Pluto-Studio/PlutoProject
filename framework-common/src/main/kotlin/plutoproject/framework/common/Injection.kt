@@ -16,10 +16,7 @@ import plutoproject.framework.common.api.rpc.RpcServer
 import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
-import plutoproject.framework.common.databasepersist.ContainerModel
-import plutoproject.framework.common.databasepersist.ContainerRepository
-import plutoproject.framework.common.databasepersist.DatabasePersistImpl
-import plutoproject.framework.common.databasepersist.InternalDatabasePersist
+import plutoproject.framework.common.databasepersist.*
 import plutoproject.framework.common.feature.FeatureManagerImpl
 import plutoproject.framework.common.options.OptionDescriptorFactoryImpl
 import plutoproject.framework.common.options.OptionsManagerImpl
@@ -75,4 +72,5 @@ val FrameworkCommonModule = module {
     single { DatabasePersistImpl() } binds arrayOf(DatabasePersist::class, InternalDatabasePersist::class)
     single<MongoCollection<ContainerModel>> { Provider.getCollection("database_persist_containers") }
     single<ContainerRepository> { ContainerRepository() }
+    single { DataChangeStream() }
 }
