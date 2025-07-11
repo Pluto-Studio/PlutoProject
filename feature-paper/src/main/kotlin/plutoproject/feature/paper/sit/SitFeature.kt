@@ -19,7 +19,6 @@ import plutoproject.feature.paper.sit.player.listeners.PlayerSitEntityListener
 import plutoproject.feature.paper.sit.player.listeners.PlayerSitPlayerListener
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser

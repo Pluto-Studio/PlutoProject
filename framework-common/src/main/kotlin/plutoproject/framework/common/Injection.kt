@@ -5,8 +5,6 @@ import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.feature.FeatureManager
-import plutoproject.framework.common.api.options.OptionsManager
-import plutoproject.framework.common.api.options.factory.OptionDescriptorFactory
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.api.provider.getCollection
@@ -17,9 +15,6 @@ import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
 import plutoproject.framework.common.databasepersist.*
 import plutoproject.framework.common.feature.FeatureManagerImpl
-import plutoproject.framework.common.options.OptionDescriptorFactoryImpl
-import plutoproject.framework.common.options.OptionsManagerImpl
-import plutoproject.framework.common.options.repositories.OptionsContainerRepository
 import plutoproject.framework.common.profile.ProfileLookupImpl
 import plutoproject.framework.common.profile.ProfileRepository
 import plutoproject.framework.common.provider.ProviderImpl
@@ -58,9 +53,6 @@ val FrameworkCommonModule = module {
     single<Provider> { ProviderImpl() }
     single<RpcClient> { RpcClientImpl() }
     single<RpcServer> { RpcServerImpl() }
-    single<OptionsContainerRepository> { OptionsContainerRepository(Provider.getCollection("options_data")) }
-    single<OptionsManager> { OptionsManagerImpl() }
-    single<OptionDescriptorFactory> { OptionDescriptorFactoryImpl() }
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }

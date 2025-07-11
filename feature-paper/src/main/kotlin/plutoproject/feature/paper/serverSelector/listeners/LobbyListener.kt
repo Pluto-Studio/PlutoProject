@@ -20,12 +20,12 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
-import org.koin.core.component.inject
-import plutoproject.feature.common.serverSelector.UserRepository
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.player.PlayerSit
 import plutoproject.feature.paper.serverSelector.*
 import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
+import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaText
@@ -48,7 +48,6 @@ val KAOMOJIS = arrayOf(
 
 @Suppress("UNUSED")
 object LobbyListener : Listener, KoinComponent {
-    private val userRepo by inject<UserRepository>()
     private val config by lazy { get<ServerSelectorConfig>().lobby }
 
     @EventHandler
@@ -94,7 +93,8 @@ object LobbyListener : Listener, KoinComponent {
     }
 
     private suspend fun Player.showPromptTitle() {
-        val userModel = userRepo.findOrCreate(uniqueId)
+        val container = DatabasePersist.getContainer(uniqueId)
+        val hasJoinedBefore = container.getOrDefault(HAS_JOINED_BEFORE_KEY, BooleanTypeAdapter, false)
         showTitle {
             times {
                 fadeIn(Ticks.duration(5))
@@ -102,7 +102,7 @@ object LobbyListener : Listener, KoinComponent {
                 fadeOut(Ticks.duration(20))
             }
             mainTitle {
-                if (userModel.hasJoinedBefore) {
+                if (hasJoinedBefore) {
                     text("欢迎回来") with mochaPink
                 } else {
                     text("很高兴见到你！") with mochaPink
@@ -112,8 +112,9 @@ object LobbyListener : Listener, KoinComponent {
                 text("使用指南针来传送服务器 ${KAOMOJIS.random()}") with mochaText
             }
         }
-        if (userModel.hasJoinedBefore) return
-        userRepo.saveOrUpdate(userModel.copy(hasJoinedBefore = true))
+        if (hasJoinedBefore) return
+        container.set(HAS_JOINED_BEFORE_KEY, BooleanTypeAdapter, true)
+        container.save()
     }
 
     @EventHandler
