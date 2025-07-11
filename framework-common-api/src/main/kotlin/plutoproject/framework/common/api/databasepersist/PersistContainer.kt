@@ -38,6 +38,39 @@ interface PersistContainer {
     suspend fun <T : Any> get(key: String, adapter: DataTypeAdapter<T>): T?
 
     /**
+     * 获取一个键值，若不存在则返回默认值
+     *
+     * @param key 需要获取的键
+     * @param adapter 需要获取的值的类型适配器
+     * @param default 默认值
+     *
+     * @return 若这个键存在则返回键值，否则返回默认值
+     */
+    suspend fun <T : Any> getOrDefault(key: String, adapter: DataTypeAdapter<T>, default: T): T
+
+    /**
+     * 获取一个键值，若不存在则返回默认值
+     *
+     * @param key 需要获取的键
+     * @param adapter 需要获取的值的类型适配器
+     * @param defaultValue 默认值运算函数
+     *
+     * @return 若这个键存在则返回键值，否则返回默认值
+     */
+    suspend fun <T : Any> getOrElse(key: String, adapter: DataTypeAdapter<T>, defaultValue: () -> T): T
+
+    /**
+     * 获取一个键值，若不存在则设置并返回默认值
+     *
+     * @param key 需要获取的键
+     * @param adapter 需要获取的值的类型适配器
+     * @param defaultValue 默认值运算函数
+     *
+     * @return 若这个键存在则返回键值，否则返回默认值并设置
+     */
+    suspend fun <T : Any> getOrSet(key: String, adapter: DataTypeAdapter<T>, defaultValue: () -> T): T
+
+    /**
      * 检查一个键是否存在
      *
      * @param key 需要检查的键
