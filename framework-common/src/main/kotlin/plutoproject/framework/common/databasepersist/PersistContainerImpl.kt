@@ -14,7 +14,6 @@ import plutoproject.framework.common.util.data.setNestedValue
 import java.time.Instant
 import java.util.*
 
-@Suppress("UNCHECKED_CAST")
 class PersistContainerImpl(override val playerId: UUID) : PersistContainer, KoinComponent {
     private val databasePersist by inject<InternalDatabasePersist>()
     private val repository by inject<ContainerRepository>()
@@ -31,14 +30,15 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
-            require(adapter.type.isSubtypeOf(entry.type)) {
-                "Type mismatch for entry with key $key: attempting to set type ${adapter.type}, but found ${entry.type} in memory."
+            require(adapter.type.isInstance(value)) { "Value isn't an instance of ${adapter.type.name}." }
+            require(adapter.type == entry.adapter.type) {
+                "Type mismatch for entry with key $key: attempting to set type ${adapter.type.name}, but found ${entry.adapter.type.name} in memory."
             }
-            loadedEntries.replace(key, (entry as MemoryEntry<T>).copy(value = value, wasChangedSinceLastSave = true))
+            loadedEntries.replace(key, entry.copy(value = adapter.toBson(value), wasChangedSinceLastSave = true))
             return
         }
 
-        loadedEntries[key] = MemoryEntry(key, adapter.type, adapter, value, true)
+        loadedEntries[key] = MemoryEntry(key, adapter.toBson(value), adapter, true)
     }
 
     override fun remove(key: String) {
@@ -56,21 +56,19 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
-            require(adapter.type.isSubtypeOf(entry.type)) {
-                "Type mismatch for entry with key $key: attempting to get type ${adapter.type}, but found ${entry.type} in memory."
+            require(adapter.type == entry.adapter.type) {
+                "Type mismatch for entry with key $key: attempting to get type ${adapter.type.name}, but found ${entry.adapter.type.name} in memory."
             }
-            return entry.value as T
+            return adapter.fromBson(entry.value)
         }
 
         val projection = Projections.include("data.$key")
         val document = repository.findByPlayerId(playerId, projection)?.toBsonDocument() ?: return null
-
-        val data = document.getNestedValue("data.$key") ?: return null
-        val value = adapter.fromBson(data)
-        val entry = MemoryEntry(key, adapter.type, adapter, value, false)
+        val value = document.getNestedValue("data.$key") ?: return null
+        val entry = MemoryEntry(key, value, adapter, false)
 
         loadedEntries[key] = entry
-        return value
+        return adapter.fromBson(value)
     }
 
     override suspend fun contains(key: String): Boolean {
@@ -100,9 +98,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
             val timestamp = Instant.now().toEpochMilli()
             val data = BsonDocument()
             loadedEntries.forEach { (key, entry) ->
-                val adapter = entry.adapter as DataTypeAdapter<Any>
-                val value = entry.value
-                data.setNestedValue(key, adapter.toBson(value))
+                data.setNestedValue(key, entry.value)
                 loadedEntries.replace(key, entry.copy(wasChangedSinceLastSave = false))
             }
             val model = ContainerModel(
@@ -126,9 +122,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         loadedEntries
             .filter { (_, entry) -> entry.wasChangedSinceLastSave }
             .forEach { (key, entry) ->
-                val adapter = entry.adapter as DataTypeAdapter<Any>
-                val value = entry.value
-                updates.add(Updates.set("data.$key", adapter.toBson(value)))
+                updates.add(Updates.set("data.$key", entry.value))
                 loadedEntries.replace(key, entry.copy(wasChangedSinceLastSave = false))
             }
 
