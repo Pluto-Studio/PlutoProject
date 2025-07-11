@@ -206,6 +206,28 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         return adapter.fromBson(value)
     }
 
+    override suspend fun <T : Any> getOrDefault(key: String, adapter: DataTypeAdapter<T>, default: T): T {
+        check(isValid) { "PersistContainer instance already closed." }
+        return get(key, adapter) ?: default
+    }
+
+    override suspend fun <T : Any> getOrElse(key: String, adapter: DataTypeAdapter<T>, defaultValue: () -> T): T {
+        check(isValid) { "PersistContainer instance already closed." }
+        return get(key, adapter) ?: defaultValue()
+    }
+
+    override suspend fun <T : Any> getOrSet(key: String, adapter: DataTypeAdapter<T>, defaultValue: () -> T): T {
+        check(isValid) { "PersistContainer instance already closed." }
+        val value = get(key, adapter)
+        return if (value == null) {
+            val result = defaultValue()
+            set(key, adapter, result)
+            result
+        } else {
+            value
+        }
+    }
+
     override suspend fun contains(key: String): Boolean {
         check(isValid) { "PersistContainer instance already closed." }
         require(key.isValidKey) { "$key is not a valid key." }
