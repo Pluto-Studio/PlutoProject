@@ -15,7 +15,6 @@ import plutoproject.framework.common.api.feature.Load
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
@@ -53,7 +52,6 @@ class DynamicSchedulerFeature : PaperFeature(), KoinComponent {
         if (isMenuAvailable) {
             MenuManager.registerButton(ViewBoostButtonDescriptor) { ViewBoost() }
         }
-        OptionsManager.registerOptionDescriptor(DynamicViewDistanceOptionDescriptor)
         server.pluginManager.registerSuspendingEvents(DynamicViewDistanceListener, plugin)
         DynamicScheduler.start()
     }

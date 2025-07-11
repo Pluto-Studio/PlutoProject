@@ -15,7 +15,8 @@ import org.koin.core.component.inject
 import plutoproject.feature.paper.api.dynamicScheduler.DynamicScheduler
 import plutoproject.feature.paper.api.dynamicScheduler.DynamicViewDistanceState
 import plutoproject.feature.paper.dynamicScheduler.config.DynamicSchedulerConfig
-import plutoproject.framework.common.api.options.OptionsManager
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
+import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.common.util.data.map.listMultimapOf
 import plutoproject.framework.common.util.data.map.set
@@ -132,10 +133,8 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
     }
 
     override fun setViewDistance(player: Player, state: Boolean) {
-        val options = runBlocking {
-            OptionsManager.getOptionsOrCreate(player.uniqueId)
-        }
-        options.setEntry(DynamicViewDistanceOptionDescriptor, state)
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        container.set(VIEW_BOOST_TOGGLE_KEY, BooleanTypeAdapter, state)
         when {
             !state && getViewDistanceLocally(player) == DynamicViewDistanceState.ENABLED ->
                 setViewDistanceLocally(player, DynamicViewDistanceState.DISABLED)
@@ -144,7 +143,7 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
                 -> setViewDistanceLocally(player, DynamicViewDistanceState.ENABLED)
         }
         runAsync {
-            options.save()
+            container.save()
         }
     }
 
@@ -161,11 +160,8 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
     }
 
     override fun getViewDistance(player: Player): Boolean {
-        val options = runBlocking {
-            OptionsManager.getOptionsOrCreate(player.uniqueId)
-        }
-        val entry = options.getEntry(DynamicViewDistanceOptionDescriptor)
-        return entry?.value ?: false
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        return runBlocking { container.getOrDefault(VIEW_BOOST_TOGGLE_KEY, BooleanTypeAdapter, false) }
     }
 
     override fun getViewDistanceLocally(player: Player): DynamicViewDistanceState {

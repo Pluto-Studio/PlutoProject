@@ -2,7 +2,6 @@ package plutoproject.feature.paper.serverSelector.screens
 
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
@@ -10,13 +9,14 @@ import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.common.serverSelector.AutoJoinOptionDescriptor
+import plutoproject.feature.common.serverSelector.AUTO_JOIN_TOGGLE_KEY
 import plutoproject.feature.paper.serverSelector.Ingredient
 import plutoproject.feature.paper.serverSelector.Server
 import plutoproject.feature.paper.serverSelector.ServerSelectorConfig
 import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen.AutoJoinState.*
 import plutoproject.feature.paper.serverSelector.transferServer
-import plutoproject.framework.common.api.options.OptionsManager
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
+import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
@@ -136,9 +136,8 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
         val player = LocalPlayer.current
         var state by remember { mutableStateOf(LOADING) }
         LaunchedEffect(Unit) {
-            val options = OptionsManager.getOptions(player.uniqueId)
-            val entry = options?.getEntry(AutoJoinOptionDescriptor)
-            if (options == null || entry == null || !entry.value) {
+            val container = DatabasePersist.getContainer(player.uniqueId)
+            if (!container.getOrDefault(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, false)) {
                 state = DISABLED
                 return@LaunchedEffect
             }
@@ -182,15 +181,15 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
             modifier = Modifier.clickable {
                 if (clickType != ClickType.LEFT) return@clickable
                 if (state == LOADING) return@clickable
-                val options = OptionsManager.getOptionsOrCreate(player.uniqueId)
+                val container = DatabasePersist.getContainer(player.uniqueId)
                 if (state == DISABLED) {
-                    options.setEntry(AutoJoinOptionDescriptor, true)
+                    container.set(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, true)
                     state = ENABLED
                 } else {
-                    options.setEntry(AutoJoinOptionDescriptor, false)
+                    container.set(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, false)
                     state = DISABLED
                 }
-                options.save()
+                container.save()
                 player.playSound(UI_SUCCEED_SOUND)
             }
         )
