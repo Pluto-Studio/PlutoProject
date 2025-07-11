@@ -36,8 +36,9 @@ class DataChangeStream : KoinComponent {
         )
     )
 
-    private val changeStreamFlow = repository.openChangeStream(listOf(match))
+    private val changeStreamFlow = repository.openChangeStream(listOf())
     private val changeStreamJob = runAsync {
+        println("Change Stream Job Stared")
         changeStreamFlow.collect { event ->
             println("A document changed: $event")
             val playerId = when (event.operationType) {
