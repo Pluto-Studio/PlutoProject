@@ -10,10 +10,12 @@ import plutoproject.feature.paper.api.sit.player.PlayerStack
 import plutoproject.feature.paper.api.sit.player.PlayerStackDestroyCause
 import plutoproject.feature.paper.api.sit.player.StackOptions
 import plutoproject.feature.paper.api.sit.player.events.PlayerStackCreateEvent
+import plutoproject.feature.paper.sit.PLAYER_SIT_FEATURE_TOGGLE_KEY
 import plutoproject.feature.paper.sit.player.contexts.CarrierSitContext
 import plutoproject.feature.paper.sit.player.contexts.PassengerSitContext
 import plutoproject.feature.paper.sit.player.contexts.PlayerSitContext
-import plutoproject.framework.common.api.options.OptionsManager
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
+import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
 import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.paper.util.plugin
 
@@ -105,14 +107,13 @@ class PlayerSitImpl : InternalPlayerSit {
     }
 
     override suspend fun isFeatureEnabled(player: Player): Boolean {
-        val default = PlayerSitOptionDescriptor.defaultValue!!
-        val options = OptionsManager.getOptions(player.uniqueId) ?: return default
-        return options.getEntry(PlayerSitOptionDescriptor)?.value ?: default
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        return container.getOrElse(PLAYER_SIT_FEATURE_TOGGLE_KEY, BooleanTypeAdapter) { true }
     }
 
     override suspend fun toggleFeature(player: Player, state: Boolean) {
-        val options = OptionsManager.getOptionsOrCreate(player.uniqueId)
-        options.setEntry(PlayerSitOptionDescriptor, state)
-        options.save()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        container.set(PLAYER_SIT_FEATURE_TOGGLE_KEY, BooleanTypeAdapter, state)
+        container.save()
     }
 }
