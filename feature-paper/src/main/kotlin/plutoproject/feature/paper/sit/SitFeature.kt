@@ -64,7 +64,6 @@ class SitFeature : PaperFeature() {
         server.pluginManager.registerEvents(PlayerSitChunkListener, plugin)
         server.pluginManager.registerEvents(PlayerSitEntityListener, plugin)
         server.pluginManager.registerSuspendingEvents(PlayerSitPlayerListener, plugin)
-        OptionsManager.registerOptionDescriptor(PlayerSitOptionDescriptor)
         if (isMenuAvailable) {
             MenuManager.registerButton(PlayerSitFeatureButtonDescriptor) { PlayerSitToggle() }
         }
