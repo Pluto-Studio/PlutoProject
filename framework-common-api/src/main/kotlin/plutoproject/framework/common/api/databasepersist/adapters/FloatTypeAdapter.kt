@@ -2,9 +2,10 @@ package plutoproject.framework.common.api.databasepersist.adapters
 
 import org.bson.BsonValue
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
+import kotlin.reflect.KClass
 
 object FloatTypeAdapter : DataTypeAdapter<Float> {
-    override val type: Class<Float> = Float::class.java
+    override val type: KClass<Float> = Float::class
 
     override fun fromBson(bson: BsonValue): Float {
         return DoubleTypeAdapter.fromBson(bson).toFloat()

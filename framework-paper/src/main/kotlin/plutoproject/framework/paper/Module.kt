@@ -6,6 +6,7 @@ import plutoproject.framework.common.api.rpc.RpcClient
 import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.util.inject.Koin
 import plutoproject.framework.paper.api.interactive.GuiManager
+import plutoproject.framework.paper.databasepersist.TestCommand
 import plutoproject.framework.paper.interactive.GuiListener
 import plutoproject.framework.paper.interactive.commands.InteractiveCommand
 import plutoproject.framework.paper.interactive.inventory.InventoryListener
@@ -41,6 +42,7 @@ private fun registerListeners() = server.pluginManager.apply {
 private fun registerCommands() {
     AnnotationParser.apply {
         parse(InteractiveCommand)
+        parse(TestCommand)
     }
 }
 

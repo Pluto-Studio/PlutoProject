@@ -1,6 +1,7 @@
 package plutoproject.framework.common.api.databasepersist
 
 import org.bson.BsonValue
+import kotlin.reflect.KClass
 
 /**
  * 用于适配不同对象类型的存储
@@ -11,7 +12,7 @@ interface DataTypeAdapter<T : Any> {
     /**
      * 需要存储的对象类型
      */
-    val type: Class<T>
+    val type: KClass<T>
 
     /**
      * 将要存储的对象类型转换为 [BsonValue]

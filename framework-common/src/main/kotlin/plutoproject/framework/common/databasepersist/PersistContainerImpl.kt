@@ -30,9 +30,9 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
-            require(adapter.type.isInstance(value)) { "Value isn't an instance of ${adapter.type.name}." }
+            require(adapter.type.isInstance(value)) { "Value isn't an instance of ${adapter.type.qualifiedName}." }
             require(adapter.type == entry.adapter.type) {
-                "Type mismatch for entry with key $key: attempting to set type ${adapter.type.name}, but found ${entry.adapter.type.name} in memory."
+                "Type mismatch for entry with key $key: attempting to set type ${adapter.type.qualifiedName}, but found ${entry.adapter.type.qualifiedName} in memory."
             }
             loadedEntries.replace(key, entry.copy(value = adapter.toBson(value), wasChangedSinceLastSave = true))
             return
@@ -57,7 +57,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         if (loadedEntries.contains(key)) {
             val entry = loadedEntries.getValue(key)
             require(adapter.type == entry.adapter.type) {
-                "Type mismatch for entry with key $key: attempting to get type ${adapter.type.name}, but found ${entry.adapter.type.name} in memory."
+                "Type mismatch for entry with key $key: attempting to get type ${adapter.type.qualifiedName}, but found ${entry.adapter.type.qualifiedName} in memory."
             }
             return adapter.fromBson(entry.value)
         }

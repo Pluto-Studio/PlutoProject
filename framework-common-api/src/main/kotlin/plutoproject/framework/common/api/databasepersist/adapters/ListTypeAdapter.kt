@@ -3,12 +3,13 @@ package plutoproject.framework.common.api.databasepersist.adapters
 import org.bson.BsonArray
 import org.bson.BsonValue
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
+import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
 sealed class ListTypeAdapter<T : Any> : DataTypeAdapter<List<T>> {
     abstract val innerType: DataTypeAdapter<T>
 
-    override val type: Class<List<T>> = List::class.java as Class<List<T>>
+    override val type: KClass<List<T>> = List::class as KClass<List<T>>
 
     override fun fromBson(bson: BsonValue): List<T> {
         require(bson is BsonArray) { "Bson value is not BsonArray." }
