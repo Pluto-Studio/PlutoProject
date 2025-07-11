@@ -9,9 +9,6 @@ import plutoproject.framework.paper.api.interactive.GuiManager
 import plutoproject.framework.paper.interactive.GuiListener
 import plutoproject.framework.paper.interactive.commands.InteractiveCommand
 import plutoproject.framework.paper.interactive.inventory.InventoryListener
-import plutoproject.framework.paper.options.PaperOptionsListener
-import plutoproject.framework.paper.options.startOptionsMonitor
-import plutoproject.framework.paper.options.stopOptionsMonitor
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.hook.initHooks
 import plutoproject.framework.paper.util.plugin
@@ -26,13 +23,11 @@ fun enableFrameworkModules() {
     initHooks()
     registerListeners()
     registerCommands()
-    startOptionsMonitor()
 }
 
 private fun registerListeners() = server.pluginManager.apply {
     registerSuspendingEvents(GuiListener, plugin)
     registerSuspendingEvents(InventoryListener, plugin)
-    registerSuspendingEvents(PaperOptionsListener, plugin)
 }
 
 private fun registerCommands() {
@@ -42,7 +37,6 @@ private fun registerCommands() {
 }
 
 fun disableFrameworkModules() {
-    stopOptionsMonitor()
     Koin.get<InternalDatabasePersist>().close()
     GuiManager.disposeAll()
     Provider.close()
