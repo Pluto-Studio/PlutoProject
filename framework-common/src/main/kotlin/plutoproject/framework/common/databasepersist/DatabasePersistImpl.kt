@@ -38,7 +38,9 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         if (!loadedContainers.contains(playerId)) {
             return false
         }
-        loadedContainers.getValue(playerId).unload()
+        val container = loadedContainers.getValue(playerId).apply { close() }
+        loadedContainers.remove(playerId)
+        containerLastUsedTimestamps.remove(container)
         return true
     }
 
@@ -53,6 +55,7 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
             if (lastUsed.plusSeconds(MAX_UNUSED_SECONDS).isBefore(currentTimestamp)
                 && autoUnloadCondition.shouldUnload(id)
             ) {
+                container.close()
                 iterator.remove()
                 containerLastUsedTimestamps.remove(container)
             }
@@ -72,9 +75,15 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         containerLastUsedTimestamps.remove(container)
     }
 
+    private fun unloadAllContainers() {
+        loadedContainers.values.forEach { it.close() }
+        loadedContainers.clear()
+        containerLastUsedTimestamps.clear()
+    }
+
     override fun close() {
         isValid = false
-        loadedContainers.values.toList().forEach { it.unload() }
+        unloadAllContainers()
         autoUnloadDaemonJob.cancel()
         changeStream.close()
     }

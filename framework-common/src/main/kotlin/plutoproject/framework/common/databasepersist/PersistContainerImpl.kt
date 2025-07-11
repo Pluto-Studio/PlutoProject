@@ -152,8 +152,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
             val model = ContainerModel(
                 playerId = playerId,
                 createdAt = timestamp,
-                updatedAt = timestamp,
-                updatedByServer = serverName,
+                updateInfo = UpdateInfo(playerId, serverName, timestamp),
                 data = data
             )
             removedEntries.clear()
@@ -162,9 +161,10 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         }
 
         val updates = mutableListOf(
-            Updates.set("updatedAt", Instant.now().toEpochMilli()),
-            Updates.set("updatedByServer", serverName),
-            Updates.set("playerId", playerId)
+            Updates.set(
+                ContainerModel::updateInfo.name,
+                UpdateInfo(playerId, serverName, Instant.now().toEpochMilli())
+            )
         )
 
         if (removedEntries.isNotEmpty()) {
@@ -182,9 +182,8 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         repository.updateDocument(playerId, Updates.combine(updates))
     }
 
-    override fun unload() {
+    override fun close() {
         isValid = false
         changeStream.unsubscribe(playerId)
-        databasePersist.removeLoadedContainer(this)
     }
 }

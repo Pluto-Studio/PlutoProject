@@ -13,7 +13,6 @@ data class ContainerModel(
     @SerialName("_id") val objectId: @Contextual ObjectId = ObjectId(),
     val playerId: @Serializable(UuidBinarySerializer::class) UUID,
     val createdAt: Long,
-    val updatedAt: Long,
-    val updatedByServer: String,
+    val updateInfo: UpdateInfo,
     val data: @Contextual BsonDocument,
 )

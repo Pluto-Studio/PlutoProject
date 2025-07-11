@@ -22,16 +22,16 @@ class ContainerRepository : KoinComponent {
     suspend fun findByPlayerId(playerId: UUID, projection: Bson): Document? {
         return collection
             .withDocumentClass<Document>()
-            .find(Filters.eq("playerId", playerId))
+            .find(Filters.eq(ContainerModel::playerId.name, playerId))
             .projection(projection)
             .firstOrNull()
     }
 
     suspend fun updateDocument(playerId: UUID, updates: Bson) {
-        collection.updateOne(Filters.eq("playerId", playerId), updates)
+        collection.updateOne(Filters.eq(ContainerModel::playerId.name, playerId), updates)
     }
 
     suspend fun save(model: ContainerModel) {
-        collection.replaceOne(Filters.eq("playerId", model.playerId), model, replaceOptions)
+        collection.replaceOne(Filters.eq(ContainerModel::playerId.name, model.playerId), model, replaceOptions)
     }
 }

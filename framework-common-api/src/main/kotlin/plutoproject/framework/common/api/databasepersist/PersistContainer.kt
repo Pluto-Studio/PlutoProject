@@ -51,9 +51,9 @@ interface PersistContainer {
     suspend fun save()
 
     /**
-     * 从内存中卸载该容器
+     * 关闭该容器实例
      *
      * 所有未保存的值都会丢失。
      */
-    fun unload()
+    fun close()
 }
