@@ -9,6 +9,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
 import plutoproject.framework.common.api.databasepersist.PersistContainer
+import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.util.data.collection.mutableConcurrentSetOf
 import plutoproject.framework.common.util.data.containsNested
 import plutoproject.framework.common.util.data.getNestedValue
@@ -106,7 +107,8 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         }
 
         val projection = Projections.include("data.$key")
-        val document = repository.findByPlayerId(playerId, projection)?.toBsonDocument() ?: return null
+        val document = repository.findByPlayerId(playerId, projection)
+            ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return null
         val value = document.getNestedValue("data.$key") ?: return null
         val entry = MemoryEntry(key, value, adapter, false)
 
@@ -127,7 +129,8 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         }
 
         val projection = Projections.include("data.$key")
-        val document = repository.findByPlayerId(playerId, projection)?.toBsonDocument() ?: return false
+        val document = repository.findByPlayerId(playerId, projection)
+            ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return false
 
         document.getNestedValue("data.$key") ?: return false
         return true

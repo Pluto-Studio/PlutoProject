@@ -41,14 +41,15 @@ class DataChangeStream : KoinComponent {
         println("Change Stream Job Stared")
         changeStreamFlow.collect { event ->
             println("A document changed: $event")
-            val playerId = when (event.operationType) {
+/*            val playerId = when (event.operationType) {
                 INSERT -> extractPlayerId(event.fullDocument!!.toBsonDocument())
                 UPDATE -> extractPlayerId(event.fullDocument!!.toBsonDocument())
                 REPLACE -> extractPlayerId(event.updateDescription!!.updatedFields!!)
                 else -> error("Unexpected")
             }
-            subscribers[playerId]?.invoke(event)
+            subscribers[playerId]?.invoke(event)*/
         }
+        println("Change Stream collect end")
     }
 
     private fun extractPlayerId(document: BsonDocument): UUID {

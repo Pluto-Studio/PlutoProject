@@ -8,11 +8,13 @@ import org.incendo.cloud.annotations.Command
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.*
 import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.framework.common.util.data.serializers.bson.UuidBinarySerializer
 import plutoproject.framework.paper.util.command.ensurePlayer
 import java.util.*
 
 @Serializable
 data class TestObj(
+    val identity: @Serializable(UuidBinarySerializer::class) UUID = UUID.randomUUID(),
     val age: Int = 114514,
     val name: String = "Fucked",
     val location: String = "asdadasd",
