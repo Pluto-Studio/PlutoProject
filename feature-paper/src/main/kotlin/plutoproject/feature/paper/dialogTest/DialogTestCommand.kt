@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.dialogTest
 
+import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.text
@@ -13,6 +14,9 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.input.DialogInput
 import io.papermc.paper.registry.data.dialog.input.SingleOptionDialogInput
 import io.papermc.paper.registry.data.dialog.type.DialogType
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickCallback.Options
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
@@ -20,8 +24,11 @@ import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import plutoproject.framework.common.util.chat.palettes.*
+import plutoproject.framework.paper.api.interactive.startInventory
+import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.dsl.ItemStack
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("UnstableApiUsage")
 object DialogTestCommand {
@@ -78,18 +85,21 @@ object DialogTestCommand {
                 SingleOptionDialogInput.OptionEntry.create("3", component { text("选项 3") with mochaText }, false),
             )
         ).build()
-
         val dialogBase =
             DialogBase.builder(title)
                 .externalTitle(externalTitle)
                 .canCloseWithEscape(false)
                 .pause(false)
-                .afterAction(DialogBase.DialogAfterAction.CLOSE).body(listOf(plainMessage, item))
-                .inputs(listOf(textInput, boolInput, numberRangeInput, singleOption))
+                .afterAction(DialogBase.DialogAfterAction.CLOSE)
+                .inputs(listOf(boolInput, textInput, numberRangeInput, singleOption))
+                .body(listOf(plainMessage, item))
+                // .inputs(listOf(textInput, boolInput, numberRangeInput, singleOption))
                 .build()
+
 
         val actionButtonText = component { text("提交") with mochaText }
         val callback = DialogActionCallback { view, audience ->
+            view.payload()
             val clicker = audience as Player
             clicker.send {
                 text("给你一个苹果！") with mochaMaroon
@@ -119,4 +129,27 @@ object DialogTestCommand {
 
         player.showDialog(dialog)
     }
+
+    @Command("compose-dialog")
+    fun composeDialog(sender: CommandSender) = ensurePlayer(sender) {
+        var count by remember { mutableStateOf(0) }
+
+        LaunchedEffect(Unit) {
+            while (isActive) {
+                delay(500.milliseconds)
+                count++
+            }
+        }
+
+        startInventory {
+            plutoproject.framework.paper.api.interactive.canvas.dialog.Dialog(
+                type = DialogType.notice(),
+                title = Component.text(count),
+                body = {
+
+                }
+            )
+        }
+    }
+
 }
