@@ -10,7 +10,7 @@ import plutoproject.feature.paper.api.sit.player.PlayerStack
 import plutoproject.feature.paper.api.sit.player.PlayerStackDestroyCause
 import plutoproject.feature.paper.api.sit.player.StackOptions
 import plutoproject.feature.paper.api.sit.player.events.PlayerStackCreateEvent
-import plutoproject.feature.paper.sit.PLAYER_SIT_FEATURE_TOGGLE_KEY
+import plutoproject.feature.paper.sit.PLAYER_SIT_TOGGLE_PERSIST_KEY
 import plutoproject.feature.paper.sit.player.contexts.CarrierSitContext
 import plutoproject.feature.paper.sit.player.contexts.PassengerSitContext
 import plutoproject.feature.paper.sit.player.contexts.PlayerSitContext
@@ -108,12 +108,12 @@ class PlayerSitImpl : InternalPlayerSit {
 
     override suspend fun isFeatureEnabled(player: Player): Boolean {
         val container = DatabasePersist.getContainer(player.uniqueId)
-        return container.getOrElse(PLAYER_SIT_FEATURE_TOGGLE_KEY, BooleanTypeAdapter) { true }
+        return container.getOrElse(PLAYER_SIT_TOGGLE_PERSIST_KEY, BooleanTypeAdapter) { true }
     }
 
     override suspend fun toggleFeature(player: Player, state: Boolean) {
         val container = DatabasePersist.getContainer(player.uniqueId)
-        container.set(PLAYER_SIT_FEATURE_TOGGLE_KEY, BooleanTypeAdapter, state)
+        container.set(PLAYER_SIT_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, state)
         container.save()
     }
 }
