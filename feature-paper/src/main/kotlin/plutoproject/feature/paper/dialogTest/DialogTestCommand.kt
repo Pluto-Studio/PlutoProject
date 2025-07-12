@@ -17,10 +17,10 @@ import net.kyori.adventure.text.event.ClickCallback.Options
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import plutoproject.framework.common.util.chat.palettes.*
+import plutoproject.framework.paper.util.dsl.ItemStack
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
 
 @Suppress("UnstableApiUsage")
@@ -28,7 +28,7 @@ object DialogTestCommand {
     @Command("dialogtest <player>")
     fun dialogTest(sender: CommandSender, @Argument("player") player: Player) {
         val title = component {
-            text("修改家名称") with mochaText
+            text("") with mochaText
         }
         val externalTitle = component {
             text("这是额外标题") with mochaText
@@ -42,22 +42,22 @@ object DialogTestCommand {
         }, 1024)
 
         val descMessage = DialogBody.plainMessage(component {
-            text("正在修改家 ") with mochaText
-            text("TestHome123 ") with mochaYellow
-            text("的名称") with mochaText
+            text("这是") with mochaText
+            text("樱花树叶") with mochaPink
         })
 
-        val item = DialogBody.item(ItemStack(Material.NAME_TAG).apply {
-            editMeta {
-                it.isHideTooltip = true
+        val item = DialogBody.item(ItemStack(Material.CHERRY_LEAVES) {
+            displayName {
+                text("樱花树叶") with mochaPink
+            }
+            lore {
+                text("这是一行 Lore") with mochaSubtext0
             }
         }).description(descMessage).build()
 
         val textInputLabel = component {
-            text("输入家名称") with mochaText
-            text(" (最长 ") with mochaSubtext0
-            text("15 ") with mochaText
-            text("个字符)") with mochaSubtext0
+            text("这是文字输入...") with mochaText
+            text(" (仅可包含英文字母、数字、下划线)") with mochaMaroon
         }
         val textInput = DialogInput.text("text_input", textInputLabel).build()
 
@@ -84,11 +84,11 @@ object DialogTestCommand {
                 .externalTitle(externalTitle)
                 .canCloseWithEscape(false)
                 .pause(false)
-                .afterAction(DialogBase.DialogAfterAction.CLOSE).body(listOf(/*plainMessage,*/ item))
-                .inputs(listOf(textInput, /*boolInput, numberRangeInput, singleOption*/))
+                .afterAction(DialogBase.DialogAfterAction.CLOSE).body(listOf(plainMessage, item))
+                .inputs(listOf(textInput, boolInput, numberRangeInput, singleOption))
                 .build()
 
-        val actionButtonText = component { text("保存") }
+        val actionButtonText = component { text("提交") with mochaText }
         val callback = DialogActionCallback { view, audience ->
             val clicker = audience as Player
             clicker.send {
@@ -106,7 +106,7 @@ object DialogTestCommand {
                 text("数字范围内容: ") with mochaText
                 text("${view.getFloat("number_range_input") ?: "null"}") with mochaLavender
             }
-            clicker.inventory.addItemOrDrop(ItemStack(Material.APPLE))
+            clicker.inventory.addItemOrDrop(ItemStack(material = Material.APPLE))
         }
         val options = Options.builder().uses(1).build()
         val actionButton = ActionButton.create(
