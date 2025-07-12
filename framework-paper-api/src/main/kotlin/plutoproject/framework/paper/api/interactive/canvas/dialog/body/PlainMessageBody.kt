@@ -1,16 +1,17 @@
 package plutoproject.framework.paper.api.interactive.canvas.dialog.body
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import net.kyori.adventure.text.Component
-import plutoproject.framework.paper.api.interactive.canvas.dialog.LocalDialogBodyListProvider
 
 @Composable
 @Suppress("UnstableApiUsage")
-fun PlainMessage(
+fun PlainMessageBody(
     contents: Component,
-    width: Long = 200L,
+    width: Int = 200,
 ) {
-    require(width in 1..1024) { "Width must be in [1, 1024]" }
-    val bodyList = LocalDialogBodyListProvider.current
+    BodyElement(remember(contents, width) {
+        DialogBody.plainMessage(contents, width)
+    })
 }

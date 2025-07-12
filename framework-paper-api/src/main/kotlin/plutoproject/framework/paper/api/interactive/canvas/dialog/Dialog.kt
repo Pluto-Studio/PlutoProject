@@ -9,11 +9,12 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import net.kyori.adventure.text.Component
 import plutoproject.framework.paper.api.interactive.ComposableFunction
 import plutoproject.framework.paper.api.interactive.LocalPlayer
+import plutoproject.framework.paper.util.entity.clearDialog
 
-val LocalDialogBodyListProvider: ProvidableCompositionLocal<MutableList<DialogBody>> =
+val LocalDialogBodyListProvider: ProvidableCompositionLocal<MutableList<DialogElement<DialogBody>>> =
     staticCompositionLocalOf { error("Unexpected") }
 
-val LocalDialogInputListProvider: ProvidableCompositionLocal<MutableList<DialogInput>> =
+val LocalDialogInputListProvider: ProvidableCompositionLocal<MutableList<DialogElement<DialogInput>>> =
     staticCompositionLocalOf { error("Unexpected") }
 
 @Composable
@@ -23,15 +24,22 @@ fun Dialog(
     title: Component = Component.empty(),
     externalTitle: Component = Component.empty(),
     canCloseWithEscape: Boolean = true,
-    pause: Boolean = true,
+    pause: Boolean = false,
     afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.CLOSE,
     body: ComposableFunction = {},
     input: ComposableFunction = {},
 ) {
-    val player = LocalPlayer.current
+    require(!pause || afterAction != DialogBase.DialogAfterAction.NONE) { "Pause cannot be enabled when after action is NONE" }
 
-    val bodyList = remember { mutableListOf<DialogBody>() }
-    val inputList = remember { mutableListOf<DialogInput>() }
+    val player = LocalPlayer.current
+    val bodyList = remember { mutableListOf<DialogElement<DialogBody>>() }
+    val inputList = remember { mutableListOf<DialogElement<DialogInput>>() }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            player.clearDialog()
+        }
+    }
 
     CompositionLocalProvider(
         LocalDialogBodyListProvider provides bodyList,
@@ -49,8 +57,8 @@ fun Dialog(
             .canCloseWithEscape(canCloseWithEscape)
             .pause(pause)
             .afterAction(afterAction)
-            .body(bodyList)
-            .inputs(inputList)
+            .body(bodyList.map { it.element })
+            .inputs(inputList.map { it.element })
             .build()
         Dialog.create {
             it.empty().base(dialogBase).type(type)
