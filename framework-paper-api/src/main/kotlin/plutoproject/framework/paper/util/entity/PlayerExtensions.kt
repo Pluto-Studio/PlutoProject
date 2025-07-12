@@ -2,6 +2,7 @@ package plutoproject.framework.paper.util.entity
 
 import com.google.common.io.ByteStreams
 import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
 import net.minecraft.server.level.ServerPlayer
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
@@ -26,4 +27,8 @@ suspend fun Player.switchServer(name: String) {
 
 fun Player.switchServerAsync(name: String) = runAsyncIO {
     switchServer(name)
+}
+
+fun Player.clearDialog() {
+    sendPacket(ClientboundClearDialogPacket.INSTANCE)
 }
