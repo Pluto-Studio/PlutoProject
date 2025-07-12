@@ -6,7 +6,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.keybind
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.send
@@ -19,9 +18,12 @@ import plutoproject.feature.paper.api.menu.LocalMenuScreenModel
 import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.feature.paper.api.menu.descriptor.PageDescriptor
 import plutoproject.feature.paper.menu.Button
+import plutoproject.feature.paper.menu.MENU_USER_MODEL_PERSIST_KEY
 import plutoproject.feature.paper.menu.MenuConfig
 import plutoproject.feature.paper.menu.Page
-import plutoproject.feature.paper.menu.repositories.UserRepository
+import plutoproject.feature.paper.menu.models.PersistUserModel
+import plutoproject.feature.paper.menu.models.UserModelTypeAdapter
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaText
@@ -38,7 +40,6 @@ import plutoproject.framework.paper.api.interactive.modifiers.*
 
 class MenuScreen : InteractiveScreen(), KoinComponent {
     private val config by inject<MenuConfig>()
-    private val userRepo by inject<UserRepository>()
 
     @Composable
     override fun Content() {
@@ -46,7 +47,8 @@ class MenuScreen : InteractiveScreen(), KoinComponent {
         val screenModel = rememberScreenModel { MenuScreenModelImpl() }
 
         LaunchedEffect(Unit) {
-            val userModel = userRepo.findOrCreate(player.uniqueId)
+            val container = DatabasePersist.getContainer(player.uniqueId)
+            val userModel = container.getOrDefault(MENU_USER_MODEL_PERSIST_KEY, UserModelTypeAdapter, PersistUserModel())
             if (userModel.wasOpenedBefore) return@LaunchedEffect
             player.send {
                 text("小提示: 你可以使用 ") with mochaText
@@ -57,11 +59,8 @@ class MenuScreen : InteractiveScreen(), KoinComponent {
                 text("/menu ") with mochaLavender
                 text("来打开「手账」") with mochaText
             }
-            userRepo.saveOrUpdate(
-                userModel.copy(
-                    wasOpenedBefore = true
-                )
-            )
+            container.set(MENU_USER_MODEL_PERSIST_KEY, UserModelTypeAdapter, userModel.copy(wasOpenedBefore = true))
+            container.save()
         }
 
         CompositionLocalProvider(LocalMenuScreenModel provides screenModel) {
