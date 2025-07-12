@@ -3,6 +3,7 @@ import java.time.Instant
 plugins {
     id("plutoproject.build-logic")
     id("plutoproject.base-conventions")
+    id("plutoproject.dokka-conventions")
     alias(libs.plugins.shadow)
     alias(libs.plugins.protobuf)
 }
@@ -33,8 +34,8 @@ tasks.jar {
     manifest {
         attributes(
             "PlutoProject-Version" to project.version,
-            "PlutoProject-Release-Name" to "${project.version}",
-            "PlutoProject-Release-Channel" to "stable",
+            "PlutoProject-Release-Name" to "${project.version} Development Preview",
+            "PlutoProject-Release-Channel" to "development",
             "PlutoProject-Git-Commit" to gitCommitProvider.standardOutput.asText.map { it.trim() },
             "PlutoProject-Git-Branch" to gitBranchProvider.standardOutput.asText.map { it.trim() },
             "PlutoProject-Build-Time" to buildTimestampProvider

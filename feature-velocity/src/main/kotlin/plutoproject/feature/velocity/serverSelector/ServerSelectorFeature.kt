@@ -2,13 +2,10 @@ package plutoproject.feature.velocity.serverSelector
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
 import org.koin.dsl.module
-import plutoproject.feature.common.serverSelector.AutoJoinOptionDescriptor
-import plutoproject.feature.common.serverSelector.CommonFeatureModule
 import plutoproject.feature.velocity.serverSelector.commands.LobbyCommand
 import plutoproject.feature.velocity.serverSelector.listeners.AutoJoinListener
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
@@ -28,10 +25,9 @@ class ServerSelectorFeature : VelocityFeature() {
 
     override fun onEnable() {
         configureKoin {
-            modules(velocityFeatureModule, CommonFeatureModule)
+            modules(velocityFeatureModule)
         }
         AnnotationParser.parse(LobbyCommand)
-        OptionsManager.registerOptionDescriptor(AutoJoinOptionDescriptor)
         server.eventManager.registerSuspend(plugin, AutoJoinListener)
     }
 }

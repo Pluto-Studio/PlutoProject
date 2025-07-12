@@ -14,10 +14,10 @@ import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.api.warp.WarpCategory
 import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.feature.paper.api.warp.WarpType
-import plutoproject.framework.common.api.playerdb.PlayerDB
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
+import plutoproject.framework.common.api.databasepersist.adapters.JavaUuidTypeAdapter
+import plutoproject.framework.common.api.databasepersist.adapters.ListTypeAdapter
 import plutoproject.framework.common.util.data.collection.subListOrNull
-import plutoproject.framework.common.util.data.convertToUuid
-import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.util.data.models.toModel
 import plutoproject.framework.paper.util.server
@@ -29,8 +29,8 @@ import kotlin.time.Duration
 class WarpManagerImpl : WarpManager, KoinComponent {
     private val config by inject<WarpConfig>()
     private val repo by inject<WarpRepository>()
-    private val preferredSpawnKey = "essentials.$serverName.warp.preferred_spawn"
-    private val collectionKey = "essentials.$serverName.warp.collection"
+    private val preferredSpawnKey = "warp.$serverName.preferred_spawn"
+    private val collectionKey = "warp.$serverName.collection"
     private val cache = cacheBuilder<UUID, Warp?> { // null 值不会被存储到缓存
         refreshAfterWrite = Duration.parse("5m")
     }.build {
@@ -99,23 +99,29 @@ class WarpManagerImpl : WarpManager, KoinComponent {
     }
 
     override suspend fun getPreferredSpawn(player: OfflinePlayer): Warp? {
-        val database = PlayerDB.getOrCreate(player.uniqueId)
-        val spawnId = database.getString(preferredSpawnKey)?.convertToUuidOrNull() ?: return getDefaultSpawn()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        val spawnId = container.get(preferredSpawnKey, JavaUuidTypeAdapter) ?: return getDefaultSpawn()
         val spawn = get(spawnId) ?: return getDefaultSpawn()
         return if (spawn.isSpawn) spawn else getDefaultSpawn()
     }
 
     override suspend fun setPreferredSpawn(player: OfflinePlayer, spawn: Warp) {
         require(spawn.isSpawn) { "Warp ${spawn.name} isn't a spawn" }
-        val database = PlayerDB.getOrCreate(player.uniqueId)
-        database[preferredSpawnKey] = spawn.id.toString()
-        database.update()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        container.set(preferredSpawnKey, JavaUuidTypeAdapter, spawn.id)
+        container.save()
     }
 
     override suspend fun getCollection(player: OfflinePlayer): Collection<Warp> {
-        return PlayerDB.getOrCreate(player.uniqueId).getList<String>(collectionKey)
-            ?.mapNotNull { get(it.convertToUuid()) }
-            ?: emptyList()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        val collection = container.get(collectionKey, ListTypeAdapter.UUID)
+        return if (collection != null) {
+            collection.mapNotNull { get(it) }
+        } else {
+            container.set(collectionKey, ListTypeAdapter.UUID, emptyList())
+            container.save()
+            emptyList()
+        }
     }
 
     override suspend fun getCollectionPageCount(player: OfflinePlayer, pageSize: Int): Int {
@@ -131,17 +137,17 @@ class WarpManagerImpl : WarpManager, KoinComponent {
     override suspend fun addToCollection(player: OfflinePlayer, warp: Warp) {
         val list = getCollection(player).toMutableList()
         list.add(warp)
-        val db = PlayerDB.getOrCreate(player.uniqueId)
-        db[collectionKey] = list.map { it.id.toString() }
-        db.update()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        container.set(collectionKey, ListTypeAdapter.UUID, list.map { it.id })
+        container.save()
     }
 
     override suspend fun removeFromCollection(player: OfflinePlayer, warp: Warp) {
         val list = getCollection(player).toMutableList()
         list.remove(warp)
-        val db = PlayerDB.getOrCreate(player.uniqueId)
-        db[collectionKey] = list.map { it.id.toString() }
-        db.update()
+        val container = DatabasePersist.getContainer(player.uniqueId)
+        container.set(collectionKey, ListTypeAdapter.UUID, list.map { it.id })
+        container.save()
     }
 
     override suspend fun list(): Collection<Warp> {

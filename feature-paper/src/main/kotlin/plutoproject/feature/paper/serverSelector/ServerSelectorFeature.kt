@@ -2,8 +2,6 @@ package plutoproject.feature.paper.serverSelector
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import org.koin.dsl.module
-import plutoproject.feature.common.serverSelector.AutoJoinOptionDescriptor
-import plutoproject.feature.common.serverSelector.CommonFeatureModule
 import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.feature.paper.api.menu.isMenuAvailable
 import plutoproject.feature.paper.serverSelector.button.ServerSelector
@@ -14,7 +12,6 @@ import plutoproject.framework.common.api.feature.Load
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.options.OptionsManager
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
@@ -40,10 +37,9 @@ class ServerSelectorFeature : PaperFeature() {
     override fun onEnable() {
         featureLogger = logger
         configureKoin {
-            modules(bukkitFeatureModule, CommonFeatureModule)
+            modules(bukkitFeatureModule)
         }
         loadLobbyWorld()
-        OptionsManager.registerOptionDescriptor(AutoJoinOptionDescriptor)
         if (isMenuAvailable) {
             MenuManager.registerButton(ServerSelectorButtonDescriptor) { ServerSelector() }
         }

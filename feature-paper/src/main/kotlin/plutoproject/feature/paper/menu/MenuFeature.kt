@@ -39,6 +39,7 @@ class MenuFeature : PaperFeature(), KoinComponent {
         single<PageDescriptorFactory> { PageDescriptorFactoryImpl() }
         single<ButtonDescriptorFactory> { ButtonDescriptorFactoryImpl() }
         single<UserRepository> { UserRepository(Provider.getCollection("menu_user_data")) }
+        single<PersistMigrator> { PersistMigrator() }
     }
 
     override fun onEnable() {

@@ -1,10 +1,10 @@
 package plutoproject.framework.common
 
+import com.mongodb.kotlin.client.coroutine.MongoCollection
+import org.koin.dsl.binds
 import org.koin.dsl.module
+import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.feature.FeatureManager
-import plutoproject.framework.common.api.options.OptionsManager
-import plutoproject.framework.common.api.options.factory.OptionDescriptorFactory
-import plutoproject.framework.common.api.playerdb.PlayerDB
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.api.provider.getCollection
@@ -13,12 +13,8 @@ import plutoproject.framework.common.api.rpc.RpcServer
 import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.config.ProviderConfig
 import plutoproject.framework.common.config.RpcConfig
+import plutoproject.framework.common.databasepersist.*
 import plutoproject.framework.common.feature.FeatureManagerImpl
-import plutoproject.framework.common.options.OptionDescriptorFactoryImpl
-import plutoproject.framework.common.options.OptionsManagerImpl
-import plutoproject.framework.common.options.repositories.OptionsContainerRepository
-import plutoproject.framework.common.playerdb.DatabaseRepository
-import plutoproject.framework.common.playerdb.PlayerDBImpl
 import plutoproject.framework.common.profile.ProfileLookupImpl
 import plutoproject.framework.common.profile.ProfileRepository
 import plutoproject.framework.common.provider.ProviderImpl
@@ -28,8 +24,8 @@ import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
 import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.frameworkDataFolder
-import plutoproject.framework.common.util.pluginDataFolder
 import plutoproject.framework.common.util.jvm.extractFileFromJar
+import plutoproject.framework.common.util.pluginDataFolder
 
 inline fun <reified T : Any> getModuleConfig(resourcePrefix: String, id: String): T {
     val file = frameworkDataFolder.resolve(id).resolve("config.conf")
@@ -57,12 +53,11 @@ val FrameworkCommonModule = module {
     single<Provider> { ProviderImpl() }
     single<RpcClient> { RpcClientImpl() }
     single<RpcServer> { RpcServerImpl() }
-    single<DatabaseRepository> { DatabaseRepository(Provider.getCollection("player_database_data")) }
-    single<PlayerDB> { PlayerDBImpl() }
-    single<OptionsContainerRepository> { OptionsContainerRepository(Provider.getCollection("options_data")) }
-    single<OptionsManager> { OptionsManagerImpl() }
-    single<OptionDescriptorFactory> { OptionDescriptorFactoryImpl() }
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
+    single { DatabasePersistImpl() } binds arrayOf(DatabasePersist::class, InternalDatabasePersist::class)
+    single<MongoCollection<ContainerModel>> { Provider.getCollection("database_persist_containers") }
+    single<ContainerRepository> { ContainerRepository() }
+    single { DataChangeStream() }
 }

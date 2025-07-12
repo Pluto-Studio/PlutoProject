@@ -7,9 +7,12 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
+import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.paper.api.interactive.*
+import plutoproject.framework.paper.api.interactive.animations.loadingIconAnimation
+import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.components.SeparatePageTuner
 import plutoproject.framework.paper.api.interactive.components.SeparatePageTunerMode
@@ -90,10 +93,8 @@ abstract class ListMenu<E, M : ListMenuModel<E>> : InteractiveScreen() {
             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Row(modifier = Modifier.fillMaxWidth().height(2), horizontalArrangement = Arrangement.Center) {
                     Item(
-                        material = Material.CHEST_MINECART,
-                        name = component {
-                            text("正在加载...") with mochaSubtext0
-                        }
+                        material = loadingIconAnimation(),
+                        name = Component.text("${spinnerAnimation()} 正在加载...").color(mochaSubtext0)
                     )
                 }
             }

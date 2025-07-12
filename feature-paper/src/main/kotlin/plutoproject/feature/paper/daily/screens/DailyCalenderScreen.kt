@@ -2,7 +2,6 @@ package plutoproject.feature.paper.daily.screens
 
 import androidx.compose.runtime.*
 import cafe.adriel.voyager.core.model.rememberScreenModel
-import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
@@ -24,6 +23,8 @@ import plutoproject.framework.common.util.time.formatTime
 import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
+import plutoproject.framework.paper.api.interactive.animations.loadingIconAnimation
+import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
 import plutoproject.framework.paper.api.interactive.canvas.Menu
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
@@ -72,10 +73,8 @@ class DailyCalenderScreen : InteractiveScreen() {
                     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                         Row(modifier = Modifier.fillMaxWidth().height(2), horizontalArrangement = Arrangement.Center) {
                             Item(
-                                material = Material.CHEST_MINECART,
-                                name = component {
-                                    text("正在加载...") with mochaSubtext0
-                                }
+                                material = loadingIconAnimation(),
+                                name = Component.text("${spinnerAnimation()} 正在加载...").color(mochaSubtext0)
                             )
                         }
                     }

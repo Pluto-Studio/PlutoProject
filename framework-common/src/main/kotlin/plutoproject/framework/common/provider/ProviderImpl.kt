@@ -1,8 +1,11 @@
 package plutoproject.framework.common.provider
 
 import com.maxmind.geoip2.DatabaseReader
+import com.mongodb.ConnectionString
+import com.mongodb.MongoClientSettings
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import org.bson.UuidRepresentation
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.provider.Provider
@@ -17,8 +20,11 @@ class ProviderImpl : Provider, KoinComponent {
 
     init {
         val mongoConfig = config.mongo
-        mongoClient =
-            MongoClient.Factory.create("mongodb://${mongoConfig.username}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.database}?uuidRepresentation=standard&connectTimeoutMS=0&timeoutMS=0")
+        val mongoSettings = MongoClientSettings.builder()
+            .applyConnectionString(ConnectionString("mongodb://${mongoConfig.username}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.database}"))
+            .uuidRepresentation(UuidRepresentation.STANDARD)
+            .build()
+        mongoClient = MongoClient.create(mongoSettings)
         defaultMongoDatabase = mongoClient.getDatabase(mongoConfig.database)
         val geoIpConfig = config.geoIp
         val dbFile = getFrameworkModuleDataFolder("provider").resolve(geoIpConfig.database)
