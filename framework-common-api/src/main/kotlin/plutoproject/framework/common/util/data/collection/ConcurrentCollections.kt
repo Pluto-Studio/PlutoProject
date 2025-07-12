@@ -8,5 +8,5 @@ fun <T> mutableConcurrentListOf(vararg elements: T): MutableList<T> {
 }
 
 fun <T> mutableConcurrentSetOf(vararg elements: T): MutableSet<T> {
-    return ConcurrentHashMap.newKeySet()
+    return ConcurrentHashMap.newKeySet<T>().apply { addAll(elements) }
 }
