@@ -20,6 +20,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import plutoproject.feature.common.serverSelector.HAS_JOINED_BEFORE_PERSIST_KEY
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.player.PlayerSit
 import plutoproject.feature.paper.serverSelector.*
@@ -94,7 +95,7 @@ object LobbyListener : Listener, KoinComponent {
 
     private suspend fun Player.showPromptTitle() {
         val container = DatabasePersist.getContainer(uniqueId)
-        val hasJoinedBefore = container.getOrDefault(HAS_JOINED_BEFORE_KEY, BooleanTypeAdapter, false)
+        val hasJoinedBefore = container.getOrDefault(HAS_JOINED_BEFORE_PERSIST_KEY, BooleanTypeAdapter, false)
         showTitle {
             times {
                 fadeIn(Ticks.duration(5))
@@ -113,7 +114,7 @@ object LobbyListener : Listener, KoinComponent {
             }
         }
         if (hasJoinedBefore) return
-        container.set(HAS_JOINED_BEFORE_KEY, BooleanTypeAdapter, true)
+        container.set(HAS_JOINED_BEFORE_PERSIST_KEY, BooleanTypeAdapter, true)
         container.save()
     }
 

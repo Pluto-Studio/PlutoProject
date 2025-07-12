@@ -5,7 +5,7 @@ import ink.pmc.advkt.showTitle
 import ink.pmc.advkt.title.*
 import net.kyori.adventure.util.Ticks
 import org.bukkit.entity.Player
-import plutoproject.feature.common.serverSelector.PREVIOUSLY_JOINED_SERVER_KEY
+import plutoproject.feature.common.serverSelector.PREVIOUSLY_JOINED_SERVER_PERSIST_KEY
 import plutoproject.feature.common.serverSelector.TELEPORT_FAILED_SOUND
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.StringTypeAdapter
@@ -34,6 +34,6 @@ suspend fun Player.transferServer(id: String) {
         return
     }
     val container = DatabasePersist.getContainer(uniqueId)
-    container.set(PREVIOUSLY_JOINED_SERVER_KEY, StringTypeAdapter, id)
+    container.set(PREVIOUSLY_JOINED_SERVER_PERSIST_KEY, StringTypeAdapter, id)
     container.save()
 }

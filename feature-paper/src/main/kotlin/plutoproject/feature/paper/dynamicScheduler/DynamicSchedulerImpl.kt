@@ -134,7 +134,7 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
 
     override fun setViewDistance(player: Player, state: Boolean) {
         val container = DatabasePersist.getContainer(player.uniqueId)
-        container.set(VIEW_BOOST_TOGGLE_KEY, BooleanTypeAdapter, state)
+        container.set(VIEW_BOOST_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, state)
         when {
             !state && getViewDistanceLocally(player) == DynamicViewDistanceState.ENABLED ->
                 setViewDistanceLocally(player, DynamicViewDistanceState.DISABLED)
@@ -161,7 +161,7 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
 
     override fun getViewDistance(player: Player): Boolean {
         val container = DatabasePersist.getContainer(player.uniqueId)
-        return runBlocking { container.getOrDefault(VIEW_BOOST_TOGGLE_KEY, BooleanTypeAdapter, false) }
+        return runBlocking { container.getOrDefault(VIEW_BOOST_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, false) }
     }
 
     override fun getViewDistanceLocally(player: Player): DynamicViewDistanceState {
