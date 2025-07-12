@@ -9,7 +9,7 @@ import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.common.serverSelector.AUTO_JOIN_TOGGLE_KEY
+import plutoproject.feature.common.serverSelector.AUTO_JOIN_TOGGLE_PERSIST_KEY
 import plutoproject.feature.paper.serverSelector.Ingredient
 import plutoproject.feature.paper.serverSelector.Server
 import plutoproject.feature.paper.serverSelector.ServerSelectorConfig
@@ -137,7 +137,7 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
         var state by remember { mutableStateOf(LOADING) }
         LaunchedEffect(Unit) {
             val container = DatabasePersist.getContainer(player.uniqueId)
-            if (!container.getOrDefault(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, false)) {
+            if (!container.getOrDefault(AUTO_JOIN_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, false)) {
                 state = DISABLED
                 return@LaunchedEffect
             }
@@ -183,10 +183,10 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                 if (state == LOADING) return@clickable
                 val container = DatabasePersist.getContainer(player.uniqueId)
                 if (state == DISABLED) {
-                    container.set(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, true)
+                    container.set(AUTO_JOIN_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, true)
                     state = ENABLED
                 } else {
-                    container.set(AUTO_JOIN_TOGGLE_KEY, BooleanTypeAdapter, false)
+                    container.set(AUTO_JOIN_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, false)
                     state = DISABLED
                 }
                 container.save()
