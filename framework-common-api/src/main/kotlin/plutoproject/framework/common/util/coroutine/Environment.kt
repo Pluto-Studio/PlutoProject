@@ -13,11 +13,11 @@ fun shutdownCoroutineEnvironment() {
     if (PlutoCoroutineScope.isActive) {
         PlutoCoroutineScope.cancel()
     }
+    waitForCompletion()
     Dispatchers.shutdown()
-    waitFinalize()
 }
 
-private fun waitFinalize() {
-    logger.info("Wait 1s for finalizing...")
+private fun waitForCompletion() {
+    logger.info("Waiting 1s for coroutine completion...")
     Thread.sleep(1000)
 }
