@@ -13,7 +13,6 @@ import plutoproject.framework.paper.api.interactive.drag.DragScope
 import plutoproject.framework.paper.api.interactive.layout.Constraints
 import plutoproject.framework.paper.api.interactive.node.InventoryNode
 import plutoproject.framework.paper.interactive.BaseScope
-import plutoproject.framework.paper.interactive.logger
 import plutoproject.framework.paper.interactive.uiRenderFailed
 import plutoproject.framework.paper.util.coroutine.runSync
 import java.util.logging.Level
