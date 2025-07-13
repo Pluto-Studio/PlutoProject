@@ -1,6 +1,6 @@
-package plutoproject.feature.velocity.protocolChecker
+package plutoproject.feature.velocity.versionchecker
 
-data class ProtocolCheckerConfig(
+data class VersionCheckerConfig(
     val protocolRange: Pair<Int, Int> = 767 to 767,
     val serverBrand: String? = null,
 ) {

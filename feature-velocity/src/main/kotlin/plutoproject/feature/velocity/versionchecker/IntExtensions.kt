@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.protocolChecker
+package plutoproject.feature.velocity.versionchecker
 
 import com.velocitypowered.api.network.ProtocolVersion
 
