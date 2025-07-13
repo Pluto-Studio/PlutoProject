@@ -6,7 +6,8 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.OperationType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.runBlocking
 import org.bson.BsonDocument
 import org.bson.Document
 import org.koin.core.component.KoinComponent
@@ -49,23 +50,18 @@ class DataChangeStream : KoinComponent {
     private var changeStreamJob = runChangeStreamJob()
 
     private fun runChangeStreamJob(): Job = runAsync {
-        runCatching {
-            changeStreamFlow.collect { event ->
-                val playerId = extractPlayerId(event)
-                runCatching {
-                    subscribers[playerId]?.invoke(event)
-                }.onFailure {
-                    logger.log(Level.SEVERE, "Exception caught in change stream (playerId = $playerId)", it)
-                }
+        changeStreamFlow.collect { event ->
+            val playerId = extractPlayerId(event)
+            runCatching {
+                subscribers[playerId]?.invoke(event)
+            }.onFailure {
+                logger.log(Level.SEVERE, "Error calling subscriber for $playerId", it)
             }
-        }.onFailure {
-            cancel(cause = CancellationException("Exception caught while monitoring change stream", it))
         }
     }.apply {
         invokeOnCompletion {
-            if (it !is CancellationException) return@invokeOnCompletion
-            logger.log(Level.SEVERE, it.message, it.cause)
-            logger.warning("Trying to restart monitor...")
+            if (it is CancellationException) return@invokeOnCompletion
+            logger.log(Level.SEVERE, "Error occurred while listening to change stream", it)
             changeStreamJob = runChangeStreamJob()
         }
     }
@@ -91,8 +87,8 @@ class DataChangeStream : KoinComponent {
         subscribers.remove(playerId)
     }
 
-    fun close() {
+    fun close() = runBlocking {
         isValid = false
-        changeStreamJob.cancel()
+        changeStreamJob.cancelAndJoin()
     }
 }

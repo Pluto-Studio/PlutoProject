@@ -6,7 +6,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import java.util.logging.Logger
 
-private val logger = Logger.getLogger("framework/common/util/coroutine")
+private val logger = Logger.getLogger("PlutoProject/Coroutine")
 
 @OptIn(DelicateCoroutinesApi::class)
 fun shutdownCoroutineEnvironment() {

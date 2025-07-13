@@ -48,7 +48,7 @@ class FeatureManagerImpl : FeatureManager, KoinComponent {
         val id = metadata.id
         feature.init(
             id,
-            Logger.getLogger("feature/${platformType.identifier}/$id"),
+            Logger.getLogger("PlutoProject/$id"),
             featureDataFolder.resolve("$id${File.separator}")
         )
         return feature
