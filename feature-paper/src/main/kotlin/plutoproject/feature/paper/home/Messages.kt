@@ -175,6 +175,53 @@ fun getUIHomeListHomeLore(home: Home): List<Component> {
     }
 }
 
+val UI_HOME_NAME_DIALOG_CANCEL = component {
+    text("取消")
+}
+
+val UI_HOME_NAME_DIALOG_SUBMIT = component {
+    text("提交")
+}
+
+val UI_HOME_NAME_DIALOG_TEXT_INPUT_LABEL = component {
+    text("输入家名称 ") with mochaText
+    text("(最长 ") with mochaSubtext0
+    text("${HomeManager.nameLengthLimit} ") with mochaLavender
+    text("个字符)") with mochaSubtext0
+}
+
+val UI_HOME_CREATE_DIALOG_TITLE = component {
+    text("创建家") with mochaText
+}
+
+val UI_HOME_RENAME_DIALOG_TITLE = component {
+    text("编辑家名称") with mochaText
+}
+
+val UI_HOME_RENAME_DIALOG_RENAMING = component {
+    text("正在修改家 ") with mochaText
+    text("<name> ") with mochaYellow
+    text("的名称") with mochaText
+}
+
+val UI_HOME_DIALOG_SAVE_FAILED_EMPTY_NAME = component {
+    text("请输入名称") with mochaMaroon
+}
+
+val UI_HOME_DIALOG_SAVE_FAILED_TOO_LONG = component {
+    text("名称过长，最多使用 ") with mochaMaroon
+    text("${HomeManager.nameLengthLimit} ") with mochaText
+    text("个字符") with mochaMaroon
+}
+
+val UI_HOME_DIALOG_SAVE_FAILED_EXISTED = component {
+    text("已存在同名的家") with mochaMaroon
+}
+
+val UI_HOME_DIALOG_SAVED = component {
+    text("√ 已保存") with mochaGreen
+}
+
 val UI_HOME_EDITOR_TITLE = component {
     text("编辑 <name>")
 }

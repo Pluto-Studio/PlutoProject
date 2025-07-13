@@ -25,15 +25,15 @@ fun Dialog(
     externalTitle: Component = Component.empty(),
     canCloseWithEscape: Boolean = true,
     pause: Boolean = false,
-    afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.CLOSE,
+    afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.NONE,
     body: ComposableFunction = {},
     input: ComposableFunction = {},
 ) {
     require(!pause || afterAction != DialogBase.DialogAfterAction.NONE) { "Pause cannot be enabled when after action is NONE" }
 
     val player = LocalPlayer.current
-    val bodyList = remember { mutableListOf<DialogElement<DialogBody>>() }
-    val inputList = remember { mutableListOf<DialogElement<DialogInput>>() }
+    val bodyList = mutableStateListOf<DialogElement<DialogBody>>()
+    val inputList = mutableStateListOf<DialogElement<DialogInput>>()
 
     DisposableEffect(Unit) {
         onDispose {
@@ -49,20 +49,17 @@ fun Dialog(
         input()
     }
 
-    val dialog = remember(
-        title, externalTitle, canCloseWithEscape, pause, afterAction, body, input, bodyList, inputList
-    ) {
-        val dialogBase = DialogBase.builder(title)
-            .externalTitle(externalTitle)
-            .canCloseWithEscape(canCloseWithEscape)
-            .pause(pause)
-            .afterAction(afterAction)
-            .body(bodyList.map { it.element })
-            .inputs(inputList.map { it.element })
-            .build()
-        Dialog.create {
-            it.empty().base(dialogBase).type(type)
-        }
+    val dialogBase = DialogBase.builder(title)
+        .externalTitle(externalTitle)
+        .canCloseWithEscape(canCloseWithEscape)
+        .pause(pause)
+        .afterAction(afterAction)
+        .body(bodyList.map { it.element })
+        .inputs(inputList.map { it.element })
+        .build()
+
+    val dialog = Dialog.create {
+        it.empty().base(dialogBase).type(type)
     }
 
     player.showDialog(dialog)
