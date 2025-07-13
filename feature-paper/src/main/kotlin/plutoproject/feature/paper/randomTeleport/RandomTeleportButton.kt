@@ -16,7 +16,9 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMauve
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.framework.common.util.chat.toCurrencyFormattedString
 import plutoproject.framework.common.util.chat.toFormattedString
+import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
@@ -61,7 +63,7 @@ fun RandomTeleport() {
     val economySymbol = economy.currencyNameSingular() ?: ECONOMY_SYMBOL
     val balance = economy.getBalance(player)
     val cost = RandomTeleportManager.getRandomTeleportOptions(world).cost
-    val costMessage = "${cost}$economySymbol"
+    val costMessage = "${cost.trimmedString()}$economySymbol"
 
     var cooldownRemaining by remember { mutableStateOf(player.cooldownRemaining) }
     var cooldownAnimationProgress by rememberSaveable { mutableStateOf(0) }
