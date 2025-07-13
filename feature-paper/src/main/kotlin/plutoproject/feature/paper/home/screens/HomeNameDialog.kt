@@ -8,9 +8,9 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickCallback
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.feature.paper.home.UI_HOME_NAME_DIALOG_CANCEL
-import plutoproject.feature.paper.home.UI_HOME_NAME_DIALOG_SUBMIT
-import plutoproject.feature.paper.home.UI_HOME_NAME_DIALOG_TEXT_INPUT_LABEL
+import plutoproject.feature.paper.home.UI_DIALOG_NAME_INPUT_CANCEL
+import plutoproject.feature.paper.home.UI_DIALOG_NAME_INPUT_SUBMIT
+import plutoproject.feature.paper.home.UI_DIALOG_NAME_INPUT_TEXT_INPUT_LABEL
 import plutoproject.framework.paper.api.interactive.ComposableFunction
 import plutoproject.framework.paper.api.interactive.canvas.dialog.Dialog
 import plutoproject.framework.paper.api.interactive.canvas.dialog.input.TextInput
@@ -37,8 +37,8 @@ fun HomeNameDialog(
         onSubmit(text)
     }, ClickCallback.Options.builder().build())
 
-    val noButton = ActionButton.builder(UI_HOME_NAME_DIALOG_CANCEL).action(cancelCallback).build()
-    val yesButton = ActionButton.builder(UI_HOME_NAME_DIALOG_SUBMIT).action(submitCallback).build()
+    val noButton = ActionButton.builder(UI_DIALOG_NAME_INPUT_CANCEL).action(cancelCallback).build()
+    val yesButton = ActionButton.builder(UI_DIALOG_NAME_INPUT_SUBMIT).action(submitCallback).build()
 
     Dialog(
         type = DialogType.confirmation(noButton, yesButton),
@@ -49,7 +49,7 @@ fun HomeNameDialog(
             if (!showInput) return@Dialog
             TextInput(
                 key = "name_input",
-                label = UI_HOME_NAME_DIALOG_TEXT_INPUT_LABEL,
+                label = UI_DIALOG_NAME_INPUT_TEXT_INPUT_LABEL,
                 maxLength = HomeManager.nameLengthLimit,
                 initial = submittedText
             )

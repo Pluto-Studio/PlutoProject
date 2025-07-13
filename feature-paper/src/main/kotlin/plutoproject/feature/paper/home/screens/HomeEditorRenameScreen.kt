@@ -11,7 +11,6 @@ import org.bukkit.inventory.ItemStack
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
-import plutoproject.feature.paper.home.screens.RenameState.*
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
@@ -32,7 +31,7 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
     override fun Content() {
         val player = LocalPlayer.current
         val coroutineScope = rememberCoroutineScope()
-        var state by remember { mutableStateOf(NONE) }
+        var state by remember { mutableStateOf(RenameState.NONE) }
         val navigator = LocalNavigator.currentOrThrow
 
         fun stateTransition(newState: RenameState, pop: Boolean = false) {
@@ -40,21 +39,17 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                 val keep = state
                 state = newState
                 delay(1.seconds)
-                if (!pop) {
-                    state = keep
-                }
-                if (pop) {
-                    navigator.pop()
-                }
+                if (!pop) state = keep
+                if (pop) navigator.pop()
             }
         }
 
         HomeNameDialog(
-            title = UI_HOME_RENAME_DIALOG_TITLE,
+            title = UI_DIALOG_NAME_INPUT_TITLE_RENAME,
             body = {
-                if (state == NONE) {
+                if (state == RenameState.NONE) {
                     val plainMessage = remember {
-                        DialogBody.plainMessage(UI_HOME_RENAME_DIALOG_RENAMING.replace("<name>", home.name), 1024)
+                        DialogBody.plainMessage(UI_DIALOG_NAME_INPUT_RENAMING.replace("<name>", home.name), 1024)
                     }
                     ItemBody(
                         item = ItemStack(Material.NAME_TAG),
@@ -66,41 +61,41 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                 }
 
                 val message = when (state) {
-                    EMPTY_NAME -> UI_HOME_DIALOG_SAVE_FAILED_EMPTY_NAME
-                    TOO_LONG -> UI_HOME_DIALOG_SAVE_FAILED_TOO_LONG
-                    EXISTED -> UI_HOME_DIALOG_SAVE_FAILED_EXISTED
-                    SUCCEED -> UI_HOME_DIALOG_SAVED
+                    RenameState.EMPTY_NAME -> UI_DIALOG_NAME_INPUT_SAVE_FAILED_EMPTY_NAME
+                    RenameState.TOO_LONG -> UI_DIALOG_NAME_INPUT_SAVE_FAILED_TOO_LONG
+                    RenameState.EXISTED -> UI_DIALOG_NAME_INPUT_SAVE_FAILED_EXISTED
+                    RenameState.SUCCEED -> UI_DIALOG_NAME_INPUT_SAVED
                     else -> error("Unexpected")
                 }
 
                 PlainMessageBody(message)
             },
-            showInput = state == NONE,
+            showInput = state == RenameState.NONE,
             initialInput = home.name,
             onCancel = {
                 navigator.pop()
             },
             onSubmit = { input ->
-                if (state != NONE) {
+                if (state != RenameState.NONE) {
                     return@HomeNameDialog
                 }
 
                 if (input.isBlank()) {
                     player.playSound(UI_FAILED_SOUND)
-                    stateTransition(EMPTY_NAME)
+                    stateTransition(RenameState.EMPTY_NAME)
                     return@HomeNameDialog
                 }
 
                 if (input.length > HomeManager.nameLengthLimit) {
                     player.playSound(UI_FAILED_SOUND)
-                    stateTransition(TOO_LONG)
+                    stateTransition(RenameState.TOO_LONG)
                     return@HomeNameDialog
                 }
 
                 coroutineScope.launch {
                     if (HomeManager.has(player, input)) {
                         player.playSound(UI_FAILED_SOUND)
-                        stateTransition(EXISTED)
+                        stateTransition(RenameState.EXISTED)
                         return@launch
                     }
 
@@ -109,7 +104,7 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                         home.update()
                     }
 
-                    stateTransition(SUCCEED, true)
+                    stateTransition(RenameState.SUCCEED, true)
                     player.playSound(UI_SUCCEED_SOUND)
                 }
             },
