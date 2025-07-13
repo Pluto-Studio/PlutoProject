@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.protocolChecker
+package plutoproject.feature.velocity.versionchecker
 
 import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
@@ -10,7 +10,7 @@ import org.koin.core.component.inject
 
 @Suppress("UNUSED")
 object PingListener : KoinComponent {
-    private val config by inject<ProtocolCheckerConfig>()
+    private val config by inject<VersionCheckerConfig>()
 
     @Subscribe(order = PostOrder.FIRST)
     fun ProxyPingEvent.e() {

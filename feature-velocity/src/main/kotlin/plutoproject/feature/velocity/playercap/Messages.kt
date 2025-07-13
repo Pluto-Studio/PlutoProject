@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.playerConutLimiter
+package plutoproject.feature.velocity.playercap
 
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.newline

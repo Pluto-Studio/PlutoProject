@@ -1,8 +1,7 @@
-package plutoproject.feature.velocity.playerConutLimiter
+package plutoproject.feature.velocity.versionchecker
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
 import org.koin.dsl.module
-import plutoproject.feature.velocity.protocolChecker.PingListener
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
@@ -12,13 +11,13 @@ import plutoproject.framework.velocity.util.plugin
 import plutoproject.framework.velocity.util.server
 
 @Feature(
-    id = "player_count_limiter",
+    id = "version_checker",
     platform = Platform.VELOCITY,
 )
 @Suppress("UNUSED")
-class PlayerCountLimiter : VelocityFeature() {
+class VersionChecker : VelocityFeature() {
     private val featureModule = module {
-        single<LimiterConfig> { loadConfig(saveConfig()) }
+        single<VersionCheckerConfig> { loadConfig(saveConfig()) }
     }
 
     override fun onEnable() {
