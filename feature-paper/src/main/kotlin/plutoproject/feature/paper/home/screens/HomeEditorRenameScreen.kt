@@ -92,6 +92,11 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                     return@HomeNameDialog
                 }
 
+                if (input == home.name) {
+                    navigator.pop()
+                    return@HomeNameDialog
+                }
+
                 coroutineScope.launch {
                     if (HomeManager.has(player, input)) {
                         player.playSound(UI_FAILED_SOUND)
