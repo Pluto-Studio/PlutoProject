@@ -1,12 +1,11 @@
 package plutoproject.feature.paper.home
 
-import ink.pmc.advkt.component.*
+import ink.pmc.advkt.component.component
+import ink.pmc.advkt.component.newline
+import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
-import org.bukkit.Location
-import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.paper.api.worldalias.aliasOrName
 
 val COMMAND_SETHOME_FAILED_AMOUNT_LIMIT
     get() = component {
@@ -23,12 +22,6 @@ val COMMAND_SETHOME_FAILED_EXISTED = component {
     text("的家了") with mochaMaroon
     newline()
     text("请删除或更换一个名字后再试") with mochaSubtext0
-}
-
-val COMMAND_SETHOME_FAILED_NAME_NOT_VALID = component {
-    text("家的名字只可以包含字母、数字、下划线") with mochaMaroon
-    newline()
-    text("不可以使用中文、空格等字符") with mochaSubtext0
 }
 
 val COMMAND_SETHOME_FAILED_NAME_LENGTH_LIMIT
@@ -111,114 +104,50 @@ val COMMAND_HOMES_FAILED_PLAYER_HAS_NO_HOME = component {
     text("没有设置家") with mochaMaroon
 }
 
-private val UI_HOME_MENU_EMPTY = component {
-    text("点击下方按钮或 ") with mochaSubtext0
-    text("/sethome ") with mochaLavender
-    text("以留下你的足迹") with mochaSubtext0
-}
-
-val UI_HOME_LIST_EMPTY_LORE = listOf(
-    UI_HOME_MENU_EMPTY
-)
-
-val UI_HOME_LIST_EMPTY_LORE_OTHER = listOf(
-    component { text("该玩家未设置家") with mochaSubtext0 }
-)
-
-val UI_HOME_LIST_TITLE = component {
-    text("<player> 的家")
-}
-
-val UI_HOME_LIST_TITLE_SELF = component {
-    text("家")
-}
-
-val UI_HOME_LIST_HOME_NAME = component {
-    text("<name>") with mochaYellow
-}
-
-val UI_HOME_LIST_HOME_PREFERRED = component {
-    text("√ 首选的家") with mochaGreen
-}
-
-val UI_HOME_LIST_HOME_STARRED = component {
-    text("✨ 收藏的家") with mochaYellow
-}
-
-private val UI_HOME_LIST_HOME_LOCATION = component {
-    text("<world> <x>, <y>, <z>") with mochaSubtext0
-}
-
-fun getUIHomeListHomeLore(home: Home): List<Component> {
-    val loc = home.location
-    return mutableListOf<Component>().apply {
-        add(component {
-            raw(
-                UI_HOME_LIST_HOME_LOCATION
-                    .replace("<world>", loc.world.aliasOrName)
-                    .replace("<x>", "${loc.blockX}")
-                    .replace("<y>", "${loc.blockY}")
-                    .replace("<z>", "${loc.blockZ}")
-            )
-        })
-        if (home.isPreferred) add(UI_HOME_LIST_HOME_PREFERRED)
-        if (home.isStarred) add(UI_HOME_LIST_HOME_STARRED)
-        add(Component.empty())
-        add(component {
-            text("左键 ") with mochaLavender
-            text("传送到该位置") with mochaText
-        })
-        add(component {
-            text("右键 ") with mochaLavender
-            text("编辑家") with mochaText
-        })
-    }
-}
-
-val UI_HOME_NAME_DIALOG_CANCEL = component {
+val UI_DIALOG_NAME_INPUT_CANCEL = component {
     text("取消")
 }
 
-val UI_HOME_NAME_DIALOG_SUBMIT = component {
+val UI_DIALOG_NAME_INPUT_SUBMIT = component {
     text("提交")
 }
 
-val UI_HOME_NAME_DIALOG_TEXT_INPUT_LABEL = component {
+val UI_DIALOG_NAME_INPUT_TEXT_INPUT_LABEL = component {
     text("输入家名称 ") with mochaText
     text("(最长 ") with mochaSubtext0
     text("${HomeManager.nameLengthLimit} ") with mochaLavender
     text("个字符)") with mochaSubtext0
 }
 
-val UI_HOME_CREATE_DIALOG_TITLE = component {
+val UI_DIALOG_NAME_INPUT_TITLE_CREATE = component {
     text("创建家") with mochaText
 }
 
-val UI_HOME_RENAME_DIALOG_TITLE = component {
+val UI_DIALOG_NAME_INPUT_TITLE_RENAME = component {
     text("编辑家名称") with mochaText
 }
 
-val UI_HOME_RENAME_DIALOG_RENAMING = component {
+val UI_DIALOG_NAME_INPUT_RENAMING = component {
     text("正在修改家 ") with mochaText
     text("<name> ") with mochaYellow
     text("的名称") with mochaText
 }
 
-val UI_HOME_DIALOG_SAVE_FAILED_EMPTY_NAME = component {
+val UI_DIALOG_NAME_INPUT_SAVE_FAILED_EMPTY_NAME = component {
     text("请输入名称") with mochaMaroon
 }
 
-val UI_HOME_DIALOG_SAVE_FAILED_TOO_LONG = component {
+val UI_DIALOG_NAME_INPUT_SAVE_FAILED_TOO_LONG = component {
     text("名称过长，最多使用 ") with mochaMaroon
     text("${HomeManager.nameLengthLimit} ") with mochaText
     text("个字符") with mochaMaroon
 }
 
-val UI_HOME_DIALOG_SAVE_FAILED_EXISTED = component {
+val UI_DIALOG_NAME_INPUT_SAVE_FAILED_EXISTED = component {
     text("已存在同名的家") with mochaMaroon
 }
 
-val UI_HOME_DIALOG_SAVED = component {
+val UI_DIALOG_NAME_INPUT_SAVED = component {
     text("√ 已保存") with mochaGreen
 }
 
@@ -321,95 +250,3 @@ val UI_HOME_EDITOR_UNSET_STAR_LORE = listOf(
         text("将该家取消收藏") with mochaText
     }
 )
-
-val UI_HOME_EDITOR_RENAME_TITLE = component {
-    text("重命名 <name>")
-}
-
-val UI_HOME_EDITOR_RENAME_EXIT_LORE = listOf(
-    Component.empty(),
-    component {
-        text("左键 ") with mochaLavender
-        text("退出编辑") with mochaText
-    }
-)
-
-fun getUIHomeEditorRenameSaveLore(home: Home): List<Component> {
-    val loc = home.location
-    return listOf(
-        component {
-            raw(
-                UI_HOME_LIST_HOME_LOCATION
-                    .replace("<world>", loc.world.aliasOrName)
-                    .replace("<x>", "${loc.blockX}")
-                    .replace("<y>", "${loc.blockY}")
-                    .replace("<z>", "${loc.blockZ}")
-            )
-        },
-        Component.empty(),
-        component {
-            text("左键 ") with mochaLavender
-            text("保存并退出") with mochaText
-        }
-    )
-}
-
-val UI_HOME_EDITOR_RENAME_SAVE_FAILED_INVALID_LORE = listOf(
-    Component.empty(),
-    component { text("仅可使用字母、数字、下划线") with mochaMaroon }
-)
-
-val UI_HOME_EDITOR_RENAME_SAVE_FAILED_LENGTH_LIMIT_LORE
-    get() = listOf(
-        Component.empty(),
-        component {
-            text("名称过长，最多使用 ") with mochaMaroon
-            text("${HomeManager.nameLengthLimit} ") with mochaText
-            text("个字符") with mochaMaroon
-        }
-    )
-
-val UI_HOME_EDITOR_RENAME_SAVE_FAILED_EXISTED_LORE = listOf(
-    Component.empty(),
-    component {
-        component { text("已存在同名的家") with mochaMaroon }
-    }
-)
-
-val UI_HOME_EDITOR_RENAME_SAVED_LORE = listOf(
-    Component.empty(),
-    UI_HOME_EDITOR_SAVED
-)
-
-val UI_HOME_CREATOR_TITLE = component {
-    text("创建家")
-}
-
-val UI_HOME_CREATOR_EXIT_LORE = listOf(
-    Component.empty(),
-    component {
-        text("左键 ") with mochaLavender
-        text("返回上一页") with mochaText
-    }
-)
-
-const val UI_HOME_CREATOR_INPUT = "输入名称..."
-
-fun getUIHomeCreatorOutputLore(loc: Location): List<Component> {
-    return listOf(
-        component {
-            raw(
-                UI_HOME_LIST_HOME_LOCATION
-                    .replace("<world>", loc.world.aliasOrName)
-                    .replace("<x>", "${loc.blockX}")
-                    .replace("<y>", "${loc.blockY}")
-                    .replace("<z>", "${loc.blockZ}")
-            )
-        },
-        Component.empty(),
-        component {
-            text("左键 ") with mochaLavender
-            text("创建家") with mochaText
-        }
-    )
-}
