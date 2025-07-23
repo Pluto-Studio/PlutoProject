@@ -142,11 +142,10 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             playerBelow?.let { markInOperation(it) }
         }
 
-        if (callJoinEvent(player, options, cause, PlayerStackJoinAttemptResult.SUCCESS).isCancelled) {
-            return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
-        }
-
         try {
+            if (callJoinEvent(player, options, cause, PlayerStackJoinAttemptResult.SUCCESS).isCancelled) {
+                return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
+            }
             if (!moveCurrentPlayerUp(currentPlayer, player)) {
                 return PlayerStackJoinFinalResult.CANCELLED_BY_PLUGIN
             }
@@ -249,13 +248,16 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
             playerBelow?.let { markInOperation(it) }
         }
 
-        if (callQuitEvent(player, cause).isCancelled && cause.isCancellable) {
-            return false
-        }
-
         try {
-            if (!detachFromBelowPlayer(playerBelow, playerSitContext)) return false
-            if (!relinkAbovePlayer(playerAbove, playerBelow, player)) return false
+            if (callQuitEvent(player, cause).isCancelled && cause.isCancellable) {
+                return false
+            }
+            if (!detachFromBelowPlayer(playerBelow, playerSitContext)) {
+                return false
+            }
+            if (!relinkAbovePlayer(playerAbove, playerBelow, player)) {
+                return false
+            }
             handleRemovePlayerSounds(player, playerAbove, playerSitContext)
             player.sendActionBar(Component.empty())
         } finally {
