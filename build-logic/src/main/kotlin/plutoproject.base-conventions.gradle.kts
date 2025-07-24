@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "club.plutoproject"
-version = "1.5.2"
+version = "1.6.0"
 
 val dependencyExtension =
     dependencies.extensions.create<PlutoDependencyHandlerExtension>(
