@@ -5,7 +5,6 @@ plugins {
     id("plutoproject.base-conventions")
     id("plutoproject.dokka-conventions")
     alias(libs.plugins.shadow)
-    alias(libs.plugins.protobuf)
 }
 
 dependencies {
@@ -16,7 +15,6 @@ dependencies {
 tasks.shadowJar {
     archiveClassifier.set(null as String?)
     mergeServiceFiles()
-    relocate("com.google.protobuf", "libs.com.google.protobuf")
 }
 
 

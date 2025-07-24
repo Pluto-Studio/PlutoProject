@@ -36,7 +36,7 @@ configurations.all {
         force(libs.kotlin.reflect)
         force(libs.kotlin.serialization)
         force(libs.kotlinx.coroutine.core)
-        force(libs.guava) // grpc-api 传递的 guava 在下载时无法正确验证 hash，强制一个版本解决问题
+        force(libs.guava)
         force(libs.okio)
     }
 }
@@ -66,8 +66,6 @@ dependencies {
         downloadIfRequired(libs.bundles.mongodb)
         downloadIfRequired(libs.bundles.nightconfig)
         downloadIfRequired(libs.bundles.bytebuddy)
-        downloadIfRequired(libs.bundles.protobuf)
-        downloadIfRequired(libs.bundles.grpc)
         downloadIfRequired(libs.bundles.koin)
         downloadIfRequired(libs.bundles.hoplite)
         downloadIfRequired(libs.bundles.commons)
