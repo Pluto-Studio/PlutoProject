@@ -15,7 +15,13 @@ fun ConfigLoaderBuilder(): ConfigLoaderBuilder = ConfigLoaderBuilder.empty()
     .addDecoder(ComponentDecoder)
     .addDecoder(CharDecoder)
 
-inline fun <reified T> loadConfig(file: File): T = ConfigLoaderBuilder()
+typealias BuilderModifier = ConfigLoaderBuilder.() -> Unit
+
+inline fun <reified T> loadConfig(
+    file: File,
+    noinline builderModifier: BuilderModifier = {}
+): T = ConfigLoaderBuilder()
     .addPropertySource(PropertySource.file(file))
+    .apply(builderModifier)
     .build()
     .loadConfigOrThrow()
