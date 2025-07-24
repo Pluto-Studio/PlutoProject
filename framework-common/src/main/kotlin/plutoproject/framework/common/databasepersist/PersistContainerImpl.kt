@@ -47,7 +47,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     private fun update(event: ChangeStreamDocument<Document>) {
-        when (event.operationType) {
+        when (event.operationType!!) {
             in FULL_DOCUMENT_OPERATION_TYPES -> {
                 val fullDocument = event.fullDocument?.getValue("data") as? BsonDocument ?: return
                 onFullDocumentChange(fullDocument.flatten())
