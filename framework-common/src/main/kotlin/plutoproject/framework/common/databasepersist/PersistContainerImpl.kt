@@ -10,7 +10,6 @@ import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
-import plutoproject.framework.common.api.databasepersist.PersistContainer
 import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.util.data.collection.mutableConcurrentSetOf
 import plutoproject.framework.common.util.data.flatten
@@ -24,7 +23,7 @@ import java.time.Instant
 import java.util.*
 import java.util.logging.Level
 
-class PersistContainerImpl(override val playerId: UUID) : PersistContainer, KoinComponent {
+class PersistContainerImpl(override val playerId: UUID) : InternalPersistContainer, KoinComponent {
     private val databasePersist by inject<InternalDatabasePersist>()
     private val repository by inject<ContainerRepository>()
     private val changeStream by inject<DataChangeStream>()
