@@ -82,11 +82,4 @@ interface PersistContainer {
      * 将更改写入数据库
      */
     suspend fun save()
-
-    /**
-     * 关闭该容器实例
-     *
-     * 所有未保存的值都会丢失。
-     */
-    fun close()
 }
