@@ -12,8 +12,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
     private val changeStream by inject<DataChangeStream>()
-    private val loadedContainers = mutableConcurrentMapOf<UUID, PersistContainer>()
-    private val containerLastUsedTimestamps = mutableConcurrentMapOf<PersistContainer, Instant>()
+    private val loadedContainers = mutableConcurrentMapOf<UUID, InternalPersistContainer>()
+    private val containerLastUsedTimestamps = mutableConcurrentMapOf<InternalPersistContainer, Instant>()
     private val autoUnloadCondition by inject<AutoUnloadCondition>()
     private var isValid = true
 
@@ -62,15 +62,15 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
         }
     }
 
-    override fun getLastUsedTimestamp(container: PersistContainer): Instant {
+    override fun getLastUsedTimestamp(container: InternalPersistContainer): Instant {
         return containerLastUsedTimestamps.getValue(container)
     }
 
-    override fun setUsed(container: PersistContainer) {
+    override fun setUsed(container: InternalPersistContainer) {
         containerLastUsedTimestamps[container] = Instant.now()
     }
 
-    override fun removeLoadedContainer(container: PersistContainer) {
+    override fun removeLoadedContainer(container: InternalPersistContainer) {
         loadedContainers.remove(container.playerId)
         containerLastUsedTimestamps.remove(container)
     }
