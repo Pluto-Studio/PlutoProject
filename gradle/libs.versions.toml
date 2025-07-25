@@ -68,7 +68,7 @@ anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.4-SNAPSHOT" }
 
 # External Minecraft
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
-vaultApi = { module = "com.github.MilkBowl:VaultAPI", version = "1.7" }
+vaultApi = { module = "net.milkbowl.vault:VaultUnlockedAPI", version = "2.11" }
 coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
 
 # Platform - Common
