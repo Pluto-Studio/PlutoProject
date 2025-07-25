@@ -60,8 +60,8 @@ interface ShopUser {
      * @param limit 返回的条目数限制
      * @return 指定参数下查询到的交易记录，若列表为空则没有匹配的记录
      */
-    suspend fun queryTransaction(
-        conditions: TransactionQueryConditions = TransactionQueryConditions(),
+    suspend fun findTransactions(
+        conditions: TransactionFindConditions = TransactionFindConditions(),
         skip: Int? = null,
         limit: Int? = null,
     ): List<ShopTransaction>

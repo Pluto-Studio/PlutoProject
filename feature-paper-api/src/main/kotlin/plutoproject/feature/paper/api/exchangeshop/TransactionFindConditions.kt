@@ -8,7 +8,7 @@ import java.util.*
 /**
  * 代表进行交易记录查询时的条件。
  */
-data class TransactionQueryConditions(
+data class TransactionFindConditions(
     /**
      * 交易的 ID。
      */
