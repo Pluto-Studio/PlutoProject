@@ -67,6 +67,13 @@ interface ShopUser {
     ): List<ShopTransaction>
 
     /**
+     * 查询该玩家的交易记录数。
+     *
+     * @return 该玩家的交易记录数。
+     */
+    suspend fun countTransactions(): Int
+
+    /**
      * 为该玩家执行交易。
      *
      * 该操作不会存储在内存中，而是直接写入数据库，仅当数据库操作成功时会给予物品。
