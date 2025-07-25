@@ -13,12 +13,12 @@ import plutoproject.feature.paper.daily.commands.CheckInCommand
 import plutoproject.feature.paper.daily.listeners.PlayerListener
 import plutoproject.feature.paper.daily.repositories.DailyHistoryRepository
 import plutoproject.feature.paper.daily.repositories.DailyUserRepository
+import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Load
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.provider.Provider
-import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
@@ -43,10 +43,10 @@ class DailyFeature : PaperFeature(), KoinComponent {
         single<DailyConfig> { loadConfig(saveConfig()) }
         single<Daily> { DailyImpl() }
         single<DailyUserRepository> {
-            DailyUserRepository(Provider.getCollection("${COLLECTION_PREFIX}users"))
+            DailyUserRepository(MongoConnection.getCollection("${COLLECTION_PREFIX}users"))
         }
         single<DailyHistoryRepository> {
-            DailyHistoryRepository(Provider.getCollection("${COLLECTION_PREFIX}history"))
+            DailyHistoryRepository(MongoConnection.getCollection("${COLLECTION_PREFIX}history"))
         }
     }
 

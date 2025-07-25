@@ -11,12 +11,12 @@ import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.feature.paper.api.menu.isMenuAvailable
 import plutoproject.feature.paper.home.commands.*
+import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Load
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.provider.Provider
-import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.util.command.getKotlinMethodArgumentParserClass
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
@@ -42,7 +42,7 @@ internal var disabled = true
 class HomeFeature : PaperFeature() {
     private val featureModule = module {
         single<HomeConfig> { loadConfig(saveConfig()) }
-        single<HomeRepository> { HomeRepository(Provider.getCollection<HomeModel>("essentials_${serverName}_homes")) }
+        single<HomeRepository> { HomeRepository(MongoConnection.getCollection<HomeModel>("essentials_${serverName}_homes")) }
         single<HomeManager> { HomeManagerImpl() }
     }
 
