@@ -2,6 +2,9 @@ package plutoproject.feature.paper.api.exchangeshop
 
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
+import java.math.BigDecimal
+import java.time.DayOfWeek
 
 /**
  * 代表一个兑换商店中的类别。
@@ -28,16 +31,42 @@ interface ShopCategory {
     val description: List<Component>
 
     /**
-     * 该类别包含的物品。
+     * 该类别包含的商品。
      */
     val items: Collection<ShopItem>
 
+    /**
+     * 往该类别里添加一个商品。
+     *
+     * @param id 要添加的商品 ID
+     * @param itemStack 商品的物品堆
+     * @param ticketConsumption 购买一个数量单位的该商品所需的兑换券
+     * @param price 一个数量单位的该商品的价格
+     * @param quantity 商品的数量单位
+     * @param availableDays 商品的限期，若列表为空则不限期
+     * @throws IllegalArgumentException 同 ID 的商品已存在或 ID 不合法
+     */
+    fun addItem(
+        id: String,
+        itemStack: ItemStack,
+        ticketConsumption: Int = 1,
+        price: BigDecimal,
+        quantity: Int = 1,
+        availableDays: List<DayOfWeek> = emptyList()
+    ): ShopItem
 
     /**
-     * 获取该类别中指定 ID 的物品。
+     * 获取该类别中指定 ID 的商品。
      *
      * @param id 需要获取的 ID
-     * @return 获取到的物品，若不存在则为空
+     * @return 获取到的商品，若不存在则为空
      */
     fun getItem(id: String): ShopItem?
+
+    /**
+     * 移除该类别中指定 ID 的商品，若不存在该 ID 的商品则什么也不发生。
+     *
+     * @param id 需要移除的 ID
+     */
+    fun removeItem(id: String)
 }

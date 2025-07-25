@@ -13,27 +13,27 @@ sealed class ShopTransactionException : Exception {
      * 该玩家不在线。
      */
     class PlayerOffline(user: ShopUser) :
-        ShopTransactionException(user, "Player is offline")
+        ShopTransactionException(user, "player is offline")
 
     /**
      * 该玩家所持有的兑换券不足。
      */
     class TicketNotEnough(user: ShopUser, required: Int) :
-        ShopTransactionException(user, "Insufficient tickets, required: $required")
+        ShopTransactionException(user, "insufficient tickets, required: $required")
 
     /**
      * 该玩家所持有的余额不足。
      */
     class BalanceNotEnough(user: ShopUser, required: BigDecimal) :
-        ShopTransactionException(user, "Insufficient tickets, required: $required")
+        ShopTransactionException(user, "insufficient tickets, required: $required")
 
     /**
      * 数据库操作失败。
      */
     class DatabaseFailure(user: ShopUser, cause: Exception) :
-        ShopTransactionException(user, "Database operation failed", cause)
+        ShopTransactionException(user, "database operation failed", cause)
 }
 
 private fun transactionError(user: ShopUser, message: String): String {
-    return "Error occurred when making transaction for player ${user.player.name}: $message"
+    return "Error occurred while making transaction for player ${user.player.name}: $message"
 }

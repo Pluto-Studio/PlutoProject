@@ -1,7 +1,6 @@
 package plutoproject.feature.paper.api.exchangeshop
 
 import org.bukkit.Material
-import org.bukkit.inventory.ItemStack
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -11,55 +10,53 @@ import java.util.*
  */
 data class TransactionQueryConditions(
     /**
-     * 需要查询的交易 ID。
+     * 交易的 ID。
      */
     val id: UUID? = null,
 
     /**
-     * 需要查询的时间周期。
+     * 交易的时间周期。
      *
      * 若不设置则在该玩家的所有记录中查询。
      */
     val period: TimePeriod? = null,
 
     /**
-     * 需要查询的物品类型，若设置 [item] 则需与其一致。
+     * 交易的物品类型。
      */
-    val itemType: Material? = null,
+    val material: Material? = null,
 
     /**
-     * 需要查询的物品堆。
+     * 交易的购买数，表示玩家购买了多少个 [ShopItem.quantity] 单位的商品。
+     */
+    val amount: Int? = null,
+
+    /**
+     * 交易实际获得的物品堆数量。
      *
-     * 需要与玩家购买得到的物品堆一致，若设置 [itemType] 则该物品的类型需与其一致。
+     * 每次交易会获得 [amount] * [ShopItem.quantity] 个物品堆。
+     *
+     * 例如：当 [amount] 为 2，[ShopItem.quantity] 为 4，则玩家实际获得 8 个物品堆。
+     *
+     * 需要注意的是 [ShopItem.itemStack] 本身的 amount 属性与此无关，在上面的例子中，如果 amount 为 2，则实际获得 16 个指定类型的物品。
      */
-    val item: ItemStack? = null,
+    val quantity: Int? = null,
 
     /**
-     * 需要查询的兑换券花费。
+     * 交易花费的兑换券。
      */
     val ticket: Int? = null,
 
     /**
-     * 需要查询的货币花费。
+     * 交易花费的货币。
      */
     val cost: BigDecimal? = null,
 
     /**
-     * 需要查询的货币结余。
+     * 交易的货币结余。
      */
     val balance: BigDecimal? = null,
-
-    /**
-     * 需要查询的购买个数。
-     */
-    val count: Int? = null,
-) {
-    init {
-        if (itemType != null && item != null) {
-            require(itemType == item.type) { "Expected item type $itemType, but got ${item.type}" }
-        }
-    }
-}
+)
 
 /**
  * 代表查询的时间周期。

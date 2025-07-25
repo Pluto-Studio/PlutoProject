@@ -73,9 +73,13 @@ interface ShopUser {
      *
      * 若有未保存的操作则会先将它们保存。
      *
-     * @param itemId 需要购买的物品 ID
-     * @param count 需要购买的物品个数
-     * @return 交易的 [ShopTransaction]，失败时为 [ShopTransactionException]
+     * @param itemId 需要购买的商品 ID
+     * @param count 需要购买的数量
+     * @return 成功时为 [ShopTransaction]，失败时为 [ShopTransactionException]
+     * - [ShopTransactionException.PlayerOffline] 玩家不在线
+     * - [ShopTransactionException.TicketNotEnough] 兑换券不足
+     * - [ShopTransactionException.BalanceNotEnough] 余额不足
+     * - [ShopTransactionException.DatabaseFailure] 数据库操作失败
      */
     suspend fun makeTransaction(itemId: String, count: Int): Result<ShopTransaction>
 
