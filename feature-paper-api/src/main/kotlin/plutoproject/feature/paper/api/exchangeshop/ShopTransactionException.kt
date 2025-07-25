@@ -1,0 +1,39 @@
+package plutoproject.feature.paper.api.exchangeshop
+
+import java.math.BigDecimal
+
+/**
+ * 代表进行兑换商店交易时发生的异常。
+ */
+sealed class ShopTransactionException : Exception {
+    constructor(user: ShopUser, message: String) : super(transactionError(user, message))
+    constructor(user: ShopUser, message: String, cause: Throwable) : super(transactionError(user, message), cause)
+
+    /**
+     * 该玩家不在线。
+     */
+    class PlayerOffline(user: ShopUser) :
+        ShopTransactionException(user, "Player is offline")
+
+    /**
+     * 该玩家所持有的兑换券不足。
+     */
+    class TicketNotEnough(user: ShopUser, required: Int) :
+        ShopTransactionException(user, "Insufficient tickets, required: $required")
+
+    /**
+     * 该玩家所持有的余额不足。
+     */
+    class BalanceNotEnough(user: ShopUser, required: BigDecimal) :
+        ShopTransactionException(user, "Insufficient tickets, required: $required")
+
+    /**
+     * 数据库操作失败。
+     */
+    class DatabaseFailure(user: ShopUser, cause: Exception) :
+        ShopTransactionException(user, "Database operation failed", cause)
+}
+
+private fun transactionError(user: ShopUser, message: String): String {
+    return "Error occurred when making transaction for player ${user.player.name}: $message"
+}
