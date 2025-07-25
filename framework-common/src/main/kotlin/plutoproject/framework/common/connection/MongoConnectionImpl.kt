@@ -1,13 +1,17 @@
 package plutoproject.framework.common.connection
 
+import com.mongodb.ClientSessionOptions
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
+import com.mongodb.TransactionOptions
+import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import org.bson.UuidRepresentation
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.util.database.withTransaction
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -29,6 +33,16 @@ class MongoConnectionImpl : MongoConnection, ExternalConnection, KoinComponent {
             .uuidRepresentation(UuidRepresentation.STANDARD)
             .build()
         return MongoClient.create(settings)
+    }
+
+    override suspend fun withTransaction(
+        clientSessionOptions: ClientSessionOptions,
+        transactionOptions: TransactionOptions,
+        block: suspend (ClientSession) -> Unit
+    ): Result<Unit> {
+        return client.startSession(clientSessionOptions).use { session ->
+            session.withTransaction(transactionOptions, block)
+        }
     }
 
     override fun close() {
