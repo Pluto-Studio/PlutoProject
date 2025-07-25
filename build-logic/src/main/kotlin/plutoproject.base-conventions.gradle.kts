@@ -27,7 +27,7 @@ repositories {
     maven("https://maven.nostal.ink/repository/maven-public")
     maven("https://maven.playpro.com/")
     maven("https://repo.opencollab.dev/main/")
-    maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.codemc.org/repository/maven-public")
 }
 
 configurations.all {
