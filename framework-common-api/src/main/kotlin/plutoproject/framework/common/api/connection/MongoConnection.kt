@@ -2,10 +2,10 @@ package plutoproject.framework.common.api.connection
 
 import com.mongodb.ClientSessionOptions
 import com.mongodb.TransactionOptions
+import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import plutoproject.framework.common.util.database.withTransaction
 import plutoproject.framework.common.util.inject.Koin
 
 /**
@@ -23,6 +23,20 @@ interface MongoConnection {
      * 链接的 [MongoDatabase]。
      */
     val database: MongoDatabase
+
+    /**
+     * 开启事务。
+     *
+     * @param clientSessionOptions [ClientSession] 设置
+     * @param transactionOptions 事务设置
+     * @param block 事务逻辑函数
+     * @return 事务结果，若失败可获取异常
+     */
+    suspend fun withTransaction(
+        clientSessionOptions: ClientSessionOptions = ClientSessionOptions.builder().build(),
+        transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
+        block: suspend (ClientSession) -> Unit
+    ): Result<Unit>
 }
 
 /**
@@ -34,19 +48,4 @@ interface MongoConnection {
  */
 inline fun <reified T : Any> MongoConnection.getCollection(collectionName: String): MongoCollection<T> {
     return database.getCollection(collectionName)
-}
-
-/**
- * 开启事务上下文。
- *
- * @param clientSessionOptions 此 ClientSession 的设置
- * @param transactionOptions 此事务的设置
- * @param block 事务逻辑函数
- */
-suspend inline fun MongoConnection.withTransaction(
-    clientSessionOptions: ClientSessionOptions = ClientSessionOptions.builder().build(),
-    transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
-    block: () -> Unit
-) {
-    client.startSession(clientSessionOptions).withTransaction(transactionOptions, block)
 }
