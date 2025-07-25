@@ -2,7 +2,6 @@ package plutoproject.platform.paper
 
 import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
-import kotlinx.coroutines.runBlocking
 import plutoproject.framework.common.FrameworkCommonModule
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.PlatformType
