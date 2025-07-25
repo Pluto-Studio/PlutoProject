@@ -6,6 +6,7 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.TransactionOptions
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoClient
+import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import org.bson.UuidRepresentation
 import org.koin.core.component.KoinComponent
@@ -14,6 +15,7 @@ import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.util.database.withTransaction
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlin.reflect.KClass
 
 class MongoConnectionImpl : MongoConnection, ExternalConnection, KoinComponent {
     private val config by lazy { get<ExternalConnectionConfig>().mongo }
@@ -33,6 +35,10 @@ class MongoConnectionImpl : MongoConnection, ExternalConnection, KoinComponent {
             .uuidRepresentation(UuidRepresentation.STANDARD)
             .build()
         return MongoClient.create(settings)
+    }
+
+    override fun <T : Any> getCollection(collectionName: String, type: KClass<T>): MongoCollection<T> {
+        return database.getCollection(collectionName, type.java)
     }
 
     override suspend fun withTransaction(
