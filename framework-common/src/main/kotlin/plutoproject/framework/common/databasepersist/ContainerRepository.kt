@@ -8,11 +8,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.util.*
 
-class ContainerRepository : KoinComponent {
-    private val collection by inject<MongoCollection<ContainerModel>>()
+class ContainerRepository(private val collection: MongoCollection<ContainerModel>) : KoinComponent {
     private val replaceOptions = ReplaceOptions().upsert(true)
 
     fun openChangeStream(pipelines: List<Bson>): ChangeStreamFlow<Document> {

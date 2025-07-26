@@ -3,20 +3,24 @@ package plutoproject.feature.paper.api.exchangeshop
 import com.mongodb.client.model.Filters
 import org.bson.Document
 import org.bson.conversions.Bson
+import java.math.BigDecimal
+import java.time.Instant
+import java.util.*
 
 /**
  * 代表交易查询中可被使用的条件。
  */
-enum class TransactionFilter(val field: String) {
-    ID("id"),
-    TIMESTAMP("timestamp"),
-    ITEM_ID("itemId"),
-    MATERIAL("material"),
-    AMOUNT("amount"),
-    QUANTITY("quantity"),
-    TICKET("ticket"),
-    COST("cost"),
-    BALANCE("balance"),
+sealed class TransactionFilter<T>(val field: String) {
+    data object Id : TransactionFilter<UUID>("id")
+    data object PlayerId : TransactionFilter<UUID>("playerId")
+    data object Time : TransactionFilter<Instant>("time")
+    data object ItemId : TransactionFilter<String>("itemId")
+    data object Material : TransactionFilter<org.bukkit.Material>("material")
+    data object Amount : TransactionFilter<Int>("amount")
+    data object Quantity : TransactionFilter<Int>("quantity")
+    data object Ticket : TransactionFilter<Int>("ticket")
+    data object Cost : TransactionFilter<BigDecimal>("cost")
+    data object Balance : TransactionFilter<BigDecimal>("balance")
 }
 
 private sealed interface FilterExpr {
@@ -64,56 +68,56 @@ class TransactionFilterDsl {
     /**
      * 等于某个值。
      */
-    infix fun <T : Any> TransactionFilter.eq(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.eq(value: T) {
         filters.add(FilterExpr.Eq(field, value))
     }
 
     /**
      * 不等于某个值。
      */
-    infix fun <T : Any> TransactionFilter.ne(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.ne(value: T) {
         filters.add(FilterExpr.Ne(field, value))
     }
 
     /**
      * 大于某个值。
      */
-    infix fun <T : Any> TransactionFilter.gt(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.gt(value: T) {
         filters.add(FilterExpr.Gt(field, value))
     }
 
     /**
      * 大于等于某个值。
      */
-    infix fun <T : Any> TransactionFilter.gte(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.gte(value: T) {
         filters.add(FilterExpr.Gte(field, value))
     }
 
     /**
      * 小于某个值。
      */
-    infix fun <T : Any> TransactionFilter.lt(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.lt(value: T) {
         filters.add(FilterExpr.Lt(field, value))
     }
 
     /**
      * 小于等于某个值。
      */
-    infix fun <T : Any> TransactionFilter.lte(value: T) {
+    infix fun <T : Any> TransactionFilter<T>.lte(value: T) {
         filters.add(FilterExpr.Lte(field, value))
     }
 
     /**
      * 在某个数组中。
      */
-    infix fun <T : Any> TransactionFilter.`in`(values: Iterable<T>) {
+    infix fun <T : Any> TransactionFilter<T>.`in`(values: Iterable<T>) {
         filters.add(FilterExpr.In(field, values))
     }
 
     /**
      * 不在某个数组中。
      */
-    infix fun <T : Any> TransactionFilter.nin(values: Iterable<T>) {
+    infix fun <T : Any> TransactionFilter<T>.nin(values: Iterable<T>) {
         filters.add(FilterExpr.Nin(field, values))
     }
 
