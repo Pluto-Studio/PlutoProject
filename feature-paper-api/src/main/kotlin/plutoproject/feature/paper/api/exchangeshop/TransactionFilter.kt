@@ -1,8 +1,9 @@
 package plutoproject.feature.paper.api.exchangeshop
 
 import com.mongodb.client.model.Filters
-import org.bson.Document
+import org.bson.*
 import org.bson.conversions.Bson
+import org.bson.types.Decimal128
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -11,50 +12,135 @@ import java.util.*
  * 代表交易查询中可被使用的条件。
  */
 sealed class TransactionFilter<T>(val field: String) {
-    data object Id : TransactionFilter<UUID>("id")
-    data object PlayerId : TransactionFilter<UUID>("playerId")
-    data object Time : TransactionFilter<Instant>("time")
-    data object ItemId : TransactionFilter<String>("itemId")
-    data object Material : TransactionFilter<org.bukkit.Material>("material")
-    data object Amount : TransactionFilter<Int>("amount")
-    data object Quantity : TransactionFilter<Int>("quantity")
-    data object Ticket : TransactionFilter<Int>("ticket")
-    data object Cost : TransactionFilter<BigDecimal>("cost")
-    data object Balance : TransactionFilter<BigDecimal>("balance")
+    abstract fun toBsonValue(value: T): BsonValue
+
+    /**
+     * 交易的 ID。
+     */
+    data object Id : TransactionFilter<UUID>("id") {
+        override fun toBsonValue(value: UUID): BsonBinary {
+            return BsonBinary(value)
+        }
+    }
+
+    /**
+     * 参与交易的玩家 UUID。
+     */
+    data object PlayerId : TransactionFilter<UUID>("playerId") {
+        override fun toBsonValue(value: UUID): BsonValue {
+            return BsonBinary(value)
+        }
+    }
+
+    /**
+     * 交易发生的时间。
+     */
+    data object Time : TransactionFilter<Instant>("time") {
+        override fun toBsonValue(value: Instant): BsonValue {
+            return BsonDateTime(value.toEpochMilli())
+        }
+    }
+
+    /**
+     * 交易涉及的商品 ID。
+     */
+    data object ShopItemId : TransactionFilter<String>("shopItemId") {
+        override fun toBsonValue(value: String): BsonValue {
+            return BsonString(value)
+        }
+    }
+
+    /**
+     * 交易涉及的物品类型。
+     */
+    data object ItemType : TransactionFilter<org.bukkit.inventory.ItemType>("itemType") {
+        override fun toBsonValue(value: org.bukkit.inventory.ItemType): BsonValue {
+            return BsonString(value.key.toString())
+        }
+    }
+
+    /**
+     * 交易的购买数。
+     *
+     * @see ShopTransaction.amount
+     */
+    data object Amount : TransactionFilter<Int>("amount") {
+        override fun toBsonValue(value: Int): BsonValue {
+            return BsonInt32(value)
+        }
+    }
+
+    /**
+     * 交易实际获得的物品堆数量。
+     *
+     * @see ShopTransaction.quantity
+     */
+    data object Quantity : TransactionFilter<Int>("quantity") {
+        override fun toBsonValue(value: Int): BsonValue {
+            return BsonInt32(value)
+        }
+    }
+
+    /**
+     * 交易花费的兑换券。
+     */
+    data object Ticket : TransactionFilter<Int>("ticket") {
+        override fun toBsonValue(value: Int): BsonValue {
+            return BsonInt32(value)
+        }
+    }
+
+    /**
+     * 交易花费的货币。
+     */
+    data object Cost : TransactionFilter<BigDecimal>("cost") {
+        override fun toBsonValue(value: BigDecimal): BsonValue {
+            return BsonDecimal128(Decimal128(value))
+        }
+    }
+
+    /**
+     * 交易的货币结余。
+     */
+    data object Balance : TransactionFilter<BigDecimal>("balance") {
+        override fun toBsonValue(value: BigDecimal): BsonValue {
+            return BsonDecimal128(Decimal128(value))
+        }
+    }
 }
 
 private sealed interface FilterExpr {
     fun toBson(): Bson
 
-    data class Eq<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Eq(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.eq(field, value)
     }
 
-    data class Ne<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Ne(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.ne(field, value)
     }
 
-    data class Gt<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Gt(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.gt(field, value)
     }
 
-    data class Gte<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Gte(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.gte(field, value)
     }
 
-    data class Lt<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Lt(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.lt(field, value)
     }
 
-    data class Lte<T : Any>(val field: String, val value: T) : FilterExpr {
+    data class Lte(val field: String, val value: BsonValue) : FilterExpr {
         override fun toBson(): Bson = Filters.lte(field, value)
     }
 
-    data class In<T : Any>(val field: String, val values: Iterable<T>) : FilterExpr {
+    data class In(val field: String, val values: Iterable<BsonValue>) : FilterExpr {
         override fun toBson(): Bson = Filters.`in`(field, values)
     }
 
-    data class Nin<T : Any>(val field: String, val values: Iterable<T>) : FilterExpr {
+    data class Nin(val field: String, val values: Iterable<BsonValue>) : FilterExpr {
         override fun toBson(): Bson = Filters.nin(field, values)
     }
 }
@@ -69,56 +155,56 @@ class TransactionFilterDsl {
      * 等于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.eq(value: T) {
-        filters.add(FilterExpr.Eq(field, value))
+        filters.add(FilterExpr.Eq(field, toBsonValue(value)))
     }
 
     /**
      * 不等于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.ne(value: T) {
-        filters.add(FilterExpr.Ne(field, value))
+        filters.add(FilterExpr.Ne(field, toBsonValue(value)))
     }
 
     /**
      * 大于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.gt(value: T) {
-        filters.add(FilterExpr.Gt(field, value))
+        filters.add(FilterExpr.Gt(field, toBsonValue(value)))
     }
 
     /**
      * 大于等于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.gte(value: T) {
-        filters.add(FilterExpr.Gte(field, value))
+        filters.add(FilterExpr.Gte(field, toBsonValue(value)))
     }
 
     /**
      * 小于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.lt(value: T) {
-        filters.add(FilterExpr.Lt(field, value))
+        filters.add(FilterExpr.Lt(field, toBsonValue(value)))
     }
 
     /**
      * 小于等于某个值。
      */
     infix fun <T : Any> TransactionFilter<T>.lte(value: T) {
-        filters.add(FilterExpr.Lte(field, value))
+        filters.add(FilterExpr.Lte(field, toBsonValue(value)))
     }
 
     /**
      * 在某个数组中。
      */
     infix fun <T : Any> TransactionFilter<T>.`in`(values: Iterable<T>) {
-        filters.add(FilterExpr.In(field, values))
+        filters.add(FilterExpr.In(field, values.map { toBsonValue(it) }))
     }
 
     /**
      * 不在某个数组中。
      */
     infix fun <T : Any> TransactionFilter<T>.nin(values: Iterable<T>) {
-        filters.add(FilterExpr.Nin(field, values))
+        filters.add(FilterExpr.Nin(field, values.map { toBsonValue(it) }))
     }
 
     /**

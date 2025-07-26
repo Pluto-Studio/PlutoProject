@@ -23,10 +23,8 @@ interface ShopUser {
      * 该玩家的兑换券数。
      *
      * 仅当 [ShopUser] 被加载到内存时会实时恢复，获取 [ShopUser] 时会计算离线恢复量。
-     *
-     * 对该属性的设置仅保存在内存中，需要调用 [save] 保存。
      */
-    var ticket: Int
+    val ticket: Int
 
     /**
      * 该玩家上次恢复兑换券的时间，若还没有恢复过则为空。
@@ -36,43 +34,61 @@ interface ShopUser {
     /**
      * 减少一定的兑换券数量。
      *
+     * 该操作是线程安全的，会保持挂起直至完成。
+     *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
      * @param amount 要减少的兑换券数量
-     * @return 减少后剩余的值，若玩家持有的兑换券小于 [amount] 时为 [IllegalArgumentException]
+     * @return 减少后剩余的值
+     * @throws IllegalArgumentException 当玩家剩余兑换券数量小于 [amount] 时
      */
-    fun withdrawTicket(amount: Int): Result<Int>
+    suspend fun withdrawTicket(amount: Int): Int
 
     /**
      * 增加一定的兑换券数量。
+     *
+     * 该操作是线程安全的，会保持挂起直至完成。
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
      * @param amount 要增加的兑换券数量
      * @return 增加后剩余的值
      */
-    fun depositTicket(amount: Int): Int
+    suspend fun depositTicket(amount: Int): Int
+
+    /**
+     * 设置兑换券数量。
+     *
+     * 该操作是线程安全的，会保持挂起直至完成。
+     *
+     * 修改后的值仅保存在内存中，需要调用 [save] 保存。
+     *
+     * @param amount 要设置的兑换券数量
+     * @return 设置后剩余的值
+     */
+    suspend fun setTicket(amount: Int): Int
 
     /**
      * 查询该玩家的交易记录。
      *
      * @param skip 要跳过的条目数
      * @param limit 返回的条目数限制
-     * @param filters 查询条件
-     * @return 指定参数下查询到的交易记录，若列表为空则没有匹配的记录
+     * @param filterBlock 查询条件
+     * @return 指定条件下查询到的交易记录，若列表为空则没有匹配的记录
      */
     suspend fun findTransactions(
         skip: Int? = null,
         limit: Int? = null,
-        filters: TransactionFilterDsl.() -> Unit = {},
+        filterBlock: TransactionFilterDsl.() -> Unit = {},
     ): Flow<ShopTransaction>
 
     /**
-     * 查询该玩家的交易记录数。
+     * 统计该玩家的交易记录数。
      *
-     * @return 该玩家的交易记录数。
+     * @param filterBlock 统计条件
+     * @return 指定条件下统计到的交易记录数
      */
-    suspend fun countTransactions(): Int
+    suspend fun countTransactions(filterBlock: TransactionFilterDsl.() -> Unit = {}): Long
 
     /**
      * 为该玩家执行交易。

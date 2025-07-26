@@ -21,7 +21,7 @@ data class TransactionModel(
     @SerialName("_id") val id: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
     val playerId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
     val time: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
-    val itemId: String,
+    val shopItemId: String,
     @SerialName("itemType") val itemTypeString: String,
     @SerialName("itemStack") val itemStackBinary: @Contextual BsonBinary,
     val amount: Int,
