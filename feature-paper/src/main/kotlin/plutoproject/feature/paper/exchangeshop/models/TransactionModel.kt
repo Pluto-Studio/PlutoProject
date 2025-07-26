@@ -2,8 +2,10 @@ package plutoproject.feature.paper.exchangeshop.models
 
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.bson.BsonBinary
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
@@ -21,7 +23,7 @@ data class TransactionModel(
     val time: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
     val itemId: String,
     @SerialName("itemType") val itemTypeString: String,
-    @SerialName("itemStack") val itemStackBytes: ByteArray,
+    @SerialName("itemStack") val itemStackBinary: @Contextual BsonBinary,
     val amount: Int,
     val quantity: Int,
     val ticket: Int,
@@ -33,7 +35,7 @@ data class TransactionModel(
             .getRegistry(RegistryKey.ITEM)
             .get(NamespacedKey(itemTypeString.substringBefore(":"), itemTypeString.substringAfter(":")))
     val itemStack: ItemStack?
-        get() = runCatching { ItemStack.deserializeBytes(itemStackBytes) }.getOrNull()
+        get() = runCatching { ItemStack.deserializeBytes(itemStackBinary.data) }.getOrNull()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
