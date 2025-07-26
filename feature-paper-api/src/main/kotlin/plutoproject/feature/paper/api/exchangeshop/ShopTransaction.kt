@@ -25,9 +25,14 @@ interface ShopTransaction {
     val time: Instant
 
     /**
+     * 交易所涉及的商品 ID。
+     */
+    val itemId: String
+
+    /**
      * 交易所涉及的物品堆，与玩家获取到的物品堆一致。
      */
-    val item: ItemStack
+    val itemStack: ItemStack
 
     /**
      * 交易的购买数，表示玩家购买了多少个 [ShopItem.quantity] 单位的商品。

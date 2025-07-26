@@ -10,6 +10,7 @@ import org.bson.conversions.Bson
 enum class TransactionFilter(val field: String) {
     ID("id"),
     TIMESTAMP("timestamp"),
+    ITEM_ID("itemId"),
     MATERIAL("material"),
     AMOUNT("amount"),
     QUANTITY("quantity"),
