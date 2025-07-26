@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.bson.BsonBinary
 import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
@@ -31,6 +33,7 @@ class ShopUserImpl(
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
+    private val saveLock = Mutex()
     private val isDirty = AtomicBoolean(false)
     private val internalTicket = AtomicInteger(ticket)
 
@@ -145,6 +148,7 @@ class ShopUserImpl(
 
     override suspend fun makeTransaction(shopItemId: String, count: Int): Result<ShopTransaction> {
         exchangeShop.setUsed(this)
+        if (isDirty.get()) save()
         TODO("Not yet implemented")
     }
 
@@ -154,9 +158,14 @@ class ShopUserImpl(
         }
     }
 
-    override suspend fun save() {
+    override suspend fun save() = saveLock.withLock {
         exchangeShop.setUsed(this)
         if (!isDirty.get()) return
-        userRepo.update(uniqueId, Updates.set("ticket", internalTicket.get()))
+        val updates = Updates.combine(
+            Updates.set("ticket", internalTicket.get()),
+            Updates.set("lastTicketRecoveryOn", lastTicketRecoveryOn)
+        )
+        userRepo.update(uniqueId, updates)
+        isDirty.set(false)
     }
 }
