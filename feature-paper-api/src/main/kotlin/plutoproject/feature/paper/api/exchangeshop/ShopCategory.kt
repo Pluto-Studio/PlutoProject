@@ -33,7 +33,7 @@ interface ShopCategory {
     /**
      * 该类别包含的商品。
      */
-    val items: Collection<ShopItem>
+    val items: List<ShopItem>
 
     /**
      * 往该类别里添加一个商品。
@@ -58,15 +58,24 @@ interface ShopCategory {
     /**
      * 获取该类别中指定 ID 的商品。
      *
-     * @param id 需要获取的 ID
+     * @param id 要获取的 ID
      * @return 获取到的商品，若不存在则为空
      */
     fun getItem(id: String): ShopItem?
 
     /**
-     * 移除该类别中指定 ID 的商品，若不存在该 ID 的商品则什么也不发生。
+     * 检查该类别中是否有指定 ID 的商品。
      *
-     * @param id 需要移除的 ID
+     * @param id 要检查的 ID
+     * @return 是否有指定 ID 的商品
      */
-    fun removeItem(id: String)
+    fun hasItem(id: String): Boolean
+
+    /**
+     * 移除该类别中指定 ID 的商品。
+     *
+     * @param id 要移除的 ID
+     * @return 被移除的商品，若不存在则为空
+     */
+    fun removeItem(id: String): ShopItem?
 }

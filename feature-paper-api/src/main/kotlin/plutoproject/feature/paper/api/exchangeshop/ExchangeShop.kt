@@ -13,6 +13,11 @@ interface ExchangeShop {
     companion object : ExchangeShop by Koin.get()
 
     /**
+     * 商店中已添加的类别。
+     */
+    val categories: Collection<ShopCategory>
+
+    /**
      * 获取指定玩家的用户。
      *
      * @param player 需要获取的玩家
@@ -98,15 +103,24 @@ interface ExchangeShop {
     /**
      * 获取指定 ID 的类别。
      *
-     * @param id 需要获取的 ID
+     * @param id 要获取的 ID
      * @return 获取到的类别，若不存在则为空
      */
     fun getCategory(id: String): ShopCategory?
 
     /**
-     * 移除一个已有的类别，若不存在该 ID 的类别则什么也不发生。
+     * 检查是否有指定 ID 的类别。
      *
-     * @param id 需要移除的类别 ID
+     * @param id 要判断的 ID
+     * @return 是否有指定 ID 的类别
      */
-    fun removeCategory(id: String)
+    fun hasCategory(id: String): Boolean
+
+    /**
+     * 移除一个指定 ID 的类别。
+     *
+     * @param id 要移除的 ID
+     * @return 被移除的类别，若不存在则为空
+     */
+    fun removeCategory(id: String): ShopCategory?
 }
