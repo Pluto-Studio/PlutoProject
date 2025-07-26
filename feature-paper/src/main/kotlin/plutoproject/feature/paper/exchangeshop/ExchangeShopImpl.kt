@@ -27,12 +27,16 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val userLock = Mutex()
     private val users = mutableConcurrentMapOf<UUID, ShopUser>()
     private val userLastUsedTimestamps = mutableConcurrentMapOf<ShopUser, Instant>()
-    private val autoUnloadJob = runAutoUnloadDaemonJob()
+    private val autoUnloadJob: Job
 
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
     override val coroutineScope: CoroutineScope = CoroutineScope(
         PlutoCoroutineScope.coroutineContext + Job(PlutoCoroutineScope.coroutineContext[Job])
     )
+
+    init {
+        autoUnloadJob = runAutoUnloadDaemonJob()
+    }
 
     private fun runAutoUnloadDaemonJob(): Job = coroutineScope.launch {
         while (isActive) {
