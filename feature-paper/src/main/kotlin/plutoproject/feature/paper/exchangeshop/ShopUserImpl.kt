@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class ShopUserImpl(
-    override val uniqueId: UUID,
-    override val player: OfflinePlayer,
+    uniqueId: UUID,
+    player: OfflinePlayer,
     ticket: Int,
     lastTicketRecoveryOn: Instant?,
 ) : ShopUser, KoinComponent {
@@ -34,9 +34,23 @@ class ShopUserImpl(
     private val isDirty = AtomicBoolean(false)
     private val internalTicket = AtomicInteger(ticket)
 
+    override val uniqueId: UUID = uniqueId
+        get() {
+            exchangeShop.setUsed(this)
+            return field
+        }
+    override val player: OfflinePlayer = player
+        get() {
+            exchangeShop.setUsed(this)
+            return field
+        }
     override var ticket: Int
-        get() = internalTicket.get()
+        get() {
+            exchangeShop.setUsed(this)
+            return internalTicket.get()
+        }
         set(value) {
+            exchangeShop.setUsed(this)
             internalTicket.set(value)
             isDirty.set(true)
         }
@@ -73,8 +87,8 @@ class ShopUserImpl(
         transactionRepo.update(model.id, Updates.combine(updates))
     }
 
-    // require 检查和 addAndGet 之间需要同步
-    override fun withdrawTicket(amount: Int): Int = synchronized(internalTicket) {
+    override fun withdrawTicket(amount: Int): Int {
+        exchangeShop.setUsed(this)
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         val value = internalTicket.addAndGet(-amount)
         isDirty.set(true)
@@ -82,6 +96,7 @@ class ShopUserImpl(
     }
 
     override fun depositTicket(amount: Int): Int {
+        exchangeShop.setUsed(this)
         val value = internalTicket.addAndGet(amount)
         isDirty.set(true)
         return value
@@ -92,6 +107,7 @@ class ShopUserImpl(
         limit: Int?,
         filterBlock: TransactionFilterDsl.() -> Unit
     ): Flow<ShopTransaction> {
+        exchangeShop.setUsed(this)
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
@@ -119,6 +135,7 @@ class ShopUserImpl(
     }
 
     override suspend fun countTransactions(filterBlock: TransactionFilterDsl.() -> Unit): Long {
+        exchangeShop.setUsed(this)
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
@@ -127,6 +144,7 @@ class ShopUserImpl(
     }
 
     override suspend fun makeTransaction(shopItemId: String, count: Int): Result<ShopTransaction> {
+        exchangeShop.setUsed(this)
         TODO("Not yet implemented")
     }
 
@@ -137,6 +155,7 @@ class ShopUserImpl(
     }
 
     override suspend fun save() {
+        exchangeShop.setUsed(this)
         if (!isDirty.get()) return
         userRepo.update(uniqueId, Updates.set("ticket", internalTicket.get()))
     }
