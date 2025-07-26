@@ -5,8 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.bson.BsonBinary
 import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
@@ -21,19 +19,27 @@ import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepositor
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class ShopUserImpl(
     override val uniqueId: UUID,
     override val player: OfflinePlayer,
-    override var ticket: Int,
+    ticket: Int,
     lastTicketRecoveryOn: Instant?,
 ) : ShopUser, KoinComponent {
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
-    private val updateLock = Mutex()
-    private val pendingUpdates = mutableListOf<Bson>()
+    private val isDirty = AtomicBoolean(false)
+    private val internalTicket = AtomicInteger(ticket)
 
+    override var ticket: Int
+        get() = internalTicket.get()
+        set(value) {
+            internalTicket.set(value)
+            isDirty.set(true)
+        }
     override var lastTicketRecoveryOn: Instant? = lastTicketRecoveryOn
         set(value) {
             exchangeShop.setUsed(this)
@@ -43,10 +49,6 @@ class ShopUserImpl(
             exchangeShop.setUsed(this)
             return field
         }
-
-    private fun addTicketSetUpdate(amount: Int) {
-        pendingUpdates.add(Updates.set("ticket", amount))
-    }
 
     private suspend fun patchItem(model: TransactionModel) {
         val updates = mutableListOf<Bson>()
@@ -71,21 +73,18 @@ class ShopUserImpl(
         transactionRepo.update(model.id, Updates.combine(updates))
     }
 
-    override suspend fun withdrawTicket(amount: Int): Int {
+    // require 检查和 addAndGet 之间需要同步
+    override fun withdrawTicket(amount: Int): Int = synchronized(internalTicket) {
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
-        return setTicket(ticket - amount)
+        val value = internalTicket.addAndGet(-amount)
+        isDirty.set(true)
+        return value
     }
 
-    override suspend fun depositTicket(amount: Int): Int {
-        return setTicket(ticket + amount)
-    }
-
-    override suspend fun setTicket(amount: Int): Int {
-        updateLock.withLock {
-            ticket = amount
-            addTicketSetUpdate(ticket)
-        }
-        return ticket
+    override fun depositTicket(amount: Int): Int {
+        val value = internalTicket.addAndGet(amount)
+        isDirty.set(true)
+        return value
     }
 
     override fun findTransactions(
@@ -138,9 +137,7 @@ class ShopUserImpl(
     }
 
     override suspend fun save() {
-        updateLock.withLock {
-            userRepo.update(uniqueId, Updates.combine(pendingUpdates))
-            pendingUpdates.clear()
-        }
+        if (!isDirty.get()) return
+        userRepo.update(uniqueId, Updates.set("ticket", internalTicket.get()))
     }
 }

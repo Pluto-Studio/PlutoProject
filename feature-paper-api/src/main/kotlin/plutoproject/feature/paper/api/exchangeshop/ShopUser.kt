@@ -23,8 +23,10 @@ interface ShopUser {
      * 该玩家的兑换券数。
      *
      * 仅当 [ShopUser] 被加载到内存时会实时恢复，获取 [ShopUser] 时会计算离线恢复量。
+     *
+     * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      */
-    val ticket: Int
+    var ticket: Int
 
     /**
      * 该玩家上次恢复兑换券的时间，若还没有恢复过则为空。
@@ -34,39 +36,23 @@ interface ShopUser {
     /**
      * 减少一定的兑换券数量。
      *
-     * 该操作是线程安全的，会保持挂起直至完成。
-     *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
      * @param amount 要减少的兑换券数量
      * @return 减少后剩余的值
      * @throws IllegalArgumentException 当玩家剩余兑换券数量小于 [amount] 时
      */
-    suspend fun withdrawTicket(amount: Int): Int
+    fun withdrawTicket(amount: Int): Int
 
     /**
      * 增加一定的兑换券数量。
-     *
-     * 该操作是线程安全的，会保持挂起直至完成。
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
      * @param amount 要增加的兑换券数量
      * @return 增加后剩余的值
      */
-    suspend fun depositTicket(amount: Int): Int
-
-    /**
-     * 设置兑换券数量。
-     *
-     * 该操作是线程安全的，会保持挂起直至完成。
-     *
-     * 修改后的值仅保存在内存中，需要调用 [save] 保存。
-     *
-     * @param amount 要设置的兑换券数量
-     * @return 设置后剩余的值
-     */
-    suspend fun setTicket(amount: Int): Int
+    fun depositTicket(amount: Int): Int
 
     /**
      * 查询该玩家的交易记录。
