@@ -68,7 +68,7 @@ interface ExchangeShop {
      * @param player 需要获取的玩家
      * @return 获取到或新创建的用户对象
      */
-    suspend fun getOrCreateUser(player: Player): ShopUser
+    suspend fun getUserOrCreate(player: Player): ShopUser
 
     /**
      * 获取指定 UUID 的用户，若不存在则创建。
@@ -76,7 +76,7 @@ interface ExchangeShop {
      * @param uniqueId 需要获取的 UUID
      * @return 获取到或新创建的用户对象
      */
-    suspend fun getOrCreateUser(uniqueId: UUID): ShopUser
+    suspend fun getUserOrCreate(uniqueId: UUID): ShopUser
 
     /**
      * 创建一个新的类别。

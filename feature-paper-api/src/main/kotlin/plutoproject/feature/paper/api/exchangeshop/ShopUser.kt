@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.api.exchangeshop
 
+import kotlinx.coroutines.flow.Flow
 import org.bukkit.OfflinePlayer
 import java.time.Instant
 import java.util.*
@@ -64,7 +65,7 @@ interface ShopUser {
         conditions: TransactionFindConditions = TransactionFindConditions(),
         skip: Int? = null,
         limit: Int? = null,
-    ): List<ShopTransaction>
+    ): Flow<ShopTransaction>
 
     /**
      * 查询该玩家的交易记录数。
