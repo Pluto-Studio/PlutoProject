@@ -14,7 +14,7 @@ class ShopCategoryImpl(
     override val name: Component,
     override val description: List<Component>
 ) : ShopCategory {
-    private val internalItems = mutableMapOf<String, ShopItem>()
+    private val internalItems = linkedMapOf<String, ShopItem>()
 
     override val items: List<ShopItem>
         get() = internalItems.values.toList()
