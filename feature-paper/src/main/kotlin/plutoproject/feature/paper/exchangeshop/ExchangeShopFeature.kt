@@ -2,6 +2,7 @@ package plutoproject.feature.paper.exchangeshop
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.mongodb.kotlin.client.coroutine.MongoCollection
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.binds
@@ -19,6 +20,9 @@ import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
+import java.util.logging.Logger
+
+lateinit var featureLogger: Logger
 
 @Feature(
     id = "exchange_shop",
@@ -42,10 +46,11 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
         configureKoin {
             modules(featureModule)
         }
+        featureLogger = logger
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
     }
 
-    override fun onDisable() {
+    override fun onDisable() = runBlocking {
         exchangeShop.shutdown()
     }
 }

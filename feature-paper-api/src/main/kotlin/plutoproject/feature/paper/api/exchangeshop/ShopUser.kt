@@ -76,7 +76,7 @@ interface ShopUser {
      * @param filterBlock 查询条件
      * @return 指定条件下查询到的交易记录，若列表为空则没有匹配的记录
      */
-    suspend fun findTransactions(
+    fun findTransactions(
         skip: Int? = null,
         limit: Int? = null,
         filterBlock: TransactionFilterDsl.() -> Unit = {},
@@ -97,7 +97,7 @@ interface ShopUser {
      *
      * 若有未保存的操作则会先将它们保存。
      *
-     * @param itemId 需要购买的商品 ID
+     * @param shopItemId 需要购买的商品 ID
      * @param count 需要购买的数量
      * @return 成功时为 [ShopTransaction]，失败时为 [ShopTransactionException]
      * - [ShopTransactionException.PlayerOffline] 玩家不在线
@@ -105,7 +105,7 @@ interface ShopUser {
      * - [ShopTransactionException.BalanceNotEnough] 余额不足
      * - [ShopTransactionException.DatabaseFailure] 数据库操作失败
      */
-    suspend fun makeTransaction(itemId: String, count: Int): Result<ShopTransaction>
+    suspend fun makeTransaction(shopItemId: String, count: Int): Result<ShopTransaction>
 
     /**
      * 为该玩家执行批量交易。

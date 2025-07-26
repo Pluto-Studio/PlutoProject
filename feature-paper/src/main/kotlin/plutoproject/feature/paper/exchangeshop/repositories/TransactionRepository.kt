@@ -2,8 +2,8 @@ package plutoproject.feature.paper.exchangeshop.repositories
 
 import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.ClientSession
+import com.mongodb.kotlin.client.coroutine.FindFlow
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -12,7 +12,7 @@ import plutoproject.framework.common.util.database.upsertReplaceOptions
 import java.util.*
 
 class TransactionRepository(private val collection: MongoCollection<TransactionModel>) {
-    fun find(filter: Bson = Document(), skip: Int? = null, limit: Int? = null): Flow<TransactionModel> {
+    fun find(filter: Bson = Document(), skip: Int? = null, limit: Int? = null): FindFlow<TransactionModel> {
         return collection.find(filter)
             .apply { if (skip != null) skip(skip) }
             .apply { if (limit != null) limit(limit) }
@@ -24,6 +24,10 @@ class TransactionRepository(private val collection: MongoCollection<TransactionM
 
     suspend fun count(filter: Bson = Document()): Long {
         return collection.countDocuments(filter)
+    }
+
+    suspend fun update(id: UUID, update: Bson) {
+        collection.updateOne(Filters.eq("_id", id), update)
     }
 
     suspend fun insert(model: TransactionModel) {

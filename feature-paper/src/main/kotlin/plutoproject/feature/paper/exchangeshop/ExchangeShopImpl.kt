@@ -10,7 +10,7 @@ import plutoproject.feature.paper.api.exchangeshop.ShopCategory
 import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PlutoCoroutineScope
 import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.paper.util.server
@@ -27,8 +27,11 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val autoUnloadJob = runAutoUnloadDaemonJob()
 
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
+    override val coroutineScope: CoroutineScope = CoroutineScope(
+        PlutoCoroutineScope.coroutineContext + Job(PlutoCoroutineScope.coroutineContext[Job])
+    )
 
-    private fun runAutoUnloadDaemonJob(): Job = runAsync {
+    private fun runAutoUnloadDaemonJob(): Job = coroutineScope.launch {
         while (isActive) {
             delay(AUTO_UNLOAD_INTERVAL_SECONDS.seconds)
             unloadUnusedUsers()
@@ -64,7 +67,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
             uniqueId = model.uniqueId,
             player = server.getOfflinePlayer(model.uniqueId),
             ticket = model.ticket,
-            internalLastTicketRecoveryOn = model.lastTicketRecoveryOn
+            lastTicketRecoveryOn = model.lastTicketRecoveryOn
         )
 
         loadUser(user)
@@ -91,7 +94,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
             uniqueId = uniqueId,
             player = server.getOfflinePlayer(uniqueId),
             ticket = config.ticket.recoveryCap,
-            internalLastTicketRecoveryOn = null,
+            lastTicketRecoveryOn = null,
         )
         val model = UserModel(
             uniqueId = user.uniqueId,
@@ -166,7 +169,8 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return internalCategories.remove(id)
     }
 
-    override fun shutdown() = runBlocking {
+    override suspend fun shutdown() {
         autoUnloadJob.cancelAndJoin()
+        coroutineScope.coroutineContext[Job]?.cancelAndJoin()
     }
 }
