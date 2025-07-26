@@ -5,7 +5,7 @@ import java.time.Instant
 import java.util.*
 
 /**
- * 代表一个使用过兑换商店且有数据的玩家。
+ * 代表兑换商店中玩家的用户数据。
  */
 interface ShopUser {
     /**
