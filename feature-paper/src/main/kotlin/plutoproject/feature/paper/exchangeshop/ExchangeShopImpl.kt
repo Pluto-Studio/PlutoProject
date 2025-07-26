@@ -39,9 +39,11 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         val currentTimestamp = Instant.now()
         val iterator = users.iterator()
         while (iterator.hasNext()) {
-            val (_, user) = iterator.next()
+            val (id, user) = iterator.next()
             val lastUsed = getLastUsedTimestamp(user)
-            if (lastUsed.plusSeconds(MAX_UNUSED_SECONDS).isBefore(currentTimestamp)) {
+            if (lastUsed.plusSeconds(MAX_UNUSED_SECONDS).isBefore(currentTimestamp)
+                && server.getPlayer(id) == null
+            ) {
                 iterator.remove()
                 userLastUsedTimestamps.remove(user)
             }
