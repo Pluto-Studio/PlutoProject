@@ -92,6 +92,19 @@ interface ShopUser {
     suspend fun makeTransaction(itemId: String, count: Int): Result<ShopTransaction>
 
     /**
+     * 为该玩家执行批量交易。
+     *
+     * 该操作不会存储在内存中，而是直接写入数据库，仅当数据库操作成功时会给予物品。
+     *
+     * 每条交易会被独立执行，并各自返回一条交易记录。
+     *
+     * @param purchases 需要执行的交易，key 为物品 ID，value 为要购买的数量
+     * @return 交易结果，每个物品 ID 对应一个 Result
+     * @see makeTransaction
+     */
+    suspend fun batchTransaction(purchases: Map<String, Int>): Map<String, Result<ShopTransaction>>
+
+    /**
      * 将更改存入数据库。
      */
     suspend fun save()
