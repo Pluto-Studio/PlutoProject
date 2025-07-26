@@ -25,7 +25,7 @@ sealed class ShopTransactionException : Exception {
      * 该玩家所持有的余额不足。
      */
     class BalanceNotEnough(user: ShopUser, required: BigDecimal) :
-        ShopTransactionException(user, "insufficient tickets, required: $required")
+        ShopTransactionException(user, "insufficient balance, required: $required")
 
     /**
      * 数据库操作失败。
