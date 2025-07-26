@@ -11,9 +11,9 @@ interface InternalExchangeShop : ExchangeShop {
 
     fun isUserLoaded(id: UUID): Boolean
 
-    fun loadUser(user: ShopUser)
+    suspend fun loadUser(user: ShopUser)
 
-    fun unloadUser(id: UUID)
+    suspend fun unloadUser(id: UUID)
 
     fun getLastUsedTimestamp(user: ShopUser): Instant
 

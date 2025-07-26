@@ -1,6 +1,8 @@
 package plutoproject.feature.paper.exchangeshop
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -22,6 +24,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val userRepo by inject<UserRepository>()
     private val config by inject<ExchangeShopConfig>()
     private val internalCategories = mutableMapOf<String, ShopCategory>()
+    private val userLock = Mutex()
     private val users = mutableConcurrentMapOf<UUID, ShopUser>()
     private val userLastUsedTimestamps = mutableConcurrentMapOf<ShopUser, Instant>()
     private val autoUnloadJob = runAutoUnloadDaemonJob()
@@ -38,7 +41,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         }
     }
 
-    private fun unloadUnusedUsers() {
+    private suspend fun unloadUnusedUsers() = userLock.withLock {
         val currentTimestamp = Instant.now()
         val iterator = users.iterator()
         while (iterator.hasNext()) {
@@ -119,13 +122,13 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return users.containsKey(id)
     }
 
-    override fun loadUser(user: ShopUser) {
+    override suspend fun loadUser(user: ShopUser) = userLock.withLock {
         users[user.uniqueId] = user
         userLastUsedTimestamps[user] = Instant.now()
     }
 
-    override fun unloadUser(id: UUID) {
-        userLastUsedTimestamps.remove(users.remove(id) ?: return)
+    override suspend fun unloadUser(id: UUID) = userLock.withLock {
+        userLastUsedTimestamps.remove(users.remove(id) ?: return@withLock)
     }
 
     override fun getLastUsedTimestamp(user: ShopUser): Instant {
@@ -133,8 +136,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override fun setUsed(user: ShopUser) {
-        if (!userLastUsedTimestamps.containsKey(user)) return
-        userLastUsedTimestamps[user] = Instant.now()
+        userLastUsedTimestamps.replace(user, Instant.now())
     }
 
     override fun createCategory(

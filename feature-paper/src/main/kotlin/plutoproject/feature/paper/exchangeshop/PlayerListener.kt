@@ -18,7 +18,7 @@ object PlayerListener : Listener, KoinComponent {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    fun PlayerQuitEvent.onPlayerQuit() {
+    suspend fun PlayerQuitEvent.onPlayerQuit() {
         exchangeShop.unloadUser(player.uniqueId)
     }
 }
