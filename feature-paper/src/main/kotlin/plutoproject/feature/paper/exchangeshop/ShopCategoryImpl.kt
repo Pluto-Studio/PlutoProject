@@ -27,8 +27,8 @@ class ShopCategoryImpl(
         quantity: Int,
         availableDays: List<DayOfWeek>
     ): ShopItem {
-        require(id.isAlphabeticOrUnderscore()) { "ID must contain only English letters and underscores: $id" }
-        require(!hasItem(id)) { "Shop item with ID `$id` already exists" }
+        require(id.isValidIdentifier()) { "ID must contain only English letters, numbers and underscores: $id" }
+        require(!hasItem(id)) { "Shop item with ID `$id` already exists in category ${this.id}" }
 
         val item = ShopItemImpl(
             id = id,

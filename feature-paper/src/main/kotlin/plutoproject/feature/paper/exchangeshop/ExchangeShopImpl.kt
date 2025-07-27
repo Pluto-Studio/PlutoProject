@@ -75,7 +75,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     private fun addConfigCategory(config: ShopCategoryConfig) {
-        if (!config.id.isAlphabeticOrUnderscore()) {
+        if (!config.id.isValidIdentifier()) {
             featureLogger.severe("Invalid category ID in config: '${config.id}'")
             return
         }
@@ -88,7 +88,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     private fun addConfigItem(config: ShopItemConfig) {
-        if (!config.id.isAlphabeticOrUnderscore()) {
+        if (!config.id.isValidIdentifier()) {
             featureLogger.severe("Invalid shop item ID in config: '${config.id}'")
             return
         }
@@ -202,7 +202,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         name: Component,
         description: List<Component>
     ): ShopCategory {
-        require(id.isAlphabeticOrUnderscore()) { "ID must contain only English letters and underscores: $id" }
+        require(id.isValidIdentifier()) { "ID must contain only English letters, numbers and underscores: $id" }
         require(!hasCategory(id)) { "Shop category with ID `$id` already exists" }
 
         val category = ShopCategoryImpl(

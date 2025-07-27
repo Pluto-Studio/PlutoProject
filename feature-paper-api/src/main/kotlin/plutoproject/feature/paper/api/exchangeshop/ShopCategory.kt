@@ -38,7 +38,7 @@ interface ShopCategory {
     /**
      * 往该类别里添加一个商品。
      *
-     * @param id 要添加的商品 ID
+     * @param id 要添加的商品 ID，需在类别中唯一
      * @param itemStack 商品的物品堆
      * @param ticketConsumption 购买一个数量单位的该商品所需的兑换券
      * @param price 一个数量单位的该商品的价格
