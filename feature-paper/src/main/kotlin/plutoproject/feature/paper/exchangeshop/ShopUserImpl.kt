@@ -137,7 +137,7 @@ class ShopUserImpl(
         val currentTime = Instant.now()
         val nextRecoveryTime = getNextRecoveryTime()
 
-        require(config.ticket.naturalRecovery) { "Natural ticket recovery is disabled" }
+        check(config.ticket.naturalRecovery) { "Natural ticket recovery is disabled" }
         require(nextRecoveryTime.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
         val interval = Duration.between(currentTime, nextRecoveryTime.plusSeconds(1))
@@ -164,7 +164,7 @@ class ShopUserImpl(
             unscheduleTicketRecovery()
             return
         }
-        if (scheduledTicketRecovery == null) {
+        if (scheduledTicketRecovery == null && config.ticket.naturalRecovery) {
             scheduleTicketRecovery()
         }
     }
