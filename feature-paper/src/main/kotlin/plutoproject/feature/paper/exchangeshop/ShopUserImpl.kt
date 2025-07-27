@@ -19,6 +19,7 @@ import plutoproject.feature.paper.api.exchangeshop.TransactionFilterDsl
 import plutoproject.feature.paper.exchangeshop.models.TransactionModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,7 +30,9 @@ class ShopUserImpl(
     player: OfflinePlayer,
     ticket: Int,
     lastTicketRecoveryOn: Instant?,
+    createdAt: Instant,
 ) : ShopUser, KoinComponent {
+    private val config by inject<ExchangeShopConfig>()
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
@@ -43,6 +46,11 @@ class ShopUserImpl(
             return field
         }
     override val player: OfflinePlayer = player
+        get() {
+            exchangeShop.setUsed(this)
+            return field
+        }
+    override val createdAt: Instant = createdAt
         get() {
             exchangeShop.setUsed(this)
             return field
@@ -66,6 +74,49 @@ class ShopUserImpl(
             exchangeShop.setUsed(this)
             return field
         }
+    override var nextTicketRecoveryOn: Instant? = lastTicketRecoveryOn?.plus(config.ticket.recoveryInterval)
+
+    init {
+        if (config.ticket.naturalRecovery) {
+            performOfflineRecovery()
+        }
+    }
+
+    private fun performOfflineRecovery() {
+        if (ticket >= config.ticket.recoveryCap) {
+            return
+        }
+
+        val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
+        val currentTime = Instant.now()
+        val timeDelta = Duration.between(lastRecoveryTime, currentTime.plusSeconds(1))
+        val recoveryAmount = config.ticket.recoveryAmount * timeDelta.dividedBy(config.ticket.recoveryInterval)
+
+        if (lastRecoveryTime.isAfter(currentTime)) {
+            if (createdAt.isAfter(currentTime)) {
+                featureLogger.severe("Time anomaly detected for player ${player.name}: create time ($createdAt) is after current time ($currentTime), possibly due to system time change")
+            }
+            if (lastTicketRecoveryOn?.isAfter(currentTime) == true) {
+                featureLogger.severe("Time anomaly detected for player ${player.name}: last recovery time ($lastTicketRecoveryOn) is after current time ($currentTime), possibly due to system time change")
+                lastTicketRecoveryOn = currentTime
+                isDirty.set(true)
+                exchangeShop.coroutineScope.launch(Dispatchers.IO) {
+                    save()
+                }
+            }
+            return
+        }
+
+        ticket = if (ticket + recoveryAmount > config.ticket.recoveryCap) {
+            config.ticket.recoveryCap
+        } else {
+            ticket + recoveryAmount.toInt()
+        }
+        lastTicketRecoveryOn = currentTime
+        exchangeShop.coroutineScope.launch(Dispatchers.IO) {
+            save()
+        }
+    }
 
     private suspend fun patchItem(model: TransactionModel) {
         val updates = mutableListOf<Bson>()

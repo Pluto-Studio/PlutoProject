@@ -20,6 +20,11 @@ interface ShopUser {
     val player: OfflinePlayer
 
     /**
+     * 该玩家数据创建的时间。
+     */
+    val createdAt: Instant
+
+    /**
      * 该玩家的兑换券数。
      *
      * 仅当 [ShopUser] 被加载到内存时会实时恢复，获取 [ShopUser] 时会计算离线恢复量。
@@ -32,6 +37,11 @@ interface ShopUser {
      * 该玩家上次恢复兑换券的时间，若还没有恢复过则为空。
      */
     val lastTicketRecoveryOn: Instant?
+
+    /**
+     * 该玩家下次恢复兑换券的时间，若还没有计划恢复则为空。
+     */
+    val nextTicketRecoveryOn: Instant?
 
     /**
      * 减少一定的兑换券数量。
