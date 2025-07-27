@@ -14,10 +14,7 @@ import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.paper.api.exchangeshop.ShopTransaction
-import plutoproject.feature.paper.api.exchangeshop.ShopUser
-import plutoproject.feature.paper.api.exchangeshop.TransactionFilter
-import plutoproject.feature.paper.api.exchangeshop.TransactionFilterDsl
+import plutoproject.feature.paper.api.exchangeshop.*
 import plutoproject.feature.paper.exchangeshop.models.TransactionModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
@@ -253,15 +250,19 @@ class ShopUserImpl(
         return transactionRepo.count(filter)
     }
 
-    override suspend fun makeTransaction(shopItemId: String, count: Int): Result<ShopTransaction> {
+    override suspend fun makeTransaction(
+        shopItemId: String,
+        count: Int,
+        checkAvailability: Boolean
+    ): Result<ShopTransaction> {
         exchangeShop.setUsed(this)
         if (isDirty.get()) save()
         TODO("Not yet implemented")
     }
 
-    override suspend fun batchTransaction(purchases: Map<String, Int>): Map<String, Result<ShopTransaction>> {
-        return purchases.entries.associate { (shopItemId, count) ->
-            shopItemId to makeTransaction(shopItemId, count)
+    override suspend fun batchTransaction(purchases: Map<String, ShopTransactionParameters>): Map<String, Result<ShopTransaction>> {
+        return purchases.entries.associate { (shopItemId, parameters) ->
+            shopItemId to makeTransaction(shopItemId, parameters.count, parameters.checkAvailability)
         }
     }
 

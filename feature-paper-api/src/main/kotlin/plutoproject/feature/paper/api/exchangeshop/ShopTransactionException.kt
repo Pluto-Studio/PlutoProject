@@ -10,6 +10,12 @@ sealed class ShopTransactionException : Exception {
     constructor(user: ShopUser, message: String, cause: Throwable) : super(transactionError(user, message), cause)
 
     /**
+     * 要兑换的商品限期未至。
+     */
+    class ShopItemNotAvailable(item: ShopItem, user: ShopUser) :
+        ShopTransactionException(user, "Shop item ${item.id} is not available today")
+
+    /**
      * 该玩家不在线。
      */
     class PlayerOffline(user: ShopUser) :

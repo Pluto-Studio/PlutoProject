@@ -95,13 +95,19 @@ interface ShopUser {
      *
      * @param shopItemId 需要购买的商品 ID
      * @param count 需要购买的数量
+     * @param checkAvailability 是否检查商品限期
      * @return 成功时为 [ShopTransaction]，失败时为 [ShopTransactionException]
+     * - [ShopTransactionException.ShopItemNotAvailable] 兑换的商品限期未至
      * - [ShopTransactionException.PlayerOffline] 玩家不在线
      * - [ShopTransactionException.TicketNotEnough] 兑换券不足
      * - [ShopTransactionException.BalanceNotEnough] 余额不足
      * - [ShopTransactionException.DatabaseFailure] 数据库操作失败
      */
-    suspend fun makeTransaction(shopItemId: String, count: Int): Result<ShopTransaction>
+    suspend fun makeTransaction(
+        shopItemId: String,
+        count: Int,
+        checkAvailability: Boolean = true
+    ): Result<ShopTransaction>
 
     /**
      * 为该玩家执行批量交易。
@@ -110,11 +116,11 @@ interface ShopUser {
      *
      * 每条交易会被独立执行，并各自返回一条交易记录。
      *
-     * @param purchases 需要执行的交易，key 为物品 ID，value 为要购买的数量
-     * @return 交易结果，每个物品 ID 对应一个 Result
+     * @param purchases 需要执行的交易，key 为商品 ID，value 为要购买的数量
+     * @return 交易结果，每个商品 ID 对应一个 [Result]
      * @see makeTransaction
      */
-    suspend fun batchTransaction(purchases: Map<String, Int>): Map<String, Result<ShopTransaction>>
+    suspend fun batchTransaction(purchases: Map<String, ShopTransactionParameters>): Map<String, Result<ShopTransaction>>
 
     /**
      * 将更改存入数据库。
