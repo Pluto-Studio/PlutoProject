@@ -2,6 +2,8 @@ package plutoproject.feature.paper.exchangeshop
 
 import com.mongodb.client.model.Updates
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -24,6 +26,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.toKotlinDuration
 
 class ShopUserImpl(
     uniqueId: UUID,
@@ -39,6 +42,7 @@ class ShopUserImpl(
     private val saveLock = Mutex()
     private val isDirty = AtomicBoolean(false)
     private val internalTicket = AtomicInteger(ticket)
+    private var scheduledTicketRecovery: Job? = null
 
     override val uniqueId: UUID = uniqueId
         get() {
@@ -64,6 +68,7 @@ class ShopUserImpl(
             exchangeShop.setUsed(this)
             internalTicket.set(value)
             isDirty.set(true)
+            updateTicketRecoverySchedule()
         }
     override var lastTicketRecoveryOn: Instant? = lastTicketRecoveryOn
         set(value) {
@@ -78,11 +83,14 @@ class ShopUserImpl(
 
     init {
         if (config.ticket.naturalRecovery) {
-            performOfflineRecovery()
+            exchangeShop.coroutineScope.launch {
+                performOfflineRecovery()
+                updateTicketRecoverySchedule()
+            }
         }
     }
 
-    private fun performOfflineRecovery() {
+    private suspend fun performOfflineRecovery() {
         if (ticket >= config.ticket.recoveryCap) {
             return
         }
@@ -107,14 +115,60 @@ class ShopUserImpl(
             return
         }
 
-        ticket = if (ticket + recoveryAmount > config.ticket.recoveryCap) {
+        recoveryTicket(recoveryAmount.toInt())
+        save()
+    }
+
+    private fun recoveryTicket(amount: Int): Boolean {
+        if (ticket >= config.ticket.recoveryCap) return false
+        ticket = if (ticket + amount > config.ticket.recoveryCap) {
             config.ticket.recoveryCap
         } else {
-            ticket + recoveryAmount.toInt()
+            ticket + amount
         }
-        lastTicketRecoveryOn = currentTime
-        exchangeShop.coroutineScope.launch(Dispatchers.IO) {
-            save()
+        lastTicketRecoveryOn = Instant.now()
+        return true
+    }
+
+    private fun getNextRecoveryTime(): Instant {
+        val lastRecoveryTimes = lastTicketRecoveryOn ?: createdAt
+        return lastRecoveryTimes.plus(config.ticket.recoveryInterval)
+    }
+
+    private fun scheduleTicketRecovery() {
+        if (ticket >= config.ticket.recoveryCap) return
+        val currentTime = Instant.now()
+        val nextRecoveryTime = getNextRecoveryTime()
+
+        require(config.ticket.naturalRecovery) { "Natural ticket recovery is disabled" }
+        require(nextRecoveryTime.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
+
+        val interval = Duration.between(currentTime, nextRecoveryTime.plusSeconds(1))
+        nextTicketRecoveryOn = nextRecoveryTime
+
+        exchangeShop.coroutineScope.launch {
+            delay(interval.toKotlinDuration())
+            if (recoveryTicket(config.ticket.recoveryAmount)) {
+                save()
+            }
+            scheduleTicketRecovery()
+        }.also { scheduledTicketRecovery = it }
+    }
+
+    private fun unscheduleTicketRecovery() {
+        if (scheduledTicketRecovery == null) return
+        scheduledTicketRecovery?.cancel()
+        scheduledTicketRecovery = null
+        lastTicketRecoveryOn = null
+    }
+
+    private fun updateTicketRecoverySchedule() {
+        if (ticket >= config.ticket.recoveryCap) {
+            unscheduleTicketRecovery()
+            return
+        }
+        if (scheduledTicketRecovery == null) {
+            scheduleTicketRecovery()
         }
     }
 
@@ -146,6 +200,7 @@ class ShopUserImpl(
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         val value = internalTicket.addAndGet(-amount)
         isDirty.set(true)
+        updateTicketRecoverySchedule()
         return value
     }
 
@@ -153,6 +208,7 @@ class ShopUserImpl(
         exchangeShop.setUsed(this)
         val value = internalTicket.addAndGet(amount)
         isDirty.set(true)
+        updateTicketRecoverySchedule()
         return value
     }
 

@@ -10,6 +10,7 @@ import java.util.*
 @Serializable
 data class UserModel(
     @SerialName("_id") val uniqueId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
+    val createdAt: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
     val ticket: Int,
     val lastTicketRecoveryOn: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
 )
