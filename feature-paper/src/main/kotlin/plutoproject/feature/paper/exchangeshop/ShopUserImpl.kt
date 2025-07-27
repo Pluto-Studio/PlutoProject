@@ -78,6 +78,7 @@ class ShopUserImpl(
     }
 
     private suspend fun performOfflineRecovery() {
+        // 离线时间未满一次恢复间隔，有计划了且未截止的恢复任务
         if (scheduledTicketRecoveryOn?.isAfter(Instant.now()) == true) return
         if (ticket >= config.ticket.recoveryCap) return
 
@@ -120,7 +121,7 @@ class ShopUserImpl(
 
         val currentTime = Instant.now()
         val scheduledAt = if (scheduledTicketRecoveryOn?.isAfter(currentTime) == true) {
-            // 有一个计划了且为超时的恢复任务，继续它
+            // 有一个计划了且未截止的恢复任务，继续它
             scheduledTicketRecoveryOn!!
         } else {
             // 没有可以继续的任务，计划新的
@@ -160,13 +161,16 @@ class ShopUserImpl(
         }
     }
 
-    private suspend fun unscheduleTicketRecovery() {
+    // 卸载 ShopUser 时在数据库里保存计划的恢复任务，下次加载时若未截止就继续它
+    private suspend fun unscheduleTicketRecovery(keepInDatabase: Boolean = false) {
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancelAndJoin()
         scheduledTicketRecovery = null
         scheduledTicketRecoveryOn = null
-        isDirty = true
-        saveWithoutLock()
+        if (!keepInDatabase) {
+            isDirty = true
+            saveWithoutLock()
+        }
         featureLogger.info("Unscheduled ticket recovery for ${player.name}")
     }
 
@@ -361,7 +365,7 @@ class ShopUserImpl(
 
     override suspend fun close(): Unit = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
-        unscheduleTicketRecovery()
+        unscheduleTicketRecovery(true)
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false
     }
