@@ -23,6 +23,7 @@ import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.flow.getValue
 import plutoproject.framework.common.util.data.flow.setValue
 import plutoproject.framework.common.util.logger
+import plutoproject.framework.common.util.time.times
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
@@ -58,7 +59,7 @@ class ShopUserImpl(
         createdAt = model.createdAt,
         ticket = model.ticket,
         lastTicketRecoveryOn = model.lastTicketRecoveryOn,
-        scheduledTicketRecoveryOn = model.scheduledTicketRecoveryOn
+        scheduledTicketRecoveryOn = null,
     )
 
     override var isValid by MutableStateFlow(true)
@@ -78,29 +79,29 @@ class ShopUserImpl(
     }
 
     private suspend fun performOfflineRecovery() {
-        // 离线时间未满一次恢复间隔，有计划了且未截止的恢复任务
-        if (scheduledTicketRecoveryOn?.isAfter(Instant.now()) == true) return
         if (ticket >= config.ticket.recoveryCap) return
 
-        val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
-        val currentTime = Instant.now()
-        val timeDelta = Duration.between(lastRecoveryTime, currentTime)
-        val recoveryAmount = config.ticket.recoveryAmount * timeDelta.dividedBy(config.ticket.recoveryInterval)
+        val lastOnlineRecoveryTime = lastTicketRecoveryOn ?: createdAt
+        val completedIntervals = getCompletedIntervalsSince(lastOnlineRecoveryTime)
+        val lastOfflineRecoveryTime = lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals.toLong()
+        val offlineRecoveryAmount = completedIntervals * config.ticket.recoveryAmount
 
-        if (recoveryAmount <= 0) return
-        if (lastRecoveryTime.isAfter(currentTime)) {
-            featureLogger.severe("Time anomaly detected for player ${player.name}: last recovery time ($lastRecoveryTime) is after current time ($currentTime)")
-            lastTicketRecoveryOn = currentTime
-            isDirty = true
-            saveWithoutLock()
-            return
+        if (offlineRecoveryAmount <= 0) return
+
+        _ticket = if (ticket + offlineRecoveryAmount > config.ticket.recoveryCap) {
+            config.ticket.recoveryCap
+        } else {
+            ticket + offlineRecoveryAmount
         }
+        isDirty = true
+        lastTicketRecoveryOn = lastOfflineRecoveryTime
 
-        recoveryTicket(recoveryAmount.toInt())
+        saveWithoutLock()
     }
 
     private suspend fun recoveryTicket(amount: Int): Boolean {
         if (ticket >= config.ticket.recoveryCap) return false
+
         _ticket = if (ticket + amount > config.ticket.recoveryCap) {
             config.ticket.recoveryCap
         } else {
@@ -108,8 +109,24 @@ class ShopUserImpl(
         }
         lastTicketRecoveryOn = Instant.now()
         isDirty = true
+
         saveWithoutLock()
         return true
+    }
+
+    private fun getCompletedIntervalsSince(time: Instant): Int {
+        val currentTime = Instant.now()
+        require(time.isBefore(currentTime)) { "Start timestamp must in before" }
+        val timeSinceLastRecovery = Duration.between(time, currentTime)
+        return timeSinceLastRecovery.dividedBy(config.ticket.recoveryInterval).toInt()
+    }
+
+    private fun calculateTimeUntilNextRecovery(): Duration {
+        val currentTime = Instant.now()
+        val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
+        val timeSinceLastRecovery = Duration.between(lastRecoveryTime, currentTime)
+        featureLogger.info("Time since last recovery: ${timeSinceLastRecovery.seconds} seconds")
+        return config.ticket.recoveryInterval.minus(timeSinceLastRecovery)
     }
 
     private suspend fun scheduleTicketRecovery() {
@@ -120,13 +137,7 @@ class ShopUserImpl(
         if (ticket >= config.ticket.recoveryCap) return
 
         val currentTime = Instant.now()
-        val scheduledAt = if (scheduledTicketRecoveryOn?.isAfter(currentTime) == true) {
-            // 有一个计划了且未截止的恢复任务，继续它
-            scheduledTicketRecoveryOn!!
-        } else {
-            // 没有可以继续的任务，计划新的
-            currentTime.plus(config.ticket.recoveryInterval)
-        }
+        val scheduledAt = currentTime + calculateTimeUntilNextRecovery()
 
         check(scheduledAt.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
@@ -162,15 +173,11 @@ class ShopUserImpl(
     }
 
     // 卸载 ShopUser 时在数据库里保存计划的恢复任务，下次加载时若未截止就继续它
-    private suspend fun unscheduleTicketRecovery(keepInDatabase: Boolean = false) {
+    private suspend fun unscheduleTicketRecovery() {
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancelAndJoin()
         scheduledTicketRecovery = null
         scheduledTicketRecoveryOn = null
-        if (!keepInDatabase) {
-            isDirty = true
-            saveWithoutLock()
-        }
         featureLogger.info("Unscheduled ticket recovery for ${player.name}")
     }
 
@@ -357,7 +364,6 @@ class ShopUserImpl(
         val updates = Updates.combine(
             Updates.set("ticket", ticket),
             Updates.set("lastTicketRecoveryOn", lastTicketRecoveryOn),
-            Updates.set("scheduledTicketRecoveryOn", scheduledTicketRecoveryOn)
         )
         userRepo.update(uniqueId, updates)
         isDirty = false
@@ -365,7 +371,7 @@ class ShopUserImpl(
 
     override suspend fun close(): Unit = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
-        unscheduleTicketRecovery(true)
+        unscheduleTicketRecovery()
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false
     }

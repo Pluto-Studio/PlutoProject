@@ -140,7 +140,6 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
             createdAt = Instant.now(),
             ticket = config.ticket.recoveryCap,
             lastTicketRecoveryOn = null,
-            scheduledTicketRecoveryOn = null
         )
         val user = ShopUserImpl(model)
 
