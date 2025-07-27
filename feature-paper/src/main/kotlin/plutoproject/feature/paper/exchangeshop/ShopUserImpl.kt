@@ -156,7 +156,7 @@ class ShopUserImpl(
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancel()
         scheduledTicketRecovery = null
-        lastTicketRecoveryOn = null
+        nextTicketRecoveryOn = null
     }
 
     private fun updateTicketRecoverySchedule() {
