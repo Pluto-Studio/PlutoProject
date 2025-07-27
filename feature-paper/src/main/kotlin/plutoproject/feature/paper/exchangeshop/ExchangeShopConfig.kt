@@ -25,13 +25,13 @@ data class TicketConfig(
 }
 
 data class LayoutConfig(
-    val patterns: List<String> = listOf("       ", "   E   ", "       "),
-    val icons: List<LayoutIconConfig> = listOf(LayoutIconConfig("E")),
+    val patterns: List<String> = emptyList(),
+    val icons: List<LayoutIconConfig> = emptyList(),
 )
 
 data class LayoutIconConfig(
     val pattern: String,
-    val icon: Material = Material.PAPER,
+    val category: String,
 )
 
 data class ShopCategoryConfig(
