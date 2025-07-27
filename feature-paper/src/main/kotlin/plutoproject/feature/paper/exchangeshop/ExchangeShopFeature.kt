@@ -48,6 +48,7 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
         }
         featureLogger = logger
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
+        ExchangeShop // 初始化并加载配置定义
     }
 
     override fun onDisable() = runBlocking {

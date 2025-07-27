@@ -1,5 +1,7 @@
 package plutoproject.feature.paper.exchangeshop
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -13,12 +15,16 @@ object PlayerListener : Listener, KoinComponent {
     private val exchangeShop by inject<InternalExchangeShop>()
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    suspend fun PlayerJoinEvent.onPlayerJoin() {
-        exchangeShop.getUserOrCreate(player)
+    fun PlayerJoinEvent.onPlayerJoin() {
+        exchangeShop.coroutineScope.launch(Dispatchers.IO) {
+            exchangeShop.getUserOrCreate(player)
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    suspend fun PlayerQuitEvent.onPlayerQuit() {
-        exchangeShop.unloadUser(player.uniqueId)
+    fun PlayerQuitEvent.onPlayerQuit() {
+        exchangeShop.coroutineScope.launch {
+            exchangeShop.unloadUser(player.uniqueId)
+        }
     }
 }
