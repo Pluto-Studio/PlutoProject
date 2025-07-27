@@ -1,12 +1,9 @@
 package plutoproject.feature.paper.exchangeshop
 
 import com.mongodb.client.model.Updates
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.bson.BsonBinary
@@ -14,7 +11,10 @@ import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.paper.api.exchangeshop.*
+import plutoproject.feature.paper.api.exchangeshop.ShopTransaction
+import plutoproject.feature.paper.api.exchangeshop.ShopTransactionParameters
+import plutoproject.feature.paper.api.exchangeshop.TransactionFilter
+import plutoproject.feature.paper.api.exchangeshop.TransactionFilterDsl
 import plutoproject.feature.paper.exchangeshop.models.TransactionModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
@@ -31,7 +31,7 @@ class ShopUserImpl(
     ticket: Int,
     lastTicketRecoveryOn: Instant?,
     createdAt: Instant,
-) : ShopUser, KoinComponent {
+) : InternalShopUser, KoinComponent {
     private val config by inject<ExchangeShopConfig>()
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
@@ -275,5 +275,9 @@ class ShopUserImpl(
         )
         userRepo.update(uniqueId, updates)
         isDirty.set(false)
+    }
+
+    override suspend fun close() {
+        scheduledTicketRecovery?.cancelAndJoin()
     }
 }

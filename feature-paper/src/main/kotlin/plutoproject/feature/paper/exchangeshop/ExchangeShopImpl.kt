@@ -27,7 +27,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val config by inject<ExchangeShopConfig>()
     private val internalCategories = mutableMapOf<String, ShopCategory>()
     private val userLock = Mutex()
-    private val users = mutableConcurrentMapOf<UUID, ShopUser>()
+    private val users = mutableConcurrentMapOf<UUID, InternalShopUser>()
     private val userLastUsedTimestamps = mutableConcurrentMapOf<ShopUser, Instant>()
     private val autoUnloadJob: Job
 
@@ -177,13 +177,15 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return users.containsKey(id)
     }
 
-    override suspend fun loadUser(user: ShopUser) = userLock.withLock {
+    override suspend fun loadUser(user: InternalShopUser) = userLock.withLock {
         users[user.uniqueId] = user
         userLastUsedTimestamps[user] = Instant.now()
     }
 
     override suspend fun unloadUser(id: UUID) = userLock.withLock {
-        userLastUsedTimestamps.remove(users.remove(id) ?: return@withLock)
+        val user = users.remove(id) ?: return@withLock
+        userLastUsedTimestamps.remove(user)
+        user.close()
     }
 
     override fun getLastUsedTimestamp(user: ShopUser): Instant {

@@ -11,7 +11,7 @@ interface InternalExchangeShop : ExchangeShop {
 
     fun isUserLoaded(id: UUID): Boolean
 
-    suspend fun loadUser(user: ShopUser)
+    suspend fun loadUser(user: InternalShopUser)
 
     suspend fun unloadUser(id: UUID)
 
