@@ -188,7 +188,6 @@ class ShopUserImpl(
         }
     }
 
-    // 卸载 ShopUser 时在数据库里保存计划的恢复任务，下次加载时若未截止就继续它
     private suspend fun unscheduleTicketRecovery() {
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancelAndJoin()
