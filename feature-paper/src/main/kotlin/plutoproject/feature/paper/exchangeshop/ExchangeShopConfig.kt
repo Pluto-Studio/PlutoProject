@@ -18,7 +18,11 @@ data class TicketConfig(
     val recoveryInterval: Duration = Duration.ofMinutes(4),
     val recoveryAmount: Int = 1,
     val recoveryCap: Int = 320,
-)
+) {
+    init {
+        check(!recoveryInterval.isZero) { "Recovery interval cannot be zero" }
+    }
+}
 
 data class LayoutConfig(
     val patterns: List<String> = listOf("       ", "   E   ", "       "),
