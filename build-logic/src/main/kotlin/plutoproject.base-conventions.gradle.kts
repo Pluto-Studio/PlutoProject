@@ -38,6 +38,7 @@ configurations.all {
         force(libs.kotlinx.coroutine.core)
         force(libs.guava)
         force(libs.okio)
+        force(libs.adventure)
     }
 }
 
