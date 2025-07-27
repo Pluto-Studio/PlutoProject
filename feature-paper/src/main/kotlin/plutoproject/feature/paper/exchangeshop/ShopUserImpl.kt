@@ -11,15 +11,17 @@ import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.paper.api.exchangeshop.ShopTransaction
-import plutoproject.feature.paper.api.exchangeshop.ShopTransactionParameters
-import plutoproject.feature.paper.api.exchangeshop.TransactionFilter
-import plutoproject.feature.paper.api.exchangeshop.TransactionFilterDsl
+import plutoproject.feature.paper.api.exchangeshop.*
 import plutoproject.feature.paper.exchangeshop.models.TransactionModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
+import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.hook.vaultHook
+import plutoproject.framework.paper.util.inventory.addItemOrDrop
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -251,18 +253,73 @@ class ShopUserImpl(
     }
 
     override suspend fun makeTransaction(
-        shopItemId: String,
-        count: Int,
+        shopItem: ShopItem,
+        amount: Int,
         checkAvailability: Boolean
     ): Result<ShopTransaction> {
         exchangeShop.setUsed(this)
         if (isDirty.get()) save()
-        TODO("Not yet implemented")
+
+        val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
+        val ticketRequirements = shopItem.ticketConsumption * amount
+
+        if (!player.isOnline) {
+            return Result.failure(ShopTransactionException.PlayerOffline(this))
+        }
+        if (checkAvailability && LocalDateTime.now().dayOfWeek !in shopItem.availableDays) {
+            return Result.failure(ShopTransactionException.ShopItemNotAvailable(this, shopItem))
+        }
+        if (ticket < ticketRequirements) {
+            return Result.failure(ShopTransactionException.TicketNotEnough(this, shopItem.ticketConsumption))
+        }
+        if (balance < shopItem.price) {
+            return Result.failure(ShopTransactionException.BalanceNotEnough(this, shopItem.price))
+        }
+
+        val cost = shopItem.price * amount.toBigDecimal()
+        val ticketAfterTransaction = ticket - ticketRequirements
+        val balanceAfterTransaction = balance - cost
+
+        val transactionModel = TransactionModel(
+            id = UUID.randomUUID(),
+            playerId = uniqueId,
+            time = Instant.now(),
+            shopItemId = shopItem.id,
+            itemTypeString = shopItem.itemStack.type.asItemType().toString(),
+            itemStackBinary = BsonBinary(shopItem.itemStack.serializeAsBytes()),
+            amount = amount,
+            quantity = shopItem.quantity * amount,
+            ticket = shopItem.ticketConsumption * amount,
+            cost = cost,
+            balance = balanceAfterTransaction,
+        )
+        val transaction = ShopTransactionImpl(transactionModel)
+
+        val databaseResult = MongoConnection.withTransaction {
+            userRepo.update(it, uniqueId, Updates.set("ticket", ticketAfterTransaction))
+            transactionRepo.insert(it, transactionModel)
+        }
+
+        if (databaseResult.isFailure) {
+            val e = databaseResult.exceptionOrNull()
+                ?: IllegalStateException("Database operation failed without exception")
+            return Result.failure(ShopTransactionException.DatabaseFailure(this, e))
+        }
+
+        internalTicket.set(ticketAfterTransaction)
+        vaultHook?.economy!!.withdrawPlayer(player, shopItem.price.toDouble())
+        withSync {
+            repeat(amount) {
+                player.player?.inventory?.addItemOrDrop(shopItem.itemStack)
+            }
+        }
+
+        return Result.success(transaction)
     }
 
-    override suspend fun batchTransaction(purchases: Map<String, ShopTransactionParameters>): Map<String, Result<ShopTransaction>> {
+    override suspend fun batchTransaction(purchases: Map<ShopItem, ShopTransactionParameters>): Map<ShopItem, Result<ShopTransaction>> {
         return purchases.entries.associate { (shopItemId, parameters) ->
-            shopItemId to makeTransaction(shopItemId, parameters.count, parameters.checkAvailability)
+            shopItemId to makeTransaction(shopItemId, parameters.amount, parameters.checkAvailability)
         }
     }
 

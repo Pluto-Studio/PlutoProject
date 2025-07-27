@@ -93,8 +93,8 @@ interface ShopUser {
      *
      * 若有未保存的操作则会先将它们保存。
      *
-     * @param shopItemId 需要购买的商品 ID
-     * @param count 需要购买的数量
+     * @param shopItem 需要购买的商品
+     * @param amount 需要购买的数量
      * @param checkAvailability 是否检查商品限期
      * @return 成功时为 [ShopTransaction]，失败时为 [ShopTransactionException]
      * - [ShopTransactionException.ShopItemNotAvailable] 兑换的商品限期未至
@@ -104,8 +104,8 @@ interface ShopUser {
      * - [ShopTransactionException.DatabaseFailure] 数据库操作失败
      */
     suspend fun makeTransaction(
-        shopItemId: String,
-        count: Int,
+        shopItem: ShopItem,
+        amount: Int,
         checkAvailability: Boolean = true
     ): Result<ShopTransaction>
 
@@ -116,11 +116,11 @@ interface ShopUser {
      *
      * 每条交易会被独立执行，并各自返回一条交易记录。
      *
-     * @param purchases 需要执行的交易，key 为商品 ID，value 为要购买的数量
+     * @param purchases 需要执行的交易，key 为商品，value 为要购买的数量
      * @return 交易结果，每个商品 ID 对应一个 [Result]
      * @see makeTransaction
      */
-    suspend fun batchTransaction(purchases: Map<String, ShopTransactionParameters>): Map<String, Result<ShopTransaction>>
+    suspend fun batchTransaction(purchases: Map<ShopItem, ShopTransactionParameters>): Map<ShopItem, Result<ShopTransaction>>
 
     /**
      * 将更改存入数据库。

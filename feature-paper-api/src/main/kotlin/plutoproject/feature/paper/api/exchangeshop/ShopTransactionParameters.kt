@@ -7,7 +7,7 @@ data class ShopTransactionParameters(
     /**
      * 需要购买的数量。
      */
-    val count: Int,
+    val amount: Int,
 
     /**
      * 是否检查商品限期。

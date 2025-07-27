@@ -12,7 +12,7 @@ sealed class ShopTransactionException : Exception {
     /**
      * 要兑换的商品限期未至。
      */
-    class ShopItemNotAvailable(item: ShopItem, user: ShopUser) :
+    class ShopItemNotAvailable(user: ShopUser, item: ShopItem) :
         ShopTransactionException(user, "Shop item ${item.id} is not available today")
 
     /**
@@ -36,7 +36,7 @@ sealed class ShopTransactionException : Exception {
     /**
      * 数据库操作失败。
      */
-    class DatabaseFailure(user: ShopUser, cause: Exception) :
+    class DatabaseFailure(user: ShopUser, cause: Throwable) :
         ShopTransactionException(user, "database operation failed", cause)
 }
 
