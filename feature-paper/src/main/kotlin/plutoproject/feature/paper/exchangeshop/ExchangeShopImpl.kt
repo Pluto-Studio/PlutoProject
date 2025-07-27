@@ -124,16 +124,20 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun hasUser(uniqueId: UUID): Boolean = userLock.withLock {
-        if (loadedUsers.containsKey(uniqueId)) return true
-        return userRepo.has(uniqueId)
+        return hasUserWithoutLock(uniqueId)
     }
 
     override suspend fun createUser(player: Player): ShopUser {
         return createUser(player.uniqueId)
     }
 
+    private suspend fun hasUserWithoutLock(uniqueId: UUID): Boolean {
+        if (loadedUsers.containsKey(uniqueId)) return true
+        return userRepo.has(uniqueId)
+    }
+
     override suspend fun createUser(uniqueId: UUID): ShopUser = userLock.withLock {
-        require(!hasUser(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
+        require(!hasUserWithoutLock(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
 
         val model = UserModel(
             uniqueId = uniqueId,

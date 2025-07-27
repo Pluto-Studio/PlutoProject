@@ -81,6 +81,7 @@ class ShopUserImpl(
     }
 
     private suspend fun initializeTicketRecovery() = ticketLock.withLock {
+        // 在计划在线恢复前先完成离线恢复，在线恢复中获取到的值是已经完成离线恢复的
         performOfflineRecovery()
         updateTicketRecoverySchedule()
     }
@@ -133,8 +134,15 @@ class ShopUserImpl(
         val currentTime = Instant.now()
         val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
         val timeSinceLastRecovery = Duration.between(lastRecoveryTime, currentTime)
-        featureLogger.info("Time since last recovery: ${timeSinceLastRecovery.seconds} seconds")
-        return config.ticket.recoveryInterval.minus(timeSinceLastRecovery)
+
+        return if (timeSinceLastRecovery <= config.ticket.recoveryInterval) {
+            // 距离上次恢复时间还不满一个间隔
+            config.ticket.recoveryInterval.minus(timeSinceLastRecovery)
+        } else {
+            // 大于一个间隔，表明此前已回满过一次
+            // 由于离线恢复会在在线恢复开始前完成，所以此处大于一个间隔一定是已经回满过一次
+            config.ticket.recoveryInterval
+        }
     }
 
     private suspend fun scheduleTicketRecovery() {
