@@ -66,9 +66,10 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
         ticketRecoveryTitleJob = exchangeShop.coroutineScope.launch {
             while (isActive) {
                 server.onlinePlayers.forEach { player ->
+                    if (!player.isConnected) return@forEach
                     val user = exchangeShop.getUser(player) ?: return@forEach
                     val seconds = Duration
-                        .between(Instant.now(), user.nextTicketRecoveryOn ?: return@forEach)
+                        .between(Instant.now(), user.scheduledTicketRecoveryOn ?: return@forEach)
                         .toSeconds() + 1
                     player.showTitle {
                         mainTitle(Component.empty())

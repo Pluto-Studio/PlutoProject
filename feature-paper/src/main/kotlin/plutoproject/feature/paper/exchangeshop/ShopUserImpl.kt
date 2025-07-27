@@ -3,7 +3,9 @@ package plutoproject.feature.paper.exchangeshop
 import com.mongodb.client.model.Updates
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.bson.BsonBinary
@@ -17,6 +19,9 @@ import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.util.coroutine.createSupervisorChild
+import plutoproject.framework.common.util.data.flow.getValue
+import plutoproject.framework.common.util.data.flow.setValue
 import plutoproject.framework.common.util.logger
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
@@ -26,170 +31,154 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.toKotlinDuration
 
 class ShopUserImpl(
-    uniqueId: UUID,
-    player: OfflinePlayer,
+    override val uniqueId: UUID,
+    override val player: OfflinePlayer,
+    override val createdAt: Instant,
     ticket: Int,
-    lastTicketRecoveryOn: Instant?,
-    createdAt: Instant,
+    override var lastTicketRecoveryOn: Instant?,
+    override var scheduledTicketRecoveryOn: Instant?,
 ) : InternalShopUser, KoinComponent {
     private val config by inject<ExchangeShopConfig>()
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
-    private val saveLock = Mutex()
-    private val isDirty = AtomicBoolean(false)
-    private val internalTicket = AtomicInteger(ticket)
+    private val ticketLock = Mutex()
+    private val coroutineScope: CoroutineScope = exchangeShop.coroutineScope.createSupervisorChild() + Dispatchers.IO
+
+    private var isDirty by MutableStateFlow(false)
+    private var _ticket by MutableStateFlow(ticket)
     private var scheduledTicketRecovery: Job? = null
 
     constructor(model: UserModel) : this(
         uniqueId = model.uniqueId,
         player = server.getOfflinePlayer(model.uniqueId),
+        createdAt = model.createdAt,
         ticket = model.ticket,
         lastTicketRecoveryOn = model.lastTicketRecoveryOn,
-        createdAt = model.createdAt
+        scheduledTicketRecoveryOn = model.scheduledTicketRecoveryOn
     )
 
-    override val uniqueId: UUID = uniqueId
-        get() {
-            exchangeShop.setUsed(this)
-            return field
-        }
-    override val player: OfflinePlayer = player
-        get() {
-            exchangeShop.setUsed(this)
-            return field
-        }
-    override val createdAt: Instant = createdAt
-        get() {
-            exchangeShop.setUsed(this)
-            return field
-        }
+    override var isValid by MutableStateFlow(true)
     override var ticket: Int
-        get() {
-            exchangeShop.setUsed(this)
-            return internalTicket.get()
-        }
-        set(value) {
-            exchangeShop.setUsed(this)
-            internalTicket.set(value)
-            isDirty.set(true)
-            updateTicketRecoverySchedule()
-        }
-    override var lastTicketRecoveryOn: Instant? = lastTicketRecoveryOn
-        set(value) {
-            exchangeShop.setUsed(this)
-            field = value
-        }
-        get() {
-            exchangeShop.setUsed(this)
-            return field
-        }
-    override var nextTicketRecoveryOn: Instant? = lastTicketRecoveryOn?.plus(config.ticket.recoveryInterval)
+        get() = _ticket
+        set(value) = coroutineScope.launch { setTicket(value) }.asCompletableFuture().join()
 
     init {
         if (config.ticket.naturalRecovery) {
-            exchangeShop.coroutineScope.launch {
-                performOfflineRecovery()
-                updateTicketRecoverySchedule()
-            }
+            coroutineScope.launch { initializeTicketRecovery() }
         }
     }
 
+    private suspend fun initializeTicketRecovery() = ticketLock.withLock {
+        performOfflineRecovery()
+        updateTicketRecoverySchedule()
+    }
+
     private suspend fun performOfflineRecovery() {
-        if (ticket >= config.ticket.recoveryCap) {
-            return
-        }
+        if (scheduledTicketRecoveryOn?.isAfter(Instant.now()) == true) return
+        if (ticket >= config.ticket.recoveryCap) return
 
         val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
         val currentTime = Instant.now()
         val timeDelta = Duration.between(lastRecoveryTime, currentTime)
         val recoveryAmount = config.ticket.recoveryAmount * timeDelta.dividedBy(config.ticket.recoveryInterval)
 
+        if (recoveryAmount <= 0) return
         if (lastRecoveryTime.isAfter(currentTime)) {
-            if (createdAt.isAfter(currentTime)) {
-                featureLogger.severe("Time anomaly detected for player ${player.name}: create time ($createdAt) is after current time ($currentTime), possibly due to system time change")
-            }
-            if (lastTicketRecoveryOn?.isAfter(currentTime) == true) {
-                featureLogger.severe("Time anomaly detected for player ${player.name}: last recovery time ($lastTicketRecoveryOn) is after current time ($currentTime), possibly due to system time change")
-                lastTicketRecoveryOn = currentTime
-                isDirty.set(true)
-                exchangeShop.coroutineScope.launch(Dispatchers.IO) {
-                    save()
-                }
-            }
+            featureLogger.severe("Time anomaly detected for player ${player.name}: last recovery time ($lastRecoveryTime) is after current time ($currentTime)")
+            lastTicketRecoveryOn = currentTime
+            isDirty = true
+            saveWithoutLock()
             return
         }
 
         recoveryTicket(recoveryAmount.toInt())
-        save()
     }
 
-    private fun recoveryTicket(amount: Int): Boolean {
+    private suspend fun recoveryTicket(amount: Int): Boolean {
         if (ticket >= config.ticket.recoveryCap) return false
-        ticket = if (ticket + amount > config.ticket.recoveryCap) {
+        _ticket = if (ticket + amount > config.ticket.recoveryCap) {
             config.ticket.recoveryCap
         } else {
             ticket + amount
         }
         lastTicketRecoveryOn = Instant.now()
+        isDirty = true
+        saveWithoutLock()
         return true
     }
 
-    private fun getNextRecoveryTime(): Instant {
-        return Instant.now().plus(config.ticket.recoveryInterval)
-    }
-
-    private fun scheduleTicketRecovery() {
-        if (scheduledTicketRecovery != null) return
+    private suspend fun scheduleTicketRecovery() {
+        check(scheduledTicketRecovery == null) { "There is a scheduled ticket recovery unfinished" }
+        featureLogger.info("Scheduling ticket recovery for ${player.name} (isValid = $isValid, isActive = ${coroutineScope.isActive})")
+        if (!isValid) return
+        if (!config.ticket.naturalRecovery) return
         if (ticket >= config.ticket.recoveryCap) return
+
         val currentTime = Instant.now()
-        val nextRecoveryTime = getNextRecoveryTime()
+        val scheduledAt = if (scheduledTicketRecoveryOn?.isAfter(currentTime) == true) {
+            // 有一个计划了且为超时的恢复任务，继续它
+            scheduledTicketRecoveryOn!!
+        } else {
+            // 没有可以继续的任务，计划新的
+            currentTime.plus(config.ticket.recoveryInterval)
+        }
 
-        check(config.ticket.naturalRecovery) { "Natural ticket recovery is disabled" }
-        require(nextRecoveryTime.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
+        check(scheduledAt.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
-        val interval = Duration.between(currentTime, nextRecoveryTime)
-        nextTicketRecoveryOn = nextRecoveryTime
+        val interval = Duration.between(currentTime, scheduledAt)
+        val keepScheduledAt = scheduledTicketRecoveryOn
+        scheduledTicketRecoveryOn = scheduledAt
 
-        featureLogger.info("Scheduled ticket recovery for ${player.name} on $nextRecoveryTime")
+        if (scheduledTicketRecoveryOn != keepScheduledAt) {
+            isDirty = true
+            saveWithoutLock()
+        }
 
-        exchangeShop.coroutineScope.launch {
+        coroutineScope.launch {
             delay(interval.toKotlinDuration())
-            if (recoveryTicket(config.ticket.recoveryAmount)) {
-                featureLogger.info("Ticket recovery performed for ${player.name} (ticket = $ticket)")
-                save()
-            }
-            scheduledTicketRecovery = null
-            scheduleTicketRecovery()
+            ticketLock.withLock { performScheduledRecovery() }
         }.also { scheduledTicketRecovery = it }
+        featureLogger.info("Scheduled ticket recovery for ${player.name} on $scheduledAt")
     }
 
-    private fun unscheduleTicketRecovery() {
-        if (scheduledTicketRecovery == null) return
-        featureLogger.info("Unscheduled ticket recovery for ${player.name}")
-        scheduledTicketRecovery?.cancel()
+    private suspend fun performScheduledRecovery() {
+        if (recoveryTicket(config.ticket.recoveryAmount)) {
+            featureLogger.info("Ticket recovery performed for ${player.name} (ticket = $ticket)")
+        }
         scheduledTicketRecovery = null
-        nextTicketRecoveryOn = null
+        scheduledTicketRecoveryOn = null
+        isDirty = true
+        saveWithoutLock()
+        // 还没有恢复满，继续计划恢复
+        if (ticket < config.ticket.recoveryCap) {
+            if (!coroutineScope.isActive || !isValid) return
+            scheduleTicketRecovery()
+        }
     }
 
-    private fun updateTicketRecoverySchedule() {
-        logger.info("Updating ticket recovery schedule state for ${player.name}")
-        if (ticket >= config.ticket.recoveryCap) {
+    private suspend fun unscheduleTicketRecovery() {
+        if (scheduledTicketRecovery == null) return
+        scheduledTicketRecovery?.cancelAndJoin()
+        scheduledTicketRecovery = null
+        scheduledTicketRecoveryOn = null
+        isDirty = true
+        saveWithoutLock()
+        featureLogger.info("Unscheduled ticket recovery for ${player.name}")
+    }
+
+    private suspend fun updateTicketRecoverySchedule() {
+        if (scheduledTicketRecovery != null && ticket >= config.ticket.recoveryCap) {
             logger.info("Ticket remaining enough, unschedule")
             unscheduleTicketRecovery()
-            logger.info("Updating ticket recovery schedule state for ${player.name} finished")
             return
         }
         if (scheduledTicketRecovery == null && config.ticket.naturalRecovery) {
-            println("Schedule a new recovery")
             scheduleTicketRecovery()
         }
-        logger.info("Updating ticket recovery schedule state for ${player.name} finished")
     }
 
     private suspend fun patchItem(model: TransactionModel) {
@@ -215,21 +204,29 @@ class ShopUserImpl(
         transactionRepo.update(model.id, Updates.combine(updates))
     }
 
-    override fun withdrawTicket(amount: Int): Int {
-        exchangeShop.setUsed(this)
+    override suspend fun withdrawTicket(amount: Int): Int = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
-        val value = internalTicket.addAndGet(-amount)
-        isDirty.set(true)
+        _ticket -= amount
+        isDirty = true
         updateTicketRecoverySchedule()
-        return value
+        return _ticket
     }
 
-    override fun depositTicket(amount: Int): Int {
-        exchangeShop.setUsed(this)
-        val value = internalTicket.addAndGet(amount)
-        isDirty.set(true)
+    override suspend fun depositTicket(amount: Int): Int = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
+        _ticket += amount
+        isDirty = true
         updateTicketRecoverySchedule()
-        return value
+        return _ticket
+    }
+
+    override suspend fun setTicket(amount: Int): Int = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
+        _ticket = amount
+        isDirty = true
+        updateTicketRecoverySchedule()
+        return _ticket
     }
 
     override fun findTransactions(
@@ -237,13 +234,13 @@ class ShopUserImpl(
         limit: Int?,
         filterBlock: TransactionFilterDsl.() -> Unit
     ): Flow<ShopTransaction> {
-        exchangeShop.setUsed(this)
+        check(isValid) { "Instance not valid" }
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
         }.build()
         return transactionRepo.find(filter, skip, limit).map { model ->
-            exchangeShop.coroutineScope.launch(Dispatchers.IO) {
+            coroutineScope.launch {
                 patchItem(model)
             }
             if (model.itemStack == null) {
@@ -265,7 +262,7 @@ class ShopUserImpl(
     }
 
     override suspend fun countTransactions(filterBlock: TransactionFilterDsl.() -> Unit): Long {
-        exchangeShop.setUsed(this)
+        check(isValid) { "Instance not valid" }
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
@@ -277,42 +274,40 @@ class ShopUserImpl(
         shopItem: ShopItem,
         amount: Int,
         checkAvailability: Boolean
-    ): Result<ShopTransaction> {
-        exchangeShop.setUsed(this)
-        if (isDirty.get()) save()
+    ): Result<ShopTransaction> = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
+        if (isDirty) saveWithoutLock()
 
         val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
-        val ticketRequirements = shopItem.ticketConsumption * amount
+        val cost = shopItem.price * amount.toBigDecimal()
+        val ticketConsumption = shopItem.ticketConsumption * amount
 
         if (!player.isOnline) {
             return Result.failure(ShopTransactionException.PlayerOffline(this))
         }
-        if (checkAvailability && LocalDateTime.now().dayOfWeek !in shopItem.availableDays) {
+        if (checkAvailability && shopItem.availableDays.isNotEmpty() && LocalDateTime.now().dayOfWeek !in shopItem.availableDays) {
             return Result.failure(ShopTransactionException.ShopItemNotAvailable(this, shopItem))
         }
-        if (ticket < ticketRequirements) {
-            return Result.failure(ShopTransactionException.TicketNotEnough(this, shopItem.ticketConsumption))
+        if (ticket < ticketConsumption) {
+            return Result.failure(ShopTransactionException.TicketNotEnough(this, ticketConsumption))
         }
-        if (balance < shopItem.price) {
-            return Result.failure(ShopTransactionException.BalanceNotEnough(this, shopItem.price))
+        if (balance < cost) {
+            return Result.failure(ShopTransactionException.BalanceNotEnough(this, cost))
         }
-
-        val cost = shopItem.price * amount.toBigDecimal()
-        val ticketAfterTransaction = ticket - ticketRequirements
-        val balanceAfterTransaction = balance - cost
+        val ticketAfterTransaction = ticket - ticketConsumption
 
         val transactionModel = TransactionModel(
             id = UUID.randomUUID(),
             playerId = uniqueId,
             time = Instant.now(),
             shopItemId = shopItem.id,
-            itemTypeString = shopItem.itemStack.type.asItemType().toString(),
+            itemTypeString = shopItem.itemStack.type.asItemType()?.key().toString(),
             itemStackBinary = BsonBinary(shopItem.itemStack.serializeAsBytes()),
             amount = amount,
             quantity = shopItem.quantity * amount,
-            ticket = shopItem.ticketConsumption * amount,
+            ticket = ticketConsumption,
             cost = cost,
-            balance = balanceAfterTransaction,
+            balance = balance - cost,
         )
         val transaction = ShopTransactionImpl(transactionModel)
 
@@ -327,8 +322,10 @@ class ShopUserImpl(
             return Result.failure(ShopTransactionException.DatabaseFailure(this, e))
         }
 
-        internalTicket.set(ticketAfterTransaction)
-        vaultHook?.economy!!.withdrawPlayer(player, shopItem.price.toDouble())
+        _ticket -= ticketConsumption
+        vaultHook?.economy!!.withdrawPlayer(player, cost.toDouble())
+        updateTicketRecoverySchedule()
+
         withSync {
             repeat(amount) {
                 player.player?.inventory?.addItemOrDrop(shopItem.itemStack)
@@ -339,24 +336,33 @@ class ShopUserImpl(
     }
 
     override suspend fun batchTransaction(purchases: Map<ShopItem, ShopTransactionParameters>): Map<ShopItem, Result<ShopTransaction>> {
+        check(isValid) { "Instance not valid" }
         return purchases.entries.associate { (shopItemId, parameters) ->
             shopItemId to makeTransaction(shopItemId, parameters.amount, parameters.checkAvailability)
         }
     }
 
-    override suspend fun save() = saveLock.withLock {
-        exchangeShop.setUsed(this)
-        if (!isDirty.get()) return
-        val updates = Updates.combine(
-            Updates.set("ticket", internalTicket.get()),
-            Updates.set("lastTicketRecoveryOn", lastTicketRecoveryOn)
-        )
-        userRepo.update(uniqueId, updates)
-        isDirty.set(false)
+    override suspend fun save() = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
+        saveWithoutLock()
     }
 
-    override suspend fun close() {
+    private suspend fun saveWithoutLock() = withContext(Dispatchers.IO) {
+        check(isValid) { "Instance not valid" }
+        if (!isDirty) return@withContext
+        val updates = Updates.combine(
+            Updates.set("ticket", ticket),
+            Updates.set("lastTicketRecoveryOn", lastTicketRecoveryOn),
+            Updates.set("scheduledTicketRecoveryOn", scheduledTicketRecoveryOn)
+        )
+        userRepo.update(uniqueId, updates)
+        isDirty = false
+    }
+
+    override suspend fun close(): Unit = ticketLock.withLock {
+        check(isValid) { "Instance not valid" }
         unscheduleTicketRecovery()
-        scheduledTicketRecovery?.cancelAndJoin()
+        coroutineScope.coroutineContext[Job]?.cancelAndJoin()
+        isValid = false
     }
 }

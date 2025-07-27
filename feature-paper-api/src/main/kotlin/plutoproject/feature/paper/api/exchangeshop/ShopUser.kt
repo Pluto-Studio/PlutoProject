@@ -25,9 +25,18 @@ interface ShopUser {
     val createdAt: Instant
 
     /**
+     * 该 [ShopUser] 实例是否可用，用于判断是否被卸载。
+     *
+     * 被卸载后尝试进行任何操作都会抛出 [IllegalStateException]。
+     */
+    val isValid: Boolean
+
+    /**
      * 该玩家的兑换券数。
      *
      * 仅当 [ShopUser] 被加载到内存时会实时恢复，获取 [ShopUser] 时会计算离线恢复量。
+     *
+     * 对该属性的设置操作可能需要获取锁，等待锁时会阻塞，可使用 [setTicket] 以避免。
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      */
@@ -41,10 +50,12 @@ interface ShopUser {
     /**
      * 该玩家下次恢复兑换券的时间，若还没有计划恢复则为空。
      */
-    val nextTicketRecoveryOn: Instant?
+    val scheduledTicketRecoveryOn: Instant?
 
     /**
      * 减少一定的兑换券数量。
+     *
+     * 此操作可能需要获取锁，等待锁时会挂起。
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
@@ -52,17 +63,31 @@ interface ShopUser {
      * @return 减少后剩余的值
      * @throws IllegalArgumentException 当玩家剩余兑换券数量小于 [amount] 时
      */
-    fun withdrawTicket(amount: Int): Int
+    suspend fun withdrawTicket(amount: Int): Int
 
     /**
      * 增加一定的兑换券数量。
+     *
+     * 此操作可能需要获取锁，等待锁时会挂起。
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      *
      * @param amount 要增加的兑换券数量
      * @return 增加后剩余的值
      */
-    fun depositTicket(amount: Int): Int
+    suspend fun depositTicket(amount: Int): Int
+
+    /**
+     * 设置一定的兑换券数量。
+     *
+     * 此操作可能需要获取锁，等待锁时会挂起。
+     *
+     * 修改后的值仅保存在内存中，需要调用 [save] 保存。
+     *
+     * @param amount 要设置的兑换券数量
+     * @return 设置后剩余的值
+     */
+    suspend fun setTicket(amount: Int): Int
 
     /**
      * 查询该玩家的交易记录。

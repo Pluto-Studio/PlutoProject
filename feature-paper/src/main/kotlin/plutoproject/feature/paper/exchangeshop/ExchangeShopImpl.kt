@@ -15,6 +15,7 @@ import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.util.coroutine.PlutoCoroutineScope
+import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.paper.util.server
@@ -27,16 +28,14 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val config by inject<ExchangeShopConfig>()
     private val internalCategories = mutableMapOf<String, ShopCategory>()
     private val userLock = Mutex()
-    private val users = mutableConcurrentMapOf<UUID, InternalShopUser>()
-    private val userLastUsedTimestamps = mutableConcurrentMapOf<ShopUser, Instant>()
+    private val loadedUsers = mutableConcurrentMapOf<UUID, InternalShopUser>()
+    private val usersLoadedAt = mutableConcurrentMapOf<ShopUser, Instant>()
     private val autoUnloadJob: Job
 
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
     override val items: Collection<ShopItem>
         get() = categories.flatMap { it.items }
-    override val coroutineScope: CoroutineScope = CoroutineScope(
-        PlutoCoroutineScope.coroutineContext + Job(PlutoCoroutineScope.coroutineContext[Job])
-    )
+    override val coroutineScope: CoroutineScope = PlutoCoroutineScope.createSupervisorChild()
 
     init {
         loadConfigDeclaration()
@@ -52,15 +51,12 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
 
     private suspend fun unloadUnusedUsers() = userLock.withLock {
         val currentTimestamp = Instant.now()
-        val iterator = users.iterator()
-        while (iterator.hasNext()) {
-            val (id, user) = iterator.next()
-            val lastUsed = getLastUsedTimestamp(user)
-            if (lastUsed.plusSeconds(MAX_UNUSED_SECONDS).isBefore(currentTimestamp)
-                && server.getPlayer(id) == null
+        loadedUsers.forEach { (uniqueId, user) ->
+            val loadedAt = usersLoadedAt.getValue(user)
+            if (loadedAt.plusSeconds(UNLOAD_AFTER_SECONDS).isBefore(currentTimestamp)
+                && server.getPlayer(uniqueId) == null
             ) {
-                iterator.remove()
-                userLastUsedTimestamps.remove(user)
+                unloadUserWithoutLock(uniqueId)
             }
         }
     }
@@ -111,21 +107,15 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return getUser(player.uniqueId)
     }
 
-    override suspend fun getUser(uniqueId: UUID): ShopUser? {
-        if (users.containsKey(uniqueId)) {
-            return users.getValue(uniqueId)
+    override suspend fun getUser(uniqueId: UUID): ShopUser? = userLock.withLock {
+        if (loadedUsers.containsKey(uniqueId)) {
+            return loadedUsers.getValue(uniqueId)
         }
 
         val model = userRepo.find(uniqueId) ?: return null
-        val user = ShopUserImpl(
-            uniqueId = model.uniqueId,
-            player = server.getOfflinePlayer(model.uniqueId),
-            ticket = model.ticket,
-            lastTicketRecoveryOn = model.lastTicketRecoveryOn,
-            createdAt = model.createdAt
-        )
+        val user = ShopUserImpl(model)
 
-        loadUser(user)
+        loadUserWithoutLock(user)
         return user
     }
 
@@ -133,8 +123,8 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return hasUser(player.uniqueId)
     }
 
-    override suspend fun hasUser(uniqueId: UUID): Boolean {
-        if (users.containsKey(uniqueId)) return true
+    override suspend fun hasUser(uniqueId: UUID): Boolean = userLock.withLock {
+        if (loadedUsers.containsKey(uniqueId)) return true
         return userRepo.has(uniqueId)
     }
 
@@ -142,19 +132,20 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return createUser(player.uniqueId)
     }
 
-    override suspend fun createUser(uniqueId: UUID): ShopUser {
+    override suspend fun createUser(uniqueId: UUID): ShopUser = userLock.withLock {
         require(!hasUser(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
 
         val model = UserModel(
             uniqueId = uniqueId,
+            createdAt = Instant.now(),
             ticket = config.ticket.recoveryCap,
             lastTicketRecoveryOn = null,
-            createdAt = Instant.now()
+            scheduledTicketRecoveryOn = null
         )
         val user = ShopUserImpl(model)
 
         userRepo.insert(model)
-        loadUser(user)
+        loadUserWithoutLock(user)
         return user
     }
 
@@ -167,28 +158,26 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override fun isUserLoaded(id: UUID): Boolean {
-        return users.containsKey(id)
+        return loadedUsers.containsKey(id)
     }
 
     override suspend fun loadUser(user: InternalShopUser) = userLock.withLock {
-        users[user.uniqueId] = user
-        userLastUsedTimestamps[user] = Instant.now()
+        loadUserWithoutLock(user)
     }
 
     override suspend fun unloadUser(id: UUID) = userLock.withLock {
-        featureLogger.info("Begin unload user $id")
-        val user = users.remove(id) ?: return@withLock
+        unloadUserWithoutLock(id)
+    }
+
+    private fun loadUserWithoutLock(user: InternalShopUser) {
+        loadedUsers[user.uniqueId] = user
+        usersLoadedAt[user] = Instant.now()
+    }
+
+    private suspend fun unloadUserWithoutLock(id: UUID) {
+        val user = loadedUsers.remove(id) ?: return
         user.close()
-        userLastUsedTimestamps.remove(user)
-        featureLogger.info("User unloaded $id")
-    }
-
-    override fun getLastUsedTimestamp(user: ShopUser): Instant {
-        return userLastUsedTimestamps.getValue(user)
-    }
-
-    override fun setUsed(user: ShopUser) {
-        userLastUsedTimestamps.replace(user, Instant.now())
+        usersLoadedAt.remove(user)
     }
 
     override fun createCategory(

@@ -15,9 +15,5 @@ interface InternalExchangeShop : ExchangeShop {
 
     suspend fun unloadUser(id: UUID)
 
-    fun getLastUsedTimestamp(user: ShopUser): Instant
-
-    fun setUsed(user: ShopUser)
-
     suspend fun shutdown()
 }
