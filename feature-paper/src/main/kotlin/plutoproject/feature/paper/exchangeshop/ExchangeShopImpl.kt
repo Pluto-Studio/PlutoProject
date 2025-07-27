@@ -145,20 +145,13 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     override suspend fun createUser(uniqueId: UUID): ShopUser {
         require(!hasUser(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
 
-        val currentTime = Instant.now()
-        val user = ShopUserImpl(
+        val model = UserModel(
             uniqueId = uniqueId,
-            player = server.getOfflinePlayer(uniqueId),
             ticket = config.ticket.recoveryCap,
             lastTicketRecoveryOn = null,
-            createdAt = currentTime
+            createdAt = Instant.now()
         )
-        val model = UserModel(
-            uniqueId = user.uniqueId,
-            ticket = user.ticket,
-            lastTicketRecoveryOn = user.lastTicketRecoveryOn,
-            createdAt = currentTime
-        )
+        val user = ShopUserImpl(model)
 
         userRepo.insert(model)
         loadUser(user)

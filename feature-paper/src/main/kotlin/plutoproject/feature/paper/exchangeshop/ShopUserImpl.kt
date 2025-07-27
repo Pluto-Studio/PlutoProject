@@ -13,12 +13,14 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.exchangeshop.*
 import plutoproject.feature.paper.exchangeshop.models.TransactionModel
+import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
+import plutoproject.framework.paper.util.server
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -42,6 +44,14 @@ class ShopUserImpl(
     private val isDirty = AtomicBoolean(false)
     private val internalTicket = AtomicInteger(ticket)
     private var scheduledTicketRecovery: Job? = null
+
+    constructor(model: UserModel) : this(
+        uniqueId = model.uniqueId,
+        player = server.getOfflinePlayer(model.uniqueId),
+        ticket = model.ticket,
+        lastTicketRecoveryOn = model.lastTicketRecoveryOn,
+        createdAt = model.createdAt
+    )
 
     override val uniqueId: UUID = uniqueId
         get() {
