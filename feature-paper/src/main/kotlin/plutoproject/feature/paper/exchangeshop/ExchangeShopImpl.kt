@@ -6,9 +6,11 @@ import kotlinx.coroutines.sync.withLock
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.exchangeshop.ShopCategory
+import plutoproject.feature.paper.api.exchangeshop.ShopItem
 import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
@@ -30,11 +32,14 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val autoUnloadJob: Job
 
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
+    override val items: Collection<ShopItem>
+        get() = categories.flatMap { it.items }
     override val coroutineScope: CoroutineScope = CoroutineScope(
         PlutoCoroutineScope.coroutineContext + Job(PlutoCoroutineScope.coroutineContext[Job])
     )
 
     init {
+        loadConfigDeclaration()
         autoUnloadJob = runAutoUnloadDaemonJob()
     }
 
@@ -58,6 +63,48 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
                 userLastUsedTimestamps.remove(user)
             }
         }
+    }
+
+    private fun loadConfigDeclaration() {
+        config.categories.forEach { addConfigCategory(it) }
+        config.items.forEach { addConfigItem(it) }
+        val categoryWord = if (categories.size <= 1) "category" else "categories"
+        val itemWord = if (items.size <= 1) "item" else "items"
+        featureLogger.info("Added ${categories.size} $categoryWord from config")
+        featureLogger.info("Added ${categories.size} $itemWord from config")
+    }
+
+    private fun addConfigCategory(config: ShopCategoryConfig) {
+        if (!config.id.isAlphabeticOrUnderscore()) {
+            featureLogger.severe("Invalid category ID in config: '${config.id}'")
+            return
+        }
+        createCategory(
+            id = config.id,
+            icon = config.icon,
+            name = config.name,
+            description = config.description
+        )
+    }
+
+    private fun addConfigItem(config: ShopItemConfig) {
+        if (!config.id.isAlphabeticOrUnderscore()) {
+            featureLogger.severe("Invalid shop item ID in config: '${config.id}'")
+            return
+        }
+        val category = getCategory(config.category)
+        if (category == null) {
+            featureLogger.severe("Invalid category '${config.category}' in config for item ID: ${config.id}")
+            return
+        }
+        category.addItem(
+            id = config.id,
+            itemStack = ItemStack(config.material),
+            ticketConsumption = config.ticketConsumption,
+            price = config.price,
+            quantity = config.quantity,
+            availableDays = config.availableDays
+        )
     }
 
     override suspend fun getUser(player: Player): ShopUser? {

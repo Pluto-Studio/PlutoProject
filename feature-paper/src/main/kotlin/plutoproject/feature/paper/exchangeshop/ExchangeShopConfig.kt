@@ -43,6 +43,6 @@ data class ShopItemConfig(
     val material: Material,
     val ticketConsumption: Int = 1,
     val price: BigDecimal = BigDecimal(1.0),
-    val count: Int = 1,
+    val quantity: Int = 1,
     val availableDays: List<DayOfWeek> = emptyList(),
 )

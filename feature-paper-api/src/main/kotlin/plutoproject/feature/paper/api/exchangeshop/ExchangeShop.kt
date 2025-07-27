@@ -18,6 +18,11 @@ interface ExchangeShop {
     val categories: Collection<ShopCategory>
 
     /**
+     * 商店中所有类别里已添加的物品。
+     */
+    val items: Collection<ShopItem>
+
+    /**
      * 获取指定玩家的用户。
      *
      * @param player 需要获取的玩家
