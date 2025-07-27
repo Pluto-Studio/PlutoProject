@@ -45,12 +45,12 @@ interface ShopUser {
     /**
      * 该玩家上次恢复兑换券的时间，若还没有恢复过则为空。
      */
-    val lastTicketRecoveryOn: Instant?
+    val lastTicketRecoveryTime: Instant?
 
     /**
      * 该玩家下次恢复兑换券的时间，若还没有计划恢复则为空。
      */
-    val scheduledTicketRecoveryOn: Instant?
+    val scheduledTicketRecoveryTime: Instant?
 
     /**
      * 减少一定的兑换券数量。

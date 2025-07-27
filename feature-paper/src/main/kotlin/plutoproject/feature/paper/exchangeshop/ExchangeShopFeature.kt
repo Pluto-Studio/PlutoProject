@@ -69,7 +69,7 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
                     if (!player.isConnected) return@forEach
                     val user = exchangeShop.getUser(player) ?: return@forEach
                     val seconds = Duration
-                        .between(Instant.now(), user.scheduledTicketRecoveryOn ?: return@forEach)
+                        .between(Instant.now(), user.scheduledTicketRecoveryTime ?: return@forEach)
                         .toSeconds() + 1
                     player.showTitle {
                         mainTitle(Component.empty())

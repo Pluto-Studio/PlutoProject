@@ -137,9 +137,9 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
 
         val model = UserModel(
             uniqueId = uniqueId,
-            createdAt = Instant.now(),
+            createTime = Instant.now(),
             ticket = config.ticket.recoveryCap,
-            lastTicketRecoveryOn = null,
+            lastTicketRecoveryTime = null,
         )
         val user = ShopUserImpl(model)
 

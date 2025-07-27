@@ -39,8 +39,8 @@ class ShopUserImpl(
     override val player: OfflinePlayer,
     override val createdAt: Instant,
     ticket: Int,
-    override var lastTicketRecoveryOn: Instant?,
-    override var scheduledTicketRecoveryOn: Instant?,
+    override var lastTicketRecoveryTime: Instant?,
+    override var scheduledTicketRecoveryTime: Instant?,
 ) : InternalShopUser, KoinComponent {
     private val config by inject<ExchangeShopConfig>()
     private val userRepo by inject<UserRepository>()
@@ -56,10 +56,10 @@ class ShopUserImpl(
     constructor(model: UserModel) : this(
         uniqueId = model.uniqueId,
         player = server.getOfflinePlayer(model.uniqueId),
-        createdAt = model.createdAt,
+        createdAt = model.createTime,
         ticket = model.ticket,
-        lastTicketRecoveryOn = model.lastTicketRecoveryOn,
-        scheduledTicketRecoveryOn = null,
+        lastTicketRecoveryTime = model.lastTicketRecoveryTime,
+        scheduledTicketRecoveryTime = null,
     )
 
     override var isValid by MutableStateFlow(true)
@@ -81,7 +81,7 @@ class ShopUserImpl(
     private suspend fun performOfflineRecovery() {
         if (ticket >= config.ticket.recoveryCap) return
 
-        val lastOnlineRecoveryTime = lastTicketRecoveryOn ?: createdAt
+        val lastOnlineRecoveryTime = lastTicketRecoveryTime ?: createdAt
         val completedIntervals = getCompletedIntervalsSince(lastOnlineRecoveryTime)
         val lastOfflineRecoveryTime = lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals.toLong()
         val offlineRecoveryAmount = completedIntervals * config.ticket.recoveryAmount
@@ -94,7 +94,7 @@ class ShopUserImpl(
             ticket + offlineRecoveryAmount
         }
         isDirty = true
-        lastTicketRecoveryOn = lastOfflineRecoveryTime
+        lastTicketRecoveryTime = lastOfflineRecoveryTime
 
         saveWithoutLock()
     }
@@ -107,7 +107,7 @@ class ShopUserImpl(
         } else {
             ticket + amount
         }
-        lastTicketRecoveryOn = Instant.now()
+        lastTicketRecoveryTime = Instant.now()
         isDirty = true
 
         saveWithoutLock()
@@ -123,7 +123,7 @@ class ShopUserImpl(
 
     private fun calculateTimeUntilNextRecovery(): Duration {
         val currentTime = Instant.now()
-        val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
+        val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
         val timeSinceLastRecovery = Duration.between(lastRecoveryTime, currentTime)
         featureLogger.info("Time since last recovery: ${timeSinceLastRecovery.seconds} seconds")
         return config.ticket.recoveryInterval.minus(timeSinceLastRecovery)
@@ -142,10 +142,10 @@ class ShopUserImpl(
         check(scheduledAt.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
         val interval = Duration.between(currentTime, scheduledAt)
-        val keepScheduledAt = scheduledTicketRecoveryOn
-        scheduledTicketRecoveryOn = scheduledAt
+        val keepScheduledAt = scheduledTicketRecoveryTime
+        scheduledTicketRecoveryTime = scheduledAt
 
-        if (scheduledTicketRecoveryOn != keepScheduledAt) {
+        if (scheduledTicketRecoveryTime != keepScheduledAt) {
             isDirty = true
             saveWithoutLock()
         }
@@ -162,7 +162,7 @@ class ShopUserImpl(
             featureLogger.info("Ticket recovery performed for ${player.name} (ticket = $ticket)")
         }
         scheduledTicketRecovery = null
-        scheduledTicketRecoveryOn = null
+        scheduledTicketRecoveryTime = null
         isDirty = true
         saveWithoutLock()
         // 还没有恢复满，继续计划恢复
@@ -177,7 +177,7 @@ class ShopUserImpl(
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancelAndJoin()
         scheduledTicketRecovery = null
-        scheduledTicketRecoveryOn = null
+        scheduledTicketRecoveryTime = null
         featureLogger.info("Unscheduled ticket recovery for ${player.name}")
     }
 
@@ -363,7 +363,7 @@ class ShopUserImpl(
         if (!isDirty) return@withContext
         val updates = Updates.combine(
             Updates.set("ticket", ticket),
-            Updates.set("lastTicketRecoveryOn", lastTicketRecoveryOn),
+            Updates.set("lastTicketRecoveryTime", lastTicketRecoveryTime),
         )
         userRepo.update(uniqueId, updates)
         isDirty = false

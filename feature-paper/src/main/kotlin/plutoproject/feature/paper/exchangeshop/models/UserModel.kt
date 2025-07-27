@@ -1,6 +1,5 @@
 package plutoproject.feature.paper.exchangeshop.models
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plutoproject.framework.common.util.data.serializers.bson.InstantAsBsonDateTimeSerializer
@@ -11,7 +10,7 @@ import java.util.*
 @Serializable
 data class UserModel(
     @SerialName("_id") val uniqueId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
-    val createdAt: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
+    val createTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
     val ticket: Int,
-    val lastTicketRecoveryOn: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
+    val lastTicketRecoveryTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
 )
