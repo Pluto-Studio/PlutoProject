@@ -71,7 +71,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         val categoryWord = if (categories.size <= 1) "category" else "categories"
         val itemWord = if (items.size <= 1) "item" else "items"
         featureLogger.info("Added ${categories.size} $categoryWord from config")
-        featureLogger.info("Added ${categories.size} $itemWord from config")
+        featureLogger.info("Added ${items.size} $itemWord from config")
     }
 
     private fun addConfigCategory(config: ShopCategoryConfig) {
