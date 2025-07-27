@@ -17,6 +17,7 @@ import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.util.logger
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
@@ -106,7 +107,7 @@ class ShopUserImpl(
 
         val lastRecoveryTime = lastTicketRecoveryOn ?: createdAt
         val currentTime = Instant.now()
-        val timeDelta = Duration.between(lastRecoveryTime, currentTime.plusSeconds(1))
+        val timeDelta = Duration.between(lastRecoveryTime, currentTime)
         val recoveryAmount = config.ticket.recoveryAmount * timeDelta.dividedBy(config.ticket.recoveryInterval)
 
         if (lastRecoveryTime.isAfter(currentTime)) {
@@ -140,11 +141,11 @@ class ShopUserImpl(
     }
 
     private fun getNextRecoveryTime(): Instant {
-        val lastRecoveryTimes = lastTicketRecoveryOn ?: createdAt
-        return lastRecoveryTimes.plus(config.ticket.recoveryInterval)
+        return Instant.now().plus(config.ticket.recoveryInterval)
     }
 
     private fun scheduleTicketRecovery() {
+        if (scheduledTicketRecovery != null) return
         if (ticket >= config.ticket.recoveryCap) return
         val currentTime = Instant.now()
         val nextRecoveryTime = getNextRecoveryTime()
@@ -152,33 +153,43 @@ class ShopUserImpl(
         check(config.ticket.naturalRecovery) { "Natural ticket recovery is disabled" }
         require(nextRecoveryTime.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
-        val interval = Duration.between(currentTime, nextRecoveryTime.plusSeconds(1))
+        val interval = Duration.between(currentTime, nextRecoveryTime)
         nextTicketRecoveryOn = nextRecoveryTime
+
+        featureLogger.info("Scheduled ticket recovery for ${player.name} on $nextRecoveryTime")
 
         exchangeShop.coroutineScope.launch {
             delay(interval.toKotlinDuration())
             if (recoveryTicket(config.ticket.recoveryAmount)) {
+                featureLogger.info("Ticket recovery performed for ${player.name} (ticket = $ticket)")
                 save()
             }
+            scheduledTicketRecovery = null
             scheduleTicketRecovery()
         }.also { scheduledTicketRecovery = it }
     }
 
     private fun unscheduleTicketRecovery() {
         if (scheduledTicketRecovery == null) return
+        featureLogger.info("Unscheduled ticket recovery for ${player.name}")
         scheduledTicketRecovery?.cancel()
         scheduledTicketRecovery = null
         nextTicketRecoveryOn = null
     }
 
     private fun updateTicketRecoverySchedule() {
+        logger.info("Updating ticket recovery schedule state for ${player.name}")
         if (ticket >= config.ticket.recoveryCap) {
+            logger.info("Ticket remaining enough, unschedule")
             unscheduleTicketRecovery()
+            logger.info("Updating ticket recovery schedule state for ${player.name} finished")
             return
         }
         if (scheduledTicketRecovery == null && config.ticket.naturalRecovery) {
+            println("Schedule a new recovery")
             scheduleTicketRecovery()
         }
+        logger.info("Updating ticket recovery schedule state for ${player.name} finished")
     }
 
     private suspend fun patchItem(model: TransactionModel) {
@@ -345,6 +356,7 @@ class ShopUserImpl(
     }
 
     override suspend fun close() {
+        unscheduleTicketRecovery()
         scheduledTicketRecovery?.cancelAndJoin()
     }
 }

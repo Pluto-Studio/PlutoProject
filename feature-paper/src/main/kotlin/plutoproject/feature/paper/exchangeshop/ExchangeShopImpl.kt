@@ -176,9 +176,11 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun unloadUser(id: UUID) = userLock.withLock {
+        featureLogger.info("Begin unload user $id")
         val user = users.remove(id) ?: return@withLock
-        userLastUsedTimestamps.remove(user)
         user.close()
+        userLastUsedTimestamps.remove(user)
+        featureLogger.info("User unloaded $id")
     }
 
     override fun getLastUsedTimestamp(user: ShopUser): Instant {

@@ -12,7 +12,7 @@ sealed class ShopTransactionException : Exception {
     /**
      * 要兑换的商品限期未至。
      */
-    class ShopItemNotAvailable(user: ShopUser, item: ShopItem) :
+    class ShopItemNotAvailable(user: ShopUser, val item: ShopItem) :
         ShopTransactionException(user, "Shop item ${item.id} is not available today")
 
     /**
@@ -24,13 +24,13 @@ sealed class ShopTransactionException : Exception {
     /**
      * 该玩家所持有的兑换券不足。
      */
-    class TicketNotEnough(user: ShopUser, required: Int) :
+    class TicketNotEnough(user: ShopUser, val required: Int) :
         ShopTransactionException(user, "insufficient tickets, required: $required")
 
     /**
      * 该玩家所持有的余额不足。
      */
-    class BalanceNotEnough(user: ShopUser, required: BigDecimal) :
+    class BalanceNotEnough(user: ShopUser, val required: BigDecimal) :
         ShopTransactionException(user, "insufficient balance, required: $required")
 
     /**
