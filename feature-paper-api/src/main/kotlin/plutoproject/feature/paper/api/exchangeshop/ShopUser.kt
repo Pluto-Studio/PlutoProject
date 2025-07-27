@@ -53,6 +53,11 @@ interface ShopUser {
     val scheduledTicketRecoveryTime: Instant?
 
     /**
+     * 该玩家兑换券恢复满的时间，若已满则为空。
+     */
+    val fullTicketRecoveryTime: Instant?
+
+    /**
      * 减少一定的兑换券数量。
      *
      * 此操作可能需要获取锁，等待锁时会挂起。

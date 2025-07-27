@@ -66,6 +66,13 @@ class ShopUserImpl(
     override var ticket: Int
         get() = _ticket
         set(value) = coroutineScope.launch { setTicket(value) }.asCompletableFuture().join()
+    override val fullTicketRecoveryTime: Instant?
+        get() {
+            if (ticket >= config.ticket.recoveryCap) return null
+            val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
+            val unrecoveredAmount = config.ticket.recoveryCap - ticket
+            return lastRecoveryTime + config.ticket.recoveryInterval * unrecoveredAmount.toLong()
+        }
 
     init {
         if (config.ticket.naturalRecovery) {
@@ -83,7 +90,8 @@ class ShopUserImpl(
 
         val lastOnlineRecoveryTime = lastTicketRecoveryTime ?: createdAt
         val completedIntervals = getCompletedIntervalsSince(lastOnlineRecoveryTime)
-        val lastOfflineRecoveryTime = lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals.toLong()
+        val lastOfflineRecoveryTime =
+            lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals.toLong()
         val offlineRecoveryAmount = completedIntervals * config.ticket.recoveryAmount
 
         if (offlineRecoveryAmount <= 0) return
