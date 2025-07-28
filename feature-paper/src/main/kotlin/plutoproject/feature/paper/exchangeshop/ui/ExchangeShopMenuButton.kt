@@ -45,6 +45,8 @@ fun ExchangeShop() {
             if (amount < config.ticket.recoveryCap && recoveryInterval != null) {
                 val intervalDisplay = Duration.ofSeconds(recoveryInterval.seconds + 1).toMMSSFormat()
                 add(EXCHANGE_SHOP_BUTTON_TICKET_RECOVERY_INTERVAL.replace("<interval>", intervalDisplay))
+            } else {
+                add(EXCHANGE_SHOP_BUTTON_TICKET_FULL)
             }
 
             add(Component.empty())

@@ -18,7 +18,7 @@ val EXCHANGE_SHOP_BUTTON_DESCRIPTION_LINE_1 = component {
 }
 
 val EXCHANGE_SHOP_BUTTON_DESCRIPTION_LINE_2 = component {
-    text("也许有你想不到的宝贝...") with mochaSubtext0
+    text("也许有意想不到的宝贝...") with mochaSubtext0
 }
 
 val EXCHANGE_SHOP_BUTTON_OPERATION = component {
@@ -35,4 +35,8 @@ val EXCHANGE_SHOP_BUTTON_TICKET_RECOVERY_INTERVAL = component {
     text("$RECOVERY_SYMBOL ") with mochaText
     text("<interval> ") with mochaLavender
     text("后恢复") with mochaText
+}
+
+val EXCHANGE_SHOP_BUTTON_TICKET_FULL = component {
+    text("$RECOVERY_SYMBOL 已完全恢复") with mochaText
 }
