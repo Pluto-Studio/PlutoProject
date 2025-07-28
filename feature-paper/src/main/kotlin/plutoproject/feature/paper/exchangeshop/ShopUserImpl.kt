@@ -32,7 +32,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.time.toKotlinDuration
 
 class ShopUserImpl(
     override val uniqueId: UUID,
@@ -59,7 +58,7 @@ class ShopUserImpl(
         createdAt = model.createTime,
         ticket = model.ticket,
         lastTicketRecoveryTime = model.lastTicketRecoveryTime,
-        scheduledTicketRecoveryTime = null,
+        scheduledTicketRecoveryTime = model.scheduledTicketRecoveryTime,
     )
 
     override var isValid by MutableStateFlow(true)
@@ -76,75 +75,50 @@ class ShopUserImpl(
 
     init {
         if (config.ticket.naturalRecovery) {
-            coroutineScope.launch { initializeTicketRecovery() }
+            coroutineScope.launch { handleOfflineRecovery() }
         }
     }
 
-    private suspend fun initializeTicketRecovery() = ticketLock.withLock {
-        // 在计划在线恢复前先完成离线恢复，在线恢复中获取到的值是已经完成离线恢复的
-        performOfflineRecovery()
-        updateTicketRecoverySchedule()
-    }
+    private suspend fun handleOfflineRecovery() = ticketLock.withLock {
+        if (scheduledTicketRecoveryTime == null) return
+        val currentTime = Instant.now()
 
-    private suspend fun performOfflineRecovery() {
-        if (ticket >= config.ticket.recoveryCap) return
-
-        val lastOnlineRecoveryTime = lastTicketRecoveryTime ?: createdAt
-        val completedIntervals = getCompletedIntervalsSince(lastOnlineRecoveryTime)
-        val lastOfflineRecoveryTime = lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals
-        val offlineRecoveryAmount = completedIntervals * config.ticket.recoveryAmount
-
-        if (offlineRecoveryAmount <= 0) return
-
-        _ticket = if (ticket + offlineRecoveryAmount > config.ticket.recoveryCap) {
-            config.ticket.recoveryCap
-        } else {
-            ticket + offlineRecoveryAmount
+        // 已计划的恢复还没有截止，继续它
+        if (scheduledTicketRecoveryTime!!.isAfter(currentTime)) {
+            scheduleTicketRecovery(scheduledTicketRecoveryTime!!)
+            return
         }
-        isDirty = true
-        lastTicketRecoveryTime = lastOfflineRecoveryTime
 
-        saveWithoutLock()
+        // 已计划的恢复已经截止，计算剩余离线恢复量
+        val elapsed = Duration.between(scheduledTicketRecoveryTime, currentTime).toMillis()
+        val intervals = elapsed / config.ticket.recoveryInterval.toMillis() + 1 // 截止的恢复任务需要额外加一
+        val amount = _ticket + intervals * config.ticket.recoveryAmount
+        _ticket = amount.coerceIn(0, config.ticket.recoveryCap)
+        scheduledTicketRecoveryTime = null
+        markDirtyAndSave()
+
+        if (_ticket >= config.ticket.recoveryCap) return
+
+        // 还没回满，计算到下次恢复已经经过的时长并开启新计划
+        val intervalPassedMillis = elapsed % config.ticket.recoveryInterval.toMillis()
+        val intervalUntilNextRecovery = config.ticket.recoveryInterval.toMillis() - intervalPassedMillis
+        val nextRecoveryTime = currentTime.plusMillis(intervalUntilNextRecovery)
+        scheduleTicketRecovery(nextRecoveryTime)
     }
 
-    private suspend fun recoveryTicket(amount: Long): Boolean {
+    private fun recoveryTicket(amount: Long): Boolean {
         if (ticket >= config.ticket.recoveryCap) return false
-
-        _ticket = if (ticket + amount > config.ticket.recoveryCap) {
-            config.ticket.recoveryCap
-        } else {
-            ticket + amount
-        }
-        lastTicketRecoveryTime = Instant.now()
-        isDirty = true
-
-        saveWithoutLock()
+        _ticket = (_ticket + amount).coerceIn(0, config.ticket.recoveryCap)
         return true
     }
 
-    private fun getCompletedIntervalsSince(time: Instant): Long {
+    // 计算从现在开始下次恢复的时间
+    private fun calculateNextRecoveryTime(): Instant {
         val currentTime = Instant.now()
-        require(time.isBefore(currentTime)) { "Start timestamp must in before" }
-        val timeSinceLastRecovery = Duration.between(time, currentTime)
-        return timeSinceLastRecovery.dividedBy(config.ticket.recoveryInterval)
+        return currentTime.plusMillis(config.ticket.recoveryInterval.toMillis())
     }
 
-    private fun calculateTimeUntilNextRecovery(): Duration {
-        val currentTime = Instant.now()
-        val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
-        val timeSinceLastRecovery = Duration.between(lastRecoveryTime, currentTime)
-
-        return if (timeSinceLastRecovery <= config.ticket.recoveryInterval) {
-            // 距离上次恢复时间还不满一个间隔
-            config.ticket.recoveryInterval.minus(timeSinceLastRecovery)
-        } else {
-            // 大于一个间隔，表明此前已回满过一次
-            // 由于离线恢复会在在线恢复开始前完成，所以此处大于一个间隔一定是已经回满过一次
-            config.ticket.recoveryInterval
-        }
-    }
-
-    private suspend fun scheduleTicketRecovery() {
+    private suspend fun scheduleTicketRecovery(time: Instant) {
         check(scheduledTicketRecovery == null) { "There is a scheduled ticket recovery unfinished" }
         featureLogger.info("Scheduling ticket recovery for ${player.name} (isValid = $isValid, isActive = ${coroutineScope.isActive})")
         if (!isValid) return
@@ -152,46 +126,43 @@ class ShopUserImpl(
         if (ticket >= config.ticket.recoveryCap) return
 
         val currentTime = Instant.now()
-        val scheduledAt = currentTime + calculateTimeUntilNextRecovery()
+        val interval = Duration.between(currentTime, time).toMillis()
 
-        check(scheduledAt.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
+        check(time.isAfter(currentTime)) { "Ticket recovery must be scheduled in the future" }
 
-        val interval = Duration.between(currentTime, scheduledAt)
-        val keepScheduledAt = scheduledTicketRecoveryTime
-        scheduledTicketRecoveryTime = scheduledAt
-
-        if (scheduledTicketRecoveryTime != keepScheduledAt) {
-            isDirty = true
-            saveWithoutLock()
+        // 如果只是继续未截止的任务这个值不会变
+        if (scheduledTicketRecoveryTime != time) {
+            scheduledTicketRecoveryTime = time
+            markDirtyAndSave()
         }
 
-        coroutineScope.launch {
-            delay(interval.toKotlinDuration())
+        scheduledTicketRecovery = coroutineScope.launch {
+            delay(interval)
             ticketLock.withLock { performScheduledRecovery() }
-        }.also { scheduledTicketRecovery = it }
-        featureLogger.info("Scheduled ticket recovery for ${player.name} on $scheduledAt")
+        }
+        featureLogger.info("Scheduled ticket recovery for ${player.name} on $time")
     }
 
     private suspend fun performScheduledRecovery() {
-        if (recoveryTicket(config.ticket.recoveryAmount)) {
-            featureLogger.info("Ticket recovery performed for ${player.name} (ticket = $ticket)")
-        }
+        recoveryTicket(config.ticket.recoveryAmount)
         scheduledTicketRecovery = null
         scheduledTicketRecoveryTime = null
-        isDirty = true
-        saveWithoutLock()
+        markDirtyAndSave()
         // 还没有恢复满，继续计划恢复
         if (ticket < config.ticket.recoveryCap) {
             if (!coroutineScope.isActive || !isValid) return
-            scheduleTicketRecovery()
+            scheduleTicketRecovery(calculateNextRecoveryTime())
         }
     }
 
-    private suspend fun unscheduleTicketRecovery() {
+    private suspend fun unscheduleTicketRecovery(keepTimeInDatabase: Boolean = false) {
         if (scheduledTicketRecovery == null) return
         scheduledTicketRecovery?.cancelAndJoin()
         scheduledTicketRecovery = null
-        scheduledTicketRecoveryTime = null
+        if (!keepTimeInDatabase) {
+            scheduledTicketRecoveryTime = null
+            markDirtyAndSave()
+        }
         featureLogger.info("Unscheduled ticket recovery for ${player.name}")
     }
 
@@ -202,7 +173,7 @@ class ShopUserImpl(
             return
         }
         if (scheduledTicketRecovery == null && config.ticket.naturalRecovery) {
-            scheduleTicketRecovery()
+            scheduleTicketRecovery(calculateNextRecoveryTime())
         }
     }
 
@@ -233,7 +204,7 @@ class ShopUserImpl(
         check(isValid) { "Instance not valid" }
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         _ticket -= amount
-        isDirty = true
+        markDirtyAndSave()
         updateTicketRecoverySchedule()
         return _ticket
     }
@@ -241,7 +212,7 @@ class ShopUserImpl(
     override suspend fun depositTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
         _ticket += amount
-        isDirty = true
+        markDirtyAndSave()
         updateTicketRecoverySchedule()
         return _ticket
     }
@@ -249,7 +220,7 @@ class ShopUserImpl(
     override suspend fun setTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
         _ticket = amount
-        isDirty = true
+        markDirtyAndSave()
         updateTicketRecoverySchedule()
         return _ticket
     }
@@ -361,12 +332,19 @@ class ShopUserImpl(
         saveWithoutLock()
     }
 
+    private suspend fun markDirtyAndSave() {
+        check(isValid) { "Instance not valid" }
+        isDirty = true
+        saveWithoutLock()
+    }
+
     private suspend fun saveWithoutLock() = withContext(Dispatchers.IO) {
         check(isValid) { "Instance not valid" }
         if (!isDirty) return@withContext
         val updates = Updates.combine(
             Updates.set("ticket", ticket),
             Updates.set("lastTicketRecoveryTime", lastTicketRecoveryTime),
+            Updates.set("scheduledTicketRecoveryTime", scheduledTicketRecoveryTime)
         )
         userRepo.update(uniqueId, updates)
         isDirty = false
@@ -374,7 +352,7 @@ class ShopUserImpl(
 
     override suspend fun close(): Unit = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
-        unscheduleTicketRecovery()
+        unscheduleTicketRecovery(true)
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false
     }

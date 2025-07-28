@@ -13,4 +13,5 @@ data class UserModel(
     val createTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
     val ticket: Long,
     val lastTicketRecoveryTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
+    val scheduledTicketRecoveryTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
 )
