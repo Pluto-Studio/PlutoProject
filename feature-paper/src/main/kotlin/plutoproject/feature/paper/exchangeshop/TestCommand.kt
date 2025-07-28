@@ -54,7 +54,7 @@ object TestCommand : KoinComponent {
         if (item == null) {
             sender.send {
                 text("未在类别 ") with mochaMaroon
-                text("$shopItemId ") with mochaText
+                text("$categoryId ") with mochaText
                 text("中找到 ") with mochaMaroon
                 text(shopItemId) with mochaText
             }

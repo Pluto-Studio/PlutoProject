@@ -23,7 +23,6 @@ import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.flow.getValue
 import plutoproject.framework.common.util.data.flow.setValue
 import plutoproject.framework.common.util.logger
-import plutoproject.framework.common.util.time.times
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
@@ -68,18 +67,23 @@ class ShopUserImpl(
     override val fullTicketRecoveryTime: Instant?
         get() {
             if (ticket >= config.ticket.recoveryCap) return null
-            val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
-            val unrecoveredAmount = config.ticket.recoveryCap - ticket
-            return lastRecoveryTime + config.ticket.recoveryInterval * unrecoveredAmount
+            if (scheduledTicketRecoveryTime == null) return null
+            val currentTime = Instant.now()
+            val intervalUntilSchedule = Duration.between(currentTime, scheduledTicketRecoveryTime).toMillis()
+            val unrecoveredAmount = config.ticket.recoveryCap - (ticket + 1) // 用来计算下次恢复时间到回满的间隔，所以要把还没恢复的这个加上
+
+            // 这个时间由两段组成：现在到下次恢复的间隔 + 下次恢复到回满的间隔
+            return currentTime.plusMillis(intervalUntilSchedule)
+                .plusMillis(unrecoveredAmount * config.ticket.recoveryInterval.toMillis())
         }
 
     init {
         if (config.ticket.naturalRecovery) {
-            coroutineScope.launch { handleOfflineRecovery() }
+            coroutineScope.launch { performOfflineRecovery() }
         }
     }
 
-    private suspend fun handleOfflineRecovery() = ticketLock.withLock {
+    private suspend fun performOfflineRecovery() = ticketLock.withLock {
         if (scheduledTicketRecoveryTime == null) return
         val currentTime = Instant.now()
 
@@ -100,8 +104,8 @@ class ShopUserImpl(
         if (_ticket >= config.ticket.recoveryCap) return
 
         // 还没回满，计算到下次恢复已经经过的时长并开启新计划
-        val intervalPassedMillis = elapsed % config.ticket.recoveryInterval.toMillis()
-        val intervalUntilNextRecovery = config.ticket.recoveryInterval.toMillis() - intervalPassedMillis
+        val passedMillis = elapsed % config.ticket.recoveryInterval.toMillis()
+        val intervalUntilNextRecovery = config.ticket.recoveryInterval.toMillis() - passedMillis
         val nextRecoveryTime = currentTime.plusMillis(intervalUntilNextRecovery)
         scheduleTicketRecovery(nextRecoveryTime)
     }
