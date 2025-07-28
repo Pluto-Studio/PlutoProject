@@ -1,9 +1,6 @@
 package plutoproject.feature.paper.exchangeshop.ui
 
 import androidx.compose.runtime.Composable
-import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.raw
-import ink.pmc.advkt.component.text
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.ItemLore
 import io.papermc.paper.datacomponent.item.TooltipDisplay
