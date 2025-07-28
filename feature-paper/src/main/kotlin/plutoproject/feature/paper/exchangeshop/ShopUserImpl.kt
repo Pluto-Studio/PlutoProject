@@ -121,7 +121,6 @@ class ShopUserImpl(
 
     private suspend fun scheduleTicketRecovery(time: Instant) {
         check(scheduledTicketRecovery == null) { "There is a scheduled ticket recovery unfinished" }
-        featureLogger.info("Scheduling ticket recovery for ${player.name} (isValid = $isValid, isActive = ${coroutineScope.isActive})")
         if (!isValid) return
         if (!config.ticket.naturalRecovery) return
         if (ticket >= config.ticket.recoveryCap) return
@@ -141,7 +140,6 @@ class ShopUserImpl(
             delay(interval)
             ticketLock.withLock { performScheduledRecovery() }
         }
-        featureLogger.info("Scheduled ticket recovery for ${player.name} on $time")
     }
 
     private suspend fun performScheduledRecovery() {
@@ -167,12 +165,10 @@ class ShopUserImpl(
             scheduledTicketRecoveryTime = null
             markDirtyAndSave()
         }
-        featureLogger.info("Unscheduled ticket recovery for ${player.name}")
     }
 
     private suspend fun updateTicketRecoverySchedule() {
         if (scheduledTicketRecovery != null && ticket >= config.ticket.recoveryCap) {
-            logger.info("Ticket remaining enough, unschedule")
             unscheduleTicketRecovery()
             return
         }
@@ -192,12 +188,12 @@ class ShopUserImpl(
             return
         }
         if (!itemStackBinary.contentEquals(model.itemStackBinary.data)) {
-            featureLogger.info("Patching item '${model.itemTypeString}': item stack binary updated")
-            updates.add(Updates.set("itemStack", BsonBinary(itemStackBinary)))
+            featureLogger.warning("Patching item '${model.itemTypeString}': item stack binary updated")
+            updates.add(Updates.set("itemStackBinary", BsonBinary(itemStackBinary)))
         }
         if (itemType != model.itemType) {
-            featureLogger.info("Patching item '${model.itemTypeString}': item type updated to '${itemType.key}'")
-            updates.add(Updates.set("itemType", itemType.key.toString()))
+            featureLogger.warning("Patching item '${model.itemTypeString}': item type updated to '${itemType.key}'")
+            updates.add(Updates.set("itemTypeString", itemType.key.toString()))
         }
 
         if (updates.isEmpty()) return
