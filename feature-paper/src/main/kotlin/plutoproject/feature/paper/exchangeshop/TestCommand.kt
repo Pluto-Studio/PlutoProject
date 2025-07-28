@@ -17,6 +17,8 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.framework.common.util.time.formatTime
+import java.time.ZoneId
 import java.util.logging.Level
 
 @Suppress("UNUSED")
@@ -141,6 +143,69 @@ object TestCommand : KoinComponent {
         sender.send {
             text("活跃状态 ") with mochaText
             text(exchangeShop.coroutineScope.isActive) with mochaLavender
+        }
+    }
+
+    @Command("full-ticket-recovery-time <player>")
+    suspend fun fullTicketRecoveryTime(
+        sender: CommandSender,
+        @Argument("player") player: OfflinePlayer,
+    ) {
+        val user = ExchangeShop.getUser(player.uniqueId)
+
+        if (user == null) {
+            sender.send {
+                text("无法获取 ShopUser 实例") with mochaMaroon
+            }
+            return
+        }
+
+        val fullTicketRecoveryDateTime = user.fullTicketRecoveryTime?.atZone(ZoneId.systemDefault())
+        sender.send {
+            text("完整恢复时间 ") with mochaText
+            text(fullTicketRecoveryDateTime?.formatTime().toString()) with mochaLavender
+        }
+    }
+
+    @Command("scheduled-ticket-recovery-time <player>")
+    suspend fun scheduledTicketRecoveryTime(
+        sender: CommandSender,
+        @Argument("player") player: OfflinePlayer,
+    ) {
+        val user = ExchangeShop.getUser(player.uniqueId)
+
+        if (user == null) {
+            sender.send {
+                text("无法获取 ShopUser 实例") with mochaMaroon
+            }
+            return
+        }
+
+        val scheduledTicketRecoveryDateTime = user.scheduledTicketRecoveryTime?.atZone(ZoneId.systemDefault())
+        sender.send {
+            text("计划恢复时间 ") with mochaText
+            text(scheduledTicketRecoveryDateTime?.formatTime().toString()) with mochaLavender
+        }
+    }
+
+    @Command("last-ticket-recovery-time <player>")
+    suspend fun lastTicketRecoveryTime(
+        sender: CommandSender,
+        @Argument("player") player: OfflinePlayer,
+    ) {
+        val user = ExchangeShop.getUser(player.uniqueId)
+
+        if (user == null) {
+            sender.send {
+                text("无法获取 ShopUser 实例") with mochaMaroon
+            }
+            return
+        }
+
+        val lastTicketRecoveryDateTime = user.lastTicketRecoveryTime?.atZone(ZoneId.systemDefault())
+        sender.send {
+            text("上次恢复时间 ") with mochaText
+            text(lastTicketRecoveryDateTime?.formatTime().toString()) with mochaLavender
         }
     }
 }

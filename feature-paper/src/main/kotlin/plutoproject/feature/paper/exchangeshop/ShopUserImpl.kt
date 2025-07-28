@@ -95,25 +95,22 @@ class ShopUserImpl(
 
         // 已计划的恢复已经截止，计算剩余离线恢复量
         val elapsed = Duration.between(scheduledTicketRecoveryTime, currentTime).toMillis()
-        val intervals = elapsed / config.ticket.recoveryInterval.toMillis() + 1 // 截止的恢复任务需要额外加一
-        val amount = _ticket + intervals * config.ticket.recoveryAmount
-        _ticket = amount.coerceIn(0, config.ticket.recoveryCap)
-        scheduledTicketRecoveryTime = null
-        markDirtyAndSave()
+        val intervals = elapsed / config.ticket.recoveryInterval.toMillis()
+        val passedMillis = elapsed % config.ticket.recoveryInterval.toMillis() // 当前恢复间隔已经过的毫秒
+        val lastOfflineRecoveryTime = currentTime.minusMillis(passedMillis) // 当前时间减间隔经过的毫秒就是上次离线恢复的时间
+        val amount = _ticket + (intervals + 1) * config.ticket.recoveryAmount // 有截止的恢复任务，需要给 intervals 额外 +1
 
+        _ticket = amount.coerceIn(0, config.ticket.recoveryCap)
+        lastTicketRecoveryTime = lastOfflineRecoveryTime
+        scheduledTicketRecoveryTime = null
+
+        markDirtyAndSave()
         if (_ticket >= config.ticket.recoveryCap) return
 
         // 还没回满，计算到下次恢复已经经过的时长并开启新计划
-        val passedMillis = elapsed % config.ticket.recoveryInterval.toMillis()
         val intervalUntilNextRecovery = config.ticket.recoveryInterval.toMillis() - passedMillis
         val nextRecoveryTime = currentTime.plusMillis(intervalUntilNextRecovery)
         scheduleTicketRecovery(nextRecoveryTime)
-    }
-
-    private fun recoveryTicket(amount: Long): Boolean {
-        if (ticket >= config.ticket.recoveryCap) return false
-        _ticket = (_ticket + amount).coerceIn(0, config.ticket.recoveryCap)
-        return true
     }
 
     // 计算从现在开始下次恢复的时间
@@ -148,10 +145,13 @@ class ShopUserImpl(
     }
 
     private suspend fun performScheduledRecovery() {
-        recoveryTicket(config.ticket.recoveryAmount)
+        if (ticket >= config.ticket.recoveryCap) return
+        _ticket = (_ticket + config.ticket.recoveryAmount).coerceIn(0, config.ticket.recoveryCap)
+        lastTicketRecoveryTime = Instant.now()
         scheduledTicketRecovery = null
         scheduledTicketRecoveryTime = null
         markDirtyAndSave()
+
         // 还没有恢复满，继续计划恢复
         if (ticket < config.ticket.recoveryCap) {
             if (!coroutineScope.isActive || !isValid) return
