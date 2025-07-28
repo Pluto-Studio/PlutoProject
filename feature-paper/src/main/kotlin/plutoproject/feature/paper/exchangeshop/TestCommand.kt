@@ -114,7 +114,7 @@ object TestCommand : KoinComponent {
     suspend fun setTicket(
         sender: CommandSender,
         @Argument("player") player: OfflinePlayer,
-        @Argument("amount") amount: Int
+        @Argument("amount") amount: Long
     ) {
         val user = ExchangeShop.getUser(player.uniqueId)
 

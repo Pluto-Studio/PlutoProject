@@ -10,7 +10,7 @@ data class ShopItemImpl(
     override val id: String,
     override val category: ShopCategory,
     override val itemStack: ItemStack,
-    override val ticketConsumption: Int,
+    override val ticketConsumption: Long,
     override val price: BigDecimal,
     override val quantity: Int,
     override val availableDays: List<DayOfWeek>

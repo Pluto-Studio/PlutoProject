@@ -22,7 +22,7 @@ class ShopCategoryImpl(
     override fun addItem(
         id: String,
         itemStack: ItemStack,
-        ticketConsumption: Int,
+        ticketConsumption: Long,
         price: BigDecimal,
         quantity: Int,
         availableDays: List<DayOfWeek>

@@ -53,7 +53,7 @@ interface ShopTransaction {
     /**
      * 交易花费的兑换券。
      */
-    val ticket: Int
+    val ticket: Long
 
     /**
      * 交易花费的货币。

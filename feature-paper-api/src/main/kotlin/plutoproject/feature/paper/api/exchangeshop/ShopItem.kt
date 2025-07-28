@@ -26,7 +26,7 @@ interface ShopItem {
     /**
      * 购买一个数量单位的该商品所需的兑换券。
      */
-    val ticketConsumption: Int
+    val ticketConsumption: Long
 
     /**
      * 一个数量单位的该商品的价格。

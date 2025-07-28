@@ -16,8 +16,8 @@ data class ExchangeShopConfig(
 data class TicketConfig(
     val naturalRecovery: Boolean = true,
     val recoveryInterval: Duration = Duration.ofMinutes(4),
-    val recoveryAmount: Int = 1,
-    val recoveryCap: Int = 320,
+    val recoveryAmount: Long = 1,
+    val recoveryCap: Long = 320,
 ) {
     init {
         check(!recoveryInterval.isZero) { "Recovery interval cannot be zero" }
@@ -45,7 +45,7 @@ data class ShopItemConfig(
     val id: String,
     val category: String,
     val material: Material,
-    val ticketConsumption: Int = 1,
+    val ticketConsumption: Long = 1,
     val price: BigDecimal = BigDecimal(1.0),
     val quantity: Int = 1,
     val availableDays: List<DayOfWeek> = emptyList(),

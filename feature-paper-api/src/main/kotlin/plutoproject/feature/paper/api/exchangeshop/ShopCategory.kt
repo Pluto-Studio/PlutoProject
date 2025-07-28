@@ -49,7 +49,7 @@ interface ShopCategory {
     fun addItem(
         id: String,
         itemStack: ItemStack,
-        ticketConsumption: Int = 1,
+        ticketConsumption: Long = 1,
         price: BigDecimal,
         quantity: Int = 1,
         availableDays: List<DayOfWeek> = emptyList()

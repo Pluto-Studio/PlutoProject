@@ -40,7 +40,7 @@ interface ShopUser {
      *
      * 修改后的值仅保存在内存中，需要调用 [save] 保存。
      */
-    var ticket: Int
+    var ticket: Long
 
     /**
      * 该玩家上次恢复兑换券的时间，若还没有恢复过则为空。
@@ -68,7 +68,7 @@ interface ShopUser {
      * @return 减少后剩余的值
      * @throws IllegalArgumentException 当玩家剩余兑换券数量小于 [amount] 时
      */
-    suspend fun withdrawTicket(amount: Int): Int
+    suspend fun withdrawTicket(amount: Long): Long
 
     /**
      * 增加一定的兑换券数量。
@@ -80,7 +80,7 @@ interface ShopUser {
      * @param amount 要增加的兑换券数量
      * @return 增加后剩余的值
      */
-    suspend fun depositTicket(amount: Int): Int
+    suspend fun depositTicket(amount: Long): Long
 
     /**
      * 设置一定的兑换券数量。
@@ -92,7 +92,7 @@ interface ShopUser {
      * @param amount 要设置的兑换券数量
      * @return 设置后剩余的值
      */
-    suspend fun setTicket(amount: Int): Int
+    suspend fun setTicket(amount: Long): Long
 
     /**
      * 查询该玩家的交易记录。

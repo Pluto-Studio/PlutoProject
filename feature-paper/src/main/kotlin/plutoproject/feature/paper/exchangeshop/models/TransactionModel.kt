@@ -26,7 +26,7 @@ data class TransactionModel(
     @SerialName("itemStack") val itemStackBinary: @Contextual BsonBinary,
     val amount: Int,
     val quantity: Int,
-    val ticket: Int,
+    val ticket: Long,
     val cost: @Serializable(BigDecimalAsBsonDecimal128Serializer::class) BigDecimal,
     val balance: @Serializable(BigDecimalAsBsonDecimal128Serializer::class) BigDecimal,
 ) {

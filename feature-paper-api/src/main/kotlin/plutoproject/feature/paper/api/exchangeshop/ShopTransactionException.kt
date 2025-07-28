@@ -24,7 +24,7 @@ sealed class ShopTransactionException : Exception {
     /**
      * 该玩家所持有的兑换券不足。
      */
-    class TicketNotEnough(user: ShopUser, val required: Int) :
+    class TicketNotEnough(user: ShopUser, val required: Long) :
         ShopTransactionException(user, "insufficient tickets, required: $required")
 
     /**

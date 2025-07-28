@@ -15,7 +15,7 @@ data class ShopTransactionImpl(
     override val itemStack: ItemStack?,
     override val amount: Int,
     override val quantity: Int,
-    override val ticket: Int,
+    override val ticket: Long,
     override val cost: BigDecimal,
     override val balance: BigDecimal
 ) : ShopTransaction {

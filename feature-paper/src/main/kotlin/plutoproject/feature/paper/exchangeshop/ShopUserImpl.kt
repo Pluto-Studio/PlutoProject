@@ -38,7 +38,7 @@ class ShopUserImpl(
     override val uniqueId: UUID,
     override val player: OfflinePlayer,
     override val createdAt: Instant,
-    ticket: Int,
+    ticket: Long,
     override var lastTicketRecoveryTime: Instant?,
     override var scheduledTicketRecoveryTime: Instant?,
 ) : InternalShopUser, KoinComponent {
@@ -63,7 +63,7 @@ class ShopUserImpl(
     )
 
     override var isValid by MutableStateFlow(true)
-    override var ticket: Int
+    override var ticket: Long
         get() = _ticket
         set(value) = coroutineScope.launch { setTicket(value) }.asCompletableFuture().join()
     override val fullTicketRecoveryTime: Instant?
@@ -71,7 +71,7 @@ class ShopUserImpl(
             if (ticket >= config.ticket.recoveryCap) return null
             val lastRecoveryTime = lastTicketRecoveryTime ?: createdAt
             val unrecoveredAmount = config.ticket.recoveryCap - ticket
-            return lastRecoveryTime + config.ticket.recoveryInterval * unrecoveredAmount.toLong()
+            return lastRecoveryTime + config.ticket.recoveryInterval * unrecoveredAmount
         }
 
     init {
@@ -91,8 +91,7 @@ class ShopUserImpl(
 
         val lastOnlineRecoveryTime = lastTicketRecoveryTime ?: createdAt
         val completedIntervals = getCompletedIntervalsSince(lastOnlineRecoveryTime)
-        val lastOfflineRecoveryTime =
-            lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals.toLong()
+        val lastOfflineRecoveryTime = lastOnlineRecoveryTime + config.ticket.recoveryInterval * completedIntervals
         val offlineRecoveryAmount = completedIntervals * config.ticket.recoveryAmount
 
         if (offlineRecoveryAmount <= 0) return
@@ -108,7 +107,7 @@ class ShopUserImpl(
         saveWithoutLock()
     }
 
-    private suspend fun recoveryTicket(amount: Int): Boolean {
+    private suspend fun recoveryTicket(amount: Long): Boolean {
         if (ticket >= config.ticket.recoveryCap) return false
 
         _ticket = if (ticket + amount > config.ticket.recoveryCap) {
@@ -123,11 +122,11 @@ class ShopUserImpl(
         return true
     }
 
-    private fun getCompletedIntervalsSince(time: Instant): Int {
+    private fun getCompletedIntervalsSince(time: Instant): Long {
         val currentTime = Instant.now()
         require(time.isBefore(currentTime)) { "Start timestamp must in before" }
         val timeSinceLastRecovery = Duration.between(time, currentTime)
-        return timeSinceLastRecovery.dividedBy(config.ticket.recoveryInterval).toInt()
+        return timeSinceLastRecovery.dividedBy(config.ticket.recoveryInterval)
     }
 
     private fun calculateTimeUntilNextRecovery(): Duration {
@@ -230,7 +229,7 @@ class ShopUserImpl(
         transactionRepo.update(model.id, Updates.combine(updates))
     }
 
-    override suspend fun withdrawTicket(amount: Int): Int = ticketLock.withLock {
+    override suspend fun withdrawTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         _ticket -= amount
@@ -239,7 +238,7 @@ class ShopUserImpl(
         return _ticket
     }
 
-    override suspend fun depositTicket(amount: Int): Int = ticketLock.withLock {
+    override suspend fun depositTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
         _ticket += amount
         isDirty = true
@@ -247,7 +246,7 @@ class ShopUserImpl(
         return _ticket
     }
 
-    override suspend fun setTicket(amount: Int): Int = ticketLock.withLock {
+    override suspend fun setTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
         _ticket = amount
         isDirty = true
@@ -272,18 +271,7 @@ class ShopUserImpl(
             if (model.itemStack == null) {
                 featureLogger.warning("Unknown item stack: ${model.itemTypeString}")
             }
-            ShopTransactionImpl(
-                id = model.id,
-                playerId = model.playerId,
-                time = model.time,
-                shopItemId = model.shopItemId,
-                itemStack = model.itemStack,
-                amount = model.amount,
-                quantity = model.quantity,
-                ticket = model.ticket,
-                cost = model.cost,
-                balance = model.balance
-            )
+            ShopTransactionImpl(model)
         }
     }
 

@@ -11,6 +11,6 @@ import java.util.*
 data class UserModel(
     @SerialName("_id") val uniqueId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
     val createTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant,
-    val ticket: Int,
+    val ticket: Long,
     val lastTicketRecoveryTime: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant?,
 )
