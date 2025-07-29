@@ -25,7 +25,7 @@ class ShopCategoryImpl(
         ticketConsumption: Long,
         price: BigDecimal,
         quantity: Int,
-        availableDays: List<DayOfWeek>
+        availableDays: Set<DayOfWeek>
     ): ShopItem {
         require(id.isValidIdentifier()) { "ID must contain only English letters, numbers and underscores: $id" }
         require(!hasItem(id)) { "Shop item with ID `$id` already exists in category ${this.id}" }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
+import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
@@ -103,7 +104,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         )
     }
 
-    override suspend fun getUser(player: Player): ShopUser? {
+    override suspend fun getUser(player: OfflinePlayer): ShopUser? {
         return getUser(player.uniqueId)
     }
 
@@ -119,7 +120,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return user
     }
 
-    override suspend fun hasUser(player: Player): Boolean {
+    override suspend fun hasUser(player: OfflinePlayer): Boolean {
         return hasUser(player.uniqueId)
     }
 
@@ -127,7 +128,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return hasUserWithoutLock(uniqueId)
     }
 
-    override suspend fun createUser(player: Player): ShopUser {
+    override suspend fun createUser(player: OfflinePlayer): ShopUser {
         return createUser(player.uniqueId)
     }
 
@@ -153,7 +154,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return user
     }
 
-    override suspend fun getUserOrCreate(player: Player): ShopUser {
+    override suspend fun getUserOrCreate(player: OfflinePlayer): ShopUser {
         return getUserOrCreate(player.uniqueId)
     }
 

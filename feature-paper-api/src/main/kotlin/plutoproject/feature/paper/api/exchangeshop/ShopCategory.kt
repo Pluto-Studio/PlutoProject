@@ -52,7 +52,7 @@ interface ShopCategory {
         ticketConsumption: Long = 1,
         price: BigDecimal,
         quantity: Int = 1,
-        availableDays: List<DayOfWeek> = emptyList()
+        availableDays: Set<DayOfWeek> = emptySet()
     ): ShopItem
 
     /**

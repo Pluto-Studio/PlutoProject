@@ -19,7 +19,7 @@ interface ShopItem {
     val category: ShopCategory
 
     /**
-     * 该商品的物品堆。
+     * 该商品的物品堆，返回一个不会影响内部物品堆的副本。
      */
     val itemStack: ItemStack
 
@@ -47,5 +47,42 @@ interface ShopItem {
     /**
      * 该商品的限期，若没有限期则为空。
      */
-    val availableDays: List<DayOfWeek>
+    val availableDays: Set<DayOfWeek>
+
+    /**
+     * 该商品是否在今日可购，若无限期则始终可购买。
+     *
+     * 该属性不受限期功能开关影响。
+     */
+    val isAvailableToday: Boolean
+
+    /**
+     * 检查该商品是否花费货币。
+     */
+    val hasMoneyCost: Boolean
+
+    /**
+     * 检查该商品是否消耗兑换券。
+     */
+    val hasTicketConsumption: Boolean
+
+    /**
+     * 检查该商品是否免费，即不需要花费货币和兑换券。
+     */
+    val isFree: Boolean
+
+    /**
+     * 检查该商品的数量单位是否为多个物品。
+     */
+    val isMultipleQuantity: Boolean
+
+    /**
+     * 检查该商品是否只花费货币，即无兑换券消耗。
+     */
+    val isMoneyOnly: Boolean
+
+    /**
+     * 检查该商品是否只花费兑换券，即无货币消耗。
+     */
+    val isTicketOnly: Boolean
 }

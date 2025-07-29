@@ -31,6 +31,8 @@ interface ShopTransaction {
 
     /**
      * 交易所涉及的物品堆，与玩家获取到的物品堆一致，若无法识别则为空。
+     *
+     * 返回一个不会影响内部物品堆的副本。
      */
     val itemStack: ItemStack?
 

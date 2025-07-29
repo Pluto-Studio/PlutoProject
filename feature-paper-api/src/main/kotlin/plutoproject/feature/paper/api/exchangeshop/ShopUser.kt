@@ -95,6 +95,13 @@ interface ShopUser {
     suspend fun setTicket(amount: Long): Long
 
     /**
+     * 获取该玩家所剩资源（货币与兑换券）还能购买多少个指定物品。
+     *
+     * @return 该玩家所剩资源还可购买指定商品的数量，若商品免费则为 [Long.MAX_VALUE]
+     */
+    fun calculatePurchasableQuantity(shopItem: ShopItem): Long
+
+    /**
      * 查询该玩家的交易记录。
      *
      * @param skip 要跳过的条目数
@@ -125,7 +132,7 @@ interface ShopUser {
      *
      * @param shopItem 需要购买的商品
      * @param amount 需要购买的数量
-     * @param checkAvailability 是否检查商品限期
+     * @param checkAvailability 是否检查商品限期，若配置文件中关闭了限期功能则无论如何都不检查
      * @return 成功时为 [ShopTransaction]，失败时为 [ShopTransactionException]
      * - [ShopTransactionException.ShopItemNotAvailable] 兑换的商品限期未至
      * - [ShopTransactionException.PlayerOffline] 玩家不在线

@@ -1,15 +1,20 @@
 package plutoproject.feature.paper.exchangeshop.ui
 
 import androidx.compose.runtime.*
+import ink.pmc.advkt.component.component
+import ink.pmc.advkt.component.raw
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import net.kyori.adventure.text.Component
 import plutoproject.feature.paper.api.exchangeshop.ExchangeShop
-import plutoproject.feature.paper.exchangeshop.ExchangeShopConfig
+import plutoproject.feature.paper.api.exchangeshop.ShopItem
+import plutoproject.feature.paper.exchangeshop.*
+import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.inject.Koin
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import java.time.Duration
 import java.time.Instant
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val config by Koin.inject<ExchangeShopConfig>()
 
@@ -22,7 +27,7 @@ fun ticketAmount(): Long {
         val user = ExchangeShop.getUserOrCreate(player)
         while (isActive) {
             amount = user.ticket
-            delay(200.milliseconds)
+            delay(1.seconds)
         }
     }
 
@@ -38,7 +43,7 @@ fun ticketRecoveryTime(): Instant? {
         val user = ExchangeShop.getUserOrCreate(player)
         while (isActive) {
             time = user.scheduledTicketRecoveryTime
-            delay(200.milliseconds)
+            delay(1.seconds)
         }
     }
 
@@ -53,9 +58,49 @@ fun ticketRecoveryInterval(): Duration? {
     LaunchedEffect(time) {
         while (isActive) {
             interval = time?.let { Duration.between(Instant.now(), it) }
-            delay(200.milliseconds)
+            delay(1.seconds)
         }
     }
 
     return interval
 }
+
+private fun Duration.toMMSSFormat(): String {
+    val totalSeconds = this.seconds
+    val minutes = (totalSeconds / 60).toInt()
+    val seconds = (totalSeconds % 60).toInt()
+    return String.format("%02d:%02d", minutes, seconds)
+}
+
+@Composable
+fun ticketRecoveryIntervalDisplay(): Component {
+    val amount = ticketAmount()
+    val recoveryInterval = ticketRecoveryInterval()
+    return if (amount < config.ticket.recoveryCap && recoveryInterval != null) {
+        val intervalDisplay = Duration.ofSeconds(recoveryInterval.seconds + 1).toMMSSFormat()
+        EXCHANGE_SHOP_BUTTON_LORE_TICKET_RECOVERY_INTERVAL.replace("<interval>", intervalDisplay)
+    } else {
+        EXCHANGE_SHOP_BUTTON_LORE_TICKET_FULL
+    }
+}
+
+val ShopItem.priceDisplay: Component
+    get() = component {
+        if (isFree) {
+            raw(SHOP_ITEM_LORE_PRICE_FREE)
+        }
+        if (hasMoneyCost) {
+            raw(SHOP_ITEM_LORE_PRICE_COST.replace("<cost>", price.stripTrailingZeros().toPlainString()))
+            if (hasTicketConsumption) {
+                raw(SHOP_ITEM_LORE_PRICE_AND)
+            }
+        }
+        if (hasTicketConsumption) {
+            raw(SHOP_ITEM_LORE_PRICE_TICKET.replace("<ticket>", ticketConsumption))
+        }
+        if (!isMultipleQuantity) {
+            raw(SHOP_ITEM_LORE_QUANTITY_SINGLE)
+        } else {
+            raw(SHOP_ITEM_LORE_QUANTITY_MULTIPLE.replace("<quantity>", quantity))
+        }
+    }

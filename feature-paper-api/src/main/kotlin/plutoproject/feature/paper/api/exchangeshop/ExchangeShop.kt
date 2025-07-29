@@ -2,6 +2,7 @@ package plutoproject.feature.paper.api.exchangeshop
 
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
+import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import plutoproject.framework.common.util.inject.Koin
 import java.util.*
@@ -28,7 +29,7 @@ interface ExchangeShop {
      * @param player 需要获取的玩家
      * @return 获取到的用户对象，若不存在则为空
      */
-    suspend fun getUser(player: Player): ShopUser?
+    suspend fun getUser(player: OfflinePlayer): ShopUser?
 
     /**
      * 获取指定 UUID 的用户。
@@ -44,7 +45,7 @@ interface ExchangeShop {
      * @param player 需要判断的玩家
      * @return 若存在则为 true，不存在为 false
      */
-    suspend fun hasUser(player: Player): Boolean
+    suspend fun hasUser(player: OfflinePlayer): Boolean
 
     /**
      * 判断是否存在指定 UUID 的用户。
@@ -61,7 +62,7 @@ interface ExchangeShop {
      * @return 新创建的用户对象
      * @throws IllegalArgumentException 该玩家的用户已存在
      */
-    suspend fun createUser(player: Player): ShopUser
+    suspend fun createUser(player: OfflinePlayer): ShopUser
 
     /**
      * 创建指定 UUID 的用户。
@@ -78,7 +79,7 @@ interface ExchangeShop {
      * @param player 需要获取的玩家
      * @return 获取到或新创建的用户对象
      */
-    suspend fun getUserOrCreate(player: Player): ShopUser
+    suspend fun getUserOrCreate(player: OfflinePlayer): ShopUser
 
     /**
      * 获取指定 UUID 的用户，若不存在则创建。

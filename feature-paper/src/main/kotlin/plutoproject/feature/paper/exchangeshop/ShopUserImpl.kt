@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.exchangeshop
 
+import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Updates
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,6 @@ import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.flow.getValue
 import plutoproject.framework.common.util.data.flow.setValue
-import plutoproject.framework.common.util.logger
 import plutoproject.framework.paper.util.coroutine.withSync
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
@@ -31,6 +31,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.math.min
 
 class ShopUserImpl(
     override val uniqueId: UUID,
@@ -189,11 +190,11 @@ class ShopUserImpl(
         }
         if (!itemStackBinary.contentEquals(model.itemStackBinary.data)) {
             featureLogger.warning("Patching item '${model.itemTypeString}': item stack binary updated")
-            updates.add(Updates.set("itemStackBinary", BsonBinary(itemStackBinary)))
+            updates.add(Updates.set("itemStack", BsonBinary(itemStackBinary)))
         }
         if (itemType != model.itemType) {
             featureLogger.warning("Patching item '${model.itemTypeString}': item type updated to '${itemType.key}'")
-            updates.add(Updates.set("itemTypeString", itemType.key.toString()))
+            updates.add(Updates.set("itemType", itemType.key.toString()))
         }
 
         if (updates.isEmpty()) return
@@ -225,6 +226,24 @@ class ShopUserImpl(
         return _ticket
     }
 
+    override fun calculatePurchasableQuantity(shopItem: ShopItem): Long {
+        if (shopItem.isFree) return Long.MAX_VALUE
+
+        val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
+        val balancePurchasableQuantity = if (!shopItem.hasMoneyCost) {
+            Long.MAX_VALUE
+        } else {
+            balance.divideToIntegralValue(shopItem.price).longValueExact()
+        }
+        val ticketPurchasableQuantity = if (!shopItem.hasTicketConsumption) {
+            Long.MAX_VALUE
+        } else {
+            ticket / shopItem.ticketConsumption
+        }
+
+        return min(balancePurchasableQuantity, ticketPurchasableQuantity) * shopItem.quantity
+    }
+
     override fun findTransactions(
         skip: Int?,
         limit: Int?,
@@ -235,7 +254,7 @@ class ShopUserImpl(
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
         }.build()
-        return transactionRepo.find(filter, skip, limit).map { model ->
+        return transactionRepo.find(filter, skip, limit).sort(Indexes.descending("time")).map { model ->
             coroutineScope.launch {
                 patchItem(model)
             }
@@ -270,7 +289,11 @@ class ShopUserImpl(
         if (!player.isOnline) {
             return Result.failure(ShopTransactionException.PlayerOffline(this))
         }
-        if (checkAvailability && shopItem.availableDays.isNotEmpty() && LocalDateTime.now().dayOfWeek !in shopItem.availableDays) {
+        if (config.capability.availableDays
+            && checkAvailability
+            && shopItem.availableDays.isNotEmpty()
+            && LocalDateTime.now().dayOfWeek !in shopItem.availableDays
+        ) {
             return Result.failure(ShopTransactionException.ShopItemNotAvailable(this, shopItem))
         }
         if (ticket < ticketConsumption) {
