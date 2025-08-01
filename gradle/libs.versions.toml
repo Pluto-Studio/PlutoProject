@@ -22,7 +22,7 @@ gremlin = "0.0.6"
 ksp = "2.1.10-1.0.31"
 
 [plugins]
-shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta4" }
+shadow = { id = "com.gradleup.shadow", version = "9.0.0-rc3" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
 resourceFactory-paper = { id = "xyz.jpenilla.resource-factory-paper-convention", version.ref = "resource-factory" }
 resourceFactory-velocity = { id = "xyz.jpenilla.resource-factory-velocity-convention", version.ref = "resource-factory" }
