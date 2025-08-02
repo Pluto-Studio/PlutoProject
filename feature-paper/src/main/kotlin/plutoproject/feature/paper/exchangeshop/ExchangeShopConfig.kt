@@ -25,7 +25,9 @@ data class TicketConfig(
     val recoveryCap: Long = 320,
 ) {
     init {
-        check(!recoveryInterval.isZero) { "Recovery interval cannot be zero" }
+        check(recoveryInterval.isPositive) { "Recovery interval must be positive" }
+        check(recoveryAmount >= 0) { "Ticket amount cannot be negative" }
+        check(recoveryCap >= 0) { "Ticket amount cannot be negative" }
     }
 }
 

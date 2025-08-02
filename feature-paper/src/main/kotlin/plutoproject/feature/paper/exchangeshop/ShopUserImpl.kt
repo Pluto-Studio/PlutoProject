@@ -203,6 +203,7 @@ class ShopUserImpl(
 
     override suspend fun withdrawTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
+        require(amount >= 0) { "Ticket amount cannot be negative" }
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         _ticket -= amount
         markDirtyAndSave()
@@ -212,6 +213,7 @@ class ShopUserImpl(
 
     override suspend fun depositTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
+        require(amount >= 0) { "Ticket amount cannot be negative" }
         _ticket += amount
         markDirtyAndSave()
         updateTicketRecoverySchedule()
@@ -220,6 +222,7 @@ class ShopUserImpl(
 
     override suspend fun setTicket(amount: Long): Long = ticketLock.withLock {
         check(isValid) { "Instance not valid" }
+        require(amount >= 0) { "Ticket amount cannot be negative" }
         _ticket = amount
         markDirtyAndSave()
         updateTicketRecoverySchedule()

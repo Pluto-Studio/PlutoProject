@@ -66,7 +66,7 @@ interface ShopUser {
      *
      * @param amount 要减少的兑换券数量
      * @return 减少后剩余的值
-     * @throws IllegalArgumentException 当玩家剩余兑换券数量小于 [amount] 时
+     * @throws IllegalArgumentException 若 [amount] 为负数或当玩家剩余兑换券数量小于 [amount] 时
      */
     suspend fun withdrawTicket(amount: Long): Long
 
@@ -79,6 +79,7 @@ interface ShopUser {
      *
      * @param amount 要增加的兑换券数量
      * @return 增加后剩余的值
+     * @throws IllegalArgumentException 若 [amount] 为负数
      */
     suspend fun depositTicket(amount: Long): Long
 
@@ -91,6 +92,7 @@ interface ShopUser {
      *
      * @param amount 要设置的兑换券数量
      * @return 设置后剩余的值
+     * @throws IllegalArgumentException 若 [amount] 为负数
      */
     suspend fun setTicket(amount: Long): Long
 
