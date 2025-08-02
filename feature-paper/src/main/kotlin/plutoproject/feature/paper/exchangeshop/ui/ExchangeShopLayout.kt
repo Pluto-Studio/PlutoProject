@@ -9,6 +9,7 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.paper.api.exchangeshop.ExchangeShop
+import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.daily.screens.DailyCalenderScreen
 import plutoproject.feature.paper.exchangeshop.*
 import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
@@ -138,10 +139,12 @@ fun Transaction() {
     val navigator = LocalNavigator.currentOrThrow
     var isLoading by remember { mutableStateOf(true) }
     var purchaseTime by remember { mutableStateOf(0L) }
+    var shopUser: ShopUser? by remember { mutableStateOf(null) }
 
     LaunchedEffect(Unit) {
         val user = ExchangeShop.getUserOrCreate(player)
         purchaseTime = user.countTransactions()
+        shopUser = user
         isLoading = false
     }
 
@@ -163,7 +166,8 @@ fun Transaction() {
         },
         modifier = Modifier.clickable {
             if (clickType != ClickType.LEFT) return@clickable
-            navigator.push(TransactionHistoryScreen())
+            if (isLoading) return@clickable
+            navigator.push(TransactionHistoryScreen(shopUser!!))
         }
     )
 }

@@ -22,6 +22,10 @@ class UserRepository(private val collection: MongoCollection<UserModel>) {
         return collection.find(Filters.eq("_id", uniqueId)).firstOrNull()
     }
 
+    suspend fun count(): Long {
+        return collection.countDocuments()
+    }
+
     suspend fun update(uniqueId: UUID, update: Bson) {
         collection.updateOne(Filters.eq("_id", uniqueId), update)
     }

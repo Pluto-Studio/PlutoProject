@@ -7,17 +7,19 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import plutoproject.feature.paper.api.exchangeshop.ShopTransaction
+import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.*
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.time.format24Hour
-import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.layout.list.ListMenu
 import java.time.ZoneId
 
 @Suppress("UnstableApiUsage")
-class TransactionHistoryScreen : ListMenu<ShopTransaction, TransactionHistoryScreenModel>() {
+class TransactionHistoryScreen(
+    private val shopUser: ShopUser
+) : ListMenu<ShopTransaction, TransactionHistoryScreenModel>() {
     @Composable
     override fun MenuLayout() {
         LocalListMenuOptions.current.title = EXCHANGE_SHOP_TRANSACTION_HISTORY_TITLE
@@ -26,8 +28,7 @@ class TransactionHistoryScreen : ListMenu<ShopTransaction, TransactionHistoryScr
 
     @Composable
     override fun modelProvider(): TransactionHistoryScreenModel {
-        val player = LocalPlayer.current
-        return TransactionHistoryScreenModel(player)
+        return TransactionHistoryScreenModel(shopUser)
     }
 
     @Composable

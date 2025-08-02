@@ -356,3 +356,85 @@ val SHOP_ITEM_PURCHASE_CONFIRMATION_DATABASE_FAILURE = component {
 val SHOP_ITEM_PURCHASE_CONFIRMATION_ITEM_NOT_AVAILABLE = component {
     text("该商品今日未出售") with mochaMaroon
 }
+
+val COMMAND_EXCHANGE_SHOP_CATEGORY_NOT_FOUND = component {
+    text("名为 ") with mochaMaroon
+    text("<categoryId> ") with mochaText
+    text("的类别未找到") with mochaMaroon
+}
+
+val COMMAND_EXCHANGE_SHOP_TRANSACTIONS_SHOP_USER_NOT_FOUND = component {
+    text("玩家 ") with mochaMaroon
+    text("<input> ") with mochaText
+    text("的用户数据未找到") with mochaMaroon
+}
+
+const val EXCHANGE_SHOP_NONE = "无"
+
+val COMMAND_EXCHANGE_SHOP_TICKET = component {
+    text("» ") with mochaSubtext0
+    text("玩家 ") with mochaText
+    text("<player> ") with mochaFlamingo
+    text("的${TICKET_NAME}信息") with mochaText
+    newline()
+
+    text("- ") with mochaSubtext0
+    text("当前持有: ") with mochaText
+    text("<currentTicket>/<recoveryCap>") with mochaYellow
+    newline()
+
+    text("- ") with mochaSubtext0
+    text("上次恢复时间: ") with mochaText
+    text("<lastTicketRecoveryTime>") with mochaLavender
+    newline()
+
+    text("- ") with mochaSubtext0
+    text("计划恢复时间: ") with mochaText
+    text("<nextTicketRecoveryTime>") with mochaLavender
+    newline()
+
+    text("- ") with mochaSubtext0
+    text("完全恢复时间: ") with mochaText
+    text("<fullTicketRecoveryTime>") with mochaLavender
+}
+
+val COMMAND_EXCHANGE_SHOP_TICKET_OPERATION_FAILED_CANNOT_BE_NEGATIVE = component {
+    text("${TICKET_NAME}不能是负数") with mochaMaroon
+}
+
+val COMMAND_EXCHANGE_SHOP_TICKET_SET = component {
+    text("已将玩家 ") with mochaText
+    text("<player> ") with mochaFlamingo
+    text("的${TICKET_NAME}余额设置为 ") with mochaText
+    text("<amount>") with mochaLavender
+}
+
+val COMMAND_EXCHANGE_SHOP_TICKET_WITHDRAW = component {
+    text("已为玩家 ") with mochaText
+    text("<player> ") with mochaFlamingo
+    text("减少 ") with mochaText
+    text("<amount> ") with mochaLavender
+    text(TICKET_NAME) with mochaText
+}
+
+val COMMAND_EXCHANGE_SHOP_TICKET_WITHDRAW_FAILED_NOT_ENOUGH = component {
+    text("玩家 ") with mochaMaroon
+    text("<player> ") with mochaText
+    text("的${TICKET_NAME}不足") with mochaMaroon
+}
+
+val COMMAND_EXCHANGE_SHOP_TICKET_DEPOSIT = component {
+    text("已为玩家 ") with mochaText
+    text("<player> ") with mochaFlamingo
+    text("增加 ") with mochaText
+    text("<amount> ") with mochaLavender
+    text(TICKET_NAME) with mochaText
+}
+
+val COMMAND_EXCHANGE_SHOP_STATS = component {
+    text("数据库中共有 ") with mochaText
+    text("<users> ") with mochaLavender
+    text("条玩家数据与 ") with mochaText
+    text("<transactions> ") with mochaLavender
+    text("条交易信息") with mochaText
+}

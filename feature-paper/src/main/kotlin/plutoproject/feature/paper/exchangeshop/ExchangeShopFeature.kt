@@ -2,16 +2,20 @@ package plutoproject.feature.paper.exchangeshop
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import org.bukkit.permissions.Permission
+import org.bukkit.permissions.PermissionDefault
+import org.incendo.cloud.parser.ParserDescriptor
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.feature.paper.api.exchangeshop.ExchangeShop
+import plutoproject.feature.paper.api.exchangeshop.ShopCategory
+import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.api.menu.MenuManager
 import plutoproject.feature.paper.api.menu.isMenuAvailable
+import plutoproject.feature.paper.exchangeshop.commands.*
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.feature.paper.exchangeshop.ui.ExchangeShop
@@ -25,6 +29,7 @@ import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
+import plutoproject.framework.paper.util.command.CommandManager
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
 import java.util.logging.Logger
@@ -56,11 +61,35 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
         }
         featureLogger = logger
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
-        AnnotationParser.parse(TestCommand)
+        initializeCommands()
         if (isMenuAvailable) {
             MenuManager.registerButton(ExchangeShopButtonDescriptor) { ExchangeShop() }
         }
         ExchangeShop // 初始化并加载配置定义
+    }
+
+    @Suppress("UnstableApiUsage")
+    private fun initializeCommands() {
+        val permissions = listOf(
+            Permission(COMMAND_EXCHANGE_SHOP_TRANSACTIONS_PERMISSION, PermissionDefault.OP),
+            Permission(COMMAND_EXCHANGE_SHOP_TICKET_PERMISSION, PermissionDefault.OP),
+            Permission(COMMAND_EXCHANGE_SHOP_TICKET_SET_PERMISSION, PermissionDefault.OP),
+            Permission(COMMAND_EXCHANGE_SHOP_TICKET_WITHDRAW_PERMISSION, PermissionDefault.OP),
+            Permission(COMMAND_EXCHANGE_SHOP_TICKET_DEPOSIT_PERMISSION, PermissionDefault.OP),
+            Permission(COMMAND_EXCHANGE_SHOP_STATS_PERMISSION, PermissionDefault.OP),
+        )
+        server.pluginManager.addPermissions(permissions)
+        CommandManager.parserRegistry().apply {
+            registerSuggestionProvider("shop-category", ShopCategoryParser)
+            registerNamedParser("shop-category", ParserDescriptor.of(ShopCategoryParser, ShopCategory::class.java))
+            registerSuggestionProvider("shop-user", ShopUserParser)
+            registerNamedParser("shop-user", ParserDescriptor.of(ShopUserParser, ShopUser::class.java))
+        }
+        AnnotationParser.parse(
+            ExchangeShopCommand,
+            ShopCategoryNotFoundExceptionHandler,
+            ShopUserNotFoundExceptionHandler,
+        )
     }
 
     override fun onDisable() = runBlocking {
