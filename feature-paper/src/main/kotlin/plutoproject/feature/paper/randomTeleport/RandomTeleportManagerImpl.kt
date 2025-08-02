@@ -26,7 +26,7 @@ import plutoproject.feature.paper.teleport.TeleportConfig
 import plutoproject.framework.common.util.chat.ECONOMY_SYMBOL
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.toCurrencyFormattedString
-import plutoproject.framework.common.util.chat.toFormattedComponent
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.common.util.coroutine.withDefault
 import plutoproject.framework.common.util.data.map.mapKeysAndValues

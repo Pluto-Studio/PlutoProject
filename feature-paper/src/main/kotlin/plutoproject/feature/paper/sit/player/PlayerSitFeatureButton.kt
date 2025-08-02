@@ -9,6 +9,8 @@ import plutoproject.feature.paper.api.sit.player.PlayerSit
 import plutoproject.feature.paper.sit.*
 import plutoproject.feature.paper.sit.player.PlayerSitFeatureState.*
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
@@ -63,15 +65,16 @@ fun PlayerSitToggle() {
                 LOADING -> return@clickable
                 ENABLED -> {
                     PlayerSit.toggleFeature(player, false)
+                    player.playSound(UI_TOGGLE_OFF_SOUND)
                     state = DISABLED
                 }
 
                 DISABLED -> {
                     PlayerSit.toggleFeature(player, true)
+                    player.playSound(UI_TOGGLE_ON_SOUND)
                     state = ENABLED
                 }
             }
-            player.playSound(UI_SUCCEED_SOUND)
         }
     )
 }

@@ -4,7 +4,6 @@ import androidx.compose.runtime.*
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.replace
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
@@ -20,7 +19,7 @@ import plutoproject.feature.paper.teleport.COMMAND_TPAHERE_SUCCEED
 import plutoproject.feature.paper.teleport.COMMAND_TPA_SUCCEED
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.chat.toFormattedComponent
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.common.util.time.ticks
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable

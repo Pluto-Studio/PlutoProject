@@ -14,6 +14,8 @@ import plutoproject.feature.paper.api.dynamicScheduler.DynamicScheduler
 import plutoproject.feature.paper.api.dynamicScheduler.DynamicViewDistanceState
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
@@ -135,13 +137,13 @@ fun ViewBoost() {
             when (state) {
                 DynamicViewDistanceState.ENABLED -> {
                     DynamicScheduler.setViewDistance(player, false)
-                    player.playSound(UI_SUCCEED_SOUND)
+                    player.playSound(UI_TOGGLE_OFF_SOUND)
                     state = DynamicViewDistanceState.DISABLED
                 }
 
                 DynamicViewDistanceState.DISABLED -> {
                     DynamicScheduler.setViewDistance(player, true)
-                    player.playSound(UI_SUCCEED_SOUND)
+                    player.playSound(UI_TOGGLE_ON_SOUND)
                     state = DynamicViewDistanceState.ENABLED
                 }
 
