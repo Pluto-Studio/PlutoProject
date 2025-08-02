@@ -126,8 +126,8 @@ fun Ticket() {
             add(EXCHANGE_SHOP_TICKET_LORE_DESC_3)
 
             // 星币购买还没写
-            add(Component.empty())
-            add(EXCHANGE_SHOP_TICKET_LORE_OPERATION_BUY_TICKET.replace("<amount>", 1))
+            // add(Component.empty())
+            // add(EXCHANGE_SHOP_TICKET_LORE_OPERATION_BUY_TICKET.replace("<amount>", 1))
         }
     )
 }
