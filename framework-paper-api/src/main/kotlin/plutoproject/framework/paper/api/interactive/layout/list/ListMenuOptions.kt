@@ -7,7 +7,7 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Material
 
 class ListMenuOptions {
-    var title by mutableStateOf(Component.empty())
+    var title: Component by mutableStateOf(Component.empty())
     var rows by mutableStateOf(6)
     var topBorder by mutableStateOf(true)
     var bottomBorder by mutableStateOf(true)

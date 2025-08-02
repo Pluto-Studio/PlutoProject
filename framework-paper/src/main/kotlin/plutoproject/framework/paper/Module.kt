@@ -1,8 +1,8 @@
 package plutoproject.framework.paper
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
-import plutoproject.framework.common.api.provider.Provider
-import plutoproject.framework.common.api.rpc.RpcClient
+import plutoproject.framework.common.connection.initializeExternalConnections
+import plutoproject.framework.common.connection.shutdownExternalConnections
 import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.util.inject.Koin
 import plutoproject.framework.paper.api.interactive.GuiManager
@@ -15,8 +15,7 @@ import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
 
 fun loadFrameworkModules() {
-    RpcClient.start()
-    Provider
+    initializeExternalConnections()
 }
 
 fun enableFrameworkModules() {
@@ -39,6 +38,5 @@ private fun registerCommands() {
 fun disableFrameworkModules() {
     Koin.get<InternalDatabasePersist>().close()
     GuiManager.disposeAll()
-    Provider.close()
-    RpcClient.stop()
+    shutdownExternalConnections()
 }

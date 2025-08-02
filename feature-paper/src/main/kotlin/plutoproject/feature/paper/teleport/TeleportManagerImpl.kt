@@ -20,7 +20,7 @@ import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.UNUSUAL_ISSUE_OCCURRED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.title.replaceSubTitle
-import plutoproject.framework.common.util.chat.toFormattedComponent
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.common.util.coroutine.raceConditional
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.common.util.coroutine.withDefault

@@ -52,8 +52,6 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
             loadClassesInPackages(
                 "androidx",
                 "cafe.adriel.voyager",
-                "libs.com.google.protobuf",
-                "io.grpc",
                 classLoader = pluginClassLoader.libraryLoader
             )
             loadClassesInPackages(

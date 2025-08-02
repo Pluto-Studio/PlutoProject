@@ -2,14 +2,12 @@ package plutoproject.feature.paper.menu.prebuilt.buttons
 
 import androidx.compose.runtime.Composable
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import org.bukkit.Material
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
-import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.components.NotAvailable
@@ -28,7 +26,7 @@ fun Balance() {
         NotAvailable(
             material = Material.SUNFLOWER,
             name = component {
-                text("货币") with mochaYellow
+                text("星币") with mochaYellow
             }
         )
         return
@@ -36,17 +34,17 @@ fun Balance() {
     Item(
         material = Material.SUNFLOWER,
         name = component {
-            text("货币") with mochaYellow
+            text("星币") with mochaYellow
         },
         lore = buildList {
             add(component {
-                val balance = economy.getBalance(player).trimmedString()
+                val balance = economy.getBalance(player).toBigDecimal().stripTrailingZeros().toPlainString()
                 val economySymbol = economy.currencyNameSingular()
-                text("你的余额: ") with mochaSubtext0
+                text("余额: ") with mochaSubtext0
                 text("$balance$economySymbol") with mochaText
             })
             add(component {
-                text("可在「礼记」中到访来获取货币") with mochaSubtext0
+                text("可在「礼记」中到访以获取星币") with mochaSubtext0
             })
         }
     )

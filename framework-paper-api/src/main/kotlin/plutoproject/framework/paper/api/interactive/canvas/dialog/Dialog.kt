@@ -26,6 +26,7 @@ fun Dialog(
     canCloseWithEscape: Boolean = true,
     pause: Boolean = false,
     afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.NONE,
+    closeWhenDispose: Boolean = false,
     body: ComposableFunction = {},
     input: ComposableFunction = {},
 ) {
@@ -37,7 +38,7 @@ fun Dialog(
 
     DisposableEffect(Unit) {
         onDispose {
-            player.clearDialog()
+            if (closeWhenDispose) player.clearDialog()
         }
     }
 

@@ -8,6 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.*
 
+@Deprecated("替换为 UuidAsBsonBinarySerializer")
 object UuidSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("java_uuid", PrimitiveKind.STRING)
 

@@ -12,8 +12,8 @@ import org.bson.BsonDocument
 import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.databasepersist.adapters.SerializationTypeAdapter
-import plutoproject.framework.common.api.provider.Provider
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.common.util.logger
@@ -69,7 +69,7 @@ class DataChangeStream : KoinComponent {
     private fun extractPlayerId(event: ChangeStreamDocument<Document>): UUID {
         val updateInfo = when (event.operationType) {
             in FULL_DOCUMENT_OPERATION_TYPES -> (event.fullDocument?.getValue(ContainerModel::updateInfo.name) as Document)
-                .toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry)
+                .toBsonDocument(BsonDocument::class.java, MongoConnection.client.codecRegistry)
 
             OperationType.UPDATE -> event.updateDescription?.updatedFields?.getValue(ContainerModel::updateInfo.name) as BsonDocument
             else -> error("Unexpected")

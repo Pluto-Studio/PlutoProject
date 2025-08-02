@@ -7,6 +7,7 @@ import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
+import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.plugin
 import plutoproject.framework.velocity.util.server
 
@@ -17,7 +18,11 @@ import plutoproject.framework.velocity.util.server
 @Suppress("UNUSED")
 class VersionChecker : VelocityFeature() {
     private val featureModule = module {
-        single<VersionCheckerConfig> { loadConfig(saveConfig()) }
+        single<VersionCheckerConfig> {
+            loadConfig(saveConfig()) {
+                addDecoder(IntRangeDecoder)
+            }
+        }
     }
 
     override fun onEnable() {
@@ -25,5 +30,6 @@ class VersionChecker : VelocityFeature() {
             modules(featureModule)
         }
         server.eventManager.registerSuspend(plugin, PingListener)
+        AnnotationParser.parse(IgnoreCommand)
     }
 }

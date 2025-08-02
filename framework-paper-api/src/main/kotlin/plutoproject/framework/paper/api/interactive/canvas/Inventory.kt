@@ -35,7 +35,7 @@ fun Inventory(
     val scope = LocalGuiScope.current
     val canvas = remember { MapCanvas() }
 
-    LaunchedEffect(player) {
+    LaunchedEffect(player, inventory) {
         withSync {
             scope.setPendingRefreshIfNeeded(true)
             player.openInventory(inventory)

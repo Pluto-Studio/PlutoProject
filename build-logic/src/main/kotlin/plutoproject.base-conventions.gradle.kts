@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "club.plutoproject"
-version = "1.5.2"
+version = "1.6.0"
 
 val dependencyExtension =
     dependencies.extensions.create<PlutoDependencyHandlerExtension>(
@@ -27,7 +27,7 @@ repositories {
     maven("https://maven.nostal.ink/repository/maven-public")
     maven("https://maven.playpro.com/")
     maven("https://repo.opencollab.dev/main/")
-    maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://repo.codemc.org/repository/maven-public")
 }
 
 configurations.all {
@@ -36,8 +36,9 @@ configurations.all {
         force(libs.kotlin.reflect)
         force(libs.kotlin.serialization)
         force(libs.kotlinx.coroutine.core)
-        force(libs.guava) // grpc-api 传递的 guava 在下载时无法正确验证 hash，强制一个版本解决问题
+        force(libs.guava)
         force(libs.okio)
+        force(libs.adventure)
     }
 }
 
@@ -66,8 +67,6 @@ dependencies {
         downloadIfRequired(libs.bundles.mongodb)
         downloadIfRequired(libs.bundles.nightconfig)
         downloadIfRequired(libs.bundles.bytebuddy)
-        downloadIfRequired(libs.bundles.protobuf)
-        downloadIfRequired(libs.bundles.grpc)
         downloadIfRequired(libs.bundles.koin)
         downloadIfRequired(libs.bundles.hoplite)
         downloadIfRequired(libs.bundles.commons)

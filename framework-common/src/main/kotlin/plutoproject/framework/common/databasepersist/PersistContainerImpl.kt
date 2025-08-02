@@ -9,9 +9,9 @@ import org.bson.BsonValue
 import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.databasepersist.DataTypeAdapter
-import plutoproject.framework.common.api.databasepersist.PersistContainer
-import plutoproject.framework.common.api.provider.Provider
+import plutoproject.framework.common.util.coroutine.withIO
 import plutoproject.framework.common.util.data.collection.mutableConcurrentSetOf
 import plutoproject.framework.common.util.data.flatten
 import plutoproject.framework.common.util.data.getNested
@@ -24,7 +24,7 @@ import java.time.Instant
 import java.util.*
 import java.util.logging.Level
 
-class PersistContainerImpl(override val playerId: UUID) : PersistContainer, KoinComponent {
+class PersistContainerImpl(override val playerId: UUID) : InternalPersistContainer, KoinComponent {
     private val databasePersist by inject<InternalDatabasePersist>()
     private val repository by inject<ContainerRepository>()
     private val changeStream by inject<DataChangeStream>()
@@ -47,7 +47,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
     }
 
     private fun update(event: ChangeStreamDocument<Document>) {
-        when (event.operationType) {
+        when (event.operationType!!) {
             in FULL_DOCUMENT_OPERATION_TYPES -> {
                 val fullDocument = event.fullDocument?.getValue("data") as? BsonDocument ?: return
                 onFullDocumentChange(fullDocument.flatten())
@@ -197,8 +197,8 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
         }
 
         val projection = Projections.include("data.$key")
-        val document = repository.findByPlayerId(playerId, projection)
-            ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return null
+        val document = withIO { repository.findByPlayerId(playerId, projection) }
+            ?.toBsonDocument(BsonDocument::class.java, MongoConnection.client.codecRegistry) ?: return null
         val value = document.getNested("data.$key") ?: return null
         val entry = MemoryEntry(key, value, adapter, false)
 
@@ -242,7 +242,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
 
         val projection = Projections.include("data.$key")
         val document = repository.findByPlayerId(playerId, projection)
-            ?.toBsonDocument(BsonDocument::class.java, Provider.mongoClient.codecRegistry) ?: return false
+            ?.toBsonDocument(BsonDocument::class.java, MongoConnection.client.codecRegistry) ?: return false
 
         document.getNested("data.$key") ?: return false
         return true
@@ -268,7 +268,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
                 data = data
             )
             removedEntries.clear()
-            repository.save(model)
+            withIO { repository.save(model) }
             return
         }
 
@@ -291,7 +291,7 @@ class PersistContainerImpl(override val playerId: UUID) : PersistContainer, Koin
                 loadedEntries.replace(key, entry.copy(wasChangedSinceLastSave = false))
             }
 
-        repository.updateDocument(playerId, Updates.combine(updates))
+        withIO { repository.updateDocument(playerId, Updates.combine(updates)) }
     }
 
     override fun close() {

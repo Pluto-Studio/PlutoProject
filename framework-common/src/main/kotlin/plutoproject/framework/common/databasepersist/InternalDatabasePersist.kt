@@ -5,11 +5,11 @@ import plutoproject.framework.common.api.databasepersist.PersistContainer
 import java.time.Instant
 
 interface InternalDatabasePersist : DatabasePersist {
-    fun getLastUsedTimestamp(container: PersistContainer): Instant
+    fun getLastUsedTimestamp(container: InternalPersistContainer): Instant
 
-    fun setUsed(container: PersistContainer)
+    fun setUsed(container: InternalPersistContainer)
 
-    fun removeLoadedContainer(container: PersistContainer)
+    fun removeLoadedContainer(container: InternalPersistContainer)
 
     fun close()
 }

@@ -13,7 +13,7 @@ import plutoproject.feature.paper.teleport.screens.TeleportRequestScreen
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.chat.toFormattedComponent
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
 

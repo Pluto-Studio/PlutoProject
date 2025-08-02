@@ -1,25 +1,24 @@
 package plutoproject.framework.common
 
-import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import plutoproject.framework.common.api.connection.GeoIpConnection
+import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.api.profile.ProfileLookup
-import plutoproject.framework.common.api.provider.Provider
-import plutoproject.framework.common.api.provider.getCollection
-import plutoproject.framework.common.api.rpc.RpcClient
-import plutoproject.framework.common.api.rpc.RpcServer
 import plutoproject.framework.common.builddata.BuildInfoImpl
-import plutoproject.framework.common.config.ProviderConfig
-import plutoproject.framework.common.config.RpcConfig
-import plutoproject.framework.common.databasepersist.*
+import plutoproject.framework.common.connection.ExternalConnectionConfig
+import plutoproject.framework.common.connection.GeoIpConnectionImpl
+import plutoproject.framework.common.connection.MongoConnectionImpl
+import plutoproject.framework.common.databasepersist.ContainerRepository
+import plutoproject.framework.common.databasepersist.DataChangeStream
+import plutoproject.framework.common.databasepersist.DatabasePersistImpl
+import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.feature.FeatureManagerImpl
 import plutoproject.framework.common.profile.ProfileLookupImpl
 import plutoproject.framework.common.profile.ProfileRepository
-import plutoproject.framework.common.provider.ProviderImpl
-import plutoproject.framework.common.rpc.RpcClientImpl
-import plutoproject.framework.common.rpc.RpcServerImpl
 import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
 import plutoproject.framework.common.util.buildinfo.BuildInfo
 import plutoproject.framework.common.util.config.loadConfig
@@ -48,16 +47,13 @@ private fun getPlutoConfig(): PlutoConfig {
 val FrameworkCommonModule = module {
     single<PlutoConfig> { getPlutoConfig() }
     single<FeatureManager> { FeatureManagerImpl() }
-    single<ProviderConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "provider") }
-    single<RpcConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "rpc") }
-    single<Provider> { ProviderImpl() }
-    single<RpcClient> { RpcClientImpl() }
-    single<RpcServer> { RpcServerImpl() }
+    single<ExternalConnectionConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "connection") }
+    single<MongoConnection> { MongoConnectionImpl() }
+    single<GeoIpConnection> { GeoIpConnectionImpl() }
     single<ProfileLookup> { ProfileLookupImpl() }
-    single<ProfileRepository> { ProfileRepository(Provider.getCollection("framework_profile_profiles")) }
+    single<ProfileRepository> { ProfileRepository(MongoConnection.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
     single { DatabasePersistImpl() } binds arrayOf(DatabasePersist::class, InternalDatabasePersist::class)
-    single<MongoCollection<ContainerModel>> { Provider.getCollection("database_persist_containers") }
-    single<ContainerRepository> { ContainerRepository() }
+    single<ContainerRepository> { ContainerRepository(MongoConnection.getCollection("database_persist_containers")) }
     single { DataChangeStream() }
 }

@@ -15,10 +15,10 @@ import plutoproject.feature.paper.menu.prebuilt.buttons.*
 import plutoproject.feature.paper.menu.prebuilt.pages.AssistantPageDescriptor
 import plutoproject.feature.paper.menu.prebuilt.pages.HomePageDescriptor
 import plutoproject.feature.paper.menu.repositories.UserRepository
+import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.api.provider.Provider
-import plutoproject.framework.common.api.provider.getCollection
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
@@ -38,7 +38,7 @@ class MenuFeature : PaperFeature(), KoinComponent {
         single<MenuManager> { MenuManagerImpl() }
         single<PageDescriptorFactory> { PageDescriptorFactoryImpl() }
         single<ButtonDescriptorFactory> { ButtonDescriptorFactoryImpl() }
-        single<UserRepository> { UserRepository(Provider.getCollection("menu_user_data")) }
+        single<UserRepository> { UserRepository(MongoConnection.getCollection("menu_user_data")) }
         single<PersistMigrator> { PersistMigrator() }
     }
 

@@ -32,33 +32,35 @@ val TELEPORT_SUCCEED_MAINTITLE_CANDIDATES = arrayOf(
     "下车请注意安全"
 )
 
-val teleportSucceedTitle = title {
-    times {
-        fadeIn(Ticks.duration(5))
-        stay(Ticks.duration(35))
-        fadeOut(Ticks.duration(20))
+val teleportSucceedTitle
+    get() = title {
+        times {
+            fadeIn(Ticks.duration(5))
+            stay(Ticks.duration(35))
+            fadeOut(Ticks.duration(20))
+        }
+        mainTitle {
+            text(TELEPORT_SUCCEED_MAINTITLE_CANDIDATES.random()) with mochaGreen
+        }
+        subTitle {
+            text("已传送至目标位置") with mochaText
+        }
     }
-    mainTitle {
-        text(TELEPORT_SUCCEED_MAINTITLE_CANDIDATES.random()) with mochaGreen
-    }
-    subTitle {
-        text("已传送至目标位置") with mochaText
-    }
-}
 
-val teleportSucceedTitleSafe = title {
-    times {
-        fadeIn(Ticks.duration(5))
-        stay(Ticks.duration(35))
-        fadeOut(Ticks.duration(20))
+val teleportSucceedTitleSafe
+    get() = title {
+        times {
+            fadeIn(Ticks.duration(5))
+            stay(Ticks.duration(35))
+            fadeOut(Ticks.duration(20))
+        }
+        mainTitle {
+            text(TELEPORT_SUCCEED_MAINTITLE_CANDIDATES.random()) with mochaGreen
+        }
+        subTitle {
+            text("已传送至附近的安全位置") with mochaText
+        }
     }
-    mainTitle {
-        text(TELEPORT_SUCCEED_MAINTITLE_CANDIDATES.random()) with mochaGreen
-    }
-    subTitle {
-        text("已传送至附近的安全位置") with mochaText
-    }
-}
 
 val TELEPORT_FAILED_TITLE = title {
     times {

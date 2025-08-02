@@ -16,8 +16,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMauve
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.chat.toCurrencyFormattedString
-import plutoproject.framework.common.util.chat.toFormattedString
+import plutoproject.framework.common.util.time.toFormattedString
 import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable

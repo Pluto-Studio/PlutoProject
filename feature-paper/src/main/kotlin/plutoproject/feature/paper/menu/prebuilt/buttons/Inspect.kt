@@ -2,7 +2,6 @@ package plutoproject.feature.paper.menu.prebuilt.buttons
 
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
@@ -12,6 +11,8 @@ import plutoproject.feature.paper.menu.hooks.CO_NEAR_COMMAND
 import plutoproject.feature.paper.menu.hooks.isCoreProtectAvailable
 import plutoproject.feature.paper.menu.hooks.isInspecting
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
@@ -81,9 +82,14 @@ fun Inspect() {
         modifier = Modifier.clickable {
             when (clickType) {
                 ClickType.LEFT -> {
-                    player.isInspecting = !isInspecting
-                    isInspecting = !isInspecting
-                    player.playSound(UI_SUCCEED_SOUND)
+                    val newState = !isInspecting
+                    player.isInspecting = newState
+                    isInspecting = newState
+                    if (newState) {
+                        player.playSound(UI_TOGGLE_ON_SOUND)
+                    } else {
+                        player.playSound(UI_TOGGLE_OFF_SOUND)
+                    }
                     return@clickable
                 }
 

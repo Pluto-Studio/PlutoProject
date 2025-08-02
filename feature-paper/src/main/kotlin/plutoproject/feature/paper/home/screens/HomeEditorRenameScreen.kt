@@ -52,7 +52,7 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                         DialogBody.plainMessage(UI_DIALOG_NAME_INPUT_RENAMING.replace("<name>", home.name), 1024)
                     }
                     ItemBody(
-                        item = ItemStack(Material.NAME_TAG),
+                        itemStack = ItemStack(Material.NAME_TAG),
                         description = plainMessage,
                         showDecorations = false,
                         showTooltip = false,

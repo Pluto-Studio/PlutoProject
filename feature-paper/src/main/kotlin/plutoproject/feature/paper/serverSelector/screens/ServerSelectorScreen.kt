@@ -18,6 +18,8 @@ import plutoproject.feature.paper.serverSelector.transferServer
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
+import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.coroutine.runAsync
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
@@ -185,12 +187,13 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
                 if (state == DISABLED) {
                     container.set(AUTO_JOIN_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, true)
                     state = ENABLED
+                    player.playSound(UI_TOGGLE_ON_SOUND)
                 } else {
                     container.set(AUTO_JOIN_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, false)
                     state = DISABLED
+                    player.playSound(UI_TOGGLE_OFF_SOUND)
                 }
                 container.save()
-                player.playSound(UI_SUCCEED_SOUND)
             }
         )
     }

@@ -5,7 +5,7 @@ import ink.pmc.advkt.title.*
 import net.kyori.adventure.util.Ticks
 import plutoproject.feature.paper.api.randomTeleport.RandomTeleportManager
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.chat.toFormattedComponent
+import plutoproject.framework.common.util.time.toFormattedComponent
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
