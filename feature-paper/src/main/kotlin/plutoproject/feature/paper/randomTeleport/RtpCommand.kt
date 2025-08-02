@@ -7,7 +7,7 @@ import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.randomTeleport.RandomTeleportManager
 import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.chat.toFormattedString
+import plutoproject.framework.common.util.time.toFormattedString
 import plutoproject.framework.paper.util.command.ensurePlayer
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration

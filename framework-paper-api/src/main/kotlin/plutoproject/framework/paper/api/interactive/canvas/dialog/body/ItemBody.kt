@@ -9,15 +9,15 @@ import org.bukkit.inventory.ItemStack
 @Composable
 @Suppress("UnstableApiUsage")
 fun ItemBody(
-    item: ItemStack,
+    itemStack: ItemStack,
     description: PlainMessageDialogBody? = null,
     showDecorations: Boolean = true,
     showTooltip: Boolean = true,
     width: Int = 16,
     height: Int = 16,
 ) {
-    BodyElement(remember(item, description, showDecorations, showTooltip, width, height) {
-        DialogBody.item(item)
+    BodyElement(remember(itemStack, description, showDecorations, showTooltip, width, height) {
+        DialogBody.item(itemStack)
             .description(description)
             .showDecorations(showDecorations)
             .showTooltip(showTooltip)

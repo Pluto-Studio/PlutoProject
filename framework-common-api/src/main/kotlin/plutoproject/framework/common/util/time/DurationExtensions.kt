@@ -1,4 +1,4 @@
-package plutoproject.framework.common.util.chat
+package plutoproject.framework.common.util.time
 
 import net.kyori.adventure.text.Component
 import kotlin.time.Duration
@@ -50,3 +50,7 @@ fun JavaDuration.toFormattedString() = toKotlinDuration().toFormattedString()
 fun Duration.toFormattedComponent(): Component = Component.text(toFormattedString())
 
 fun JavaDuration.toFormattedComponent(): Component = Component.text(toFormattedString())
+
+operator fun JavaDuration.times(multiplicand: Long): JavaDuration {
+    return multipliedBy(multiplicand)
+}
