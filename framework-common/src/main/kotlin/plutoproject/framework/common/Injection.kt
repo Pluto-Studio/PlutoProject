@@ -1,6 +1,5 @@
 package plutoproject.framework.common
 
-import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.dsl.binds
 import org.koin.dsl.module
 import plutoproject.framework.common.api.connection.GeoIpConnection
@@ -13,7 +12,10 @@ import plutoproject.framework.common.builddata.BuildInfoImpl
 import plutoproject.framework.common.connection.ExternalConnectionConfig
 import plutoproject.framework.common.connection.GeoIpConnectionImpl
 import plutoproject.framework.common.connection.MongoConnectionImpl
-import plutoproject.framework.common.databasepersist.*
+import plutoproject.framework.common.databasepersist.ContainerRepository
+import plutoproject.framework.common.databasepersist.DataChangeStream
+import plutoproject.framework.common.databasepersist.DatabasePersistImpl
+import plutoproject.framework.common.databasepersist.InternalDatabasePersist
 import plutoproject.framework.common.feature.FeatureManagerImpl
 import plutoproject.framework.common.profile.ProfileLookupImpl
 import plutoproject.framework.common.profile.ProfileRepository
@@ -52,7 +54,6 @@ val FrameworkCommonModule = module {
     single<ProfileRepository> { ProfileRepository(MongoConnection.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
     single { DatabasePersistImpl() } binds arrayOf(DatabasePersist::class, InternalDatabasePersist::class)
-    single<MongoCollection<ContainerModel>> { MongoConnection.getCollection("database_persist_containers") }
-    single<ContainerRepository> { ContainerRepository() }
+    single<ContainerRepository> { ContainerRepository(MongoConnection.getCollection("database_persist_containers")) }
     single { DataChangeStream() }
 }
