@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.bson.BsonBinary
 import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
@@ -20,7 +18,9 @@ import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepository
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.api.connection.MongoConnection
+import plutoproject.framework.common.util.coroutine.ConfinementExecutor
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
+import plutoproject.framework.common.util.coroutine.withIO
 import plutoproject.framework.common.util.data.flow.getValue
 import plutoproject.framework.common.util.data.flow.setValue
 import plutoproject.framework.paper.util.coroutine.withSync
@@ -45,8 +45,9 @@ class ShopUserImpl(
     private val userRepo by inject<UserRepository>()
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
-    private val ticketLock = Mutex()
+
     private val coroutineScope: CoroutineScope = exchangeShop.coroutineScope.createSupervisorChild() + Dispatchers.IO
+    private val confinementExecutor = ConfinementExecutor(coroutineScope)
 
     private var isDirty by MutableStateFlow(false)
     private var _ticket by MutableStateFlow(ticket)
@@ -84,14 +85,14 @@ class ShopUserImpl(
         }
     }
 
-    private suspend fun performOfflineRecovery() = ticketLock.withLock {
-        if (scheduledTicketRecoveryTime == null) return
+    private suspend fun performOfflineRecovery() = confinementExecutor.execute {
+        if (scheduledTicketRecoveryTime == null) return@execute
         val currentTime = Instant.now()
 
         // 已计划的恢复还没有截止，继续它
         if (scheduledTicketRecoveryTime!!.isAfter(currentTime)) {
             scheduleTicketRecovery(scheduledTicketRecoveryTime!!)
-            return
+            return@execute
         }
 
         // 已计划的恢复已经截止，计算剩余离线恢复量
@@ -106,7 +107,7 @@ class ShopUserImpl(
         scheduledTicketRecoveryTime = null
 
         markDirtyAndSave()
-        if (_ticket >= config.ticket.recoveryCap) return
+        if (_ticket >= config.ticket.recoveryCap) return@execute
 
         // 还没回满，计算到下次恢复已经经过的时长并开启新计划
         val intervalUntilNextRecovery = config.ticket.recoveryInterval.toMillis() - passedMillis
@@ -139,12 +140,12 @@ class ShopUserImpl(
 
         scheduledTicketRecovery = coroutineScope.launch {
             delay(interval)
-            ticketLock.withLock { performScheduledRecovery() }
+            performScheduledRecovery()
         }
     }
 
-    private suspend fun performScheduledRecovery() {
-        if (ticket >= config.ticket.recoveryCap) return
+    private suspend fun performScheduledRecovery() = confinementExecutor.execute {
+        if (ticket >= config.ticket.recoveryCap) return@execute
         _ticket = (_ticket + config.ticket.recoveryAmount).coerceIn(0, config.ticket.recoveryCap)
         lastTicketRecoveryTime = Instant.now()
         scheduledTicketRecovery = null
@@ -153,7 +154,7 @@ class ShopUserImpl(
 
         // 还没有恢复满，继续计划恢复
         if (ticket < config.ticket.recoveryCap) {
-            if (!coroutineScope.isActive || !isValid) return
+            if (!coroutineScope.isActive || !isValid) return@execute
             scheduleTicketRecovery(calculateNextRecoveryTime())
         }
     }
@@ -201,32 +202,38 @@ class ShopUserImpl(
         transactionRepo.update(model.id, Updates.combine(updates))
     }
 
-    override suspend fun withdrawTicket(amount: Long): Long = ticketLock.withLock {
+    override suspend fun withdrawTicket(amount: Long): Long {
         check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
-        require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
-        _ticket -= amount
-        markDirtyAndSave()
-        updateTicketRecoverySchedule()
-        return _ticket
+        return confinementExecutor.execute {
+            require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
+            _ticket -= amount
+            markDirtyAndSave()
+            updateTicketRecoverySchedule()
+            _ticket
+        }
     }
 
-    override suspend fun depositTicket(amount: Long): Long = ticketLock.withLock {
+    override suspend fun depositTicket(amount: Long): Long {
         check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
-        _ticket += amount
-        markDirtyAndSave()
-        updateTicketRecoverySchedule()
-        return _ticket
+        return confinementExecutor.execute {
+            _ticket += amount
+            markDirtyAndSave()
+            updateTicketRecoverySchedule()
+            _ticket
+        }
     }
 
-    override suspend fun setTicket(amount: Long): Long = ticketLock.withLock {
+    override suspend fun setTicket(amount: Long): Long {
         check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
-        _ticket = amount
-        markDirtyAndSave()
-        updateTicketRecoverySchedule()
-        return _ticket
+        return confinementExecutor.execute {
+            _ticket = amount
+            markDirtyAndSave()
+            updateTicketRecoverySchedule()
+            _ticket
+        }
     }
 
     override fun calculatePurchasableQuantity(shopItem: ShopItem): Long {
@@ -281,10 +288,19 @@ class ShopUserImpl(
         shopItem: ShopItem,
         amount: Int,
         checkAvailability: Boolean
-    ): Result<ShopTransaction> = ticketLock.withLock {
+    ): Result<ShopTransaction> {
         check(isValid) { "Instance is not valid" }
-        if (isDirty) saveWithoutLock()
+        return confinementExecutor.execute {
+            if (isDirty) save()
+            doTransaction(shopItem, amount, checkAvailability)
+        }
+    }
 
+    private suspend fun doTransaction(
+        shopItem: ShopItem,
+        amount: Int,
+        checkAvailability: Boolean
+    ): Result<ShopTransaction> {
         val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
         val cost = shopItem.price * amount.toBigDecimal()
         val ticketConsumption = shopItem.ticketConsumption * amount
@@ -322,9 +338,11 @@ class ShopUserImpl(
         )
         val transaction = ShopTransactionImpl(transactionModel)
 
-        val databaseResult = MongoConnection.withTransaction {
-            userRepo.update(it, uniqueId, Updates.set("ticket", ticketAfterTransaction))
-            transactionRepo.insert(it, transactionModel)
+        val databaseResult = withIO {
+            MongoConnection.withTransaction {
+                userRepo.update(it, uniqueId, Updates.set("ticket", ticketAfterTransaction))
+                transactionRepo.insert(it, transactionModel)
+            }
         }
 
         if (databaseResult.isFailure) {
@@ -353,32 +371,38 @@ class ShopUserImpl(
         }
     }
 
-    override suspend fun save() = ticketLock.withLock {
+    override suspend fun save() {
         check(isValid) { "Instance is not valid" }
-        saveWithoutLock()
+        confinementExecutor.execute {
+            doSave()
+        }
     }
 
     private suspend fun markDirtyAndSave() {
         check(isValid) { "Instance is not valid" }
         isDirty = true
-        saveWithoutLock()
+        doSave()
     }
 
-    private suspend fun saveWithoutLock() = withContext(Dispatchers.IO) {
-        check(isValid) { "Instance is not valid" }
-        if (!isDirty) return@withContext
+    private suspend fun doSave() {
+        if (!isDirty) return
         val updates = Updates.combine(
             Updates.set("ticket", ticket),
             Updates.set("lastTicketRecoveryTime", lastTicketRecoveryTime),
             Updates.set("scheduledTicketRecoveryTime", scheduledTicketRecoveryTime)
         )
-        userRepo.update(uniqueId, updates)
+        withIO {
+            userRepo.update(uniqueId, updates)
+        }
         isDirty = false
     }
 
-    override suspend fun close(): Unit = ticketLock.withLock {
+    override suspend fun close() {
         check(isValid) { "Instance is not valid" }
-        unscheduleTicketRecovery(true)
+        confinementExecutor.execute {
+            unscheduleTicketRecovery(true)
+        }
+        confinementExecutor.cancelAndJoin()
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false
     }
