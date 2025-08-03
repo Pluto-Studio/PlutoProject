@@ -202,7 +202,7 @@ class ShopUserImpl(
     }
 
     override suspend fun withdrawTicket(amount: Long): Long = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
         require(ticket >= amount) { "Insufficient tickets for `$uniqueId`, only $ticket left" }
         _ticket -= amount
@@ -212,7 +212,7 @@ class ShopUserImpl(
     }
 
     override suspend fun depositTicket(amount: Long): Long = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
         _ticket += amount
         markDirtyAndSave()
@@ -221,7 +221,7 @@ class ShopUserImpl(
     }
 
     override suspend fun setTicket(amount: Long): Long = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         require(amount >= 0) { "Ticket amount cannot be negative" }
         _ticket = amount
         markDirtyAndSave()
@@ -252,7 +252,7 @@ class ShopUserImpl(
         limit: Int?,
         filterBlock: TransactionFilterDsl.() -> Unit
     ): Flow<ShopTransaction> {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
@@ -269,7 +269,7 @@ class ShopUserImpl(
     }
 
     override suspend fun countTransactions(filterBlock: TransactionFilterDsl.() -> Unit): Long {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         val filter = TransactionFilterDsl().apply {
             TransactionFilter.PlayerId eq uniqueId
             filterBlock()
@@ -282,7 +282,7 @@ class ShopUserImpl(
         amount: Int,
         checkAvailability: Boolean
     ): Result<ShopTransaction> = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         if (isDirty) saveWithoutLock()
 
         val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
@@ -347,25 +347,25 @@ class ShopUserImpl(
     }
 
     override suspend fun batchTransaction(purchases: Map<ShopItem, ShopTransactionParameters>): Map<ShopItem, Result<ShopTransaction>> {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         return purchases.entries.associate { (shopItemId, parameters) ->
             shopItemId to makeTransaction(shopItemId, parameters.amount, parameters.checkAvailability)
         }
     }
 
     override suspend fun save() = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         saveWithoutLock()
     }
 
     private suspend fun markDirtyAndSave() {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         isDirty = true
         saveWithoutLock()
     }
 
     private suspend fun saveWithoutLock() = withContext(Dispatchers.IO) {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         if (!isDirty) return@withContext
         val updates = Updates.combine(
             Updates.set("ticket", ticket),
@@ -377,7 +377,7 @@ class ShopUserImpl(
     }
 
     override suspend fun close(): Unit = ticketLock.withLock {
-        check(isValid) { "Instance not valid" }
+        check(isValid) { "Instance is not valid" }
         unscheduleTicketRecovery(true)
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false

@@ -1,12 +1,12 @@
 package plutoproject.feature.paper.exchangeshop
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
-import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -18,6 +18,8 @@ import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.util.coroutine.PlutoCoroutineScope
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.collection.toImmutable
+import plutoproject.framework.common.util.data.flow.getValue
+import plutoproject.framework.common.util.data.flow.setValue
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.paper.util.server
 import java.time.Instant
@@ -32,6 +34,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val loadedUsers = mutableConcurrentMapOf<UUID, InternalShopUser>()
     private val usersLoadedAt = mutableConcurrentMapOf<ShopUser, Instant>()
     private val autoUnloadJob: Job
+    private var isValid by MutableStateFlow(true)
 
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
     override val items: Collection<ShopItem>
@@ -105,10 +108,12 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun getUser(player: OfflinePlayer): ShopUser? {
+        check(isValid) { "Instance is not valid" }
         return getUser(player.uniqueId)
     }
 
     override suspend fun getUser(uniqueId: UUID): ShopUser? = userLock.withLock {
+        check(isValid) { "Instance is not valid" }
         if (loadedUsers.containsKey(uniqueId)) {
             return loadedUsers.getValue(uniqueId)
         }
@@ -121,14 +126,17 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun hasUser(player: OfflinePlayer): Boolean {
+        check(isValid) { "Instance is not valid" }
         return hasUser(player.uniqueId)
     }
 
     override suspend fun hasUser(uniqueId: UUID): Boolean = userLock.withLock {
+        check(isValid) { "Instance is not valid" }
         return hasUserWithoutLock(uniqueId)
     }
 
     override suspend fun createUser(player: OfflinePlayer): ShopUser {
+        check(isValid) { "Instance is not valid" }
         return createUser(player.uniqueId)
     }
 
@@ -138,6 +146,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun createUser(uniqueId: UUID): ShopUser = userLock.withLock {
+        check(isValid) { "Instance is not valid" }
         require(!hasUserWithoutLock(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
 
         val model = UserModel(
@@ -155,22 +164,27 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override suspend fun getUserOrCreate(player: OfflinePlayer): ShopUser {
+        check(isValid) { "Instance is not valid" }
         return getUserOrCreate(player.uniqueId)
     }
 
     override suspend fun getUserOrCreate(uniqueId: UUID): ShopUser {
+        check(isValid) { "Instance is not valid" }
         return getUser(uniqueId) ?: createUser(uniqueId)
     }
 
     override fun isUserLoaded(id: UUID): Boolean {
+        check(isValid) { "Instance is not valid" }
         return loadedUsers.containsKey(id)
     }
 
     override suspend fun loadUser(user: InternalShopUser) = userLock.withLock {
+        check(isValid) { "Instance is not valid" }
         loadUserWithoutLock(user)
     }
 
     override suspend fun unloadUser(id: UUID) = userLock.withLock {
+        check(isValid) { "Instance is not valid" }
         unloadUserWithoutLock(id)
     }
 
@@ -191,6 +205,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         name: Component,
         description: List<Component>
     ): ShopCategory {
+        check(isValid) { "Instance is not valid" }
         require(id.isValidIdentifier()) { "ID must contain only English letters, numbers and underscores: $id" }
         require(!hasCategory(id)) { "Shop category with ID `$id` already exists" }
 
@@ -206,19 +221,27 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     }
 
     override fun getCategory(id: String): ShopCategory? {
+        check(isValid) { "Instance is not valid" }
         return internalCategories[id]
     }
 
     override fun hasCategory(id: String): Boolean {
+        check(isValid) { "Instance is not valid" }
         return internalCategories.containsKey(id)
     }
 
     override fun removeCategory(id: String): ShopCategory? {
+        check(isValid) { "Instance is not valid" }
         return internalCategories.remove(id)
     }
 
     override suspend fun shutdown() {
+        check(isValid) { "Instance is not valid" }
+        loadedUsers.forEach { (_, user) -> user.close() }
+        loadedUsers.clear()
+        usersLoadedAt.clear()
         autoUnloadJob.cancelAndJoin()
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
+        isValid = false
     }
 }
