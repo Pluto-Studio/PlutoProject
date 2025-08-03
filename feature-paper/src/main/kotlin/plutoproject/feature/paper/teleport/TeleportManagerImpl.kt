@@ -78,16 +78,10 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
         registerLocationChecker("void") { l, o ->
             if (o.avoidVoid) l.y >= l.world.minHeight else true
         }
-        registerLocationChecker("solid") { l, _ ->
-            val foot = !l.block.isSolid
-            val head = !l.clone().add(0.0, 1.0, 0.0).block.isSolid
-            val stand = l.clone().subtract(0.0, 1.0, 0.0).block.isSolid
-            foot && head && stand
-        }
-        registerLocationChecker("fluid_state") { l, _ ->
-            val foot = (l.block as CraftBlock).nmsFluid.isEmpty
-            val head = (l.clone().add(0.0, 1.0, 0.0).block as CraftBlock).nmsFluid.isEmpty
-            val stand = (l.clone().subtract(0.0, 1.0, 0.0).block as CraftBlock).nmsFluid.isEmpty
+        registerLocationChecker("collision") { l, _ ->
+            val foot = !l.block.isCollidable
+            val head = !l.clone().add(0.0, 1.0, 0.0).block.isCollidable
+            val stand = l.clone().subtract(0.0, 1.0, 0.0).block.isCollidable
             foot && head && stand
         }
         registerLocationChecker("blacklist") { l, o ->
