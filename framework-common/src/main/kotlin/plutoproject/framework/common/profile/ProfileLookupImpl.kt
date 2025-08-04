@@ -1,12 +1,15 @@
 package plutoproject.framework.common.profile
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.profile.Profile
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import java.util.*
 
 class ProfileLookupImpl : ProfileLookup, KoinComponent {
@@ -20,7 +23,7 @@ class ProfileLookupImpl : ProfileLookup, KoinComponent {
         if (requestApi) {
             val fetched = MojangProfileFetcher.fetchByUuid(uuid)
             if (fetched != null) {
-                runAsync {
+                PluginScope.launch(Dispatchers.Loom) {
                     repo.save(ProfileModel(ObjectId(), fetched.uuid, fetched.name))
                 }
                 return ProfileImpl(fetched.uuid, fetched.name)
@@ -37,7 +40,7 @@ class ProfileLookupImpl : ProfileLookup, KoinComponent {
         if (requestApi) {
             val fetched = MojangProfileFetcher.fetchByName(name)
             if (fetched != null) {
-                runAsync {
+                PluginScope.launch(Dispatchers.Loom) {
                     repo.save(ProfileModel(ObjectId(), fetched.uuid, fetched.name))
                 }
                 return ProfileImpl(fetched.uuid, fetched.name)

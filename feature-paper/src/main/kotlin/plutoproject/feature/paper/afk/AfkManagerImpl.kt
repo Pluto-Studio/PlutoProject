@@ -1,13 +1,14 @@
 package plutoproject.feature.paper.afk
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.afk.AfkManager
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -21,7 +22,7 @@ class AfkManagerImpl : AfkManager, KoinComponent {
     override val idleDuration: Duration = conf.idleDuration
 
     init {
-        runAsync {
+        PluginScope.launch {
             while (!disabled) {
                 Bukkit.getOnlinePlayers().forEach {
                     val idle = it.idleDuration.toKotlinDuration()

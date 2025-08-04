@@ -1,5 +1,6 @@
 package plutoproject.framework.paper.interactive.inventory
 
+import kotlinx.coroutines.launch
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -9,7 +10,7 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import plutoproject.framework.common.util.chat.catchInteractiveException
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.GuiInventoryHolder
 import plutoproject.framework.paper.api.interactive.click.ClickScope
 
@@ -27,7 +28,7 @@ object InventoryListener : Listener {
         isCancelled = true
 
         val scope = ClickScope(view, click, slot, cursor.takeIf { it.type != Material.AIR }, whoClicked)
-        runAsync {
+        PluginScope.launch {
             catchInteractiveException(whoClicked) {
                 invHolder.processClick(scope, this@e)
             }
@@ -56,7 +57,7 @@ object InventoryListener : Listener {
             isCancelled = true
             val clicked = inInv.entries.first()
             val scope = ClickScope(view, LEFT, clicked.key, cursor?.takeIf { it.type != Material.AIR }, whoClicked)
-            runAsync {
+            PluginScope.launch {
                 catchInteractiveException(whoClicked) {
                     invHolder.processClick(scope, this@e)
                 }

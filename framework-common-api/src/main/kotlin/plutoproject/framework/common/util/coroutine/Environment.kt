@@ -10,10 +10,11 @@ private val logger = Logger.getLogger("PlutoProject/Coroutine")
 
 @OptIn(DelicateCoroutinesApi::class)
 fun shutdownCoroutineEnvironment() {
-    if (PlutoCoroutineScope.isActive) {
-        PlutoCoroutineScope.cancel()
+    if (PluginScope.isActive) {
+        PluginScope.cancel()
     }
     waitForCompletion()
+    shutdownLoomDispatcher()
     Dispatchers.shutdown()
 }
 

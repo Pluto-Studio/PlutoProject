@@ -3,8 +3,8 @@ package plutoproject.feature.paper.warp.screens
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
@@ -24,7 +24,7 @@ import plutoproject.framework.paper.api.interactive.layout.list.FilterListMenu
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.provider.timezone
 import plutoproject.framework.paper.api.worldalias.aliasOrName
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import java.time.ZonedDateTime
 
 class WarpListScreen : FilterListMenu<Warp, WarpFilter, WarpListScreenModel>(
@@ -128,7 +128,7 @@ class WarpListScreen : FilterListMenu<Warp, WarpFilter, WarpListScreenModel>(
                 when (clickType) {
                     ClickType.LEFT -> {
                         obj.teleport(player)
-                        withSync {
+                        withContext(player.coroutineContext) {
                             player.closeInventory()
                         }
                     }

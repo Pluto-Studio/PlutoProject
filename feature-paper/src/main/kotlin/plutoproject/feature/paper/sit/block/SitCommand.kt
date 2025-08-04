@@ -1,21 +1,22 @@
 package plutoproject.feature.paper.sit.block
 
+import kotlinx.coroutines.withContext
 import org.bukkit.block.Block
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Command
-import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.BlockSit
+import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
 import plutoproject.feature.paper.sit.*
 import plutoproject.framework.paper.util.command.ensurePlayer
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 object SitCommand {
     @Command("sit")
     suspend fun CommandSender.sit() = ensurePlayer {
         val target = getBlockStandingOn()
-        val result = withSync {
+        val result = withContext(coroutineContext) {
             BlockSit.sit(this@ensurePlayer, target, cause = SitOnBlockCause.COMMAND)
         }
 

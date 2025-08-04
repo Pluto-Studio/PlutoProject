@@ -16,6 +16,7 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * 获取服务器的 [CoroutineContext]。
+ *
  * 在 Paper 上为基于服务器 EventLoop 的 [CoroutineDispatcher]，在 Folia 上为 [GlobalRegionDispatcher]。
  */
 val Server.coroutineContext: CoroutineContext
@@ -23,6 +24,7 @@ val Server.coroutineContext: CoroutineContext
 
 /**
  * 获取实体的 [CoroutineContext]。
+ *
  * 在 Paper 上为基于服务器 EventLoop 的 [CoroutineDispatcher]，在 Folia 上为 [EntityDispatcher]。
  */
 val Entity.coroutineContext: CoroutineContext
@@ -30,6 +32,7 @@ val Entity.coroutineContext: CoroutineContext
 
 /**
  * 获取区块的 [CoroutineContext]。
+ *
  * 在 Paper 上为基于服务器 EventLoop 的 [CoroutineDispatcher]，在 Folia 上为 [ChunkDispatcher]。
  */
 val Chunk.coroutineContext: CoroutineContext
@@ -37,7 +40,8 @@ val Chunk.coroutineContext: CoroutineContext
 
 /**
  * 获取该位置区块的 [CoroutineContext]。
+ *
  * 在 Paper 上为基于服务器 EventLoop 的 [CoroutineDispatcher]，在 Folia 上为 [ChunkDispatcher]。
  */
-val Location.coroutineContext
+val Location.coroutineContext: CoroutineContext
     get() = chunk.coroutineContext

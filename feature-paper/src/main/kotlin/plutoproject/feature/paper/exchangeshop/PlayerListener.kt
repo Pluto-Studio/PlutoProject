@@ -9,6 +9,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plutoproject.framework.common.util.coroutine.Loom
 
 @Suppress("UNUSED", "UnusedReceiverParameters")
 object PlayerListener : Listener, KoinComponent {
@@ -16,7 +17,7 @@ object PlayerListener : Listener, KoinComponent {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerJoinEvent.onPlayerJoin() {
-        exchangeShop.coroutineScope.launch(Dispatchers.IO) {
+        exchangeShop.coroutineScope.launch(Dispatchers.Loom) {
             exchangeShop.getUserOrCreate(player)
         }
     }

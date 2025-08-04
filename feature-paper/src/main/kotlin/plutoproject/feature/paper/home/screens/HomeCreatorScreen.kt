@@ -3,13 +3,15 @@ package plutoproject.feature.paper.home.screens
 import androidx.compose.runtime.*
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.canvas.dialog.body.PlainMessageBody
@@ -79,7 +81,7 @@ class HomeCreatorScreen : InteractiveScreen() {
                         return@launch
                     }
 
-                    runAsync {
+                    PluginScope.launch(Dispatchers.Loom) {
                         HomeManager.create(player, input, player.location)
                     }
 

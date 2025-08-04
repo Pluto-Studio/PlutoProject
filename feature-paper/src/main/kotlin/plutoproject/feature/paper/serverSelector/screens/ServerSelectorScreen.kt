@@ -3,6 +3,7 @@ package plutoproject.feature.paper.serverSelector.screens
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
@@ -17,11 +18,10 @@ import plutoproject.feature.paper.serverSelector.screens.ServerSelectorScreen.Au
 import plutoproject.feature.paper.serverSelector.transferServer
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
-import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
 import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
@@ -36,7 +36,7 @@ import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxWidth
 import plutoproject.framework.paper.api.interactive.modifiers.height
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 private val titles = arrayOf(
     "开始新的征程！",
@@ -122,8 +122,8 @@ class ServerSelectorScreen : InteractiveScreen(), KoinComponent {
             modifier = Modifier.clickable {
                 if (clickType != ClickType.LEFT) return@clickable
                 // if (!isOnline) return@clickable
-                runAsync { player.transferServer(server.serverId) }
-                withSync { player.closeInventory() }
+                PluginScope.launch { player.transferServer(server.serverId) }
+                PluginScope.launch(player.coroutineContext) { player.closeInventory() }
             }
         )
     }

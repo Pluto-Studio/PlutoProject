@@ -1,5 +1,7 @@
 package plutoproject.feature.paper.home.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotation.specifier.Greedy
 import org.incendo.cloud.annotations.Argument
@@ -9,7 +11,8 @@ import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.command.ensurePlayer
 
 @Suppress("UNUSED")
@@ -21,7 +24,7 @@ object EditHomeCommand {
             sendMessage(COMMAND_EDITHOME_FAILED_ALREADY_PREFERRED.replace("<name>", home.name))
             return
         }
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             home.setPreferred(true)
         }
         sendMessage(COMMAND_EDITHOME_PREFER.replace("<name>", home.name))
@@ -34,7 +37,7 @@ object EditHomeCommand {
             sendMessage(COMMAND_EDITHOME_FAILED_ALREADY_STARRED.replace("<name>", home.name))
             return
         }
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             home.isStarred = true
             home.update()
         }
@@ -51,7 +54,7 @@ object EditHomeCommand {
             sendMessage(COMMAND_SETHOME_FAILED_NAME_LENGTH_LIMIT)
             return
         }
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             home.name = name
             home.update()
         }
@@ -61,7 +64,7 @@ object EditHomeCommand {
     @Command("edithome <home> move")
     @Permission("essentials.edithome")
     fun CommandSender.move(@Argument("home", parserName = "home") home: Home) = ensurePlayer {
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             home.location = location
             home.update()
         }

@@ -1,5 +1,7 @@
 package plutoproject.feature.paper.warp.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
@@ -11,7 +13,8 @@ import plutoproject.feature.paper.warp.COMMAND_SETWARP_SUCCEED
 import plutoproject.feature.paper.warp.COMMAND_SETWARP_SUCCEED_ALIAS
 import plutoproject.feature.paper.warp.commandSetwarpFailedLengthLimit
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.command.ensurePlayer
 
 @Suppress("UNUSED")
@@ -31,7 +34,7 @@ object SetWarpCommand {
             sendMessage(commandSetwarpFailedLengthLimit)
             return
         }
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             WarpManager.create(name, location, alias)
         }
         if (alias == null) {

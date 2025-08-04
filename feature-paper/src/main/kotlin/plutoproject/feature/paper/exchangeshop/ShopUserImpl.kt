@@ -10,6 +10,8 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.bson.BsonBinary
 import org.bson.conversions.Bson
 import org.bukkit.OfflinePlayer
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.exchangeshop.*
@@ -19,11 +21,11 @@ import plutoproject.feature.paper.exchangeshop.repositories.TransactionRepositor
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.util.coroutine.ConfinementExecutor
+import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
-import plutoproject.framework.common.util.coroutine.withIO
 import plutoproject.framework.common.util.data.flow.getValue
 import plutoproject.framework.common.util.data.flow.setValue
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
 import plutoproject.framework.paper.util.server
@@ -46,7 +48,7 @@ class ShopUserImpl(
     private val transactionRepo by inject<TransactionRepository>()
     private val exchangeShop by inject<InternalExchangeShop>()
 
-    private val coroutineScope: CoroutineScope = exchangeShop.coroutineScope.createSupervisorChild() + Dispatchers.IO
+    private val coroutineScope: CoroutineScope = exchangeShop.coroutineScope.createSupervisorChild() + Dispatchers.Loom
     private val confinementExecutor = ConfinementExecutor(coroutineScope)
 
     private var isDirty by MutableStateFlow(false)
@@ -338,7 +340,7 @@ class ShopUserImpl(
         )
         val transaction = ShopTransactionImpl(transactionModel)
 
-        val databaseResult = withIO {
+        val databaseResult = withContext(Dispatchers.Loom) {
             MongoConnection.withTransaction {
                 userRepo.update(it, uniqueId, Updates.set("ticket", ticketAfterTransaction))
                 transactionRepo.insert(it, transactionModel)
@@ -354,14 +356,17 @@ class ShopUserImpl(
         _ticket -= ticketConsumption
         vaultHook?.economy!!.withdrawPlayer(player, cost.toDouble())
         updateTicketRecoverySchedule()
-
-        withSync {
-            repeat(amount) {
-                player.player?.inventory?.addItemOrDrop(shopItem.itemStack)
-            }
-        }
+        player.player?.addTransactionItem(shopItem.itemStack, amount)
 
         return Result.success(transaction)
+    }
+
+    private suspend fun Player.addTransactionItem(itemStack: ItemStack, amount: Int) {
+        withContext(coroutineContext) {
+            repeat(amount) {
+                inventory.addItemOrDrop(itemStack)
+            }
+        }
     }
 
     override suspend fun batchTransaction(purchases: Map<ShopItem, ShopTransactionParameters>): Map<ShopItem, Result<ShopTransaction>> {
@@ -391,7 +396,7 @@ class ShopUserImpl(
             Updates.set("lastTicketRecoveryTime", lastTicketRecoveryTime),
             Updates.set("scheduledTicketRecoveryTime", scheduledTicketRecoveryTime)
         )
-        withIO {
+        withContext(Dispatchers.Loom) {
             userRepo.update(uniqueId, updates)
         }
         isDirty = false

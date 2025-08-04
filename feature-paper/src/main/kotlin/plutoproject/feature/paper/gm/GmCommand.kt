@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.gm
 
+import kotlinx.coroutines.withContext
 import org.bukkit.GameMode
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -10,12 +11,12 @@ import plutoproject.framework.common.util.chat.PLAYER_ONLY_COMMAND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.command.selectPlayer
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
-private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = withSync {
+private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = withContext(server.coroutineContext) {
     val actualPlayer = selectPlayer(this@gm, player) ?: run {
         sendMessage(PLAYER_ONLY_COMMAND)
-        return@withSync
+        return@withContext
     }
     val mode = when (gameMode) {
         GameMode.SURVIVAL -> SURVIVAL
@@ -25,7 +26,7 @@ private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = with
     }
     if (this != actualPlayer && actualPlayer.gameMode == gameMode) {
         sendMessage(COMMAND_GM_OTHER_FAILED_SAME_GAMEMODE)
-        return@withSync
+        return@withContext
     }
     if (this != actualPlayer) {
         actualPlayer.gameMode = gameMode
@@ -34,12 +35,12 @@ private suspend fun CommandSender.gm(gameMode: GameMode, player: Player?) = with
                 .replace("<player>", actualPlayer.name)
                 .replace("<gamemode>", mode)
         )
-        return@withSync
+        return@withContext
     }
     ensurePlayer {
         if (this.gameMode == gameMode) {
             sendMessage(COMMAND_GM_FAILED_SAME_GAMEMODE)
-            return@withSync
+            return@withContext
         }
         this.gameMode = gameMode
         sendMessage(COMMAND_GM.replace("<gamemode>", mode))

@@ -1,9 +1,12 @@
 package plutoproject.feature.paper.daily
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.bukkit.OfflinePlayer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -13,8 +16,8 @@ import plutoproject.feature.paper.api.daily.DailyUser
 import plutoproject.feature.paper.daily.models.DailyUserModel
 import plutoproject.feature.paper.daily.repositories.DailyHistoryRepository
 import plutoproject.feature.paper.daily.repositories.DailyUserRepository
-import plutoproject.framework.common.util.coroutine.runAsync
-import plutoproject.framework.common.util.coroutine.runAsyncIO
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.convertToUuid
 import plutoproject.framework.common.util.time.LocalZoneId
 import plutoproject.framework.common.util.time.atEndOfDay
@@ -36,11 +39,11 @@ class DailyImpl : Daily, KoinComponent {
     private val historyCaches = Caffeine.newBuilder()
         .expireAfterAccess(10, TimeUnit.MINUTES)
         .buildAsync<UUID, DailyHistory?> { k, _ ->
-            runAsyncIO { loadHistory(k) }.asCompletableFuture()
+            PluginScope.async(Dispatchers.Loom) { loadHistory(k) }.asCompletableFuture()
         }
 
     init {
-        runAsync {
+        PluginScope.launch {
             while (!isShutdown) {
                 delay(10.minutes)
                 loadedUsers.entries.removeIf { !it.value.player.isOnline }

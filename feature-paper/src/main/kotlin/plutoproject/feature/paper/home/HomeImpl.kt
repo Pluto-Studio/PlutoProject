@@ -1,5 +1,8 @@
 package plutoproject.feature.paper.home
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
@@ -11,7 +14,7 @@ import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.api.home.HomeTeleportEvent
 import plutoproject.feature.paper.api.teleport.TeleportManager
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.data.models.toModel
 import java.time.Instant
 import java.util.*
@@ -36,7 +39,7 @@ class HomeImpl(private val model: HomeModel) : Home, KoinComponent {
     override val isLoaded: Boolean get() = HomeManager.isLoaded(id)
 
     override fun teleport(player: Player, prompt: Boolean) {
-        runAsync {
+        PluginScope.launch {
             teleportSuspend(player, prompt)
         }
     }
@@ -60,11 +63,11 @@ class HomeImpl(private val model: HomeModel) : Home, KoinComponent {
     }
 
     override suspend fun teleportSuspend(player: Player, prompt: Boolean) {
-        plutoproject.framework.common.util.coroutine.withDefault {
+        withContext(Dispatchers.Default) {
             val options = TeleportManager.getWorldTeleportOptions(location.world).copy(disableSafeCheck = true)
             // 必须异步触发
             val event = HomeTeleportEvent(player, player.location, this@HomeImpl).apply { callEvent() }
-            if (event.isCancelled) return@withDefault
+            if (event.isCancelled) return@withContext
             TeleportManager.teleportSuspend(player, location, options, prompt)
         }
     }

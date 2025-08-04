@@ -1,9 +1,11 @@
 package plutoproject.feature.paper.elevator.builders
 
+import kotlinx.coroutines.launch
 import org.bukkit.Location
 import org.bukkit.Material
 import plutoproject.feature.paper.api.elevator.ElevatorBuilder
-import plutoproject.framework.paper.util.coroutine.runSync
+import plutoproject.framework.common.util.coroutine.PluginScope
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.world.location.viewAligned
 
 @Suppress("UNUSED")
@@ -19,7 +21,7 @@ object IronElevatorBuilder : ElevatorBuilder {
 
         // TODO: 重写
         // 我怎么看不懂我自己写的代码了...
-        val up = loc.runSync {
+        val up = PluginScope.launch(loc.coroutineContext) {
             val top = loc.world.maxHeight
             val curr = loc.blockY
             val temp = mutableListOf<Location>()
@@ -32,7 +34,7 @@ object IronElevatorBuilder : ElevatorBuilder {
             offsetUp.addAll(filterSafe(temp))
         }
 
-        val down = loc.runSync {
+        val down = PluginScope.launch(loc.coroutineContext) {
             val bottom = loc.world.minHeight
             val curr = loc.blockY
             val temp = mutableListOf<Location>()

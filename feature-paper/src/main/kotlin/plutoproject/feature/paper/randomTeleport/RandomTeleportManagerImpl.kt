@@ -3,8 +3,10 @@ package plutoproject.feature.paper.randomTeleport
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.common.collect.Multimaps
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import net.minecraft.server.level.ChunkLevel
 import net.minecraft.server.level.FullChunkStatus
@@ -26,10 +28,9 @@ import plutoproject.feature.paper.teleport.TeleportConfig
 import plutoproject.framework.common.util.chat.ECONOMY_SYMBOL
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.toCurrencyFormattedString
-import plutoproject.framework.common.util.time.toFormattedComponent
-import plutoproject.framework.common.util.coroutine.runAsync
-import plutoproject.framework.common.util.coroutine.withDefault
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.map.mapKeysAndValues
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.common.util.trimmedString
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.plugin
@@ -187,19 +188,21 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
             return safeLocation(dx, dz)
         }
 
-        return withDefault { searchLocation() }
+        return withContext(Dispatchers.Default) {
+            searchLocation()
+        }
     }
 
     override suspend fun random(world: World, options: RandomTeleportOptions?): RandomResult {
         val opt = options ?: getRandomTeleportOptions(world)
-        return withDefault<RandomResult> {
+        return withContext<RandomResult>(Dispatchers.Default) {
             var attempts = 0
             repeat(opt.maxAttempts) {
                 attempts++
                 val loc = randomOnce(world, opt)
-                if (loc != null) return@withDefault RandomResult(attempts, loc)
+                if (loc != null) return@withContext RandomResult(attempts, loc)
             }
-            return@withDefault RandomResult(attempts, null)
+            return@withContext RandomResult(attempts, null)
         }
     }
 
@@ -235,7 +238,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
         options: RandomTeleportOptions?,
         prompt: Boolean
     ) {
-        runAsync {
+        PluginScope.launch {
             launchSuspend(player, world, options, prompt)
         }
     }
@@ -286,13 +289,13 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
         options: RandomTeleportOptions?,
         prompt: Boolean
     ) {
-        withDefault {
+        withContext(Dispatchers.Default) {
             check(!isInCooldown(player)) { "Player ${player.name} is still in cooldown" }
             if (inTeleport.contains(player)) {
                 if (prompt) {
                     player.sendMessage(RANDOM_TELEPORT_FAILED_IN_PROGRESS)
                 }
-                return@withDefault
+                return@withContext
             }
 
             val defaultOpt = getRandomTeleportOptions(world)
@@ -314,7 +317,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
                             .replace("<symbol>", symbol)
                             .replace("<balance>", balance.toCurrencyFormattedString())
                     )
-                    return@withDefault
+                    return@withContext
                 }
                 economy.withdrawPlayer(player, cost)
                 costed = true
@@ -345,12 +348,12 @@ class RandomTeleportManagerImpl : RandomTeleportManager, KoinComponent {
                     player.sendMessage(RANDOM_TELEPORT_SEARCH_FAILED)
                 }
                 inTeleport.remove(player)
-                return@withDefault
+                return@withContext
             }
 
             // 必须异步触发
             val event = RandomTeleportEvent(player, player.location, location).apply { callEvent() }
-            if (event.isCancelled) return@withDefault
+            if (event.isCancelled) return@withContext
 
             TeleportManager.teleportSuspend(player, location, prompt = prompt)
             val time = timer.end()

@@ -1,8 +1,10 @@
 package plutoproject.framework.common.api.profile.fetcher
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.Request
-import plutoproject.framework.common.util.coroutine.withIO
+import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.data.toShortUuidString
 import plutoproject.framework.common.util.network.MINECRAFT_SERVICE_API
 import plutoproject.framework.common.util.network.MOJANG_API
@@ -18,11 +20,13 @@ object MojangProfileFetcher : AbstractProfileFetcher() {
     override suspend fun fetchByName(name: String): FetchedData? =
         requestApi("${MOJANG_API}users/profiles/minecraft/${name.lowercase()}")
 
-    private suspend fun requestApi(url: String): FetchedData? = withIO {
+    private suspend fun requestApi(url: String): FetchedData? {
         val request = Request.Builder().url(url).build()
         val call = httpClient.newCall(request)
-        val response = call.execute()
+        val response = withContext(Dispatchers.Loom) {
+            call.execute()
+        }
         val body = response.body
-        runCatching { Json.decodeFromString<FetchedData>(body.string()) }.getOrNull()
+        return runCatching { Json.decodeFromString<FetchedData>(body.string()) }.getOrNull()
     }
 }

@@ -7,8 +7,10 @@ import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.replace
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.component.translatable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
@@ -18,7 +20,8 @@ import plutoproject.feature.paper.home.*
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.canvas.Menu
@@ -29,7 +32,7 @@ import plutoproject.framework.paper.api.interactive.layout.Row
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxHeight
 import plutoproject.framework.paper.api.interactive.modifiers.width
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
 import kotlin.time.Duration.Companion.seconds
 
@@ -102,12 +105,16 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 if (clickType != ClickType.LEFT) return@clickable
 
                 if (home.isPreferred) {
-                    runAsync { home.setPreferred(false) }
+                    PluginScope.launch(Dispatchers.Loom) {
+                        home.setPreferred(false)
+                    }
                     stateTransition(PreferState.NOT_PREFERRED)
                     return@clickable
                 }
 
-                runAsync { home.setPreferred(true) }
+                PluginScope.launch(Dispatchers.Loom) {
+                    home.setPreferred(true)
+                }
                 stateTransition(PreferState.PREFERRED)
             }
         )
@@ -150,7 +157,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 if (clickType != ClickType.LEFT) return@clickable
 
                 if (home.isStarred) {
-                    runAsync {
+                    PluginScope.launch(Dispatchers.Loom) {
                         home.isStarred = false
                         home.update()
                     }
@@ -158,7 +165,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                     return@clickable
                 }
 
-                runAsync {
+                PluginScope.launch(Dispatchers.Loom) {
                     home.isStarred = true
                     home.update()
                 }
@@ -201,7 +208,9 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                 if (!home.isLoaded) return@clickable
                 if (clickType != ClickType.LEFT || succeed) return@clickable
                 home.location = player.location
-                runAsync { home.update() }
+                PluginScope.launch(Dispatchers.Loom) {
+                    home.update()
+                }
                 whoClicked.playSound(UI_SUCCEED_SOUND)
                 coroutineScope.launch {
                     succeed = true
@@ -297,7 +306,7 @@ class HomeEditorScreen(private val home: Home) : InteractiveScreen() {
                         home.icon = material
                         home.update()
                         current = material
-                        player.withSync {
+                        withContext(player.coroutineContext) {
                             view.setCursor(null)
                             player.inventory.addItemOrDrop(carriedItem!!)
                         }

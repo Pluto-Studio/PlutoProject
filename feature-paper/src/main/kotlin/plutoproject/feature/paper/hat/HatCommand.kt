@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.hat
 
+import kotlinx.coroutines.withContext
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -11,7 +12,7 @@ import plutoproject.framework.common.util.chat.PERMISSION_DENIED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.command.selectPlayer
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 private val Player.handItem: ItemStack
     get() = inventory.itemInMainHand
@@ -20,19 +21,19 @@ private val Player.hatItem: ItemStack?
     get() = inventory.helmet
 
 private suspend fun Player.hand(item: ItemStack) {
-    withSync {
+    withContext(coroutineContext) {
         inventory.setItemInMainHand(item)
     }
 }
 
 private suspend fun Player.hat(item: ItemStack) {
-    withSync {
+    withContext(coroutineContext) {
         inventory.helmet = item
     }
 }
 
 private suspend fun Player.clearHand() {
-    withSync {
+    withContext(coroutineContext) {
         hand(ItemStack(Material.AIR))
     }
 }

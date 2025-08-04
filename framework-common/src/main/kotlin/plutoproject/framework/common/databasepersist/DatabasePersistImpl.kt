@@ -1,10 +1,11 @@
 package plutoproject.framework.common.databasepersist
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.databasepersist.PersistContainer
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import java.time.Instant
 import java.util.*
@@ -17,7 +18,7 @@ class DatabasePersistImpl : InternalDatabasePersist, KoinComponent {
     private val autoUnloadCondition by inject<AutoUnloadCondition>()
     private var isValid = true
 
-    private val autoUnloadDaemonJob = runAsync {
+    private val autoUnloadDaemonJob = PluginScope.launch {
         while (isValid) {
             delay(AUTO_UNLOAD_INTERVAL_SECONDS.seconds)
             unloadUnusedContainers()

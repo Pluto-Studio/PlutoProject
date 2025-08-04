@@ -1,11 +1,12 @@
 package plutoproject.framework.paper.util.world.chunk
 
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import org.bukkit.Chunk
 import org.bukkit.World
-import plutoproject.framework.common.util.coroutine.runAsyncIO
+import plutoproject.framework.common.util.coroutine.PluginScope
 
 @JvmInline
 value class ChunkLocation(private val value: Long) {
@@ -24,8 +25,9 @@ value class ChunkLocation(private val value: Long) {
         return world.getChunkAtAsync(x, z).await()
     }
 
-    fun coordinateChunkInAsync(world: World): Deferred<Chunk> =
-        runAsyncIO { coordinateChunkIn(world) }
+    fun coordinateChunkInAsync(world: World): Deferred<Chunk> = PluginScope.async {
+        coordinateChunkIn(world)
+    }
 
     fun coordinateChunkInBlocking(world: World): Chunk {
         return coordinateChunkInAsync(world).asCompletableFuture().join()

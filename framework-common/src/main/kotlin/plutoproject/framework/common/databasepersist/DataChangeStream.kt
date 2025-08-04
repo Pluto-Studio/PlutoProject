@@ -4,17 +4,15 @@ import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.OperationType
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.bson.BsonDocument
 import org.bson.Document
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.databasepersist.adapters.SerializationTypeAdapter
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.map.mutableConcurrentMapOf
 import plutoproject.framework.common.util.logger
 import plutoproject.framework.common.util.serverName
@@ -49,7 +47,7 @@ class DataChangeStream : KoinComponent {
     private val changeStreamFlow = repository.openChangeStream(listOf(match))
     private var changeStreamJob = runChangeStreamJob()
 
-    private fun runChangeStreamJob(): Job = runAsync {
+    private fun runChangeStreamJob(): Job = PluginScope.launch(Dispatchers.Loom) {
         changeStreamFlow.collect { event ->
             val playerId = extractPlayerId(event)
             runCatching {

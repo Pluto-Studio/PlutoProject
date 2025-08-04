@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
@@ -18,7 +19,8 @@ import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.provider.timezone
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
+import plutoproject.framework.paper.util.server
 import kotlin.time.Duration.Companion.seconds
 
 val StatusButtonDescriptor = ButtonDescriptor {
@@ -36,7 +38,7 @@ fun Status() {
 
     LaunchedEffect(Unit) {
         while (true) {
-            statusMessage = withSync { getStatusMessage() }
+            statusMessage = withContext(server.coroutineContext) { getStatusMessage() }
             promptMessage = getPromptMessage()
             delay(1.seconds)
         }

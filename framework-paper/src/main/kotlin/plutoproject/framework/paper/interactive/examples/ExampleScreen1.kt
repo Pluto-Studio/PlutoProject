@@ -5,12 +5,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import plutoproject.framework.common.util.chat.palettes.*
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.time.ticks
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
@@ -26,7 +27,7 @@ import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxWidth
 import plutoproject.framework.paper.api.interactive.modifiers.height
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import kotlin.math.floor
 
 class ExampleScreen1 : InteractiveScreen() {
@@ -85,7 +86,7 @@ class ExampleScreen1 : InteractiveScreen() {
                     material = Material.RED_STAINED_GLASS_PANE,
                     name = component { text("关闭菜单") with mochaMaroon },
                     modifier = Modifier.clickable {
-                        withSync {
+                        PluginScope.launch(player.coroutineContext) {
                             player.closeInventory()
                         }
                     }

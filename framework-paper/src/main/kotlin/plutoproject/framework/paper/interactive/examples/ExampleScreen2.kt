@@ -4,13 +4,14 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import plutoproject.framework.common.util.chat.palettes.mochaRed
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.canvas.Chest
@@ -25,7 +26,7 @@ import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
 import plutoproject.framework.paper.api.interactive.modifiers.fillMaxWidth
 import plutoproject.framework.paper.api.interactive.modifiers.height
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 class ExampleScreen2 : InteractiveScreen() {
     @Composable
@@ -70,7 +71,7 @@ class ExampleScreen2 : InteractiveScreen() {
                     material = Material.APPLE,
                     name = component { text("获取一个苹果") with mochaRed },
                     modifier = Modifier.clickable {
-                        player.withSync {
+                        PluginScope.launch(player.coroutineContext) {
                             player.inventory.addItem(ItemStack(Material.APPLE))
                         }
                     }
