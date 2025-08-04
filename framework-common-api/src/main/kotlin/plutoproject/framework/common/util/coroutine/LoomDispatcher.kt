@@ -16,5 +16,5 @@ val Dispatchers.Loom: CoroutineDispatcher
     get() = loomDispatcher
 
 internal fun shutdownLoomDispatcher() {
-    loomExecutor.shutdown()
+    loomDispatcher.close()
 }
