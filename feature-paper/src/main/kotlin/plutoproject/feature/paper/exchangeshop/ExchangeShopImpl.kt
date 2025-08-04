@@ -2,8 +2,6 @@ package plutoproject.feature.paper.exchangeshop
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
@@ -15,6 +13,7 @@ import plutoproject.feature.paper.api.exchangeshop.ShopItem
 import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
+import plutoproject.framework.common.util.coroutine.ConfinementExecutor
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.collection.toImmutable
@@ -30,7 +29,6 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     private val userRepo by inject<UserRepository>()
     private val config by inject<ExchangeShopConfig>()
     private val internalCategories = mutableMapOf<String, ShopCategory>()
-    private val userLock = Mutex()
     private val loadedUsers = mutableConcurrentMapOf<UUID, InternalShopUser>()
     private val usersLoadedAt = mutableConcurrentMapOf<ShopUser, Instant>()
     private val autoUnloadJob: Job
@@ -40,6 +38,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     override val items: Collection<ShopItem>
         get() = categories.flatMap { it.items }
     override val coroutineScope: CoroutineScope = PluginScope.createSupervisorChild()
+    private val confinementExecutor = ConfinementExecutor(coroutineScope)
 
     init {
         loadConfigDeclaration()
@@ -53,14 +52,14 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         }
     }
 
-    private suspend fun unloadUnusedUsers() = userLock.withLock {
+    private suspend fun unloadUnusedUsers() = confinementExecutor.execute {
         val currentTimestamp = Instant.now()
         loadedUsers.forEach { (uniqueId, user) ->
             val loadedAt = usersLoadedAt.getValue(user)
             if (loadedAt.plusSeconds(UNLOAD_AFTER_SECONDS).isBefore(currentTimestamp)
                 && server.getPlayer(uniqueId) == null
             ) {
-                unloadUserWithoutLock(uniqueId)
+                unloadUser(uniqueId)
             }
         }
     }
@@ -112,17 +111,19 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return getUser(player.uniqueId)
     }
 
-    override suspend fun getUser(uniqueId: UUID): ShopUser? = userLock.withLock {
+    override suspend fun getUser(uniqueId: UUID): ShopUser? {
         check(isValid) { "Instance is not valid" }
-        if (loadedUsers.containsKey(uniqueId)) {
-            return loadedUsers.getValue(uniqueId)
+        return confinementExecutor.execute {
+            if (loadedUsers.containsKey(uniqueId)) {
+                return@execute loadedUsers.getValue(uniqueId)
+            }
+
+            val model = userRepo.find(uniqueId) ?: return@execute null
+            val user = ShopUserImpl(model)
+
+            loadUser(user)
+            user
         }
-
-        val model = userRepo.find(uniqueId) ?: return null
-        val user = ShopUserImpl(model)
-
-        loadUserWithoutLock(user)
-        return user
     }
 
     override suspend fun hasUser(player: OfflinePlayer): Boolean {
@@ -130,9 +131,12 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return hasUser(player.uniqueId)
     }
 
-    override suspend fun hasUser(uniqueId: UUID): Boolean = userLock.withLock {
+    override suspend fun hasUser(uniqueId: UUID): Boolean {
         check(isValid) { "Instance is not valid" }
-        return hasUserWithoutLock(uniqueId)
+        return confinementExecutor.execute {
+            if (loadedUsers.containsKey(uniqueId)) return@execute true
+            userRepo.has(uniqueId)
+        }
     }
 
     override suspend fun createUser(player: OfflinePlayer): ShopUser {
@@ -140,14 +144,9 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return createUser(player.uniqueId)
     }
 
-    private suspend fun hasUserWithoutLock(uniqueId: UUID): Boolean {
-        if (loadedUsers.containsKey(uniqueId)) return true
-        return userRepo.has(uniqueId)
-    }
-
-    override suspend fun createUser(uniqueId: UUID): ShopUser = userLock.withLock {
+    override suspend fun createUser(uniqueId: UUID): ShopUser = confinementExecutor.execute {
         check(isValid) { "Instance is not valid" }
-        require(!hasUserWithoutLock(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
+        require(!hasUser(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
 
         val model = UserModel(
             uniqueId = uniqueId,
@@ -159,8 +158,8 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         val user = ShopUserImpl(model)
 
         userRepo.insert(model)
-        loadUserWithoutLock(user)
-        return user
+        loadUser(user)
+        user
     }
 
     override suspend fun getUserOrCreate(player: OfflinePlayer): ShopUser {
@@ -178,25 +177,21 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         return loadedUsers.containsKey(id)
     }
 
-    override suspend fun loadUser(user: InternalShopUser) = userLock.withLock {
+    override suspend fun loadUser(user: InternalShopUser) {
         check(isValid) { "Instance is not valid" }
-        loadUserWithoutLock(user)
+        confinementExecutor.execute {
+            loadedUsers[user.uniqueId] = user
+            usersLoadedAt[user] = Instant.now()
+        }
     }
 
-    override suspend fun unloadUser(id: UUID) = userLock.withLock {
+    override suspend fun unloadUser(id: UUID) {
         check(isValid) { "Instance is not valid" }
-        unloadUserWithoutLock(id)
-    }
-
-    private fun loadUserWithoutLock(user: InternalShopUser) {
-        loadedUsers[user.uniqueId] = user
-        usersLoadedAt[user] = Instant.now()
-    }
-
-    private suspend fun unloadUserWithoutLock(id: UUID) {
-        val user = loadedUsers.remove(id) ?: return
-        user.close()
-        usersLoadedAt.remove(user)
+        confinementExecutor.execute {
+            val user = loadedUsers.remove(id) ?: return@execute
+            user.close()
+            usersLoadedAt.remove(user)
+        }
     }
 
     override fun createCategory(
@@ -241,6 +236,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
         loadedUsers.clear()
         usersLoadedAt.clear()
         autoUnloadJob.cancelAndJoin()
+        confinementExecutor.cancelAndJoin()
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
         isValid = false
     }
