@@ -71,7 +71,7 @@ class ConfinementExecutor(
     }
 
     private fun CoroutineContext.createSingleParallelismContext(): CoroutineContext {
-        val dispatcher = this[ContinuationInterceptor] as? CoroutineDispatcher ?: Dispatchers.Main
+        val dispatcher = this[ContinuationInterceptor] as? CoroutineDispatcher ?: Dispatchers.Default
         return dispatcher.limitedParallelism(1)
     }
 
