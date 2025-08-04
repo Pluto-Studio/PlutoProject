@@ -1,6 +1,7 @@
 package plutoproject.feature.paper.warp.commands
 
 import ink.pmc.advkt.component.replace
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.exception.ExceptionHandler
@@ -14,7 +15,7 @@ import org.incendo.cloud.suggestion.SuggestionProvider
 import plutoproject.feature.paper.api.warp.Warp
 import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.feature.paper.warp.COMMAND_WARP_NOT_EXISTED
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import java.util.concurrent.CompletableFuture
 import kotlin.jvm.optionals.getOrNull
 
@@ -34,7 +35,7 @@ class WarpParser(val withoutAlias: Boolean) : FutureArgumentParser<CommandSender
     override fun parseFuture(
         commandContext: CommandContext<CommandSender>,
         commandInput: CommandInput
-    ): CompletableFuture<ArgumentParseResult<Warp>> = runAsync {
+    ): CompletableFuture<ArgumentParseResult<Warp>> = PluginScope.async {
         val string = stringParser.parser().parse(commandContext, commandInput).parsedValue().getOrNull()
             ?: error("Unable to parse warp name")
         val name = parseWarpName(string)
@@ -45,7 +46,7 @@ class WarpParser(val withoutAlias: Boolean) : FutureArgumentParser<CommandSender
     override fun suggestionsFuture(
         context: CommandContext<CommandSender>,
         input: CommandInput
-    ): CompletableFuture<List<Suggestion>> = runAsync {
+    ): CompletableFuture<List<Suggestion>> = PluginScope.async {
         if (!withoutAlias) {
             WarpManager.list().map {
                 val name = it.name

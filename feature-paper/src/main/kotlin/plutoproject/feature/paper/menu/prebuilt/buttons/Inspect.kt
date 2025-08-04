@@ -3,6 +3,7 @@ package plutoproject.feature.paper.menu.prebuilt.buttons
 import androidx.compose.runtime.*
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
@@ -19,7 +20,7 @@ import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.components.NotAvailable
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 val InspectButtonDescriptor = ButtonDescriptor {
     id = "menu:inspect"
@@ -95,7 +96,7 @@ fun Inspect() {
 
                 ClickType.RIGHT -> {
                     player.playSound(UI_SUCCEED_SOUND)
-                    player.withSync {
+                    withContext(player.coroutineContext) {
                         player.performCommand(CO_NEAR_COMMAND)
                         player.closeInventory()
                     }

@@ -2,8 +2,9 @@ package plutoproject.feature.paper.serverSelector
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.bukkit.entity.Player
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.provider.timezone
 import java.time.Duration
 import java.time.ZoneId
@@ -22,7 +23,7 @@ private val timeSyncJobs = mutableMapOf<Player, Job>()
 fun Player.startTimeSync() {
     val tz = timezone.toZoneId()
     syncTime(tz)
-    timeSyncJobs[this] = runAsync {
+    timeSyncJobs[this] = PluginScope.launch {
         while (true) {
             delay(SYNC_CYCLE_SECS.seconds)
             syncTime(tz)

@@ -5,7 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 
-private val loomDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+private val loomExecutor = Executors.newVirtualThreadPerTaskExecutor()
+private val loomDispatcher = loomExecutor.asCoroutineDispatcher()
 
 /**
  * 基于虚拟线程的 [CoroutineDispatcher]，适合用于 IO 任务。
@@ -13,3 +14,7 @@ private val loomDispatcher = Executors.newVirtualThreadPerTaskExecutor().asCorou
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.Loom: CoroutineDispatcher
     get() = loomDispatcher
+
+internal fun shutdownLoomDispatcher() {
+    loomExecutor.shutdown()
+}

@@ -5,6 +5,7 @@ import com.destroystokyo.paper.event.player.PlayerPickupExperienceEvent
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.showTitle
 import ink.pmc.advkt.title.*
+import kotlinx.coroutines.launch
 import net.kyori.adventure.util.Ticks
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -30,7 +31,7 @@ import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAda
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.inventory.addItemOrDrop
 
@@ -71,7 +72,7 @@ object LobbyListener : Listener, KoinComponent {
         player.saturation = 20f
         player.clearActivePotionEffects()
         player.setRespawnLocation(lobbyWorldSpawn, true)
-        runAsync {
+        PluginScope.launch {
             player.showPromptTitle()
         }
         // if (player.hasPermission(PROTECTION_BYPASS)) return

@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.itemFrameProtection
 
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.OfflinePlayer
@@ -13,7 +14,7 @@ import org.incendo.cloud.annotations.Permission
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 const val ITEMFRAME_PROTECTION_BYPASS_PERMISSION = "essentials.itemframe.bypass"
 
@@ -62,13 +63,17 @@ object ItemFrameCommand {
     @Command("itemframe|if invisible")
     @Permission("essentials.itemframe.invisible")
     suspend fun CommandSender.invisible() = ensurePlayer {
-        withSync { handleOperation(Operation.INVISIBLE) }
+        withContext(coroutineContext) {
+            handleOperation(Operation.INVISIBLE)
+        }
     }
 
     @Command("itemframe|if protect")
     @Permission("essentials.itemframe.protect")
     suspend fun CommandSender.protect() = ensurePlayer {
-        withSync { handleOperation(Operation.PROTECT) }
+        withContext(coroutineContext) {
+            handleOperation(Operation.PROTECT)
+        }
     }
 }
 

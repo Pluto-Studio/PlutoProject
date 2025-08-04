@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.common.collect.Multimaps
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
@@ -12,7 +13,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.paper.api.home.Home
 import plutoproject.feature.paper.api.home.HomeManager
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.data.models.toModel
 import plutoproject.framework.paper.util.server
 import java.util.*
@@ -35,7 +36,7 @@ class HomeManagerImpl : HomeManager, KoinComponent {
         Multimaps.synchronizedListMultimap<OfflinePlayer, Home>(ArrayListMultimap.create())
 
     init {
-        runAsync {
+        PluginScope.launch {
             while (!disabled) {
                 delay(5.minutes)
                 loadedHomes.entries().removeIf { !it.key.isOnline }

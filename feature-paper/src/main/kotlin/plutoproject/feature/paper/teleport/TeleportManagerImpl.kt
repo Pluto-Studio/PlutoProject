@@ -1,15 +1,12 @@
 package plutoproject.feature.paper.teleport
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.yield
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.block.BlockFace
-import org.bukkit.craftbukkit.block.CraftBlock
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.koin.core.component.KoinComponent
@@ -20,11 +17,10 @@ import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.UNUSUAL_ISSUE_OCCURRED
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.title.replaceSubTitle
-import plutoproject.framework.common.util.time.toFormattedComponent
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.coroutine.raceConditional
-import plutoproject.framework.common.util.coroutine.runAsync
-import plutoproject.framework.common.util.coroutine.withDefault
 import plutoproject.framework.common.util.data.map.mapKeysAndValues
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.util.entity.teleportSuspend
 import plutoproject.framework.paper.util.server
 import plutoproject.framework.paper.util.world.chunk.ChunkLocation
@@ -203,9 +199,9 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
         }
 
         return raceConditional(
-            runAsync { iterateLocations(0..(world.maxHeight - blockY), BlockFace.UP) },
-            runAsync { bfs() },
-            runAsync { iterateLocations(0..(blockY - world.minHeight), BlockFace.DOWN) }
+            PluginScope.async { iterateLocations(0..(world.maxHeight - blockY), BlockFace.UP) },
+            PluginScope.async { bfs() },
+            PluginScope.async { iterateLocations(0..(blockY - world.minHeight), BlockFace.DOWN) }
         ) { it != null }?.toCenterLocation()?.apply { y = floor(y) }
     }
 
@@ -214,7 +210,7 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
         destination: Location,
         options: TeleportOptions?,
         prompt: Boolean
-    ) = withDefault {
+    ) = withContext(Dispatchers.Default) {
         val opt = options ?: destination.world.teleportOptions
         val loc = if (opt.disableSafeCheck || isSafe(destination, opt)) {
             destination
@@ -228,7 +224,7 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
                 player.showTitle(TELEPORT_FAILED_TITLE)
                 player.playSound(TELEPORT_FAILED_SOUND)
             }
-            return@withDefault
+            return@withContext
         }
 
         // 必须异步触发
@@ -240,11 +236,11 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
                 player.showTitle(TELEPORT_FAILED_DENIED_TITLE.replaceSubTitle("<reason>", reason))
                 player.playSound(TELEPORT_FAILED_SOUND)
             }
-            return@withDefault
+            return@withContext
         }
 
         if (event.isCancelled) {
-            return@withDefault
+            return@withContext
         }
 
         player.teleportSuspend(loc)
@@ -319,20 +315,20 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
 
         teleportRequests.add(request)
 
-        runAsync {
+        PluginScope.launch {
             delay(options.expireAfter)
             if (!hasRequest(request.id) || request.isFinished) {
-                return@runAsync
+                return@launch
             }
             request.expire()
             destination.sendMessage(TELEPORT_REQUEST_EXPIRED.replace("<player>", source.name))
             destination.playSound(TELEPORT_REQUEST_CANCELLED_SOUND)
         }
 
-        runAsync {
+        PluginScope.launch {
             delay(options.removeAfter)
             if (!hasRequest(request.id)) {
-                return@runAsync
+                return@launch
             }
             removeRequest(request.id)
         }
@@ -374,19 +370,19 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
     }
 
     override fun teleport(player: Player, destination: Location, options: TeleportOptions?, prompt: Boolean) {
-        runAsync {
+        PluginScope.launch {
             teleportSuspend(player, destination, options, prompt)
         }
     }
 
     override fun teleport(player: Player, destination: Player, options: TeleportOptions?, prompt: Boolean) {
-        runAsync {
+        PluginScope.launch {
             teleportSuspend(player, destination.location, options, prompt)
         }
     }
 
     override fun teleport(player: Player, destination: Entity, options: TeleportOptions?, prompt: Boolean) {
-        runAsync {
+        PluginScope.launch {
             teleportSuspend(player, destination.location, options, prompt)
         }
     }
@@ -410,14 +406,14 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
     }
 
     override fun searchSafeLocation(start: Location, options: TeleportOptions?): Location? =
-        runAsync { searchSafeLocationSuspend(start, options) }.asCompletableFuture().join()
+        PluginScope.async { searchSafeLocationSuspend(start, options) }.asCompletableFuture().join()
 
     override suspend fun teleportSuspend(
         player: Player,
         destination: Location,
         options: TeleportOptions?,
         prompt: Boolean
-    ) = withDefault {
+    ) = withContext(Dispatchers.Default) {
         val optRadius = destination.world.teleportOptions.chunkPrepareRadius
         val vt = player.sendViewDistance
         val radius = if (vt < optRadius) vt else optRadius
@@ -425,7 +421,7 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
 
         if (prepare.allPrepared(destination.world)) {
             fireTeleport(player, destination, options, prompt)
-            return@withDefault
+            return@withContext
         }
 
         if (prompt) {
@@ -437,10 +433,10 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
         val task = TeleportTaskImpl(id, player, destination, options, prompt, prepare)
         queue.offer(task)
 
-        runAsync {
+        PluginScope.launch {
             delay(10.seconds)
             if (task.isFinished) {
-                return@runAsync
+                return@launch
             }
             task.cancel()
             if (prompt) {

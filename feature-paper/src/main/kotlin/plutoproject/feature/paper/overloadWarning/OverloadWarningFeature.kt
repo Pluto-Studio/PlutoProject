@@ -5,6 +5,7 @@ import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.module
@@ -14,7 +15,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.api.statistic.MeasuringTime
@@ -48,7 +49,7 @@ class OverloadWarningFeature : PaperFeature(), KoinComponent {
     private fun start() {
         check(!isRunning) { "Overload warning job already running" }
         isRunning = true
-        cycleJob = runAsync {
+        cycleJob = PluginScope.launch {
             while (isRunning) {
                 val millsPerTick = StatisticProvider.getMillsPerTick(MeasuringTime.SECONDS_10)
                 if (millsPerTick != null && millsPerTick > 50) {

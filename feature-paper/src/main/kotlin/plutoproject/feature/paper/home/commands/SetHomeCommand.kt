@@ -1,5 +1,7 @@
 package plutoproject.feature.paper.home.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotation.specifier.Greedy
 import org.incendo.cloud.annotations.Command
@@ -7,7 +9,8 @@ import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.home.HomeManager
 import plutoproject.feature.paper.home.*
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.command.ensurePlayer
 
 @Suppress("UNUSED")
@@ -31,7 +34,7 @@ object SetHomeCommand {
             sendMessage(COMMAND_SETHOME_FAILED_NAME_LENGTH_LIMIT)
             return
         }
-        runAsync {
+        PluginScope.launch(Dispatchers.Loom) {
             val home = HomeManager.create(this@ensurePlayer, actualName, location)
             if (isDefaultHome) {
                 home.setPreferred(true)

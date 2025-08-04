@@ -2,9 +2,11 @@ package plutoproject.framework.paper.api.interactive.canvas
 
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.inventory.Inventory
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.time.ticks
 import plutoproject.framework.paper.api.interactive.*
 import plutoproject.framework.paper.api.interactive.click.ClickScope
@@ -16,8 +18,8 @@ import plutoproject.framework.paper.api.interactive.node.BaseInventoryNode
 import plutoproject.framework.paper.api.interactive.node.InventoryCloseScope
 import plutoproject.framework.paper.api.interactive.node.StaticMeasurePolicy
 import plutoproject.framework.paper.api.interactive.util.IntCoordinates
-import plutoproject.framework.paper.util.coroutine.runSync
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
+import plutoproject.framework.paper.util.server
 
 val LocalInventory: ProvidableCompositionLocal<Inventory> =
     compositionLocalOf { error("No local inventory defined") }
@@ -36,7 +38,7 @@ fun Inventory(
     val canvas = remember { MapCanvas() }
 
     LaunchedEffect(player, inventory) {
-        withSync {
+        PluginScope.launch(player.coroutineContext) {
             scope.setPendingRefreshIfNeeded(true)
             player.openInventory(inventory)
         }
@@ -100,7 +102,7 @@ inline fun rememberInventoryHolder(
                         }
                     }
                 }
-                runSync {
+                PluginScope.launch(server.coroutineContext) {
                     delay(1.ticks)
                     onClose.invoke(scope, player)
                 }

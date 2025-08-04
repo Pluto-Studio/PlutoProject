@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.exchangeshop.commands
 
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.exception.ExceptionHandler
@@ -14,7 +15,7 @@ import plutoproject.feature.paper.api.exchangeshop.ExchangeShop
 import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.COMMAND_EXCHANGE_SHOP_TRANSACTIONS_SHOP_USER_NOT_FOUND
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.paper.util.server
 import java.util.concurrent.CompletableFuture
@@ -26,7 +27,7 @@ object ShopUserParser : FutureArgumentParser<CommandSender, ShopUser>, BlockingS
     override fun parseFuture(
         commandContext: CommandContext<CommandSender>,
         commandInput: CommandInput
-    ): CompletableFuture<ArgumentParseResult<ShopUser>> = runAsync {
+    ): CompletableFuture<ArgumentParseResult<ShopUser>> = PluginScope.async {
         val input = stringParser.parse(commandContext, commandInput).parsedValue().getOrNull()
             ?: error("Unable to get input")
         val uniqueId = input.convertToUuidOrNull()

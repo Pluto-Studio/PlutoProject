@@ -3,7 +3,7 @@ package plutoproject.feature.paper.warp
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.showTitle
 import ink.pmc.advkt.title.*
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.util.Ticks
@@ -24,9 +24,7 @@ import plutoproject.framework.common.api.profile.Profile
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
-import plutoproject.framework.common.util.coroutine.runAsync
-import plutoproject.framework.common.util.coroutine.runAsyncIO
-import plutoproject.framework.common.util.coroutine.withDefault
+import plutoproject.framework.common.util.coroutine.*
 import plutoproject.framework.common.util.data.convertToUuid
 import plutoproject.framework.common.util.time.formatDate
 import plutoproject.framework.paper.api.provider.timezone
@@ -43,7 +41,11 @@ class WarpImpl(private val model: WarpModel) : Warp, KoinComponent {
     override var alias: String? = model.alias
     override var founderId = model.founder?.convertToUuid()
     override val founder: Deferred<Profile>?
-        get() = founderId?.let { runAsyncIO { ProfileLookup.lookupByUuid(it)!! } }
+        get() = founderId?.let {
+            PluginScope.async(Dispatchers.Loom) {
+                ProfileLookup.lookupByUuid(it)!!
+            }
+        }
     override var icon: Material? = model.icon
     override var category: WarpCategory? = model.category
     override var description: Component? =
@@ -60,17 +62,17 @@ class WarpImpl(private val model: WarpModel) : Warp, KoinComponent {
         get() = type == WarpType.SPAWN_DEFAULT
 
     override fun teleport(player: Player, prompt: Boolean) {
-        runAsync {
+        PluginScope.launch {
             teleportSuspend(player, prompt)
         }
     }
 
     override suspend fun teleportSuspend(player: Player, prompt: Boolean) {
-        withDefault {
+        withContext(Dispatchers.Default) {
             val options = TeleportManager.getWorldTeleportOptions(location.world).copy(disableSafeCheck = true)
             // 必须异步触发
             val event = WarpTeleportEvent(player, player.location, this@WarpImpl).apply { callEvent() }
-            if (event.isCancelled) return@withDefault
+            if (event.isCancelled) return@withContext
             TeleportManager.teleportSuspend(player, location, options, false)
             if (prompt) {
                 val founderName = founder?.await()?.name

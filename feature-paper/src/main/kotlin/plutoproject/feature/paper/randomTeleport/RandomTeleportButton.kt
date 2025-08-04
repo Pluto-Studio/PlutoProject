@@ -5,6 +5,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -23,7 +24,7 @@ import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.components.NotAvailable
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.hook.vaultHook
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
@@ -148,7 +149,7 @@ fun RandomTeleport() {
             if (state != RandomTeleportState.AVAILABLE) return@clickable
             if (clickType != ClickType.LEFT) return@clickable
             RandomTeleportManager.launch(player, player.world)
-            withSync {
+            withContext(player.coroutineContext) {
                 player.closeInventory()
             }
         }

@@ -4,7 +4,9 @@ import androidx.compose.runtime.Applier
 import androidx.compose.runtime.Composition
 import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import org.bukkit.entity.Player
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.*
 import plutoproject.framework.paper.api.interactive.click.ClickHandler
 import plutoproject.framework.paper.api.interactive.click.ClickResult
@@ -14,7 +16,7 @@ import plutoproject.framework.paper.api.interactive.layout.Constraints
 import plutoproject.framework.paper.api.interactive.node.InventoryNode
 import plutoproject.framework.paper.interactive.BaseScope
 import plutoproject.framework.paper.interactive.uiRenderFailed
-import plutoproject.framework.paper.util.coroutine.runSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import java.util.logging.Level
 
 class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<InventoryNode>(owner, contents) {
@@ -91,8 +93,8 @@ class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<In
 
     override fun dispose() {
         if (isDisposed) return
-        runSync {
-            if (!owner.isOnline) return@runSync
+        PluginScope.launch(owner.coroutineContext) {
+            if (!owner.isOnline) return@launch
             setPendingRefreshIfNeeded(true) // 防止 dispose 在事件中再次被调用造成 StackOverflowError
             owner.closeInventory()
         }

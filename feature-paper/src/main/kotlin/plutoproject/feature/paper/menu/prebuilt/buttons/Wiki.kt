@@ -1,7 +1,11 @@
 package plutoproject.feature.paper.menu.prebuilt.buttons
 
 import androidx.compose.runtime.Composable
-import ink.pmc.advkt.component.*
+import ink.pmc.advkt.component.component
+import ink.pmc.advkt.component.openUrl
+import ink.pmc.advkt.component.text
+import ink.pmc.advkt.component.underlined
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
@@ -14,7 +18,7 @@ import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 val WikiButtonDescriptor = ButtonDescriptor {
     id = "menu:wiki"
@@ -48,7 +52,7 @@ fun Wiki() {
                 text("点此打开星社百科") with mochaLavender with underlined() with openUrl("https://wiki.pmc.ink/")
             })
             player.playSound(MESSAGE_SOUND)
-            player.withSync {
+            withContext(player.coroutineContext) {
                 player.closeInventory()
             }
         }

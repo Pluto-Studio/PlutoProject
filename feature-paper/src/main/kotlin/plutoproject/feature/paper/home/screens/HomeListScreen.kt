@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
@@ -26,7 +26,7 @@ import plutoproject.framework.paper.api.interactive.modifiers.height
 import plutoproject.framework.paper.api.interactive.modifiers.width
 import plutoproject.framework.paper.api.provider.timezone
 import plutoproject.framework.paper.api.worldalias.aliasOrName
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import java.time.ZonedDateTime
 
 class HomeListScreen(private val viewing: OfflinePlayer) : ListMenu<Home, HomeListScreenModel>() {
@@ -126,7 +126,7 @@ class HomeListScreen(private val viewing: OfflinePlayer) : ListMenu<Home, HomeLi
                 when (clickType) {
                     ClickType.LEFT -> {
                         obj.teleport(player)
-                        withSync {
+                        withContext(player.coroutineContext) {
                             player.closeInventory()
                         }
                     }

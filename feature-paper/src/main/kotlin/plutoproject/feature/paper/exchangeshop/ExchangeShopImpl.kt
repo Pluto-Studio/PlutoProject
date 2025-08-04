@@ -15,7 +15,7 @@ import plutoproject.feature.paper.api.exchangeshop.ShopItem
 import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.models.UserModel
 import plutoproject.feature.paper.exchangeshop.repositories.UserRepository
-import plutoproject.framework.common.util.coroutine.PlutoCoroutineScope
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.data.collection.toImmutable
 import plutoproject.framework.common.util.data.flow.getValue
@@ -39,7 +39,7 @@ class ExchangeShopImpl : InternalExchangeShop, KoinComponent {
     override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
     override val items: Collection<ShopItem>
         get() = categories.flatMap { it.items }
-    override val coroutineScope: CoroutineScope = PlutoCoroutineScope.createSupervisorChild()
+    override val coroutineScope: CoroutineScope = PluginScope.createSupervisorChild()
 
     init {
         loadConfigDeclaration()

@@ -8,6 +8,7 @@ import ink.pmc.advkt.component.replace
 import ink.pmc.advkt.component.text
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -19,8 +20,8 @@ import plutoproject.feature.paper.teleport.COMMAND_TPAHERE_SUCCEED
 import plutoproject.feature.paper.teleport.COMMAND_TPA_SUCCEED
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.common.util.time.ticks
+import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
@@ -28,7 +29,7 @@ import plutoproject.framework.paper.api.interactive.components.ItemSpacer
 import plutoproject.framework.paper.api.interactive.layout.list.ListMenu
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.api.worldalias.aliasOrName
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.dsl.ItemStack
 import kotlin.time.Duration.Companion.seconds
 
@@ -126,7 +127,7 @@ class TeleportRequestScreen : ListMenu<Player, TeleportRequestScreenModel>() {
                 options.centerBackground = true
                 coroutineScope.launch {
                     delay(1.seconds)
-                    if (!navigator.pop()) withSync {
+                    if (!navigator.pop()) withContext(player.coroutineContext) {
                         player.closeInventory()
                     }
                 }

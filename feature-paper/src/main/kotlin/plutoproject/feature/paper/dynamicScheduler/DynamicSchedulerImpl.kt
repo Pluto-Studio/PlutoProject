@@ -2,6 +2,7 @@ package plutoproject.feature.paper.dynamicScheduler
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
 import org.apache.commons.math3.fitting.PolynomialCurveFitter
@@ -17,7 +18,7 @@ import plutoproject.feature.paper.api.dynamicScheduler.DynamicViewDistanceState
 import plutoproject.feature.paper.dynamicScheduler.config.DynamicSchedulerConfig
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.data.map.listMultimapOf
 import plutoproject.framework.common.util.data.map.set
 import plutoproject.framework.paper.api.statistic.MeasuringTime
@@ -64,7 +65,7 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
                 world.viewDistance = max
             }
         }
-        cycleJob = runAsync {
+        cycleJob = PluginScope.launch {
             while (isRunning) {
                 server.onlinePlayers.forEach { player ->
                     val ping = player.ping
@@ -142,7 +143,7 @@ class DynamicSchedulerImpl : DynamicScheduler, KoinComponent {
             state && getViewDistanceLocally(player) == DynamicViewDistanceState.DISABLED
                 -> setViewDistanceLocally(player, DynamicViewDistanceState.ENABLED)
         }
-        runAsync {
+        PluginScope.launch {
             container.save()
         }
     }

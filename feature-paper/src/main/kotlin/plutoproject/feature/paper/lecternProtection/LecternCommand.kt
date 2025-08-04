@@ -1,5 +1,6 @@
 package plutoproject.feature.paper.lecternProtection
 
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.OfflinePlayer
@@ -13,7 +14,7 @@ import plutoproject.feature.paper.itemFrameProtection.ITEMFRAME_PROTECTION_UNKNO
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
-import plutoproject.framework.paper.util.coroutine.withSync
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 const val LECTERN_PROTECTION_BYPASS_PERMISSION = "essentials.lectern.bypass"
 
@@ -51,31 +52,31 @@ private fun Lectern.setProtect(value: Boolean, player: Player) {
 object LecternCommand {
     @Command("lectern")
     suspend fun CommandSender.lectern() = ensurePlayer {
-        withSync {
+        withContext(coroutineContext) {
             val range = getAttribute(Attribute.BLOCK_INTERACTION_RANGE)!!.value
             val block = getTargetBlockExact(range.toInt())?.state
             val player = this@ensurePlayer
 
             if (block == null || block !is Lectern) {
                 sendMessage(COMMAND_LECTERN_FAILED_NO_LECTERN)
-                return@withSync
+                return@withContext
             }
             if (block.isProtected
                 && block.protector != player
                 && !player.hasPermission(LECTERN_PROTECTION_BYPASS_PERMISSION)
             ) {
                 sendMessage(LECTERN_PROTECTED_ON_ACTION.replace("<player>", block.protectorName))
-                return@withSync
+                return@withContext
             }
             if (!block.protect) {
                 block.setProtect(true, player)
                 sendMessage(COMMAND_LECTERN_PROTECTION_ON_SUCCEED)
-                return@withSync
+                return@withContext
             }
 
             block.setProtect(false, player)
             sendMessage(COMMAND_LECTERN_PROTECTION_OFF_SUCCEED)
-            return@withSync
+            return@withContext
         }
     }
 }

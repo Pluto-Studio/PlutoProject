@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import io.papermc.paper.registry.data.dialog.body.DialogBody
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.bukkit.Material
@@ -14,7 +15,8 @@ import plutoproject.feature.paper.home.*
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.canvas.dialog.body.ItemBody
@@ -104,7 +106,7 @@ class HomeEditorRenameScreen(private val home: Home) : InteractiveScreen() {
                         return@launch
                     }
 
-                    runAsync {
+                    PluginScope.launch(Dispatchers.Loom) {
                         home.name = input
                         home.update()
                     }

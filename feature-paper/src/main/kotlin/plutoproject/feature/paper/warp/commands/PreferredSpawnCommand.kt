@@ -2,6 +2,8 @@ package plutoproject.feature.paper.warp.commands
 
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.text
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import net.kyori.adventure.text.Component
@@ -25,7 +27,8 @@ import plutoproject.feature.paper.warp.screens.DefaultSpawnPickerScreen
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.coroutine.runAsync
+import plutoproject.framework.common.util.coroutine.Loom
+import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.api.interactive.startScreen
 import plutoproject.framework.paper.util.command.ensurePlayer
 import java.util.concurrent.CompletableFuture
@@ -69,7 +72,7 @@ class SpawnParser : FutureArgumentParser<CommandSender, Warp>, SuggestionProvide
     override fun parseFuture(
         commandContext: CommandContext<CommandSender>,
         commandInput: CommandInput
-    ): CompletableFuture<ArgumentParseResult<Warp>> = runAsync {
+    ): CompletableFuture<ArgumentParseResult<Warp>> = PluginScope.async {
         val warp = warpParser.parseFuture(commandContext, commandInput).await()
             .also {
                 it.failure().getOrNull()?.also { e -> throw e }
@@ -84,7 +87,7 @@ class SpawnParser : FutureArgumentParser<CommandSender, Warp>, SuggestionProvide
     override fun suggestionsFuture(
         context: CommandContext<CommandSender>,
         input: CommandInput
-    ): CompletableFuture<List<Suggestion>> = runAsync {
+    ): CompletableFuture<List<Suggestion>> = PluginScope.async(Dispatchers.Loom) {
         WarpManager.listSpawns().map {
             val name = it.name
             val alias = it.alias
