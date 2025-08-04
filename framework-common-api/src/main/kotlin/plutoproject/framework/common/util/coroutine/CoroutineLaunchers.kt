@@ -31,7 +31,7 @@ suspend fun <T> withDefault(block: suspend CoroutineScope.() -> T) =
 
 @Suppress("UNUSED")
 suspend fun <T> withIO(block: suspend CoroutineScope.() -> T) =
-    withContext(Dispatchers.IO) { block() }
+    withContext(Dispatchers.Loom) { block() }
 
 @Suppress("UNUSED")
 suspend fun <T> withUnconfined(block: suspend CoroutineScope.() -> T) =
