@@ -8,7 +8,7 @@ plugins {
 
 dependencies {
     with(extensions.getByType<PaperweightUserDependenciesExtension>()) {
-        paperDevBundle("1.21.7-R0.1-SNAPSHOT")
+        paperDevBundle("1.21.8-R0.1-SNAPSHOT")
     }
     compileOnly(libs.sparkApi) {
         isTransitive = false
