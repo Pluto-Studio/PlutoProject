@@ -57,7 +57,7 @@ class TransactionHistoryScreen(
                 add(TRANSACTION_HISTORY_QUANTITY.replace("<quantity>", obj.quantity))
                 add(TRANSACTION_HISTORY_COST.replace("<money>", obj.cost.stripTrailingZeros().toPlainString()))
                 add(TRANSACTION_HISTORY_TICKET.replace("<ticket>", obj.ticket))
-                add(TRANSACTION_HISTORY_BALANCE.replace("<balance>", obj.balance))
+                add(TRANSACTION_HISTORY_BALANCE.replace("<balance>", obj.balance.stripTrailingZeros().toPlainString()))
             }
 
             setData(DataComponentTypes.CUSTOM_NAME, name)
