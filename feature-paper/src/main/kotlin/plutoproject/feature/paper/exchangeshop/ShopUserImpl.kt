@@ -306,6 +306,7 @@ class ShopUserImpl(
         val balance = vaultHook?.economy!!.getBalance(player).toBigDecimal()
         val cost = shopItem.price * amount.toBigDecimal()
         val ticketConsumption = shopItem.ticketConsumption * amount
+        val quantity = shopItem.quantity * amount
 
         if (!player.isOnline) {
             return Result.failure(ShopTransactionException.PlayerOffline(this))
@@ -333,7 +334,7 @@ class ShopUserImpl(
             itemTypeString = shopItem.itemStack.type.asItemType()?.key().toString(),
             itemStackBinary = BsonBinary(shopItem.itemStack.serializeAsBytes()),
             amount = amount,
-            quantity = shopItem.quantity * amount,
+            quantity = quantity,
             ticket = ticketConsumption,
             cost = cost,
             balance = balance - cost,
@@ -356,7 +357,7 @@ class ShopUserImpl(
         _ticket -= ticketConsumption
         vaultHook?.economy!!.withdrawPlayer(player, cost.toDouble())
         updateTicketRecoverySchedule()
-        player.player?.addTransactionItem(shopItem.itemStack, amount)
+        player.player?.addTransactionItem(shopItem.itemStack, quantity)
 
         return Result.success(transaction)
     }
