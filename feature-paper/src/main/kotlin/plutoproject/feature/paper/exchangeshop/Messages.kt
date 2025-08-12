@@ -248,7 +248,7 @@ val SHOP_ITEM_LORE_QUANTITY_SINGLE = component {
 
 val SHOP_ITEM_LORE_QUANTITY_MULTIPLE = component {
     text("/ ") with mochaSubtext0
-    text("<quantity>") with mochaText
+    text("<quantity> ") with mochaText
     text("个") with mochaSubtext0
 }
 
