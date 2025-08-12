@@ -190,14 +190,14 @@ class ShopCategoryScreen(private val category: ShopCategory) : InteractiveScreen
         val economy = vaultHook?.economy!!
         val ticket = ticketAmount()
         val balance = economy.getBalance(player).toBigDecimal()
-        var purchasableQuantity: Long? by remember { mutableStateOf(null) }
+        var purchasableQuantity: Long? by remember(shopItem) { mutableStateOf(null) }
 
         LaunchedEffect(Unit) {
             val user = ExchangeShop.getUserOrCreate(player)
             purchasableQuantity = user.calculatePurchasableQuantity(shopItem)
         }
 
-        val state by remember(shopItem.isAvailableToday, ticket, balance) {
+        val state by remember(shopItem, shopItem.isAvailableToday, ticket, balance) {
             mutableStateOf(
                 when {
                     config.capability.availableDays && !shopItem.isAvailableToday -> UNAVAILABLE
