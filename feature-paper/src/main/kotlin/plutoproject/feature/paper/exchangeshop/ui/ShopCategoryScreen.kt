@@ -192,7 +192,7 @@ class ShopCategoryScreen(private val category: ShopCategory) : InteractiveScreen
         val balance = economy.getBalance(player).toBigDecimal()
         var purchasableQuantity: Long? by remember(shopItem) { mutableStateOf(null) }
 
-        LaunchedEffect(Unit) {
+        LaunchedEffect(shopItem) {
             val user = ExchangeShop.getUserOrCreate(player)
             purchasableQuantity = user.calculatePurchasableQuantity(shopItem)
         }
