@@ -4,8 +4,6 @@ import org.bukkit.Bukkit
 import plutoproject.framework.paper.api.statistic.MeasuringTime
 import plutoproject.framework.paper.api.statistic.MeasuringTime.*
 import plutoproject.framework.paper.api.statistic.StatisticProviderType
-import plutoproject.framework.paper.util.server
-import plutoproject.framework.paper.util.toNms
 
 class NativeStatisticProvider : AbstractStatisticProvider() {
     override val type: StatisticProviderType = StatisticProviderType.NATIVE
@@ -22,6 +20,8 @@ class NativeStatisticProvider : AbstractStatisticProvider() {
     }
 
     override fun getMillsPerTick(time: MeasuringTime): Double {
+        error("NativeStatisticProvider not available.")
+        /*
         return when (time) {
             SECONDS_10 -> server.toNms().tickTimes10s.average
             MINUTE_1 -> server.toNms().tickTimes60s.average
@@ -29,6 +29,7 @@ class NativeStatisticProvider : AbstractStatisticProvider() {
             MINUTES_10 -> server.toNms().tickTimes60s.average
             MINUTES_15 -> server.toNms().tickTimes60s.average
         }
+        */
     }
 
     override fun getCpuUsageSystem(time: MeasuringTime): Double {

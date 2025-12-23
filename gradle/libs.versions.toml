@@ -74,7 +74,7 @@ coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
 
 # Platform - Common
 adventureKt = { module = "ink.pmc.advkt:core", version = "1.0.0-SNAPSHOT" }
-adventure = { module = "net.kyori:adventure-api", version = "4.23.0" }
+adventure = { module = "net.kyori:adventure-api", version = "4.25.0" }
 cloud-coroutines = { module = "org.incendo:cloud-kotlin-coroutines", version.ref = "cloud" }
 cloud-extensions = { module = "org.incendo:cloud-kotlin-extensions", version.ref = "cloud" }
 cloud-annotations = { module = "org.incendo:cloud-annotations", version.ref = "cloud" }
