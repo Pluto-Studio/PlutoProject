@@ -44,7 +44,7 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.0.0-alpha.12" }
 gson = { module = "com.google.code.gson:gson", version = "2.12.1" }
 mongodb-kotlin = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodb" }
 mongodb-kotlin-bson = { module = "org.mongodb:bson-kotlinx", version.ref = "mongodb" }
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.0" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.3" }
 catppuccin = { module = "com.catppuccin:catppuccin-palette", version = "1.0.0" }
 nightconfig-core = { module = "com.electronwill.night-config:core", version.ref = "nightconfig" }
 nightconfig-toml = { module = "com.electronwill.night-config:toml", version.ref = "nightconfig" }
