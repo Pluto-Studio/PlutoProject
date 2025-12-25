@@ -21,7 +21,7 @@ inline fun <reified T : Any> SerializationTypeAdapter(): SerializationTypeAdapte
 }
 
 /**
- * 基于 [kotlinx.serialization] 的类型适配器
+ * 基于 [kotlinx.serialization] 的类型适配器。
  *
  * 用了一些取巧的办法来支持所有能被 [kotlinx.serialization] 处理的类型。
  */
