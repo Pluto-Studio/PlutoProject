@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.1.10"
 kotlinx-coroutine = "1.10.2"
-kotlinx-serialization = "1.7.3"
+kotlinx-serialization = "1.9.0"
 mongodb = "5.4.0"
 nightconfig = "3.8.2"
 mccoroutine = "2.22.0"
