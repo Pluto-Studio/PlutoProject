@@ -15,7 +15,7 @@ compose = "1.11.0-alpha01"
 voyager = "1.1.0-beta03"
 hoplite = "2.9.0"
 gremlin = "0.0.6"
-ksp = "2.1.10-1.0.31"
+ksp = "2.3.4"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-rc3" }
