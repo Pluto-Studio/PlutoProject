@@ -13,6 +13,7 @@ This file guides coding agents (LLMs) working in this repository. Follow these i
 - Parallelize tasks when appropriate.
 - If a user request is unclear or lacks key information, ask for clarification before coding.
   - Do the same for any uncertainties about the codebase.
+- For bug fixes, do a full investigation first: locate the entrypoint, trace the call chain, and search usages across modules. Do not "guess and patch".
 - Testing:
   - This project has no unit tests, and unit tests are not required.
   - Do NOT run or add unit tests to validate changes.
