@@ -8,7 +8,6 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import plutoproject.framework.common.api.feature.FeatureMetadata
 import plutoproject.framework.common.api.feature.Load
@@ -37,19 +36,39 @@ class FeatureSymbolProcessor(
         }
 
         val id = annotation.arguments.first { it.name?.asString() == "id" }.value as String
-        val platform = annotation.arguments.first { it.name?.asString() == "platform" }.value.let {
-            it as KSType
-            val name = it.declaration.simpleName.asString()
-            Platform.valueOf(name)
+        val platform = annotation.arguments.first { it.name?.asString() == "platform" }.value.let { value ->
+            when (value) {
+                is KSType -> {
+                    val name = value.declaration.simpleName.asString()
+                    Platform.valueOf(name)
+                }
+
+                is KSClassDeclaration -> {
+                    val name = value.simpleName.asString()
+                    Platform.valueOf(name)
+                }
+
+                else -> error("Unexpected platform type: ${value?.javaClass?.name}")
+            }
         }
 
-        val dependencies = annotation.arguments.first() { it.name?.asString() == "dependencies" }.value as List<*>
+        val dependencies = annotation.arguments.first { it.name?.asString() == "dependencies" }.value as List<*>
         val dependencyList = dependencies.map { it as KSAnnotation }.map { dependency ->
             val depId = dependency.arguments.first { it.name?.asString() == "id" }.value as String
-            val load = dependency.arguments.first { it.name?.asString() == "load" }.value.let {
-                it as KSType
-                val name = it.declaration.simpleName.asString()
-                Load.valueOf(name)
+            val load = dependency.arguments.first { it.name?.asString() == "load" }.value.let { value ->
+                when (value) {
+                    is KSType -> {
+                        val name = value.declaration.simpleName.asString()
+                        Load.valueOf(name)
+                    }
+
+                    is KSClassDeclaration -> {
+                        val name = value.simpleName.asString()
+                        Load.valueOf(name)
+                    }
+
+                    else -> error("Unexpected load type: ${value?.javaClass?.name}")
+                }
             }
             val required = dependency.arguments.first { it.name?.asString() == "required" }.value as Boolean
             DependencyMetadata(depId, load, required)

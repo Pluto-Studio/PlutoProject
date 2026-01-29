@@ -57,11 +57,7 @@ class InventoryScope(owner: Player, contents: ComposableFunction) : BaseScope<In
                 LocalClickHandler provides clickHandler,
                 LocalPlayer provides owner
             ) {
-                runCatching {
-                    contents()
-                }.onFailure {
-                    renderExceptionCallback(it)
-                }
+                contents()
             }
         }
     }
