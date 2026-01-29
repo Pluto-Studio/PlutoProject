@@ -65,6 +65,7 @@ guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.4-SNAPSHOT" }
+charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-SNAPSHOT" }
 
 # External Minecraft
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }

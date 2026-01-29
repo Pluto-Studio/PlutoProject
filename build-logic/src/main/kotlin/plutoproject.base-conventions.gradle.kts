@@ -79,5 +79,6 @@ dependencies {
         downloadIfRequired(libs.aedile)
         downloadIfRequired(libs.guava)
         downloadIfRequired(libs.okio)
+        downloadIfRequired(libs.charonflow)
     }
 }
