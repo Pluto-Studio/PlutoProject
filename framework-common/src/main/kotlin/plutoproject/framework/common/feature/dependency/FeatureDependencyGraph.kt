@@ -44,13 +44,10 @@ class FeatureDependencyGraph(
         metadata.values.forEach { meta ->
             meta.dependencies.forEach { dep ->
                 if (dep.id in metadata) {
-                    // 添加依赖边
-                    depEdges[meta.id]?.add(dep.id)
-                    
                     // 添加反向边
                     revEdges[dep.id]?.add(meta.id)
                     
-                    // 根据 load 类型分类
+                    // 根据 load 类型分类，不再重复添加到 depEdges
                     when (dep.load) {
                         Load.BEFORE -> befEdges[meta.id]?.add(dep.id)
                         Load.AFTER -> aftEdges[meta.id]?.add(dep.id)
