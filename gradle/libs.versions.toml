@@ -81,6 +81,7 @@ cloud-annotations = { module = "org.incendo:cloud-annotations", version.ref = "c
 cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-annotations", version.ref = "cloud" }
 cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
 gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
+luckperms-api = { module = "net.luckperms:api", version = "5.4" }
 
 # Platform - Paper
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }

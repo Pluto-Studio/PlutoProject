@@ -1,6 +1,7 @@
 package plutoproject.feature.velocity.whitelist_v2
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
+import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.module
@@ -10,6 +11,9 @@ import plutoproject.feature.common.whitelist_v2.whitelistCommonModule
 import plutoproject.feature.velocity.whitelist_v2.commands.MigratorCommand
 import plutoproject.feature.velocity.whitelist_v2.commands.WhitelistCommand
 import plutoproject.feature.velocity.whitelist_v2.commands.WhitelistVisitorCommand
+import plutoproject.feature.velocity.whitelist_v2.listeners.PlayerListener
+import plutoproject.feature.velocity.whitelist_v2.listeners.VisitorListener
+import plutoproject.feature.velocity.whitelist_v2.VisitorState
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
@@ -34,10 +38,22 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
     }
 
     override fun onEnable() {
+        // 先只依赖注入 Config，用于下面的 LuckPerms API 检测
         configureKoin {
-            modules(whitelistCommonModule, featureModule)
+            modules(featureModule)
         }
-        VisitorState.setEnabled(config.enableVisitorMode)
+
+        val isLuckPermsApiPresent = runCatching { LuckPermsProvider.get() }.isSuccess
+        if (config.visitorMode.enable && !isLuckPermsApiPresent) {
+            logger.severe("访客模式功能已启用，但未找到 LuckPerms API。模块将不会加载。")
+            return
+        }
+
+        configureKoin {
+            modules(whitelistCommonModule)
+        }
+
+        VisitorState.setEnabled(config.visitorMode.enable)
         featureLogger = logger
         registerCommands()
         server.eventManager.registerSuspend(plugin, PlayerListener)

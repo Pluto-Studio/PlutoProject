@@ -1,23 +1,29 @@
-package plutoproject.feature.velocity.whitelist_v2
+package plutoproject.feature.velocity.whitelist_v2.listeners
 
 import com.velocitypowered.api.event.ResultedEvent
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.LoginEvent
+import net.luckperms.api.LuckPermsProvider
+import net.luckperms.api.node.types.InheritanceNode
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
 import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
+import plutoproject.feature.velocity.whitelist_v2.*
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 @Suppress("UNUSED")
 object PlayerListener : KoinComponent {
+    private val config by inject<WhitelistConfig>()
     private val recordRepo by inject<WhitelistRecordRepository>()
     private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
+    private val luckpermsApi = LuckPermsProvider.get()
 
     @Subscribe
     suspend fun LoginEvent.onPlayerLogin() {
@@ -25,7 +31,49 @@ object PlayerListener : KoinComponent {
             if (VisitorState.isVisitorModeEnabled) {
                 whitelist.addKnownVisitor(player.uniqueId)
                 player.sendMessage(PLAYER_VISITOR_WELCOME)
-                // TODO: 切换玩家权限组到 visitor
+
+                val visitorGroup = config.visitorMode.visitorPermissionGroup
+                val group = luckpermsApi.groupManager.getGroup(visitorGroup)
+                val user = luckpermsApi.userManager.getUser(player.uniqueId)
+
+                if (group == null) {
+                    featureLogger.severe("没有在 LuckPerms 中找到名为 $visitorGroup 的组，权限组正确配置了吗？")
+                    player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
+                    whitelist.removeKnownVisitor(player.uniqueId)
+                    return
+                }
+                if (user == null) {
+                    featureLogger.severe("无法获取访客 ${player.username} (UUID=${player.uniqueId}) 的 LuckPerms 用户对象，这似乎不应该发生...")
+                    player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
+                    whitelist.removeKnownVisitor(player.uniqueId)
+                    return
+                }
+
+                // 移除 default 组
+                val defaultGroup = luckpermsApi.groupManager.getGroup("default")
+                if (defaultGroup != null) {
+                    val defaultNode = InheritanceNode.builder(defaultGroup).build()
+                    user.data().remove(defaultNode)
+                }
+                
+                // 添加 visitor 组
+                val inheritanceNode = InheritanceNode.builder(group).build()
+                user.data().add(inheritanceNode)
+                
+                // 设置主组为 visitor
+                val primaryGroupResult = user.setPrimaryGroup(visitorGroup)
+                luckpermsApi.userManager.saveUser(user)
+
+                if (!primaryGroupResult.wasSuccessful()) {
+                    featureLogger.severe("在尝试为访客 ${player.username} (UUID=${player.uniqueId}) 切换到 $visitorGroup 组时失败。")
+                    featureLogger.severe("修改主组是否成功：${primaryGroupResult.wasSuccessful()}")
+                    user.data().remove(inheritanceNode)
+                    player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
+                    whitelist.removeKnownVisitor(player.uniqueId)
+                    return
+                }
+
+                featureLogger.info("已将访客 ${player.username} (UUID=${player.uniqueId}) 切换到 $visitorGroup 组。")
 
                 VisitorListener.recordVisitorSession(
                     player.uniqueId,
@@ -55,7 +103,7 @@ object PlayerListener : KoinComponent {
     }
 
     private fun logVisitorLogin(
-        uuid: java.util.UUID,
+        uuid: UUID,
         username: String,
         ip: InetAddress,
         virtualHost: InetSocketAddress?

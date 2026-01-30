@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.whitelist_v2
+package plutoproject.feature.velocity.whitelist_v2.listeners
 
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -6,11 +6,15 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.proxy.Player
 import kotlinx.coroutines.launch
+import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import org.koin.core.component.inject
 import plutoproject.feature.common.api.whitelist_v2.VisitorRecordParams
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
+import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
+import plutoproject.feature.velocity.whitelist_v2.featureLogger
 import plutoproject.framework.common.util.coroutine.PluginScope
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -22,8 +26,10 @@ import java.time.Duration as JavaDuration
 
 @Suppress("UNUSED")
 object VisitorListener : KoinComponent {
+    private val config by inject<WhitelistConfig>()
     private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
     private val visitorSessions = ConcurrentHashMap<UUID, VisitorSession>()
+    private val luckpermsApi = LuckPermsProvider.get()
 
     data class VisitorSession(
         val joinTime: Instant,
@@ -63,6 +69,13 @@ object VisitorListener : KoinComponent {
         if (session != null) {
             createVisitorRecord(player, session)
         }
+        // 讲实话我也不知道这个什么时候可能 null。。不过反正都退出了，先这样吧。
+        val user = luckpermsApi.userManager.getUser(player.uniqueId)
+        if (user != null) {
+            user.data().clear()
+            luckpermsApi.userManager.saveUser(user)
+        }
+        featureLogger.info("已清除访客 ${player.username} (UUID=${player.uniqueId}) 的 LuckPerms 数据。")
         whitelist.removeKnownVisitor(player.uniqueId)
     }
 

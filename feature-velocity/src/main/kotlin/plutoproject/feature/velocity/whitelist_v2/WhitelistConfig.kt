@@ -2,5 +2,10 @@ package plutoproject.feature.velocity.whitelist_v2
 
 data class WhitelistConfig(
     val enableMigrator: Boolean = false,
-    val enableVisitorMode: Boolean = true,
+    val visitorMode: VisitorModeConfig = VisitorModeConfig()
+)
+
+data class VisitorModeConfig(
+    val enable: Boolean = true,
+    val visitorPermissionGroup: String = "visitor"
 )

@@ -174,3 +174,7 @@ val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
 val COMMAND_VISITOR_MODE_TOGGLED_OFF = component {
     text("访客模式已关闭") with mochaMaroon
 }
+
+val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
+    text("在处理访客连接时出现异常") with mochaMaroon
+}
