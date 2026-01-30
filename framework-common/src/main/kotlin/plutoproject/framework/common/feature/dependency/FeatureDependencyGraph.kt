@@ -150,15 +150,12 @@ class FeatureDependencyGraph(
     }
     
     /**
-     * 计算禁用顺序（反向拓扑排序）
-     * 确保被依赖的 feature 先禁用
+     * 计算禁用顺序
+     * 与加载顺序相反：先禁用依赖他人的 feature，后禁用被依赖的 feature
      */
     fun getDisableOrder(): List<FeatureMetadata> {
-        val available = getAvailableFeatures()
-        // 禁用使用反向边：依赖他人的先禁用
-        val order = TopologicalSort.reverseSort(available, reverseEdges)
-        
-        return order.mapNotNull { metadata[it] }
+        // 直接使用加载顺序的反向
+        return getLoadOrder().reversed()
     }
     
     /**
