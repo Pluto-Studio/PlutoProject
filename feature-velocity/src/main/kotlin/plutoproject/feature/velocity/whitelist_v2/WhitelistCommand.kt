@@ -22,13 +22,15 @@ import kotlin.time.Duration.Companion.seconds
 object WhitelistCommand : KoinComponent {
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
 
-    private suspend fun fetchProfileWithTimeout(username: String): FetchedData? {
+    // Pair 里的第一个元素为 true 即为超时导致的未获取
+    private suspend fun fetchProfileWithTimeout(username: String): Pair<Boolean, FetchedData?> {
         return try {
-            withTimeout(10.seconds) {
+            val profile = withTimeout(10.seconds) {
                 MojangProfileFetcher.fetchByName(username)
             }
+            false to profile
         } catch (e: TimeoutCancellationException) {
-            return null
+            true to null
         }
     }
 
@@ -39,25 +41,32 @@ object WhitelistCommand : KoinComponent {
         val operator = if (this is Player) WhitelistOperator.Administrator(uniqueId) else WhitelistOperator.Console
         val profile = fetchProfileWithTimeout(name)
 
-        if (profile == null) {
-            sendMessage(COMMAND_WHITELIST_ADD_NOT_FOUND.replace("<name>", name))
+        if (profile.second == null) {
+            if (profile.first) {
+                sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT.replace("<name>", name))
+                return
+            }
+            sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND.replace("<name>", name))
             return
         }
-        if (Whitelist.isWhitelisted(profile.uuid)) {
-            sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", profile.name))
+
+        val fetchedProfile = profile.second!!
+
+        if (Whitelist.isWhitelisted(fetchedProfile.uuid)) {
+            sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", fetchedProfile.name))
             return
         }
 
         val success = Whitelist.grantWhitelist(
-            uniqueId = profile.uuid,
-            username = profile.name,
+            uniqueId = fetchedProfile.uuid,
+            username = fetchedProfile.name,
             operator = operator
         )
 
         if (success) {
-            sendMessage(COMMAND_WHITELIST_ADD_SUCCEED.replace("<name>", profile.name))
+            sendMessage(COMMAND_WHITELIST_ADD_SUCCEED.replace("<name>", fetchedProfile.name))
         } else {
-            sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", profile.name))
+            sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", fetchedProfile.name))
         }
     }
 
@@ -71,25 +80,32 @@ object WhitelistCommand : KoinComponent {
         val operator = if (this is Player) WhitelistOperator.Administrator(uniqueId) else WhitelistOperator.Console
         val profile = fetchProfileWithTimeout(name)
 
-        if (profile == null) {
-            sendMessage(COMMAND_WHITELIST_ADD_NOT_FOUND.replace("<name>", name))
+        if (profile.second == null) {
+            if (profile.first) {
+                sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT.replace("<name>", name))
+                return
+            }
+            sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND.replace("<name>", name))
             return
         }
-        if (!Whitelist.isWhitelisted(profile.uuid)) {
-            sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", profile.name))
+
+        val fetchedProfile = profile.second!!
+
+        if (!Whitelist.isWhitelisted(fetchedProfile.uuid)) {
+            sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", fetchedProfile.name))
             return
         }
 
         val success = Whitelist.revokeWhitelist(
-            uniqueId = profile.uuid,
+            uniqueId = fetchedProfile.uuid,
             operator = operator,
             reason = WhitelistRevokeReason.OTHER
         )
 
         if (success) {
-            sendMessage(COMMAND_WHITELIST_REMOVE_SUCCEED.replace("<name>", profile.name))
+            sendMessage(COMMAND_WHITELIST_REMOVE_SUCCEED.replace("<name>", fetchedProfile.name))
         } else {
-            sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", profile.name))
+            sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", fetchedProfile.name))
         }
     }
 
@@ -99,16 +115,23 @@ object WhitelistCommand : KoinComponent {
         sendMessage(COMMAND_WHITELIST_ADD_FETCHING)
         val profile = fetchProfileWithTimeout(name)
 
-        if (profile == null) {
-            sendMessage(COMMAND_WHITELIST_ADD_NOT_FOUND.replace("<name>", name))
-            return
-        }
-        if (Whitelist.isWhitelisted(profile.uuid)) {
-            sendMessage(COMMAND_WHITELIST_LOOKUP_WHITELISTED.replace("<name>", profile.name))
+        if (profile.second == null) {
+            if (profile.first) {
+                sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT.replace("<name>", name))
+                return
+            }
+            sendMessage(COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND.replace("<name>", name))
             return
         }
 
-        sendMessage(COMMAND_WHITELIST_LOOKUP_NOT_FOUND.replace("<name>", profile.name))
+        val fetchedProfile = profile.second!!
+
+        if (Whitelist.isWhitelisted(fetchedProfile.uuid)) {
+            sendMessage(COMMAND_WHITELIST_LOOKUP_WHITELISTED.replace("<name>", fetchedProfile.name))
+            return
+        }
+
+        sendMessage(COMMAND_WHITELIST_LOOKUP_NOT_FOUND.replace("<name>", fetchedProfile.name))
     }
 
     @Command("whitelist statistic")

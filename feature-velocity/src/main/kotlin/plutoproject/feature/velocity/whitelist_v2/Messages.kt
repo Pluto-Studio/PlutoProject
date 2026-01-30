@@ -29,11 +29,11 @@ val COMMAND_WHITELIST_ADD_FETCHING = component {
     text("正在获取数据，请稍等...") with mochaText
 }
 
-val COMMAND_WHITELIST_ADD_TIMEOUT = component {
+val COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT = component {
     text("数据获取超时，请重试") with mochaMaroon
 }
 
-val COMMAND_WHITELIST_ADD_NOT_FOUND = component {
+val COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND = component {
     text("未获取到玩家 ") with mochaMaroon
     text("<name> ") with mochaText
     text("的数据，请检查玩家名是否正确") with mochaMaroon
