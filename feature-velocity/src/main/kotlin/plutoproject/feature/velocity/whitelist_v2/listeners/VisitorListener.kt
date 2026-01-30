@@ -59,7 +59,8 @@ object VisitorListener : KoinComponent {
         }
     }
 
-    @Subscribe
+    // 保证最后一个出发
+    @Subscribe(priority = Short.MIN_VALUE)
     fun DisconnectEvent.onPlayerDisconnect() {
         val player = this.player
         if (!whitelist.isKnownVisitor(player.uniqueId)) {
