@@ -162,3 +162,15 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
     text("<count> ") with mochaLavender
     text("条数据") with mochaPink
 }
+
+val PLAYER_VISITOR_WELCOME = component {
+    text("<visitor_welcome_message>") with mochaText
+}
+
+val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
+    text("访客模式已开启") with mochaGreen
+}
+
+val COMMAND_VISITOR_MODE_TOGGLED_OFF = component {
+    text("访客模式已关闭") with mochaMaroon
+}
