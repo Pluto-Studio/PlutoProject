@@ -12,12 +12,12 @@ val MENU_PVP_TOGGLE_FEATURE_LOADING = component {
 }
 
 val MENU_PVP_TOGGLE_FEATURE_ENABLED = component {
-    text("PvP 开关 ") with mochaText
+    text("PvP ") with mochaText
     text("开") with mochaGreen
 }
 
 val MENU_PVP_TOGGLE_FEATURE_DISABLED = component {
-    text("PvP 开关 ") with mochaText
+    text("PvP ") with mochaText
     text("关") with mochaMaroon
 }
 

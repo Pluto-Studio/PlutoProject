@@ -18,6 +18,10 @@ object PvPToggleListener : Listener {
         val damager = damager as? Player ?: return
         val victim = entity as? Player ?: return
 
+        if (victim.hasPermission(PVP_TOGGLE_BYPASS_PERMISSION)) {
+            return
+        }
+
         val damagerEnabled = PvPToggle.isPvPEnabled(damager)
         val victimEnabled = PvPToggle.isPvPEnabled(victim)
 
