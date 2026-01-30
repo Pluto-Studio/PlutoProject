@@ -3,8 +3,8 @@ package plutoproject.feature.common.whitelist_v2
 import plutoproject.feature.common.api.whitelist_v2.WhitelistOperator
 import plutoproject.feature.common.api.whitelist_v2.WhitelistRecord
 import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
+import java.time.Instant
 import java.util.*
-import kotlin.time.Instant
 
 class WhitelistRecordImpl(
     override val uniqueId: UUID,

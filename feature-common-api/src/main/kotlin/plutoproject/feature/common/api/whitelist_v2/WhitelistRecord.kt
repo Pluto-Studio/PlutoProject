@@ -1,7 +1,7 @@
 package plutoproject.feature.common.api.whitelist_v2
 
+import java.time.Instant
 import java.util.*
-import kotlin.time.Instant
 
 interface WhitelistRecord {
     /**
