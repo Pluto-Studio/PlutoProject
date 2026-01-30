@@ -56,7 +56,7 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     override fun getMetadata(id: String): FeatureMetadata? = metadata[id]
 
     private fun getMetadataOrThrow(id: String): FeatureMetadata {
-        return getMetadata(id) ?: error("Feature metadata not found: $id")
+        return getMetadata(id) ?: error("未找到 Feature 元数据：$id")
     }
 
     /**
@@ -65,7 +65,7 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     private fun createInstance(metadata: FeatureMetadata): Feature {
         val entrypoint = metadata.entrypoint
         val entryClass = findClass(entrypoint)?.kotlin 
-            ?: error("Unable to find feature class: $entrypoint")
+            ?: error("无法找到 Feature 类：$entrypoint")
         val feature = entryClass.createInstance() as AbstractFeature
         val id = metadata.id
         feature.init(
@@ -82,7 +82,7 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     private fun validateDependencies(metadata: FeatureMetadata) {
         val missing = dependencyGraph.validateDependencies(metadata.id)
         if (missing.isNotEmpty()) {
-            error("Feature ${metadata.id} has missing required dependencies: ${missing.joinToString(", ")}")
+            error("Feature ${metadata.id} 缺少必需的依赖：${missing.joinToString(", ")}")
         }
     }
 
@@ -133,15 +133,15 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     override fun loadFeature(id: String): Feature {
         // 已加载则直接返回
         if (isLoaded(id)) {
-            return getFeature(id) ?: error("Feature $id is marked as loaded but not found")
+            return getFeature(id) ?: error("Feature $id 标记为已加载但未找到")
         }
 
         // 检查是否在配置中启用
-        check(isEnabledInConfig(id)) { "Feature $id not enabled in config" }
+        check(isEnabledInConfig(id)) { "Feature $id 未在配置中启用" }
 
         // 检查是否因循环依赖被永久禁用
         if (dependencyGraph.isPermanentlyDisabled(id)) {
-            error("Feature $id is permanently disabled due to circular dependency")
+            error("Feature $id 因循环依赖被永久禁用")
         }
 
         val meta = getMetadataOrThrow(id)
@@ -170,11 +170,11 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     override fun enableFeature(id: String): Feature {
         // 已启用则直接返回
         if (isEnabled(id)) {
-            return getFeature(id) ?: error("Feature $id is marked as enabled but not found")
+            return getFeature(id) ?: error("Feature $id 标记为已启用但未找到")
         }
 
         // 检查是否已加载
-        check(isLoaded(id)) { "Feature $id must be loaded before enable" }
+        check(isLoaded(id)) { "必须先加载 Feature $id 才能启用" }
 
         val meta = getMetadataOrThrow(id)
 
@@ -199,7 +199,7 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     }
 
     override fun reloadFeature(id: String): Feature {
-        check(isEnabled(id)) { "Feature $id must be enabled before reload" }
+        check(isEnabled(id)) { "必须先启用 Feature $id 才能重载" }
         
         val instance = getFeature(id)!!.apply { onReload() }
         logger.info("已重载 Feature：$id")
@@ -209,11 +209,11 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
     override fun disableFeature(id: String): Feature {
         // 已禁用则直接返回
         if (isDisabled(id)) {
-            return getFeature(id) ?: error("Feature $id is marked as disabled but not found")
+            return getFeature(id) ?: error("Feature $id 标记为已禁用但未找到")
         }
 
         // 检查是否已启用
-        check(isEnabled(id)) { "Feature $id must be enabled before disable" }
+        check(isEnabled(id)) { "必须先启用 Feature $id 才能禁用" }
 
         val meta = getMetadataOrThrow(id)
 
