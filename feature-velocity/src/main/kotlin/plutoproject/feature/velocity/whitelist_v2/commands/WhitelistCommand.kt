@@ -106,7 +106,7 @@ object WhitelistCommand : KoinComponent {
         val success = Whitelist.revokeWhitelist(
             uniqueId = fetchedProfile.uuid,
             operator = operator,
-            reason = WhitelistRevokeReason.OTHER
+            reason = reason
         )
 
         if (success) {
