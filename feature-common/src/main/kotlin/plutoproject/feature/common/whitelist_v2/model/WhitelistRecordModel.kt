@@ -17,5 +17,6 @@ data class WhitelistRecordModel(
     val isMigrated: Boolean = false,
     val isRevoked: Boolean = false,
     val revoker: WhitelistOperatorModel? = null,
-    val revokeReason: WhitelistRevokeReason? = null
+    val revokeReason: WhitelistRevokeReason? = null,
+    val revokeAt: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant? = null
 )

@@ -3,11 +3,14 @@ package plutoproject.feature.velocity.whitelist_v2
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.text
+import plutoproject.framework.common.util.chat.palettes.mochaFlamingo
+import plutoproject.framework.common.util.chat.palettes.mochaGreen
 import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.framework.common.util.chat.palettes.mochaYellow
 
 val PLAYER_NOT_WHITELISTED = component {
     text("你的账号未获得白名单") with mochaMaroon
@@ -45,18 +48,6 @@ val COMMAND_WHITELIST_ADD_SUCCEED = component {
     text("授予白名单") with mochaPink
 }
 
-val COMMAND_WHITELIST_LOOKUP_NOT_FOUND = component {
-    text("未查询到名为 ") with mochaMaroon
-    text("<name> ") with mochaText
-    text("的玩家") with mochaMaroon
-}
-
-val COMMAND_WHITELIST_LOOKUP_WHITELISTED = component {
-    text("已查询到名为 ") with mochaPink
-    text("<name> ") with mochaText
-    text("的玩家") with mochaPink
-}
-
 val COMMAND_WHITELIST_REMOVE_NOT_FOUND = component {
     text("名为 ") with mochaMaroon
     text("<name> ") with mochaText
@@ -73,4 +64,76 @@ val COMMAND_WHITELIST_STATISTIC = component {
     text("当前有 ") with mochaText
     text("<count> ") with mochaLavender
     text("位玩家获得了白名单") with mochaText
+}
+
+val COMMAND_WHITELIST_LOOKUP_NO_RECORD = component {
+    text("玩家 ") with mochaMaroon
+    text("<name> ") with mochaText
+    text("没有白名单记录") with mochaMaroon
+}
+
+val COMMAND_WHITELIST_LOOKUP_HEADER = component {
+    text("玩家 ") with mochaText
+    text("<name> ") with mochaYellow
+    text("的白名单信息：") with mochaText
+}
+
+val COMMAND_WHITELIST_LOOKUP_UUID = component {
+    text("- ") with mochaSubtext0
+    text("UUID: ") with mochaText
+    text("<uuid>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_USERNAME = component {
+    text("- ") with mochaSubtext0
+    text("用户名: ") with mochaText
+    text("<username>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_GRANTER = component {
+    text("- ") with mochaSubtext0
+    text("授权者: ") with mochaText
+    text("<granter>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_CREATED_AT = component {
+    text("- ") with mochaSubtext0
+    text("创建时间: ") with mochaText
+    text("<created_at>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE = component {
+    text("- ") with mochaSubtext0
+    text("此前访客: ") with mochaText
+    text("<status>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_MIGRATED = component {
+    text("- ") with mochaSubtext0
+    text("迁移记录: ") with mochaText
+    text("<status>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_REVOKED = component {
+    text("- ") with mochaSubtext0
+    text("撤销状态: ") with mochaText
+    text("<status>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_REVOKER = component {
+    text("- ") with mochaSubtext0
+    text("撤销者: ") with mochaText
+    text("<revoker>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_REVOKE_REASON = component {
+    text("- ") with mochaSubtext0
+    text("撤销原因: ") with mochaText
+    text("<reason>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_REVOKE_TIME = component {
+    text("- ") with mochaSubtext0
+    text("撤销时间: ") with mochaText
+    text("<time>") with mochaLavender
 }

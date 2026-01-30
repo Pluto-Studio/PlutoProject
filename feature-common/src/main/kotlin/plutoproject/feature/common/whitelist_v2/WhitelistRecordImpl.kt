@@ -15,5 +15,6 @@ class WhitelistRecordImpl(
     override val isMigrated: Boolean,
     override val isRevoked: Boolean,
     override val revoker: WhitelistOperator?,
-    override val revokeReason: WhitelistRevokeReason?
+    override val revokeReason: WhitelistRevokeReason?,
+    override val revokeAt: Instant?
 ) : WhitelistRecord

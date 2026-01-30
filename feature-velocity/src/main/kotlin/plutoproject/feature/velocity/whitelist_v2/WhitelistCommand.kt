@@ -2,8 +2,14 @@ package plutoproject.feature.velocity.whitelist_v2
 
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
+import ink.pmc.advkt.component.component
+import ink.pmc.advkt.component.newline
+import ink.pmc.advkt.component.raw
+import ink.pmc.advkt.component.text
+import ink.pmc.advkt.send
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import net.kyori.adventure.text.Component
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
@@ -13,9 +19,14 @@ import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.api.whitelist_v2.WhitelistOperator
 import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
 import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
+import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.FetchedData
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
 import plutoproject.framework.common.util.chat.component.replace
+import plutoproject.framework.common.util.chat.palettes.mochaMaroon
+import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
+import plutoproject.framework.common.util.chat.palettes.mochaYellow
+import plutoproject.framework.common.util.time.format
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
@@ -125,13 +136,73 @@ object WhitelistCommand : KoinComponent {
         }
 
         val fetchedProfile = profile.second!!
+        val record = Whitelist.lookupWhitelistRecord(fetchedProfile.uuid)
 
-        if (Whitelist.isWhitelisted(fetchedProfile.uuid)) {
-            sendMessage(COMMAND_WHITELIST_LOOKUP_WHITELISTED.replace("<name>", fetchedProfile.name))
+        if (record == null) {
+            sendMessage(COMMAND_WHITELIST_LOOKUP_NO_RECORD.replace("<name>", fetchedProfile.name))
             return
         }
 
-        sendMessage(COMMAND_WHITELIST_LOOKUP_NOT_FOUND.replace("<name>", fetchedProfile.name))
+        val formattedGranter = formatOperator(record.granter)
+        val formatterRevoker = record.revoker?.let { formatOperator(it) }
+
+        send {
+            raw(COMMAND_WHITELIST_LOOKUP_HEADER.replace("<name>", record.username))
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_UUID.replace("<uuid>", record.uniqueId.toString()))
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_USERNAME.replace("<username>", record.username))
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_GRANTER.replace("<granter>", formattedGranter))
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_CREATED_AT.replace("<created_at>", record.createdAt.format()))
+            newline()
+            raw(
+                COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE.replace(
+                    "<status>",
+                    if (record.joinedAsVisitorBefore) "是" else "否"
+                )
+            )
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_MIGRATED.replace("<status>", if (record.isMigrated) "是" else "否"))
+            newline()
+            raw(COMMAND_WHITELIST_LOOKUP_REVOKED.replace("<status>", if (record.isRevoked) "已撤销" else "有效"))
+            if (record.isRevoked) {
+                newline()
+                raw(COMMAND_WHITELIST_LOOKUP_REVOKER.replace("<revoker>", formatterRevoker!!))
+                newline()
+                raw(
+                    COMMAND_WHITELIST_LOOKUP_REVOKE_REASON.replace(
+                        "<reason>",
+                        formatRevokeReason(record.revokeReason!!)
+                    )
+                )
+                newline()
+                raw(COMMAND_WHITELIST_LOOKUP_REVOKE_TIME.replace("<time>", record.revokeAt!!.format()))
+            }
+        }
+    }
+
+    private suspend fun formatOperator(operator: WhitelistOperator): Component {
+        return when (operator) {
+            is WhitelistOperator.Console -> Component.text("控制台")
+            is WhitelistOperator.Administrator -> {
+                val profile = ProfileLookup.lookupByUuid(operator.uniqueId, requestApi = false)
+                val name = profile?.name ?: operator.uniqueId.toString()
+                component {
+                    text("管理员 ")
+                    text("($name)") with mochaSubtext0
+                }
+            }
+        }
+    }
+
+    private fun formatRevokeReason(reason: WhitelistRevokeReason): Component {
+        return when (reason) {
+            WhitelistRevokeReason.VIOLATION -> Component.text("违规").color(mochaMaroon)
+            WhitelistRevokeReason.REQUESTED -> Component.text("主动请求").color(mochaYellow)
+            WhitelistRevokeReason.OTHER -> Component.text("其他").color(mochaSubtext0)
+        }
     }
 
     @Command("whitelist statistic")

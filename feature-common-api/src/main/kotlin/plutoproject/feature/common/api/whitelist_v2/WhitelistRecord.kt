@@ -56,4 +56,9 @@ interface WhitelistRecord {
      * 撤销该白名单的原因，若未被撤销则为 null。
      */
     val revokeReason: WhitelistRevokeReason?
+
+    /**
+     * 撤销该白名单的时间，若未被撤销则为 null。
+     */
+    val revokeAt: Instant?
 }

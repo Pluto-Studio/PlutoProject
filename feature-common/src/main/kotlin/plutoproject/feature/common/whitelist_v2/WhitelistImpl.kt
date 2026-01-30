@@ -12,6 +12,7 @@ import plutoproject.framework.common.util.network.parseInetSocketAddress
 import plutoproject.framework.common.util.network.toHostPortString
 import java.net.Inet6Address
 import java.net.InetAddress
+import java.time.Instant
 import java.util.*
 import kotlin.time.Duration
 
@@ -52,7 +53,8 @@ class WhitelistImpl : Whitelist, KoinComponent {
             joinedAsVisitorBefore = hasVisitorRecord,
             isRevoked = false,
             revoker = null,
-            revokeReason = null
+            revokeReason = null,
+            revokeAt = null
         ) ?: WhitelistRecordModel(
             uniqueId = uniqueId,
             username = username,
@@ -74,7 +76,8 @@ class WhitelistImpl : Whitelist, KoinComponent {
         val updatedModel = model.copy(
             isRevoked = true,
             revoker = operator.toModel(),
-            revokeReason = reason
+            revokeReason = reason,
+            revokeAt = Instant.now()
         )
 
         whitelistRecordRepository.saveOrUpdate(updatedModel)
@@ -142,7 +145,8 @@ class WhitelistImpl : Whitelist, KoinComponent {
             isMigrated = isMigrated,
             isRevoked = isRevoked,
             revoker = revoker?.toOperator(),
-            revokeReason = revokeReason
+            revokeReason = revokeReason,
+            revokeAt = revokeAt
         )
     }
 
