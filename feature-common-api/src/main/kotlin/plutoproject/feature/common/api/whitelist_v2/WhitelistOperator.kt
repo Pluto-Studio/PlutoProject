@@ -9,7 +9,7 @@ sealed class WhitelistOperator {
     /**
      * 代表该白名单的授予或撤销通过控制台命令操作。
      */
-    class Console : WhitelistOperator()
+    object Console : WhitelistOperator()
 
     /**
      * 代表该白名单的授予或撤销由管理员通过游戏内命令操作。

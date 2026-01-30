@@ -43,7 +43,17 @@ class WhitelistImpl : Whitelist, KoinComponent {
         }
 
         val hasVisitorRecord = visitorRecordRepository.hasByUniqueId(uniqueId)
-        val model = WhitelistRecordModel(
+        val existingModel = whitelistRecordRepository.findByUniqueId(uniqueId)
+
+        // 如果有现存的记录即代表该玩家此前获得过白名单，后面被移除了，现在再获得。复用现有 Model 来保留其他信息而不是创建新的。
+        val model = existingModel?.copy(
+            username = username,
+            granter = operator.toModel(),
+            joinedAsVisitorBefore = hasVisitorRecord,
+            isRevoked = false,
+            revoker = null,
+            revokeReason = null
+        ) ?: WhitelistRecordModel(
             uniqueId = uniqueId,
             username = username,
             granter = operator.toModel(),
@@ -163,7 +173,7 @@ class WhitelistImpl : Whitelist, KoinComponent {
 
     private fun WhitelistOperatorModel.toOperator(): WhitelistOperator {
         return when (type) {
-            WhitelistOperatorModelType.CONSOLE -> WhitelistOperator.Console()
+            WhitelistOperatorModelType.CONSOLE -> WhitelistOperator.Console
             WhitelistOperatorModelType.ADMINISTRATOR -> WhitelistOperator.Administrator(
                 uniqueId = administrator ?: throw IllegalStateException("Administrator UUID is null")
             )
