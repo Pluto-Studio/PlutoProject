@@ -16,7 +16,7 @@ import plutoproject.framework.common.databasepersist.ContainerRepository
 import plutoproject.framework.common.databasepersist.DataChangeStream
 import plutoproject.framework.common.databasepersist.DatabasePersistImpl
 import plutoproject.framework.common.databasepersist.InternalDatabasePersist
-import plutoproject.framework.common.feature.FeatureManagerImpl
+import plutoproject.framework.common.feature.FeatureManagerImplV2
 import plutoproject.framework.common.profile.ProfileLookupImpl
 import plutoproject.framework.common.profile.ProfileRepository
 import plutoproject.framework.common.util.COMMON_FRAMEWORK_RESOURCE_PREFIX
@@ -46,7 +46,7 @@ private fun getPlutoConfig(): PlutoConfig {
 
 val FrameworkCommonModule = module {
     single<PlutoConfig> { getPlutoConfig() }
-    single<FeatureManager> { FeatureManagerImpl() }
+    single<FeatureManager> { FeatureManagerImplV2() }
     single<ExternalConnectionConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "connection") }
     single<MongoConnection> { MongoConnectionImpl() }
     single<GeoIpConnection> { GeoIpConnectionImpl() }

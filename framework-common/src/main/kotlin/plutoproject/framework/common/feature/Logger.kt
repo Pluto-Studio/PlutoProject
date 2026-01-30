@@ -1,5 +1,5 @@
 package plutoproject.framework.common.feature
 
-import org.slf4j.LoggerFactory
+import java.util.logging.Logger
 
-internal val logger = LoggerFactory.getLogger("PlutoProject/Feature")
+internal val logger = Logger.getLogger("PlutoProject/Feature")
