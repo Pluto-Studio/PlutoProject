@@ -54,10 +54,18 @@ val COMMAND_WHITELIST_REMOVE_SUCCEED = component {
     text("的白名单") with mochaPink
 }
 
-val COMMAND_WHITELIST_STATISTIC = component {
-    text("当前有 ") with mochaText
-    text("<count> ") with mochaLavender
-    text("位玩家获得了白名单") with mochaText
+val COMMAND_WHITELIST_STATISTIC_HEADER = component {
+    text("白名单统计信息：") with mochaText
+}
+
+val COMMAND_WHITELIST_STATISTIC_TOTAL = component {
+    text("- 总计记录: ") with mochaSubtext0
+    text("<count>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_STATISTIC_ACTIVE = component {
+    text("- 有效白名单: ") with mochaSubtext0
+    text("<count>") with mochaGreen
 }
 
 val COMMAND_WHITELIST_LOOKUP_NO_RECORD = component {

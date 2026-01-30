@@ -201,8 +201,14 @@ object WhitelistCommand : KoinComponent {
     @Command("whitelist statistic")
     @Permission("whitelist.command")
     suspend fun CommandSource.statistic() {
-        val allRecords = whitelistRecordRepository.findAll()
-        val count = allRecords.count { !it.isRevoked }
-        sendMessage(COMMAND_WHITELIST_STATISTIC.replace("<count>", count.toString()))
+        val totalCount = whitelistRecordRepository.count()
+        val activeCount = whitelistRecordRepository.countActive()
+        send {
+            raw(COMMAND_WHITELIST_STATISTIC_HEADER)
+            newline()
+            raw(COMMAND_WHITELIST_STATISTIC_TOTAL.replace("<count>", totalCount.toString()))
+            newline()
+            raw(COMMAND_WHITELIST_STATISTIC_ACTIVE.replace("<count>", activeCount.toString()))
+        }
     }
 }

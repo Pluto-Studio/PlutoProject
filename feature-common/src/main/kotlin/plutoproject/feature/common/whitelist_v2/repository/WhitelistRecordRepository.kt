@@ -19,6 +19,14 @@ class WhitelistRecordRepository(private val collection: MongoCollection<Whitelis
         return collection.find().toList()
     }
 
+    suspend fun count(): Long {
+        return collection.countDocuments()
+    }
+
+    suspend fun countActive(): Long {
+        return collection.countDocuments(eq(WhitelistRecordModel::isRevoked.name, false))
+    }
+
     suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecordModel? {
         return collection.find(eq(WhitelistRecordModel::uniqueId.name, uniqueId))
             .firstOrNull()
