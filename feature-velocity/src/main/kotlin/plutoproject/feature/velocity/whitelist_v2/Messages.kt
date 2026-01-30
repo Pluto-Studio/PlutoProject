@@ -3,14 +3,8 @@ package plutoproject.feature.velocity.whitelist_v2
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.text
-import plutoproject.framework.common.util.chat.palettes.mochaFlamingo
-import plutoproject.framework.common.util.chat.palettes.mochaGreen
-import plutoproject.framework.common.util.chat.palettes.mochaLavender
-import plutoproject.framework.common.util.chat.palettes.mochaMaroon
-import plutoproject.framework.common.util.chat.palettes.mochaPink
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
-import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.chat.palettes.mochaYellow
+import net.kyori.adventure.text.Component
+import plutoproject.framework.common.util.chat.palettes.*
 
 val PLAYER_NOT_WHITELISTED = component {
     text("你的账号未获得白名单") with mochaMaroon
@@ -71,6 +65,19 @@ val COMMAND_WHITELIST_LOOKUP_NO_RECORD = component {
     text("<name> ") with mochaText
     text("没有白名单记录") with mochaMaroon
 }
+
+val COMMAND_WHITELIST_OPERATOR_CONSOLE = Component.text("控制台")
+
+val COMMAND_WHITELIST_OPERATOR_ADMIN = component {
+    text("管理员 ")
+    text("(<name>)") with mochaSubtext0
+}
+
+val COMMAND_WHITELIST_REVOKE_REASON_VIOLATION = Component.text("违规").color(mochaMaroon)
+
+val COMMAND_WHITELIST_REVOKE_REASON_REQUESTED = Component.text("主动请求").color(mochaYellow)
+
+val COMMAND_WHITELIST_REVOKE_REASON_OTHER = Component.text("其他").color(mochaSubtext0)
 
 val COMMAND_WHITELIST_LOOKUP_HEADER = component {
     text("玩家 ") with mochaText

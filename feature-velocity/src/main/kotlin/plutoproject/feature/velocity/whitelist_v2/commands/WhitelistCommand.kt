@@ -2,10 +2,8 @@ package plutoproject.feature.velocity.whitelist_v2.commands
 
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
-import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.raw
-import ink.pmc.advkt.component.text
 import ink.pmc.advkt.send
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -19,33 +17,11 @@ import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.api.whitelist_v2.WhitelistOperator
 import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
 import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_ALREADY_EXISTS
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_FETCHING
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_SUCCEED
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_CREATED_AT
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_GRANTER
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_HEADER
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_MIGRATED
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_NO_RECORD
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKED
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKER
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKE_REASON
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKE_TIME
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_USERNAME
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_UUID
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_REMOVE_NOT_FOUND
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_REMOVE_SUCCEED
-import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_STATISTIC
+import plutoproject.feature.velocity.whitelist_v2.*
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.FetchedData
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.chat.palettes.mochaMaroon
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
-import plutoproject.framework.common.util.chat.palettes.mochaYellow
 import plutoproject.framework.common.util.time.format
 import kotlin.time.Duration.Companion.seconds
 
@@ -205,23 +181,20 @@ object WhitelistCommand : KoinComponent {
 
     private suspend fun formatOperator(operator: WhitelistOperator): Component {
         return when (operator) {
-            is WhitelistOperator.Console -> Component.text("控制台")
+            is WhitelistOperator.Console -> COMMAND_WHITELIST_OPERATOR_CONSOLE
             is WhitelistOperator.Administrator -> {
                 val profile = ProfileLookup.lookupByUuid(operator.uniqueId, requestApi = false)
                 val name = profile?.name ?: operator.uniqueId.toString()
-                component {
-                    text("管理员 ")
-                    text("($name)") with mochaSubtext0
-                }
+                COMMAND_WHITELIST_OPERATOR_ADMIN.replace("<name>", name)
             }
         }
     }
 
     private fun formatRevokeReason(reason: WhitelistRevokeReason): Component {
         return when (reason) {
-            WhitelistRevokeReason.VIOLATION -> Component.text("违规").color(mochaMaroon)
-            WhitelistRevokeReason.REQUESTED -> Component.text("主动请求").color(mochaYellow)
-            WhitelistRevokeReason.OTHER -> Component.text("其他").color(mochaSubtext0)
+            WhitelistRevokeReason.VIOLATION -> COMMAND_WHITELIST_REVOKE_REASON_VIOLATION
+            WhitelistRevokeReason.REQUESTED -> COMMAND_WHITELIST_REVOKE_REASON_REQUESTED
+            WhitelistRevokeReason.OTHER -> COMMAND_WHITELIST_REVOKE_REASON_OTHER
         }
     }
 
