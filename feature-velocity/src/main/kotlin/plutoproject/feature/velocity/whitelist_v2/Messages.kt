@@ -154,5 +154,3 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
     text("<count> ") with mochaLavender
     text("条数据") with mochaPink
 }
-
-const val LOG_LEGACY_WHITELIST_FEATURE_NOT_ENABLED = "由于旧版白名单系统未启用，迁移功能无法工作。"
