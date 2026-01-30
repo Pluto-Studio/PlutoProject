@@ -101,6 +101,14 @@ class WhitelistImpl : Whitelist, KoinComponent {
         return model.toVisitorRecord()
     }
 
+    override suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord> {
+        return visitorRecordRepository.findByCidr(cidr).map { it.toVisitorRecord() }
+    }
+
+    override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord> {
+        return visitorRecordRepository.findByIpAddress(ipAddress).map { it.toVisitorRecord() }
+    }
+
     fun addKnownVisitor(uniqueId: UUID) {
         knownVisitors.add(uniqueId)
     }

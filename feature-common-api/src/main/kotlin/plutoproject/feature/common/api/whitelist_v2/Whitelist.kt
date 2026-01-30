@@ -70,4 +70,20 @@ interface Whitelist {
      * @param params 访客记录参数
      */
     suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord
+
+    /**
+     * 根据 CIDR 网段查询访客记录。
+     *
+     * @param cidr 要查询的 CIDR 格式网段
+     * @return 该网段内的所有访客记录，按先后顺序排列
+     */
+    suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord>
+
+    /**
+     * 根据精确 IP 地址查询访客记录。
+     *
+     * @param ipAddress 要查询的 IP 地址
+     * @return 该 IP 的所有访客记录，按先后顺序排列
+     */
+    suspend fun lookupVisitorRecordsByIp(ipAddress: java.net.InetAddress): List<VisitorRecord>
 }
