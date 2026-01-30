@@ -137,3 +137,15 @@ val COMMAND_WHITELIST_LOOKUP_REVOKE_TIME = component {
     text("撤销时间: ") with mochaText
     text("<time>") with mochaLavender
 }
+
+val COMMAND_WHITELIST_MIGRATE_START = component {
+    text("正在迁移旧版白名单数据，请稍等...") with mochaText
+}
+
+val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
+    text("迁移完成，共迁移了 ") with mochaPink
+    text("<count> ") with mochaLavender
+    text("条数据") with mochaPink
+}
+
+const val LOG_LEGACY_WHITELIST_FEATURE_NOT_ENABLED = "由于旧版白名单系统未启用，迁移功能无法工作。"

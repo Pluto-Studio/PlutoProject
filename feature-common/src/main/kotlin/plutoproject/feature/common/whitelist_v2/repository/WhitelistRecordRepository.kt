@@ -40,4 +40,9 @@ class WhitelistRecordRepository(private val collection: MongoCollection<Whitelis
     suspend fun deleteByUniqueId(uniqueId: UUID) {
         collection.deleteOne(eq(WhitelistRecordModel::uniqueId.name, uniqueId))
     }
+
+    suspend fun insertAll(models: List<WhitelistRecordModel>) {
+        if (models.isEmpty()) return
+        collection.insertMany(models)
+    }
 }

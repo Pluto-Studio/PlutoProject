@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.whitelist_v2
+package plutoproject.feature.velocity.whitelist_v2.commands
 
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
@@ -19,6 +19,26 @@ import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.api.whitelist_v2.WhitelistOperator
 import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
 import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_ALREADY_EXISTS
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_FETCHING
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_ADD_SUCCEED
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_CREATED_AT
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_GRANTER
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_HEADER
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_MIGRATED
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_NO_RECORD
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKED
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKER
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKE_REASON
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_REVOKE_TIME
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_USERNAME
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_UUID
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_REMOVE_NOT_FOUND
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_REMOVE_SUCCEED
+import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_STATISTIC
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.FetchedData
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
