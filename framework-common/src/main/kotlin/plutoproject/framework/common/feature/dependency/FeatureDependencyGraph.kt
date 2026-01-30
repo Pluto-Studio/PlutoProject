@@ -160,19 +160,20 @@ class FeatureDependencyGraph(
     
     /**
      * 获取指定 feature 的禁用顺序（包括所有依赖它的 features）
+     * 顺序与加载顺序相反：先禁用依赖他人的，后禁用被依赖的
      */
     fun getDisableOrderFor(id: String): List<FeatureMetadata> {
         if (id in permanentlyDisabled) return emptyList()
-        
+
         // 收集所有需要禁用的 features（依赖它的所有 features）
         val toDisable = mutableSetOf<String>()
         val queue = ArrayDeque<String>()
         queue.add(id)
-        
+
         while (queue.isNotEmpty()) {
             val current = queue.removeFirst()
             if (current in toDisable || current in permanentlyDisabled) continue
-            
+
             toDisable.add(current)
             reverseEdges[current]?.forEach { dependent ->
                 if (dependent !in permanentlyDisabled) {
@@ -180,10 +181,10 @@ class FeatureDependencyGraph(
                 }
             }
         }
-        
-        // 反向拓扑排序
-        val order = TopologicalSort.reverseSort(toDisable, reverseEdges)
-        return order.mapNotNull { metadata[it] }
+
+        // 按照加载顺序的反向排序（先禁用依赖他人的）
+        val loadOrder = getLoadOrder()
+        return loadOrder.filter { it.id in toDisable }.reversed()
     }
     
     /**
