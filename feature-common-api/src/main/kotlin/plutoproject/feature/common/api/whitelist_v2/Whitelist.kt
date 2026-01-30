@@ -1,6 +1,9 @@
 package plutoproject.feature.common.api.whitelist_v2
 
+import plutoproject.feature.common.api.whitelist_v2.hook.WhitelistHookParam
+import plutoproject.feature.common.api.whitelist_v2.hook.WhitelistHookType
 import plutoproject.framework.common.util.inject.Koin
+import java.net.InetAddress
 import java.util.*
 
 interface Whitelist {
@@ -26,10 +29,11 @@ interface Whitelist {
      * 为指定 UUID 的玩家授予白名单。
      *
      * @param uniqueId 要授予的玩家 UUID
+     * @param username 要授予的玩家用户名
      * @param operator 白名单操作者
      * @return 若添加成功则为 true，该玩家已被授予白名单则为 false
      */
-    suspend fun grantWhitelist(uniqueId: UUID, operator: WhitelistOperator): Boolean
+    suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean
 
     /**
      * 为指定 UUID 的玩家撤销白名单。
@@ -85,5 +89,13 @@ interface Whitelist {
      * @param ipAddress 要查询的 IP 地址
      * @return 该 IP 的所有访客记录，按先后顺序排列
      */
-    suspend fun lookupVisitorRecordsByIp(ipAddress: java.net.InetAddress): List<VisitorRecord>
+    suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord>
+
+    /**
+     * 注册白名单系统钩子。
+     *
+     * @param type 钩子类型
+     * @param hook 钩子函数
+     */
+    fun <T : WhitelistHookParam> registerHook(type: WhitelistHookType<T>, hook: (T) -> Unit)
 }

@@ -13,7 +13,7 @@ data class WhitelistRecordModel(
     val username: String,
     val granter: WhitelistOperatorModel,
     val createdAt: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant = Instant.now(),
-    val joinedAsVisitorBefore: Boolean = false,
+    val joinedAsVisitorBefore: Boolean,
     val isMigrated: Boolean = false,
     val isRevoked: Boolean = false,
     val revoker: WhitelistOperatorModel? = null,

@@ -12,7 +12,7 @@ class WhitelistRecordRepository(private val collection: MongoCollection<Whitelis
     private val upsert = ReplaceOptions().upsert(true)
 
     suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecordModel? {
-        return collection.find(eq("uniqueId", uniqueId)).firstOrNull()
+        return collection.find(eq(WhitelistRecordModel::uniqueId.name, uniqueId)).firstOrNull()
     }
 
     suspend fun findAll(): List<WhitelistRecordModel> {
@@ -20,9 +20,9 @@ class WhitelistRecordRepository(private val collection: MongoCollection<Whitelis
     }
 
     suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecordModel? {
-        return collection.find(
-            eq("uniqueId", uniqueId)
-        ).firstOrNull()?.takeIf { !it.isRevoked }
+        return collection.find(eq(WhitelistRecordModel::uniqueId.name, uniqueId))
+            .firstOrNull()
+            ?.takeIf { !it.isRevoked }
     }
 
     suspend fun hasByUniqueId(uniqueId: UUID): Boolean {
@@ -33,15 +33,11 @@ class WhitelistRecordRepository(private val collection: MongoCollection<Whitelis
         return findActiveByUniqueId(uniqueId) != null
     }
 
-    suspend fun save(model: WhitelistRecordModel) {
-        collection.insertOne(model)
-    }
-
-    suspend fun update(model: WhitelistRecordModel) {
-        collection.replaceOne(eq("uniqueId", model.uniqueId), model, upsert)
+    suspend fun saveOrUpdate(model: WhitelistRecordModel) {
+        collection.replaceOne(eq(WhitelistRecordModel::uniqueId.name, model.uniqueId), model, upsert)
     }
 
     suspend fun deleteByUniqueId(uniqueId: UUID) {
-        collection.deleteOne(eq("uniqueId", uniqueId))
+        collection.deleteOne(eq(WhitelistRecordModel::uniqueId.name, uniqueId))
     }
 }

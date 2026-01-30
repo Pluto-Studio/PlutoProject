@@ -3,6 +3,8 @@ package plutoproject.feature.common.whitelist_v2
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.common.api.whitelist_v2.*
+import plutoproject.feature.common.api.whitelist_v2.hook.WhitelistHookParam
+import plutoproject.feature.common.api.whitelist_v2.hook.WhitelistHookType
 import plutoproject.feature.common.whitelist_v2.model.*
 import plutoproject.feature.common.whitelist_v2.repository.VisitorRecordRepository
 import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
@@ -13,9 +15,12 @@ import java.net.InetAddress
 import java.util.*
 import kotlin.time.Duration
 
+private typealias WhitelistHook = (WhitelistHookParam) -> Unit
+
 class WhitelistImpl : Whitelist, KoinComponent {
     private val whitelistRecordRepository: WhitelistRecordRepository by inject()
     private val visitorRecordRepository: VisitorRecordRepository by inject()
+    private val registeredHooks = mutableMapOf<WhitelistHookType<*>, MutableSet<WhitelistHook>>()
 
     private val knownVisitors = mutableSetOf<UUID>()
 
@@ -30,32 +35,23 @@ class WhitelistImpl : Whitelist, KoinComponent {
 
     override suspend fun grantWhitelist(
         uniqueId: UUID,
+        username: String,
         operator: WhitelistOperator
     ): Boolean {
-        if (whitelistRecordRepository.hasActiveByUniqueId(uniqueId)) {
-            return false
-        }
-
-        val existingRecord = whitelistRecordRepository.findByUniqueId(uniqueId)
-        if (existingRecord != null && !existingRecord.isRevoked) {
+        if (isWhitelisted(uniqueId)) {
             return false
         }
 
         val hasVisitorRecord = visitorRecordRepository.hasByUniqueId(uniqueId)
-        val username = "Unknown"
-
         val model = WhitelistRecordModel(
             uniqueId = uniqueId,
             username = username,
             granter = operator.toModel(),
-            joinedAsVisitorBefore = hasVisitorRecord,
-            isMigrated = false,
-            isRevoked = false,
-            revoker = null,
-            revokeReason = null
+            joinedAsVisitorBefore = hasVisitorRecord
         )
 
-        whitelistRecordRepository.save(model)
+        whitelistRecordRepository.saveOrUpdate(model)
+        invokeHook(WhitelistHookType.GrantWhitelist, WhitelistHookParam.GrantWhitelist(uniqueId, username))
         return true
     }
 
@@ -65,14 +61,14 @@ class WhitelistImpl : Whitelist, KoinComponent {
         reason: WhitelistRevokeReason
     ): Boolean {
         val model = whitelistRecordRepository.findActiveByUniqueId(uniqueId) ?: return false
-
         val updatedModel = model.copy(
             isRevoked = true,
             revoker = operator.toModel(),
             revokeReason = reason
         )
 
-        whitelistRecordRepository.update(updatedModel)
+        whitelistRecordRepository.saveOrUpdate(updatedModel)
+        invokeHook(WhitelistHookType.RevokeWhitelist, WhitelistHookParam.RevokeWhitelist(uniqueId))
         return true
     }
 
@@ -107,6 +103,15 @@ class WhitelistImpl : Whitelist, KoinComponent {
 
     override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord> {
         return visitorRecordRepository.findByIpAddress(ipAddress).map { it.toVisitorRecord() }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : WhitelistHookParam> registerHook(type: WhitelistHookType<T>, hook: (T) -> Unit) {
+        registeredHooks.computeIfAbsent(type) { mutableSetOf() }.add(hook as ((WhitelistHookParam) -> Unit))
+    }
+
+    private fun <T : WhitelistHookParam> invokeHook(type: WhitelistHookType<T>, param: T) {
+        registeredHooks[type]?.forEach { it.invoke(param) }
     }
 
     fun addKnownVisitor(uniqueId: UUID) {
