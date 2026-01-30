@@ -23,6 +23,7 @@ import plutoproject.feature.paper.exchangeshop.ui.ExchangeShopButtonDescriptor
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Platform
+import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
@@ -38,7 +39,8 @@ lateinit var featureLogger: Logger
 
 @Feature(
     id = "exchange_shop",
-    platform = Platform.PAPER
+    platform = Platform.PAPER,
+    dependencies = [Dependency(id = "menu", required = false)]
 )
 @Suppress("UNUSED")
 class ExchangeShopFeature : PaperFeature(), KoinComponent {
