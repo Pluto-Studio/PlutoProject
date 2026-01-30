@@ -13,6 +13,7 @@ import plutoproject.feature.velocity.whitelist.WhitelistModel
 import plutoproject.feature.velocity.whitelist.WhitelistRepository
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_COMPLETE
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_START
+import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.chat.component.replace
@@ -20,6 +21,7 @@ import plutoproject.framework.common.util.data.convertToUuid
 
 @Suppress("UNUSED")
 object MigratorCommand : KoinComponent {
+    private val config by inject<WhitelistConfig>()
     private val oldWhitelistRepository = connectOldWhitelistRepo()
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
 
@@ -31,6 +33,7 @@ object MigratorCommand : KoinComponent {
     @Command("whitelist migrate")
     @Permission("whitelist.command.migrate")
     suspend fun CommandSource.migrate() {
+        if (!config.enableMigrator) return
         sendMessage(COMMAND_WHITELIST_MIGRATE_START)
 
         val oldRecords = oldWhitelistRepository.findAll()
