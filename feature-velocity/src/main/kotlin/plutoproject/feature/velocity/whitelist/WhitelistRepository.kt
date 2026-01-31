@@ -5,6 +5,7 @@ import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.velocitypowered.api.proxy.Player
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import java.util.*
 
 @Suppress("UNUSED")
@@ -53,5 +54,9 @@ class WhitelistRepository(private val collection: MongoCollection<WhitelistModel
 
     suspend fun saveOrUpdate(model: WhitelistModel) {
         collection.replaceOne(eq("_id", model.id), model, upsert)
+    }
+
+    suspend fun findAll(): List<WhitelistModel> {
+        return collection.find().toList()
     }
 }

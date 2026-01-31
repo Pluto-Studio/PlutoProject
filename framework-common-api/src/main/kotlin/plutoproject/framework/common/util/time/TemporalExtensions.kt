@@ -1,9 +1,6 @@
 package plutoproject.framework.common.util.time
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.YearMonth
-import java.time.ZonedDateTime
+import java.time.*
 import java.time.format.DateTimeFormatter
 
 private val morningDateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd 上午 hh:mm:ss")
@@ -42,3 +39,15 @@ fun LocalDate.atEndOfDay(): LocalDateTime {
 fun YearMonth.atStartOfMonth(): LocalDate {
     return atDay(1)
 }
+
+fun Instant.format(zoneId: ZoneId = LocalZoneId): String =
+    atZone(zoneId).format()
+
+fun Instant.format24Hour(zoneId: ZoneId = LocalZoneId): String =
+    atZone(zoneId).format24Hour()
+
+fun Instant.formatTime(zoneId: ZoneId = LocalZoneId): String =
+    atZone(zoneId).formatTime()
+
+fun Instant.formatDate(zoneId: ZoneId = LocalZoneId): String =
+    atZone(zoneId).formatDate()

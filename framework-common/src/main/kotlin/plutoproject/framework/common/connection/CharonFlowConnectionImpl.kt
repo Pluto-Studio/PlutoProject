@@ -17,6 +17,7 @@ class CharonFlowConnectionImpl : CharonFlowConnection, ExternalConnection, KoinC
 
     private fun connectCharonFlow(): CharonFlow = CharonFlow.create {
         redisUri = config.redis
+        classLoader = this@CharonFlowConnectionImpl::class.java.classLoader
         serialization {
             encodeDefaults = true
             ignoreUnknownKeys = true

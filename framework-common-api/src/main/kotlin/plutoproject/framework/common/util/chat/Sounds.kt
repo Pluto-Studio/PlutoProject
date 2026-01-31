@@ -40,3 +40,9 @@ val UI_TOGGLE_OFF_SOUND = sound {
     volume(0.4f)
     pitch(0.75f)
 }
+
+val GENERIC_ACTION_DENIED_SOUND = sound {
+    key(Key.key("block.note_block.hat"))
+    volume(1f)
+    pitch(1f)
+}

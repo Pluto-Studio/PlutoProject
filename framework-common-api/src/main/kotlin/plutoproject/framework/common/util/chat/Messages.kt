@@ -5,8 +5,12 @@ import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 
-val BRANDING = component {
+val GENERIC_TEXT_SERVER_BRAND = component {
     miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 Project</gradient>")
+}
+
+val GENERIC_TEXT_SERVER_BRAND_ENGLISH = component {
+    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>PlutoProject</gradient>")
 }
 
 const val ECONOMY_SYMBOL = "\uD83C\uDF1F"

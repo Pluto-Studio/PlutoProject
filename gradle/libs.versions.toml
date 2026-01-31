@@ -65,7 +65,7 @@ guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 anvilGui = { module = "net.wesjd:anvilgui", version = "1.10.4-SNAPSHOT" }
-charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-SNAPSHOT" }
+charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-20260131.074812-13" }
 
 # External Minecraft
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
@@ -81,6 +81,7 @@ cloud-annotations = { module = "org.incendo:cloud-annotations", version.ref = "c
 cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-annotations", version.ref = "cloud" }
 cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
 gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
+luckperms-api = { module = "net.luckperms:api", version = "5.4" }
 
 # Platform - Paper
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }
