@@ -180,11 +180,11 @@ val PLAYER_VISITOR_WELCOME = component {
 }
 
 val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
-    text("访客模式已开启") with mochaGreen
+    text("访客功能已开启") with mochaGreen
 }
 
 val COMMAND_VISITOR_MODE_TOGGLED_OFF = component {
-    text("访客模式已关闭") with mochaMaroon
+    text("访客功能已关闭") with mochaMaroon
 }
 
 val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
