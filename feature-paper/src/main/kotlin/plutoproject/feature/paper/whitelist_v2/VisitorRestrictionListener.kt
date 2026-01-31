@@ -11,7 +11,6 @@ import org.bukkit.GameMode
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerTeleportEvent
-import org.bukkit.event.player.PlayerToggleSprintEvent
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.time.ticks
@@ -35,7 +34,7 @@ object VisitorRestrictionListener : Listener {
             return
         }
         server.onlinePlayers
-            .filter { Whitelist.isKnownVisitor(it.uniqueId) }
+            .filter { Whitelist.isKnownVisitor(it.uniqueId) && it.gameMode == GameMode.SPECTATOR }
             .forEach {
                 // setFlySpeed 只是发送数据包，可以异步
                 it.flySpeed = 0.1f
@@ -67,14 +66,6 @@ object VisitorRestrictionListener : Listener {
     fun onPlayerTeleport(event: PlayerTeleportEvent) {
         val player = event.player
         if (Whitelist.isKnownVisitor(player.uniqueId) && event.cause == PlayerTeleportEvent.TeleportCause.SPECTATE) {
-            event.isCancelled = true
-        }
-    }
-
-    @EventHandler
-    fun onPlayerToggleSprint(event: PlayerToggleSprintEvent) {
-        val player = event.player
-        if (Whitelist.isKnownVisitor(player.uniqueId) && player.gameMode == GameMode.SPECTATOR) {
             event.isCancelled = true
         }
     }
