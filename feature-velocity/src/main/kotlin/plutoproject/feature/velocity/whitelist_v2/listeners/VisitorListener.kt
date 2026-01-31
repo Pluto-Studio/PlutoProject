@@ -4,6 +4,7 @@ import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
+import com.velocitypowered.api.event.player.ServerPreConnectEvent
 import com.velocitypowered.api.proxy.Player
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -14,13 +15,12 @@ import org.koin.core.component.get
 import org.koin.core.component.inject
 import plutoproject.feature.common.api.whitelist_v2.VisitorRecordParams
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
+import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
+import plutoproject.feature.common.whitelist_v2.VISITOR_NOTIFICATION_TOPIC
+import plutoproject.feature.common.whitelist_v2.VisitorNotification
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
-import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME
-import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME_ENGLISH
-import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_ACTIONBAR
-import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_ACTIONBAR_ENGLISH
-import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
-import plutoproject.feature.velocity.whitelist_v2.featureLogger
+import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.util.coroutine.PluginScope
 import java.net.InetAddress
@@ -46,7 +46,7 @@ object VisitorListener : KoinComponent {
         var actionbarJob: Job? = null
     )
 
-    @Subscribe
+    @Subscribe(priority = Short.MAX_VALUE)
     fun PlayerChooseInitialServerEvent.onPlayerChooseServer() {
         val player = this.player
         if (whitelist.isKnownVisitor(player.uniqueId)) {
@@ -57,7 +57,7 @@ object VisitorListener : KoinComponent {
                 PLAYER_VISITOR_WELCOME
             }
             player.sendMessage(welcomeMessage)
-            featureLogger.info("访客 ${player.username} (UUID=${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
+            featureLogger.info("访客 ${player.username} (${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
 
             // 启动 Actionbar 定时任务
             val session = visitorSessions[player.uniqueId]
@@ -65,12 +65,26 @@ object VisitorListener : KoinComponent {
                 session.actionbarJob = startActionbarTask(player)
             }
 
-            val targetServer = initialServer.orElse(null)
-            if (targetServer != null) {
-                // TODO: 广播访客玩家 UUID 和即将连接的后端服务器信息给所有后端服务器
-                // 广播内容：玩家 UUID, 目标服务器名称
-            }
+            // val targetServer = initialServer.orElse(null)
+            // if (targetServer != null) {
+            // TODO: 广播访客玩家 UUID 和即将连接的后端服务器信息给所有后端服务器
+            // }
         }
+    }
+
+    @Subscribe(priority = Short.MIN_VALUE)
+    suspend fun ServerPreConnectEvent.onServerPreConnect() {
+        if (!whitelist.isKnownVisitor(player.uniqueId)) {
+            return
+        }
+        val server = originalServer.serverInfo.name
+        val notification = VisitorNotification(
+            uniqueId = player.uniqueId,
+            username = player.username,
+            joinedServer = server
+        )
+        CharonFlowConnection.client.publish(VISITOR_NOTIFICATION_TOPIC, notification)
+        featureLogger.info("通知后端：${player.username} (${player.uniqueId}), 连接至 $server")
     }
 
     /**
@@ -143,8 +157,9 @@ object VisitorListener : KoinComponent {
             user.data().clear()
             luckpermsApi.userManager.saveUser(user)
         }
-        featureLogger.info("已清除访客 ${player.username} (UUID=${player.uniqueId}) 的 LuckPerms 数据。")
+        featureLogger.info("已清除访客 ${player.username} (${player.uniqueId}) 的 LuckPerms 数据。")
         whitelist.removeKnownVisitor(player.uniqueId)
+        featureLogger.info("访客退出: ${player.username} (${player.uniqueId})")
     }
 
     fun recordVisitorSession(uuid: UUID, ip: InetAddress, virtualHost: InetSocketAddress?) {

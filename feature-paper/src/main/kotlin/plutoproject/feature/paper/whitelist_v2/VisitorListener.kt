@@ -26,18 +26,20 @@ object VisitorListener : Listener, KoinComponent {
     private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
     private val pendingVisitors = ConcurrentHashMap<UUID, Job>()
 
-    fun onVisitorIncoming(uuid: UUID) {
-        whitelist.addKnownVisitor(uuid)
+    fun onVisitorIncoming(uniqueId: UUID, username: String) {
+        whitelist.addKnownVisitor(uniqueId)
 
         val timeoutJob = PluginScope.launch {
             delay(30.seconds)
-            if (whitelist.isKnownVisitor(uuid)) {
-                whitelist.removeKnownVisitor(uuid)
+            if (whitelist.isKnownVisitor(uniqueId)) {
+                whitelist.removeKnownVisitor(uniqueId)
             }
-            pendingVisitors.remove(uuid)
+            pendingVisitors.remove(uniqueId)
+            featureLogger.warning("待处理的访客 $username ($uniqueId) 超时未连接")
         }
 
-        pendingVisitors[uuid] = timeoutJob
+        pendingVisitors[uniqueId] = timeoutJob
+        featureLogger.info("收到访客进入通知: $username ($uniqueId)")
     }
 
     @EventHandler
@@ -47,6 +49,7 @@ object VisitorListener : Listener, KoinComponent {
             pendingVisitors.remove(player.uniqueId)?.cancel()
             player.gameMode = GameMode.SPECTATOR
             hideVisitorFromAllPlayers(player)
+            featureLogger.info("访客进入: ${player.name} (${player.uniqueId})")
         }
     }
 
@@ -56,6 +59,7 @@ object VisitorListener : Listener, KoinComponent {
         if (whitelist.isKnownVisitor(player.uniqueId)) {
             whitelist.removeKnownVisitor(player.uniqueId)
             pendingVisitors.remove(player.uniqueId)?.cancel()
+            featureLogger.info("访客退出: ${player.name} (${player.uniqueId})")
         }
     }
 
