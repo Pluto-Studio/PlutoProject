@@ -164,7 +164,11 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
 }
 
 val PLAYER_VISITOR_WELCOME = component {
-    text("<visitor_welcome_message>") with mochaText
+    newline()
+    text("这是一条访客欢迎消息，但是现在什么也没写") with mochaText
+    newline()
+    text("111122223333") with mochaSubtext0
+    newline()
 }
 
 val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
@@ -177,4 +181,13 @@ val COMMAND_VISITOR_MODE_TOGGLED_OFF = component {
 
 val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
     text("在处理访客连接时出现异常") with mochaMaroon
+}
+
+// 英文版访客欢迎消息（给海外非中文用户）
+val PLAYER_VISITOR_WELCOME_ENGLISH = component {
+    newline()
+    text("Welcome to PlutoProject Server!") with mochaText
+    newline()
+    text("You are currently in visitor mode. Please apply for whitelist to access full features.") with mochaSubtext0
+    newline()
 }

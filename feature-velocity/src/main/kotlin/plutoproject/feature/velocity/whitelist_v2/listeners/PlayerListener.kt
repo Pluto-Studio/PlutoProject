@@ -30,7 +30,6 @@ object PlayerListener : KoinComponent {
         if (!whitelist.isWhitelisted(player.uniqueId)) {
             if (VisitorState.isVisitorModeEnabled) {
                 whitelist.addKnownVisitor(player.uniqueId)
-                player.sendMessage(PLAYER_VISITOR_WELCOME)
 
                 val visitorGroup = config.visitorMode.visitorPermissionGroup
                 val group = luckpermsApi.groupManager.getGroup(visitorGroup)

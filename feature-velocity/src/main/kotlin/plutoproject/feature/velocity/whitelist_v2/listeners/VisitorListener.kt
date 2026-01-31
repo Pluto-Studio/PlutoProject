@@ -13,8 +13,11 @@ import org.koin.core.component.inject
 import plutoproject.feature.common.api.whitelist_v2.VisitorRecordParams
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
+import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME
+import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME_ENGLISH
 import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
 import plutoproject.feature.velocity.whitelist_v2.featureLogger
+import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.util.coroutine.PluginScope
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -42,11 +45,47 @@ object VisitorListener : KoinComponent {
     fun PlayerChooseInitialServerEvent.onPlayerChooseServer() {
         val player = this.player
         if (whitelist.isKnownVisitor(player.uniqueId)) {
+            // 判断发送中文还是英文欢迎消息
+            val welcomeMessage = if (shouldSendEnglishMessage(player)) {
+                PLAYER_VISITOR_WELCOME_ENGLISH
+            } else {
+                PLAYER_VISITOR_WELCOME
+            }
+            player.sendMessage(welcomeMessage)
+            featureLogger.info("访客 ${player.username} (UUID=${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
+
             val targetServer = initialServer.orElse(null)
             if (targetServer != null) {
                 // TODO: 广播访客玩家 UUID 和即将连接的后端服务器信息给所有后端服务器
                 // 广播内容：玩家 UUID, 目标服务器名称
             }
+        }
+    }
+
+    private fun shouldSendEnglishMessage(player: Player): Boolean {
+        val clientLocale = player.playerSettings.locale
+
+        val isChineseLocale = clientLocale.language == "zh" ||
+                clientLocale.toString() == "zh_CN" ||
+                clientLocale.toString() == "zh_HK" ||
+                clientLocale.toString() == "zh_TW"
+
+        if (isChineseLocale) {
+            return false
+        }
+
+        return try {
+            val session = visitorSessions[player.uniqueId]
+            if (session != null) {
+                val response = GeoIpConnection.database.country(session.ip)
+                val countryIso = response.country.isoCode
+                val isInChina = countryIso == "CN" || countryIso == "HK" || countryIso == "MO" || countryIso == "TW"
+                !isInChina
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 
