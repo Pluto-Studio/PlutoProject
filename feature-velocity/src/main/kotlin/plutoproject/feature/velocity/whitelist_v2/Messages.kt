@@ -1,10 +1,11 @@
 package plutoproject.feature.velocity.whitelist_v2
 
-import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.newline
-import ink.pmc.advkt.component.text
+import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
+import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND
+import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND_ENGLISH
 import plutoproject.framework.common.util.chat.palettes.*
+import plutoproject.framework.common.util.inject.Koin
 
 val PLAYER_NOT_WHITELISTED = component {
     text("你的账号未获得白名单") with mochaMaroon
@@ -171,13 +172,30 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
     text("条数据") with mochaPink
 }
 
-val PLAYER_VISITOR_WELCOME = component {
-    newline()
-    text("这是一条访客欢迎消息，但是现在什么也没写") with mochaText
-    newline()
-    text("111122223333") with mochaSubtext0
-    newline()
-}
+val PLAYER_VISITOR_WELCOME
+    get() = component {
+        val config = Koin.get<WhitelistConfig>()
+        newline()
+        text("你好呀！欢迎来到 ") with mochaGreen
+        raw(GENERIC_TEXT_SERVER_BRAND)
+        text(" (≧▽≦)/") with mochaSubtext0
+        newline()
+        text("在正式开始游玩前，你需要先完成白名单申请。") with mochaText
+        newline()
+        newline()
+        text("点击这里") with mochaLavender with underlined() with openUrl(config.whitelistApplicationGuide) with showText {
+            text("访问星社 Wiki 上的申请指南") with mochaText
+        }
+        text(" 打开白名单申请指南，按照指引完成申请即可。") with mochaText
+        newline()
+        text("请放心，这个过程并不复杂，我们这么做也是为了保证服内的氛围和谐~") with mochaText
+        newline()
+        newline()
+        text("已经通过白名单却还看到这条提示？") with mochaFlamingo
+        newline()
+        text("那可能是我们忘记为你添加白名单了，请在「候车厅」联系管理员。") with mochaText
+        newline()
+    }
 
 val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
     text("访客功能已开启") with mochaGreen
@@ -191,13 +209,25 @@ val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
     text("在处理访客连接时出现异常") with mochaMaroon
 }
 
-val PLAYER_VISITOR_WELCOME_ENGLISH = component {
-    newline()
-    text("Welcome to PlutoProject Server!") with mochaText
-    newline()
-    text("You are currently in visitor mode. Please apply for whitelist to access full features.") with mochaSubtext0
-    newline()
-}
+val PLAYER_VISITOR_WELCOME_ENGLISH
+    get() = component {
+        val config = Koin.get<WhitelistConfig>()
+        newline()
+        text("Welcome to the ") with mochaGreen
+        raw(GENERIC_TEXT_SERVER_BRAND_ENGLISH)
+        text(" server!") with mochaGreen
+        newline()
+        newline()
+        text("You are currently in visitor mode.") with mochaText
+        newline()
+        text("Click here") with mochaLavender with underlined() with openUrl(config.whitelistApplicationGuide) with showText {
+            text("Open our Wiki") with mochaText
+        }
+        text(" to apply for the whitelist and unlock all features.") with mochaText
+        newline()
+        text("(Chinese reading ability required.)") with mochaSubtext0
+        newline()
+    }
 
 val PLAYER_VISITOR_ACTIONBAR = component {
     text("访客探索中 ") with mochaText
