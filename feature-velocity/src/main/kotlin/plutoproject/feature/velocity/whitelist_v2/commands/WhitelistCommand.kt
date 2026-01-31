@@ -156,13 +156,23 @@ object WhitelistCommand : KoinComponent {
             raw(
                 COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE.replace(
                     "<status>",
-                    if (record.joinedAsVisitorBefore) "是" else "否"
+                    if (record.joinedAsVisitorBefore) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
                 )
             )
             newline()
-            raw(COMMAND_WHITELIST_LOOKUP_MIGRATED.replace("<status>", if (record.isMigrated) "是" else "否"))
+            raw(
+                COMMAND_WHITELIST_LOOKUP_MIGRATED.replace(
+                    "<status>",
+                    if (record.isMigrated) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+                )
+            )
             newline()
-            raw(COMMAND_WHITELIST_LOOKUP_REVOKED.replace("<status>", if (record.isRevoked) "已撤销" else "有效"))
+            raw(
+                COMMAND_WHITELIST_LOOKUP_REVOKED.replace(
+                    "<status>",
+                    if (record.isRevoked) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+                )
+            )
             if (record.isRevoked) {
                 newline()
                 raw(COMMAND_WHITELIST_LOOKUP_REVOKER.replace("<revoker>", formatterRevoker!!))

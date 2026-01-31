@@ -107,7 +107,7 @@ val COMMAND_WHITELIST_LOOKUP_USERNAME = component {
 
 val COMMAND_WHITELIST_LOOKUP_GRANTER = component {
     text("- ") with mochaSubtext0
-    text("授权者: ") with mochaText
+    text("授予者: ") with mochaText
     text("<granter>") with mochaLavender
 }
 
@@ -119,19 +119,27 @@ val COMMAND_WHITELIST_LOOKUP_CREATED_AT = component {
 
 val COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE = component {
     text("- ") with mochaSubtext0
-    text("此前访客: ") with mochaText
+    text("此前是否作为访客加入: ") with mochaText
     text("<status>") with mochaLavender
+}
+
+val COMMAND_WHITELIST_LOOKUP_BOOL_TRUE = component {
+    text("是")
+}
+
+val COMMAND_WHITELIST_LOOKUP_BOOL_FALSE = component {
+    text("否")
 }
 
 val COMMAND_WHITELIST_LOOKUP_MIGRATED = component {
     text("- ") with mochaSubtext0
-    text("迁移记录: ") with mochaText
+    text("是否从旧版系统迁移: ") with mochaText
     text("<status>") with mochaLavender
 }
 
 val COMMAND_WHITELIST_LOOKUP_REVOKED = component {
     text("- ") with mochaSubtext0
-    text("撤销状态: ") with mochaText
+    text("是否被撤销: ") with mochaText
     text("<status>") with mochaLavender
 }
 
