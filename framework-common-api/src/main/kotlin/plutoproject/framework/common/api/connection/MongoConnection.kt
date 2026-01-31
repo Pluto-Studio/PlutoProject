@@ -10,18 +10,18 @@ import plutoproject.framework.common.util.inject.Koin
 import kotlin.reflect.KClass
 
 /**
- * MongoDB 数据库外部链接。
+ * MongoDB 数据库外部连接。
  */
 interface MongoConnection {
     companion object : MongoConnection by Koin.get()
 
     /**
-     * 链接的 [MongoClient]。
+     * 连接的 [MongoClient]。
      */
     val client: MongoClient
 
     /**
-     * 链接的 [MongoDatabase]。
+     * 连接的 [MongoDatabase]。
      */
     val database: MongoDatabase
 

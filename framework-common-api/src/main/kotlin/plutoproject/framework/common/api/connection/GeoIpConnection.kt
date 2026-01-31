@@ -4,7 +4,7 @@ import com.maxmind.geoip2.DatabaseReader
 import plutoproject.framework.common.util.inject.Koin
 
 /**
- * GeoIP 数据库外部链接。
+ * GeoIP 数据库外部连接。
  */
 interface GeoIpConnection {
     companion object : GeoIpConnection by Koin.get()

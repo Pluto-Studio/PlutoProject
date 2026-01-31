@@ -3,6 +3,7 @@ package plutoproject.framework.common.connection
 data class ExternalConnectionConfig(
     val mongo: MongoConnectionConfig,
     val geoIp: GeoIpDatabaseConnectionConfig = GeoIpDatabaseConnectionConfig(),
+    val charonflow: CharonFlowConfig = CharonFlowConfig(),
 )
 
 data class MongoConnectionConfig(
@@ -17,4 +18,9 @@ data class MongoConnectionConfig(
 data class GeoIpDatabaseConnectionConfig(
     val enabled: Boolean = false,
     val database: String = "GeoLite2-City.mmdb",
+)
+
+data class CharonFlowConfig(
+    val enabled: Boolean = true,
+    val redis: String = "redis://localhost:6379",
 )

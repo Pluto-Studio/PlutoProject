@@ -2,6 +2,7 @@ package plutoproject.framework.common
 
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
@@ -9,6 +10,7 @@ import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.builddata.BuildInfoImpl
+import plutoproject.framework.common.connection.CharonFlowConnectionImpl
 import plutoproject.framework.common.connection.ExternalConnectionConfig
 import plutoproject.framework.common.connection.GeoIpConnectionImpl
 import plutoproject.framework.common.connection.MongoConnectionImpl
@@ -50,6 +52,7 @@ val FrameworkCommonModule = module {
     single<ExternalConnectionConfig> { getModuleConfig(COMMON_FRAMEWORK_RESOURCE_PREFIX, "connection") }
     single<MongoConnection> { MongoConnectionImpl() }
     single<GeoIpConnection> { GeoIpConnectionImpl() }
+    single<CharonFlowConnection> { CharonFlowConnectionImpl() }
     single<ProfileLookup> { ProfileLookupImpl() }
     single<ProfileRepository> { ProfileRepository(MongoConnection.getCollection("framework_profile_profiles")) }
     single<BuildInfo> { BuildInfoImpl() }
