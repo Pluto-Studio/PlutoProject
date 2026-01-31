@@ -1,6 +1,7 @@
 package plutoproject.feature.paper.whitelist_v2
 
 import club.plutoproject.charonflow.CharonFlow
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -9,6 +10,7 @@ import plutoproject.feature.common.whitelist_v2.VisitorNotification
 import plutoproject.feature.common.whitelist_v2.whitelistCommonModule
 import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.feature.Platform
+import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.inject.configureKoin
@@ -22,7 +24,8 @@ internal lateinit var featureLogger: Logger
 
 @Feature(
     id = "whitelist_v2",
-    platform = Platform.PAPER
+    platform = Platform.PAPER,
+    dependencies = [Dependency("warp", required = false)]
 )
 @Suppress("UNUSED")
 class WhitelistFeature : PaperFeature(), KoinComponent {
@@ -35,29 +38,21 @@ class WhitelistFeature : PaperFeature(), KoinComponent {
         configureKoin {
             modules(featureModule, whitelistCommonModule)
         }
-        val cls = findClass("plutoproject.feature.common.whitelist_v2.VisitorNotification")
-        val charonFlowClassLoader = CharonFlow::class.java.classLoader
-        val messageClassLoader = VisitorNotification::class.java.classLoader
-        println("--------")
-        println("Message Class: $cls")
-        println("CharonFlow ClassLoader: $charonFlowClassLoader")
-        println("Message ClassLoader: $messageClassLoader")
-        println("Message ClassLoader Parent: ${messageClassLoader.parent}")
-        println("CharonFlowConnection ClassLoader: ${CharonFlowConnection::class.java.classLoader}")
-        println("--------")
         featureLogger = logger
         registerListeners()
+        VisitorRestrictionListener.startVisitorSpeedLimitationJob()
         runBlocking {
             subscribeNotificationTopic()
         }
     }
 
     private fun registerListeners() {
-        server.pluginManager.registerEvents(VisitorListener, plugin)
-        server.pluginManager.registerEvents(VisitorRestrictionListener, plugin)
+        server.pluginManager.registerSuspendingEvents(VisitorListener, plugin)
+        server.pluginManager.registerSuspendingEvents(VisitorRestrictionListener, plugin)
     }
 
     override fun onDisable() {
+        VisitorRestrictionListener.stopVisitorSpeedLimitationJob()
         runBlocking {
             unsubscribeNotificationTopic()
         }

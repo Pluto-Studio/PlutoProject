@@ -3,6 +3,7 @@ package plutoproject.feature.paper.whitelist_v2
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -14,6 +15,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
+import plutoproject.feature.paper.api.warp.WarpManager
+import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
@@ -48,15 +51,22 @@ object VisitorListener : Listener, KoinComponent {
         if (whitelist.isKnownVisitor(player.uniqueId)) {
             pendingVisitors.remove(player.uniqueId)?.cancel()
             player.gameMode = GameMode.SPECTATOR
+            // 防止旁观者模式跑图
+            // player.flySpeed = 0.02f
             hideVisitorFromAllPlayers(player)
             featureLogger.info("访客进入: ${player.name} (${player.uniqueId})")
         }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    fun onPlayerQuit(event: PlayerQuitEvent) {
+    // 现有的 Warp 系统获取 Spawn 是 suspend 的，挂起事件会导致玩家断开后再尝试传送，只能先 runBlocking 了
+    fun onPlayerQuit(event: PlayerQuitEvent): Unit = runBlocking {
         val player = event.player
         if (whitelist.isKnownVisitor(player.uniqueId)) {
+            val warpSpawn = if (FeatureManager.isEnabled("warp")) WarpManager.getDefaultSpawn()?.location else null
+            val spawn = warpSpawn ?: player.world.spawnLocation
+            player.teleport(spawn)
+            player.gameMode = GameMode.SURVIVAL
             whitelist.removeKnownVisitor(player.uniqueId)
             pendingVisitors.remove(player.uniqueId)?.cancel()
             featureLogger.info("访客退出: ${player.name} (${player.uniqueId})")
