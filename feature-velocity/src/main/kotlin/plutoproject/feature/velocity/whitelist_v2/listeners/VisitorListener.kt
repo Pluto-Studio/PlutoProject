@@ -59,7 +59,7 @@ object VisitorListener : KoinComponent {
         }
     }
 
-    // 保证最后一个出发
+    // 保证最后一个触发
     @Subscribe(priority = Short.MIN_VALUE)
     fun DisconnectEvent.onPlayerDisconnect() {
         val player = this.player
