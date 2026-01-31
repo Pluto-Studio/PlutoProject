@@ -59,13 +59,13 @@ val COMMAND_WHITELIST_STATISTIC_HEADER = component {
 }
 
 val COMMAND_WHITELIST_STATISTIC_TOTAL = component {
-    text("- 总计记录: ") with mochaSubtext0
+    text("- 总计记录: ") with mochaText
     text("<count>") with mochaLavender
 }
 
 val COMMAND_WHITELIST_STATISTIC_ACTIVE = component {
-    text("- 有效白名单: ") with mochaSubtext0
-    text("<count>") with mochaGreen
+    text("- 有效白名单: ") with mochaText
+    text("<count>") with mochaLavender
 }
 
 val COMMAND_WHITELIST_LOOKUP_NO_RECORD = component {
