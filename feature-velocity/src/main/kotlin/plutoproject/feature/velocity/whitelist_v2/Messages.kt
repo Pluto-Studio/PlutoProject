@@ -183,11 +183,22 @@ val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
     text("在处理访客连接时出现异常") with mochaMaroon
 }
 
-// 英文版访客欢迎消息（给海外非中文用户）
 val PLAYER_VISITOR_WELCOME_ENGLISH = component {
     newline()
     text("Welcome to PlutoProject Server!") with mochaText
     newline()
     text("You are currently in visitor mode. Please apply for whitelist to access full features.") with mochaSubtext0
     newline()
+}
+
+val PLAYER_VISITOR_ACTIONBAR = component {
+    text("访客探索中 ") with mochaText
+    text("· 更多指引存于聊天栏") with mochaSubtext0
+    // text("访客探索中 · 更多指引存于聊天栏") with mochaSubtext0
+}
+
+val PLAYER_VISITOR_ACTIONBAR_ENGLISH = component {
+    text("Exploring as a Visitor ") with mochaText
+    text("· Further guidance resides in chat") with mochaSubtext0
+    // text("Exploring as a Visitor · Further guidance resides in chat") with mochaSubtext0
 }

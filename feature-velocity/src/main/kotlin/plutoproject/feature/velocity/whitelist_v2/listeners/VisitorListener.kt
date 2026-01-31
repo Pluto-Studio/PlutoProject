@@ -5,6 +5,8 @@ import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.proxy.Player
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
@@ -15,6 +17,8 @@ import plutoproject.feature.common.api.whitelist_v2.Whitelist
 import plutoproject.feature.common.whitelist_v2.WhitelistImpl
 import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME
 import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_WELCOME_ENGLISH
+import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_ACTIONBAR
+import plutoproject.feature.velocity.whitelist_v2.PLAYER_VISITOR_ACTIONBAR_ENGLISH
 import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
 import plutoproject.feature.velocity.whitelist_v2.featureLogger
 import plutoproject.framework.common.api.connection.GeoIpConnection
@@ -38,7 +42,8 @@ object VisitorListener : KoinComponent {
         val joinTime: Instant,
         val visitedServers: MutableSet<String> = mutableSetOf(),
         val ip: InetAddress,
-        val virtualHost: InetSocketAddress?
+        val virtualHost: InetSocketAddress?,
+        var actionbarJob: Job? = null
     )
 
     @Subscribe
@@ -54,10 +59,31 @@ object VisitorListener : KoinComponent {
             player.sendMessage(welcomeMessage)
             featureLogger.info("访客 ${player.username} (UUID=${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
 
+            // 启动 Actionbar 定时任务
+            val session = visitorSessions[player.uniqueId]
+            if (session != null) {
+                session.actionbarJob = startActionbarTask(player)
+            }
+
             val targetServer = initialServer.orElse(null)
             if (targetServer != null) {
                 // TODO: 广播访客玩家 UUID 和即将连接的后端服务器信息给所有后端服务器
                 // 广播内容：玩家 UUID, 目标服务器名称
+            }
+        }
+    }
+
+    /**
+     * 启动 Actionbar 定时发送任务
+     */
+    private fun startActionbarTask(player: Player): Job {
+        val isEnglish = shouldSendEnglishMessage(player)
+        val actionbarMessage = if (isEnglish) PLAYER_VISITOR_ACTIONBAR_ENGLISH else PLAYER_VISITOR_ACTIONBAR
+
+        return PluginScope.launch {
+            while (whitelist.isKnownVisitor(player.uniqueId)) {
+                player.sendActionBar(actionbarMessage)
+                delay(1000) // 每秒发送一次
             }
         }
     }
@@ -107,6 +133,8 @@ object VisitorListener : KoinComponent {
         }
         val session = visitorSessions.remove(player.uniqueId)
         if (session != null) {
+            // 取消 Actionbar 任务
+            session.actionbarJob?.cancel()
             createVisitorRecord(player, session)
         }
         // 讲实话我也不知道这个什么时候可能 null。。不过反正都退出了，先这样吧。
