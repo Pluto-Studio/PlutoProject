@@ -25,10 +25,16 @@ object PvPToggleListener : Listener {
         val damagerEnabled = PvPToggle.isPvPEnabled(damager)
         val victimEnabled = PvPToggle.isPvPEnabled(victim)
 
-        if (!damagerEnabled || !victimEnabled) {
+        if (!damagerEnabled) {
             isCancelled = true
-            damager.showTitle(PVP_DISABLED_TITLE)
-            damager.playSound(PVP_DISABLED_SOUND)
+            damager.showTitle(PVP_DISABLED_TITLE_DAMAGER)
+            return
+        }
+
+        if (!victimEnabled) {
+            isCancelled = true
+            damager.showTitle(PVP_DISABLED_TITLE_VICTIM)
+            return
         }
     }
 

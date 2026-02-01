@@ -23,7 +23,7 @@ val MENU_PVP_TOGGLE_FEATURE_DISABLED = component {
 
 val MENU_PVP_TOGGLE_FEATURE_DESC = listOf(
     component {
-        text("双方都开启时才能互相伤害") with mochaSubtext0
+        text("开启后可以与其他玩家互相攻击") with mochaSubtext0
     }
 )
 
@@ -49,7 +49,21 @@ val MENU_PVP_TOGGLE_FEATURE_LORE_DISABLED = buildList {
     add(MENU_PVP_TOGGLE_FEATURE_OPERATION_ENABLE)
 }
 
-val PVP_DISABLED_TITLE = title {
+val PVP_DISABLED_TITLE_DAMAGER = title {
+    mainTitle {
+        text(" ")
+    }
+    subTitle {
+        text("你未开启 PvP") with mochaMaroon
+    }
+    times {
+        fadeIn(0.seconds)
+        stay(1.seconds)
+        fadeOut(0.seconds)
+    }
+}
+
+val PVP_DISABLED_TITLE_VICTIM = title {
     mainTitle {
         text(" ")
     }
