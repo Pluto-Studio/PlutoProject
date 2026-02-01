@@ -51,8 +51,6 @@ object VisitorListener : Listener, KoinComponent {
         if (whitelist.isKnownVisitor(player.uniqueId)) {
             pendingVisitors.remove(player.uniqueId)?.cancel()
             player.gameMode = GameMode.SPECTATOR
-            // 防止旁观者模式跑图
-            // player.flySpeed = 0.02f
             hideVisitorFromAllPlayers(player)
             featureLogger.info("访客进入: ${player.name} (${player.uniqueId})")
         }
@@ -74,25 +72,32 @@ object VisitorListener : Listener, KoinComponent {
     }
 
     private fun hideVisitorFromAllPlayers(visitor: Player) {
-        server.onlinePlayers.forEach { otherPlayer ->
-            if (otherPlayer.uniqueId != visitor.uniqueId) {
-                otherPlayer.hidePlayer(plugin, visitor)
+        server.onlinePlayers
+            .filter { it.uniqueId != visitor.uniqueId }
+            .forEach { otherPlayer ->
+                if (!otherPlayer.hasPermission(PERMISSION_WHITELIST_SEE_VISITORS)) {
+                    otherPlayer.hidePlayer(plugin, visitor)
+                }
+                // 访客无法看到其他访客
                 if (whitelist.isKnownVisitor(otherPlayer.uniqueId)) {
                     visitor.hidePlayer(plugin, otherPlayer)
                 }
             }
-        }
     }
 
     @EventHandler
     fun onNonVisitorPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        if (!whitelist.isKnownVisitor(player.uniqueId)) {
-            server.onlinePlayers.forEach { onlinePlayer ->
-                if (whitelist.isKnownVisitor(onlinePlayer.uniqueId)) {
-                    player.hidePlayer(plugin, onlinePlayer)
-                }
-            }
+        if (whitelist.isKnownVisitor(player.uniqueId)) {
+            return
         }
+        if (player.hasPermission(PERMISSION_WHITELIST_SEE_VISITORS)) {
+            return
+        }
+        server.onlinePlayers
+            .filter { whitelist.isKnownVisitor(it.uniqueId) }
+            .forEach { visitor ->
+                player.hidePlayer(plugin, visitor)
+            }
     }
 }
