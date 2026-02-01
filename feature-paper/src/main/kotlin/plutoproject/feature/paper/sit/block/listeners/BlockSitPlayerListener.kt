@@ -53,6 +53,7 @@ object BlockSitPlayerListener : Listener {
         if (!action.isRightClick) return
         if (!player.inventory.itemInMainHand.type.isAir) return
         if (clickedBlock == null) return
+        if (!player.hasPermission("plutoproject.sit.block_sit.right_click_sit")) return
         if (BlockSit.isSitting(player)) return
 
         val strategy = BlockSit.getStrategy(clickedBlock!!) ?: return

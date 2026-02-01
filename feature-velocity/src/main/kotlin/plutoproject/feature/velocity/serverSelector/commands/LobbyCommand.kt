@@ -18,7 +18,7 @@ object LobbyCommand : KoinComponent {
     private val config by inject<VelocityServerSelectorConfig>()
 
     @Command("lobby|hub")
-    @Permission("server_selector.command")
+    @Permission("plutoproject.server_selector.command.lobby")
     suspend fun CommandSource.lobby() = ensurePlayer {
         if (currentServer.getOrNull()?.serverInfo?.name == config.transferServer) {
             send {

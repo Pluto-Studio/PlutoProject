@@ -12,7 +12,7 @@ import plutoproject.framework.paper.util.coroutine.coroutineContext
 @Suppress("UNUSED")
 object StatusCommand {
     @Command("status|tps|mspt")
-    @Permission("hypervisor.status")
+    @Permission("plutoproject.status.command.status")
     suspend fun CommandSender.status() {
         val statusMessage = withContext(server.coroutineContext) { getStatusMessage() }
         send {

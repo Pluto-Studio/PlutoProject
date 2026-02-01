@@ -42,7 +42,7 @@ object WhitelistCommand : KoinComponent {
     }
 
     @Command("whitelist grant <name>")
-    @Permission("whitelist.command.grant")
+    @Permission(PERMISSION_COMMAND_WHITELIST_GRANT)
     suspend fun CommandSource.grant(@Argument("name") name: String) {
         sendMessage(COMMAND_WHITELIST_ADD_FETCHING)
         val operator = if (this is Player) WhitelistOperator.Administrator(uniqueId) else WhitelistOperator.Console
@@ -78,8 +78,8 @@ object WhitelistCommand : KoinComponent {
     }
 
     @Command("whitelist revoke <name> <reason>")
-    @Permission("whitelist.command.revoke")
-    suspend fun CommandSource.remove(
+    @Permission(PERMISSION_COMMAND_WHITELIST_REVOKE)
+    suspend fun CommandSource.revoke(
         @Argument("name") name: String,
         @Argument("reason") reason: WhitelistRevokeReason
     ) {
@@ -117,7 +117,7 @@ object WhitelistCommand : KoinComponent {
     }
 
     @Command("whitelist lookup <name>")
-    @Permission("whitelist.command.lookup")
+    @Permission(PERMISSION_COMMAND_WHITELIST_LOOKUP)
     suspend fun CommandSource.lookup(@Argument("name") name: String) {
         sendMessage(COMMAND_WHITELIST_ADD_FETCHING)
         val profile = fetchProfileWithTimeout(name)
@@ -209,7 +209,7 @@ object WhitelistCommand : KoinComponent {
     }
 
     @Command("whitelist statistic")
-    @Permission("whitelist.command")
+    @Permission(PERMISSION_COMMAND_WHITELIST_STATISTIC)
     suspend fun CommandSource.statistic() {
         val totalCount = whitelistRecordRepository.count()
         val activeCount = whitelistRecordRepository.countActive()

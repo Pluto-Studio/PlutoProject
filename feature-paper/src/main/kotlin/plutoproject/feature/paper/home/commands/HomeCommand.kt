@@ -15,7 +15,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object HomeCommand {
     @Command("home [home]")
-    @Permission("essentials.home")
+    @Permission("plutoproject.home.command.home")
     suspend fun CommandSender.home(@Argument("home", parserName = "home") home: Home?) = ensurePlayer {
         if (home == null) {
             val homes = HomeManager.list(this)

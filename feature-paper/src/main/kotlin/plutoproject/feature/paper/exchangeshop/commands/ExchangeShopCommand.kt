@@ -27,11 +27,13 @@ object ExchangeShopCommand : KoinComponent {
     private val transactionRepo by inject<TransactionRepository>()
 
     @Command("exchangeshop")
+    @Permission("plutoproject.exchange_shop.command.exchangeshop")
     fun exchangeShop(sender: CommandSender) = ensurePlayer(sender) {
         startScreen(ExchangeShopScreen())
     }
 
     @Command("exchangeshop category <shop-category>")
+    @Permission("plutoproject.exchange_shop.command.exchangeshop.category")
     fun exchangeShopCategory(
         sender: CommandSender,
         @Argument("shop-category", parserName = "shop-category") category: ShopCategory

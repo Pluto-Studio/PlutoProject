@@ -22,18 +22,21 @@ object PlayerListener : Listener, KoinComponent {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     suspend fun HomeTeleportEvent.e() {
         if (from.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, from)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     suspend fun WarpTeleportEvent.e() {
         if (from.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, from)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     suspend fun RandomTeleportEvent.e() {
         if (from.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, from)
     }
 
@@ -41,6 +44,7 @@ object PlayerListener : Listener, KoinComponent {
     suspend fun PlayerDeathEvent.e() {
         val location = player.location
         if (location.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, location)
     }
 
@@ -50,6 +54,7 @@ object PlayerListener : Listener, KoinComponent {
         val player = request.source
         val location = player.location
         if (location.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, location)
     }
 
@@ -67,6 +72,7 @@ object PlayerListener : Listener, KoinComponent {
         if (!validTeleportCauses.contains(cause)) return
         val location = player.location
         if (location.world.name in config.blacklistedWorlds) return
+        if (!player.hasPermission("plutoproject.back.record_back")) return
         BackManager.set(player, location)
     }
 }

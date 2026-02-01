@@ -18,7 +18,7 @@ private enum class Operation {
 @Suppress("UNUSED")
 object TpacceptCommand {
     @Command("tpaccept|tpyes [request]")
-    @Permission("essentials.tpaccept")
+    @Permission("plutoproject.teleport.command.tpaccept")
     fun CommandSender.tpaccept(
         @Argument("request", parserName = "tp-request") request: TeleportRequest?
     ) = ensurePlayer {
@@ -26,7 +26,7 @@ object TpacceptCommand {
     }
 
     @Command("tpdeny|tpno|tpdecline [request]")
-    @Permission("essentials.tpdeny")
+    @Permission("plutoproject.teleport.command.tpdeny")
     fun CommandSender.tpdeny(
         @Argument("request", parserName = "tp-request") request: TeleportRequest?
     ) = ensurePlayer {

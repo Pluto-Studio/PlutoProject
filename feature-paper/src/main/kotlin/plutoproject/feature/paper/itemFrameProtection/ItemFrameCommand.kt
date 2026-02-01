@@ -16,7 +16,7 @@ import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 
-const val ITEMFRAME_PROTECTION_BYPASS_PERMISSION = "essentials.itemframe.bypass"
+const val ITEMFRAME_PROTECTION_BYPASS_PERMISSION = "plutoproject.itemframe_protection.bypass"
 
 private val invKey = NamespacedKey("essentials", "itemframe_invsible")
 private val protectKey = NamespacedKey("essentials", "itemframe_protect")
@@ -61,7 +61,7 @@ private fun ItemFrame.setProtect(value: Boolean, player: Player) {
 @Suppress("UNUSED")
 object ItemFrameCommand {
     @Command("itemframe|if invisible")
-    @Permission("essentials.itemframe.invisible")
+    @Permission("plutoproject.itemframe_protection.command.itemframe.invisible")
     suspend fun CommandSender.invisible() = ensurePlayer {
         withContext(coroutineContext) {
             handleOperation(Operation.INVISIBLE)
@@ -69,7 +69,7 @@ object ItemFrameCommand {
     }
 
     @Command("itemframe|if protect")
-    @Permission("essentials.itemframe.protect")
+    @Permission("plutoproject.itemframe_protection.command.itemframe.protect")
     suspend fun CommandSender.protect() = ensurePlayer {
         withContext(coroutineContext) {
             handleOperation(Operation.PROTECT)

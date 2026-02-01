@@ -18,12 +18,13 @@ object MenuCommand : KoinComponent {
     private val migrator by inject<PersistMigrator>()
 
     @Command("menu")
+    @Permission("plutoproject.menu.command.menu")
     fun CommandSender.menu() = ensurePlayer {
         startScreen(MenuScreen())
     }
 
     @Command("menu migrate")
-    @Permission("menu.migrate")
+    @Permission("plutoproject.menu.command.menu.migrate")
     suspend fun migrate(sender: CommandSender) {
         sender.send {
             text("正在迁移到 DatabasePersist 存储...") with mochaText

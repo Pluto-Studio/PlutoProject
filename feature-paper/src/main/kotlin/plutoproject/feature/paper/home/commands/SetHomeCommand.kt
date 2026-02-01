@@ -16,7 +16,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object SetHomeCommand {
     @Command("sethome [name]")
-    @Permission("essentials.sethome")
+    @Permission("plutoproject.home.command.sethome")
     suspend fun CommandSender.sethome(@Greedy name: String?) = ensurePlayer {
         val list = HomeManager.list(this)
         val preferredHome = HomeManager.getPreferredHome(this)

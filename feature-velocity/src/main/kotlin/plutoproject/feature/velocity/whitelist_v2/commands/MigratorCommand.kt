@@ -13,6 +13,7 @@ import plutoproject.feature.velocity.whitelist.WhitelistModel
 import plutoproject.feature.velocity.whitelist.WhitelistRepository
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_COMPLETE
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_START
+import plutoproject.feature.velocity.whitelist_v2.PERMISSION_COMMAND_WHITELIST_MIGRATE
 import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
@@ -31,7 +32,7 @@ object MigratorCommand : KoinComponent {
     }
 
     @Command("whitelist migrate")
-    @Permission("whitelist.command.migrate")
+    @Permission(PERMISSION_COMMAND_WHITELIST_MIGRATE)
     suspend fun CommandSource.migrate() {
         if (!config.enableMigrator) return
         sendMessage(COMMAND_WHITELIST_MIGRATE_START)

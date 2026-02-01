@@ -20,13 +20,13 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object TpaCommand {
     @Command("tpa [player]")
-    @Permission("essentials.tpa")
+    @Permission("plutoproject.teleport.command.tpa")
     fun tpa(sender: CommandSender, @Argument("player") player: Player? = null) = sender.ensurePlayer {
         handleTpa(this, player, TeleportDirection.GO)
     }
 
     @Command("tpahere [player]")
-    @Permission("essentials.tpahere")
+    @Permission("plutoproject.teleport.command.tpahere")
     fun tpahere(sender: CommandSender, @Argument("player") player: Player? = null) = sender.ensurePlayer {
         handleTpa(this, player, TeleportDirection.COME)
     }

@@ -33,7 +33,7 @@ import plutoproject.framework.paper.util.inventory.isFull
 import plutoproject.framework.paper.util.server
 import kotlin.time.Duration.Companion.seconds
 
-private const val HEAD_COST_BYPASS_PERMISSION = "essentials.head.cost.bypass"
+private const val HEAD_COST_BYPASS_PERMISSION = "plutoproject.head.bypass_cost"
 
 @Suppress("UNUSED", "UNUSED_PARAMETER")
 object HeadCommand : KoinComponent {
@@ -49,7 +49,7 @@ object HeadCommand : KoinComponent {
         }
 
     @Command("head [player]")
-    @Permission("essentials.head")
+    @Permission("plutoproject.head.command.head")
     suspend fun CommandSender.head(@Argument("player", suggestions = "players") player: String?) = ensurePlayer {
         val targetName = (player ?: name).lowercase()
         val cost = config.cost

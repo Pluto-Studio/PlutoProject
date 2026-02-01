@@ -30,6 +30,7 @@ object ItemListener : Listener, KoinComponent {
             player.discoverRecipe(MenuItemRecipe.key)
         }
         if (!config.item.giveWhenJoin) return
+        if (!player.hasPermission("plutoproject.menu.receive_menu_item")) return
         if (player.inventory.contents
                 .filterNotNull()
                 .any { it.isMenuItem }
@@ -54,6 +55,7 @@ object ItemListener : Listener, KoinComponent {
     fun PlayerInteractEvent.menu() {
         if (!config.item.enabled) return
         if (!action.isRightClick || item?.isMenuItem == false) return
+        if (!player.hasPermission("plutoproject.menu.interact.use_menu_item")) return
         item?.let {
             isCancelled = true
             hand?.let { player.swingHand(it) }
@@ -65,6 +67,7 @@ object ItemListener : Listener, KoinComponent {
     fun PlayerSwapHandItemsEvent.e() {
         if (!config.item.enabled) return
         if (!player.isSneaking) return
+        if (!player.hasPermission("plutoproject.menu.interact.shortcut_to_open")) return
         isCancelled = true
         player.startScreen(MenuScreen())
     }

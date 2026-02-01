@@ -21,7 +21,7 @@ import plutoproject.framework.paper.util.command.selectPlayer
 @Suppress("UNUSED")
 object HomesCommand {
     @Command("homes [player]")
-    @Permission("essentials.homes")
+    @Permission("plutoproject.home.command.homes")
     suspend fun CommandSender.homes(
         @Argument("player", suggestions = "homes-offlineplayer") player: OfflinePlayer?
     ) = ensurePlayer {

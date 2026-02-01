@@ -10,13 +10,14 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
 import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.itemFrameProtection.ITEMFRAME_PROTECTION_UNKNOWN_PLAYER
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.data.convertToUuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 
-const val LECTERN_PROTECTION_BYPASS_PERMISSION = "essentials.lectern.bypass"
+const val LECTERN_PROTECTION_BYPASS_PERMISSION = "plutoproject.lectern_protection.bypass"
 
 private val protectKey = NamespacedKey("essentials", "lectern_protect")
 private val protectorKey = NamespacedKey("essentials", "lectern_protector")
@@ -51,6 +52,7 @@ private fun Lectern.setProtect(value: Boolean, player: Player) {
 @Suppress("UNUSED")
 object LecternCommand {
     @Command("lectern")
+    @Permission("plutoproject.lectern_protection.command.lectern")
     suspend fun CommandSender.lectern() = ensurePlayer {
         withContext(coroutineContext) {
             val range = getAttribute(Attribute.BLOCK_INTERACTION_RANGE)!!.value

@@ -13,8 +13,7 @@ import plutoproject.framework.velocity.util.server
 
 @Feature(
     id = "join_quit_message",
-    platform = Platform.VELOCITY,
-    dependencies = [Dependency("whitelist_v2", required = false)]
+    platform = Platform.VELOCITY
 )
 @Suppress("UNUSED")
 class JoinQuitMessageFeature : VelocityFeature() {

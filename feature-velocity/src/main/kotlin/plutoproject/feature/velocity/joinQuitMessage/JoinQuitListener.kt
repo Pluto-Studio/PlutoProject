@@ -6,8 +6,6 @@ import com.velocitypowered.api.event.player.ServerPostConnectEvent
 import com.velocitypowered.api.proxy.Player
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
-import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.velocity.util.broadcast
 import plutoproject.framework.velocity.util.server
@@ -31,9 +29,6 @@ object JoinQuitListener : KoinComponent {
     }
 
     private fun shouldDisplayMessage(player: Player): Boolean {
-        if (!FeatureManager.isEnabled("whitelist_v2")) {
-            return true
-        }
-        return !Whitelist.isKnownVisitor(player.uniqueId)
+        return player.hasPermission(PERMISSION_SEND_JOIN_QUIT_BROADCAST)
     }
 }
