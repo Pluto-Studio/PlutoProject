@@ -43,6 +43,13 @@ private fun handleTpa(source: Player, destination: Player?, direction: TeleportD
         return
     }
 
+    if (!source.hasPermission("plutoproject.teleport.command.tpa.ignore_destination_permission")
+        && !destination.hasPermission("plutoproject.teleport.as_destination")
+    ) {
+        source.sendMessage(COMMAND_TPA_FAILED_DESTINATION_NOT_PERMITTED)
+        return
+    }
+
     if (TeleportManager.hasPendingRequest(destination)) {
         source.sendMessage(COMMAND_TPA_FAILED_TARGET_BUSY)
         return

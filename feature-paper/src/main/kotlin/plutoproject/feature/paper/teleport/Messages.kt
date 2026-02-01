@@ -188,6 +188,10 @@ val COMMAND_TPA_FAILED_SELF = component {
     text("你不能向自己发送传送请求") with mochaMaroon
 }
 
+val COMMAND_TPA_FAILED_DESTINATION_NOT_PERMITTED = component {
+    text("对方无法接收传送请求") with mochaMaroon
+}
+
 val COMMAND_TPA_FAILED_TARGET_BUSY = component {
     text("对方仍有未处理的传送请求，请稍后再试") with mochaMaroon
 }
