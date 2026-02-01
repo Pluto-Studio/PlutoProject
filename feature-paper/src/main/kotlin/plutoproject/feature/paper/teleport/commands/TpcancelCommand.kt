@@ -14,11 +14,11 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object TpcancelCommand {
     @Command("tpcancel [player]")
-    @Permission("essentials.tpcancel")
+    @Permission("plutoproject.teleport.command.tpcancel")
     fun CommandSender.tpcancel(@Argument("player") player: Player?) = ensurePlayer {
         val argRequest = player?.let { TeleportManager.getUnfinishedRequest(it) }
         if (player != null) {
-            if (!hasPermission("essentials.tpcancel.other")) {
+            if (!hasPermission("plutoproject.teleport.command.tpcancel.others")) {
                 sendMessage(PERMISSION_DENIED)
                 return
             }

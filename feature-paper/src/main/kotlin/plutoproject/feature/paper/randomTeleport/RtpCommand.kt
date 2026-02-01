@@ -15,7 +15,7 @@ import kotlin.time.toDuration
 @Suppress("UNUSED")
 object RtpCommand {
     @Command("rtp|tpr|randomteleport [world]")
-    @Permission("essentials.rtp")
+    @Permission("plutoproject.rtp.command.rtp")
     fun CommandSender.rtp(world: World?) = ensurePlayer {
         val actualWorld = world ?: this.world
         if (actualWorld == world && !hasPermission(RANDOM_TELEPORT_SPECIFIC_PERMISSION)) {

@@ -15,4 +15,7 @@ velocityPluginJson {
     main = "plutoproject.platform.velocity.PlutoVelocityBootstrap"
     authors = listOf("Pluto Studio")
     description = "A collection of framework and feature components for the PlutoProject server."
+    dependencies {
+        dependency("luckperms", true)
+    }
 }

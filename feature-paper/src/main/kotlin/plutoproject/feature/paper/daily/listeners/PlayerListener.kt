@@ -18,6 +18,10 @@ object PlayerListener : Listener, KoinComponent {
             player.sendMessage(NOT_CHECKED_IN_TODAY)
         }
 
+        if (!player.hasPermission("plutoproject.daily.receive_checkin_reminder")) {
+            return
+        }
+
         val user = Daily.getUser(player) ?: run {
             sendPrompt()
             return

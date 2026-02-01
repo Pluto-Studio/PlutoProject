@@ -26,7 +26,9 @@ class AfkManagerImpl : AfkManager, KoinComponent {
             while (!disabled) {
                 Bukkit.getOnlinePlayers().forEach {
                     val idle = it.idleDuration.toKotlinDuration()
-                    if (idle >= idleDuration) set(it, true)
+                    if (idle >= idleDuration && it.hasPermission("plutoproject.afk.auto_afk")) {
+                        set(it, true)
+                    }
                 }
                 afkSet.removeIf { !it.isOnline }
                 delay(1.seconds)

@@ -17,7 +17,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object DelHomeCommand {
     @Command("delhome <home>")
-    @Permission("essentials.delhome")
+    @Permission("plutoproject.home.command.delhome")
     fun CommandSender.delhome(@Argument("home", parserName = "home") home: Home) = ensurePlayer {
         PluginScope.launch(Dispatchers.Loom) {
             HomeManager.remove(home.id)

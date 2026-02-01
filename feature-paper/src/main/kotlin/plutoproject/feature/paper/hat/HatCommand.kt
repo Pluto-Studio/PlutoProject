@@ -41,7 +41,7 @@ private suspend fun Player.clearHand() {
 @Suppress("UNUSED")
 object HatCommand {
     @Command("hat [player]")
-    @Permission("essentials.hat")
+    @Permission("plutoproject.hat.command.hat")
     suspend fun CommandSender.hat(@Argument("player") player: Player?) = ensurePlayer {
         val target = selectPlayer(this, player)!!
         if (handItem.type == Material.AIR) {
@@ -49,7 +49,7 @@ object HatCommand {
             return
         }
         if (this != target) {
-            if (!hasPermission("essentials.hat.other")) {
+            if (!hasPermission("plutoproject.hat.command.hat.other")) {
                 sendMessage(PERMISSION_DENIED)
                 return
             }

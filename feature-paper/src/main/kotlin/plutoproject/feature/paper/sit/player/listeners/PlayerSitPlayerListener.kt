@@ -25,11 +25,16 @@ object PlayerSitPlayerListener : Listener {
         if (player.isSneaking) return
         if (hand != EquipmentSlot.HAND) return
         if (!player.inventory.itemInMainHand.type.isAir) return
+        if (!player.hasPermission("plutoproject.sit.player_sit.right_click_sit")) return
         if (!PlayerSit.isFeatureEnabled(player)) return
         if (PlayerSit.isPassenger(player)) return
 
         player.swingMainHand()
         val target = rightClicked as Player
+
+        if (!target.hasPermission("plutoproject.sit.player_sit.as_seat")) {
+            return
+        }
 
         if (!PlayerSit.isFeatureEnabled(target)) {
             player.showTitle(PLAYER_SIT_FAILED_CARRIER_FEATURE_DISABLED)

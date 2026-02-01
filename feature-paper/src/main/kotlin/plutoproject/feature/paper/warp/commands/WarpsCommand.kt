@@ -11,7 +11,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object WarpsCommand {
     @Command("warps")
-    @Permission("essentials.warps")
+    @Permission("plutoproject.warp.command.warps")
     fun CommandSender.warps() = ensurePlayer {
         startScreen(WarpListScreen())
         playSound(UI_PAGING_SOUND)

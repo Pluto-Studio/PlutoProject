@@ -11,7 +11,7 @@ import plutoproject.framework.paper.util.entity.teleportSuspend
 @Suppress("UNUSED")
 object AlignCommand {
     @Command("align")
-    @Permission("essentials.align")
+    @Permission("plutoproject.align.command.align")
     suspend fun CommandSender.align() = ensurePlayer {
         alignPos()
         alignView()
@@ -19,14 +19,14 @@ object AlignCommand {
     }
 
     @Command("align pos")
-    @Permission("essentials.align.pos")
+    @Permission("plutoproject.align.command.align.pos")
     suspend fun CommandSender.pos() = ensurePlayer {
         alignPos()
         sendMessage(COMMAND_ALIGN_POS)
     }
 
     @Command("align view")
-    @Permission("essentials.align.view")
+    @Permission("plutoproject.align.command.align.view")
     suspend fun CommandSender.view() = ensurePlayer {
         alignView()
         sendMessage(COMMAND_ALIGN_VIEW)

@@ -9,7 +9,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object BackCommand {
     @Command("back")
-    @Permission("essentials.back")
+    @Permission("plutoproject.back.command.back")
     suspend fun CommandSender.back() = ensurePlayer {
         if (!BackManager.has(this)) {
             sendMessage(COMMAND_BACK_FAILED_NO_LOCATION)

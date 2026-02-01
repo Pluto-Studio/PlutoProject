@@ -5,6 +5,7 @@ import org.bukkit.block.Block
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.api.sit.block.BlockSit
 import plutoproject.feature.paper.api.sit.block.BlockSitFinalResult.*
 import plutoproject.feature.paper.api.sit.block.SitOnBlockCause
@@ -14,6 +15,7 @@ import plutoproject.framework.paper.util.coroutine.coroutineContext
 
 object SitCommand {
     @Command("sit")
+    @Permission("plutoproject.sit.command.sit")
     suspend fun CommandSender.sit() = ensurePlayer {
         val target = getBlockStandingOn()
         val result = withContext(coroutineContext) {

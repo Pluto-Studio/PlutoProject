@@ -3,8 +3,6 @@ package plutoproject.feature.paper.exchangeshop
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.runBlocking
-import org.bukkit.permissions.Permission
-import org.bukkit.permissions.PermissionDefault
 import org.incendo.cloud.parser.ParserDescriptor
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -72,6 +70,8 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
 
     @Suppress("UnstableApiUsage")
     private fun initializeCommands() {
+        // 2026.2.1 - 更新访客模式 - 最小权限，不再默认给予任何权限节点
+        /*
         val permissions = listOf(
             Permission(COMMAND_EXCHANGE_SHOP_TRANSACTIONS_PERMISSION, PermissionDefault.OP),
             Permission(COMMAND_EXCHANGE_SHOP_TICKET_PERMISSION, PermissionDefault.OP),
@@ -80,7 +80,8 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
             Permission(COMMAND_EXCHANGE_SHOP_TICKET_DEPOSIT_PERMISSION, PermissionDefault.OP),
             Permission(COMMAND_EXCHANGE_SHOP_STATS_PERMISSION, PermissionDefault.OP),
         )
-        server.pluginManager.addPermissions(permissions)
+        */
+        // server.pluginManager.addPermissions(permissions)
         CommandManager.parserRegistry().apply {
             registerSuggestionProvider("shop-category", ShopCategoryParser)
             registerNamedParser("shop-category", ParserDescriptor.of(ShopCategoryParser, ShopCategory::class.java))

@@ -13,7 +13,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object SpawnCommand {
     @Command("spawn")
-    @Permission("essentials.spawn")
+    @Permission("plutoproject.warp.command.spawn")
     suspend fun CommandSender.spawn() = ensurePlayer {
         val spawn = WarpManager.getPreferredSpawn(this)
         if (spawn == null) {

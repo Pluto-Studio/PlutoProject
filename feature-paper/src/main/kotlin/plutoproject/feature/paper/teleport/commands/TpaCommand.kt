@@ -20,13 +20,13 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object TpaCommand {
     @Command("tpa [player]")
-    @Permission("essentials.tpa")
+    @Permission("plutoproject.teleport.command.tpa")
     fun tpa(sender: CommandSender, @Argument("player") player: Player? = null) = sender.ensurePlayer {
         handleTpa(this, player, TeleportDirection.GO)
     }
 
     @Command("tpahere [player]")
-    @Permission("essentials.tpahere")
+    @Permission("plutoproject.teleport.command.tpahere")
     fun tpahere(sender: CommandSender, @Argument("player") player: Player? = null) = sender.ensurePlayer {
         handleTpa(this, player, TeleportDirection.COME)
     }
@@ -40,6 +40,13 @@ private fun handleTpa(source: Player, destination: Player?, direction: TeleportD
 
     if (destination == source) {
         source.sendMessage(COMMAND_TPA_FAILED_SELF)
+        return
+    }
+
+    if (!source.hasPermission("plutoproject.teleport.command.tpa.ignore_destination_permission")
+        && !destination.hasPermission("plutoproject.teleport.as_destination")
+    ) {
+        source.sendMessage(COMMAND_TPA_FAILED_DESTINATION_NOT_PERMITTED)
         return
     }
 

@@ -4,7 +4,7 @@ import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Entity
 import plutoproject.framework.common.util.buildinfo.BuildInfo
-import plutoproject.framework.common.util.chat.BRANDING
+import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND
 import plutoproject.framework.common.util.chat.palettes.*
 import plutoproject.framework.common.util.roundTo2
 import plutoproject.framework.common.util.time.formatDate
@@ -116,7 +116,7 @@ val BUTTON_SERVER_STATUS_OPERATION_HIDE_VERSION = component {
 }
 
 fun getVersionMessage(timezone: ZoneId) = component {
-    raw(BRANDING)
+    raw(GENERIC_TEXT_SERVER_BRAND)
     text(" ${BuildInfo.releaseName}") with mochaText
     newline()
     text("提交 ${BuildInfo.gitCommit}，分支 ${BuildInfo.gitBranch}") with mochaText

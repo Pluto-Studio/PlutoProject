@@ -15,7 +15,7 @@ import plutoproject.framework.paper.util.command.ensurePlayer
 @Suppress("UNUSED")
 object WarpCommand {
     @Command("warp [warp]")
-    @Permission("essentials.warp")
+    @Permission("plutoproject.warp.command.warp")
     suspend fun CommandSender.warp(@Argument("warp", parserName = "warp") warp: Warp?) = ensurePlayer {
         if (warp == null) {
             startScreen(WarpListScreen())
