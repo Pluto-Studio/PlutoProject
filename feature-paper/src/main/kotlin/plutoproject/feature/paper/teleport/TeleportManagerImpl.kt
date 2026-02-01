@@ -21,6 +21,7 @@ import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.coroutine.raceConditional
 import plutoproject.framework.common.util.data.map.mapKeysAndValues
 import plutoproject.framework.common.util.time.toFormattedComponent
+import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.entity.teleportSuspend
 import plutoproject.framework.paper.util.server
 import plutoproject.framework.paper.util.world.chunk.ChunkLocation
@@ -243,6 +244,10 @@ class TeleportManagerImpl : TeleportManager, KoinComponent {
             return@withContext
         }
 
+        // 1.21.11 更新后传送玩家似乎不会自动关闭打开的容器了？手动关闭一下
+        withContext(server.coroutineContext) {
+            player.closeInventory()
+        }
         player.teleportSuspend(loc)
 
         if (prompt) {
