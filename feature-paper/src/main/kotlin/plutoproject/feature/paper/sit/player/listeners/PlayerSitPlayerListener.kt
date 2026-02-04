@@ -25,7 +25,7 @@ object PlayerSitPlayerListener : Listener {
         if (player.isSneaking) return
         if (hand != EquipmentSlot.HAND) return
         if (!player.inventory.itemInMainHand.type.isAir) return
-        if (!player.hasPermission("plutoproject.sit.player_sit.right_click_sit")) return
+        if (!player.hasPermission("plutoproject.sit.interact.player_right_click")) return
         if (!PlayerSit.isFeatureEnabled(player)) return
         if (PlayerSit.isPassenger(player)) return
 
