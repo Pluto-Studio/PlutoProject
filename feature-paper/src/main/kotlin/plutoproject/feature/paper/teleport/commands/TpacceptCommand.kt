@@ -39,6 +39,12 @@ private fun CommandSender.handleOperation(request: TeleportRequest?, type: Opera
         this.sendMessage(COMMAND_TPACCEPT_FAILED_NO_PENDING)
         return
     }
+
+    if (actualRequest.isFinished) {
+        this.sendMessage(COMMAND_TPACCEPT_FAILED_NO_REQUEST_ID.replace("<player>", actualRequest.source.name))
+        return
+    }
+
     val choice = when (type) {
         Operation.ACCEPT -> {
             actualRequest.accept()

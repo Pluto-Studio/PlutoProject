@@ -252,8 +252,6 @@ val COMMAND_TPACCEPT_FAILED_NO_REQUEST = component {
 
 val COMMAND_TPACCEPT_FAILED_NO_REQUEST_ID = component {
     text("请求已过期或不存在") with mochaMaroon
-    newline()
-    text("如果你认为这是一个错误，请上报给管理组") with mochaSubtext0
 }
 
 val COMMAND_TPCANCEL_SUCCEED = component {
