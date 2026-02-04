@@ -23,6 +23,5 @@ object DelHomeCommand {
             HomeManager.remove(home.id)
         }
         sendMessage(COMMAND_DELHOME.replace("<name>", home.name))
-        sendMessage(COMMAND_DELHOME.replace("<name>", home.name))
     }
 }
