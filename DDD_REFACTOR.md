@@ -154,9 +154,9 @@ Status markers:
 
 ### Migrate Code: api/core/infra
 
-- [ ] DDD-030 Move whitelist-v2 API types into `:feature:whitelist-v2:api` and remove Koin static access
-- [ ] DDD-031 Implement `:feature:whitelist-v2:core` (ports + use-cases + JUnit5 unit tests)
-- [ ] DDD-032 Move Mongo models/repos/index wiring into `:feature:whitelist-v2:infra-mongo` (+ Testcontainers tests)
+- [x] DDD-030 Move whitelist-v2 API types into `:feature:whitelist-v2:api` and remove Koin static access
+- [x] DDD-031 Implement `:feature:whitelist-v2:core` (ports + use-cases + JUnit5 unit tests)
+- [x] DDD-032 Move Mongo models/repos/index wiring into `:feature:whitelist-v2:infra-mongo` (+ Testcontainers tests)
 - [ ] DDD-033 Move messaging DTO/topic into `:feature:whitelist-v2:infra-messaging`
 
 ### Migrate Code: adapters
@@ -174,8 +174,8 @@ Status markers:
 
 - [ ] DDD-060 Remove old whitelist-v2 sources from `feature-common`, `feature-paper`, `feature-velocity`, `feature-common-api`
 - [ ] DDD-061 Run `./gradlew shadowJar` to ensure compilation
-- [ ] DDD-062 Run unit tests for `:feature:whitelist-v2:core`
-- [ ] DDD-063 Run integration tests for `:feature:whitelist-v2:infra-mongo`
+- [x] DDD-062 Run unit tests for `:feature:whitelist-v2:core`
+- [x] DDD-063 Run integration tests for `:feature:whitelist-v2:infra-mongo`
 
 ## Notes for Manual Verification (Gameplay)
 

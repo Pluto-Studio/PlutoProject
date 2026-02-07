@@ -48,3 +48,7 @@ tasks.compileKotlin {
         javaParameters = true
     }
 }
+
+dependencies {
+    compileOnly(libs.bundles.language)
+}
