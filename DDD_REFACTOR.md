@@ -148,8 +148,8 @@ Status markers:
 
 ### Create Modules (Empty First)
 
-- [ ] DDD-020 Update `settings.gradle.kts` to include new projects for whitelist-v2
-- [ ] DDD-021 Create `build.gradle.kts` for each new whitelist-v2 module
+- [x] DDD-020 Update `settings.gradle.kts` to include new projects for whitelist-v2
+- [x] DDD-021 Create `build.gradle.kts` for each new whitelist-v2 module
 - [x] DDD-022 Verify `./gradlew shadowJar` still succeeds (no code moved yet)
 
 ### Migrate Code: api/core/infra
