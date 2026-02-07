@@ -6,30 +6,29 @@ import com.velocitypowered.api.event.connection.LoginEvent
 import net.luckperms.api.LuckPermsProvider
 import net.luckperms.api.node.types.InheritanceNode
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
 import org.koin.core.component.inject
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
-import plutoproject.feature.common.whitelist_v2.WhitelistImpl
-import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
 import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.*
+import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
 @Suppress("UNUSED")
 object PlayerListener : KoinComponent {
     private val config by inject<WhitelistConfig>()
-    private val recordRepo by inject<WhitelistRecordRepository>()
-    private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
+    private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
+    private val whitelist by inject<Whitelist>()
+    private val knownVisitors by inject<KnownVisitors>()
     private val luckpermsApi = LuckPermsProvider.get()
 
     @Subscribe
     suspend fun LoginEvent.onPlayerLogin() {
         if (!whitelist.isWhitelisted(player.uniqueId)) {
             if (VisitorState.isVisitorModeEnabled) {
-                whitelist.addKnownVisitor(player.uniqueId)
+                knownVisitors.add(player.uniqueId)
 
                 val visitorGroup = config.visitorMode.visitorPermissionGroup
                 val group = luckpermsApi.groupManager.getGroup(visitorGroup)
@@ -38,13 +37,13 @@ object PlayerListener : KoinComponent {
                 if (group == null) {
                     featureLogger.severe("没有在 LuckPerms 中找到名为 $visitorGroup 的组，权限组正确配置了吗？")
                     player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
-                    whitelist.removeKnownVisitor(player.uniqueId)
+                    knownVisitors.remove(player.uniqueId)
                     return
                 }
                 if (user == null) {
                     featureLogger.severe("无法获取访客 ${player.username} (UUID=${player.uniqueId}) 的 LuckPerms 用户对象，这似乎不应该发生...")
                     player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
-                    whitelist.removeKnownVisitor(player.uniqueId)
+                    knownVisitors.remove(player.uniqueId)
                     return
                 }
 
@@ -54,11 +53,11 @@ object PlayerListener : KoinComponent {
                     val defaultNode = InheritanceNode.builder(defaultGroup).build()
                     user.data().remove(defaultNode)
                 }
-                
+
                 // 添加 visitor 组
                 val inheritanceNode = InheritanceNode.builder(group).build()
                 user.data().add(inheritanceNode)
-                
+
                 // 设置主组为 visitor
                 val primaryGroupResult = user.setPrimaryGroup(visitorGroup)
                 luckpermsApi.userManager.saveUser(user)
@@ -68,7 +67,7 @@ object PlayerListener : KoinComponent {
                     featureLogger.severe("修改主组是否成功：${primaryGroupResult.wasSuccessful()}")
                     user.data().remove(inheritanceNode)
                     player.disconnect(ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION)
-                    whitelist.removeKnownVisitor(player.uniqueId)
+                    knownVisitors.remove(player.uniqueId)
                     return
                 }
 
@@ -77,14 +76,14 @@ object PlayerListener : KoinComponent {
                 VisitorListener.recordVisitorSession(
                     player.uniqueId,
                     player.remoteAddress.address,
-                    player.virtualHost.getOrNull()
+                    player.virtualHost.getOrNull(),
                 )
 
                 logVisitorLogin(
                     player.uniqueId,
                     player.username,
                     player.remoteAddress.address,
-                    player.virtualHost.getOrNull()
+                    player.virtualHost.getOrNull(),
                 )
                 return
             }
@@ -92,20 +91,19 @@ object PlayerListener : KoinComponent {
             return
         }
 
-        val recordModel = recordRepo.findByUniqueId(player.uniqueId) ?: error("Unexpected")
-        if (recordModel.username == player.username) {
+        val record = whitelistRecordRepository.findByUniqueId(player.uniqueId) ?: error("Unexpected")
+        if (record.username == player.username) {
             return
         }
 
-        val updatedModel = recordModel.copy(username = player.username)
-        recordRepo.saveOrUpdate(updatedModel)
+        whitelistRecordRepository.saveOrUpdate(record.copy(username = player.username))
     }
 
     private fun logVisitorLogin(
         uuid: UUID,
         username: String,
         ip: InetAddress,
-        virtualHost: InetSocketAddress?
+        virtualHost: InetSocketAddress?,
     ) {
         val location = try {
             val response = GeoIpConnection.database.city(ip)
@@ -118,7 +116,7 @@ object PlayerListener : KoinComponent {
         }
 
         featureLogger.info(
-            "访客进入: UUID=$uuid, 用户名=$username, IP=$ip, 连接地址=${virtualHost ?: "未知"}, 位置=$location"
+            "访客进入: UUID=$uuid, 用户名=$username, IP=$ip, 连接地址=${virtualHost ?: "未知"}, 位置=$location",
         )
     }
 }

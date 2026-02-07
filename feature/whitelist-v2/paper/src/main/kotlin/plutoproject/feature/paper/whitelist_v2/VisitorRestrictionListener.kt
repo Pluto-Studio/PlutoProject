@@ -11,13 +11,17 @@ import org.bukkit.GameMode
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerTeleportEvent
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.time.ticks
 import plutoproject.framework.paper.util.server
 
 @Suppress("UNUSED")
-object VisitorRestrictionListener : Listener {
+object VisitorRestrictionListener : Listener, KoinComponent {
+    private val whitelist by inject<Whitelist>()
+
     private var visitorSpeedLimitationJob: Job? = null
 
     fun startVisitorSpeedLimitationJob() {
@@ -34,7 +38,7 @@ object VisitorRestrictionListener : Listener {
             return
         }
         server.onlinePlayers
-            .filter { Whitelist.isKnownVisitor(it.uniqueId) && it.gameMode == GameMode.SPECTATOR }
+            .filter { whitelist.isKnownVisitor(it.uniqueId) && it.gameMode == GameMode.SPECTATOR }
             .forEach {
                 // setFlySpeed 只是发送数据包，可以异步
                 it.flySpeed = 0.1f
@@ -48,7 +52,7 @@ object VisitorRestrictionListener : Listener {
     @EventHandler
     fun onPlayerChat(event: AsyncChatEvent) {
         val player = event.player
-        if (Whitelist.isKnownVisitor(player.uniqueId)) {
+        if (whitelist.isKnownVisitor(player.uniqueId)) {
             player.sendMessage(VISITOR_CHAT_DENIED)
             event.isCancelled = true
         }
@@ -57,7 +61,7 @@ object VisitorRestrictionListener : Listener {
     @EventHandler
     fun onPlayerStartSpectatingEntity(event: PlayerStartSpectatingEntityEvent) {
         val player = event.player
-        if (Whitelist.isKnownVisitor(player.uniqueId)) {
+        if (whitelist.isKnownVisitor(player.uniqueId)) {
             event.isCancelled = true
         }
     }
@@ -65,7 +69,7 @@ object VisitorRestrictionListener : Listener {
     @EventHandler
     fun onPlayerTeleport(event: PlayerTeleportEvent) {
         val player = event.player
-        if (Whitelist.isKnownVisitor(player.uniqueId) && event.cause == PlayerTeleportEvent.TeleportCause.SPECTATE) {
+        if (whitelist.isKnownVisitor(player.uniqueId) && event.cause == PlayerTeleportEvent.TeleportCause.SPECTATE) {
             event.isCancelled = true
         }
     }
@@ -73,7 +77,7 @@ object VisitorRestrictionListener : Listener {
     @EventHandler
     fun onPlayerAdvancementCriterionGrant(event: PlayerAdvancementCriterionGrantEvent) {
         val player = event.player
-        if (Whitelist.isKnownVisitor(player.uniqueId)) {
+        if (whitelist.isKnownVisitor(player.uniqueId)) {
             event.isCancelled = true
         }
     }

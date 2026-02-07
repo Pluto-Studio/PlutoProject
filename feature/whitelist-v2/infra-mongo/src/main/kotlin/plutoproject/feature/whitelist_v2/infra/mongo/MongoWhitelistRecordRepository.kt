@@ -31,6 +31,19 @@ class MongoWhitelistRecordRepository(
         return findActiveByUniqueId(uniqueId) != null
     }
 
+    override suspend fun count(): Long {
+        return collection.countDocuments()
+    }
+
+    override suspend fun countActive(): Long {
+        return collection.countDocuments(eq(WhitelistRecordDocument::isRevoked.name, false))
+    }
+
+    override suspend fun insertAll(records: List<WhitelistRecordData>) {
+        if (records.isEmpty()) return
+        collection.insertMany(records.map { it.toDocument() })
+    }
+
     override suspend fun saveOrUpdate(record: WhitelistRecordData) {
         val document = record.toDocument()
         collection.replaceOne(eq(WhitelistRecordDocument::uniqueId.name, document.uniqueId), document, upsert)

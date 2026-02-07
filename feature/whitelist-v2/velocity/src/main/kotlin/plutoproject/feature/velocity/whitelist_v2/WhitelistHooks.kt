@@ -1,8 +1,8 @@
 package plutoproject.feature.velocity.whitelist_v2
 
-import plutoproject.feature.common.api.whitelist_v2.hook.WhitelistHookParam
+import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.framework.velocity.util.server
-import java.util.*
+import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
 private fun kickWhenModified(uniqueId: UUID) {

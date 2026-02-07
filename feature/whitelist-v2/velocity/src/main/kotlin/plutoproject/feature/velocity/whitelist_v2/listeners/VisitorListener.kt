@@ -11,22 +11,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
 import org.koin.core.component.inject
-import plutoproject.feature.common.api.whitelist_v2.VisitorRecordParams
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
-import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
-import plutoproject.feature.common.whitelist_v2.VISITOR_NOTIFICATION_TOPIC
-import plutoproject.feature.common.whitelist_v2.VisitorNotification
-import plutoproject.feature.common.whitelist_v2.WhitelistImpl
 import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
+import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.infra.messaging.VISITOR_NOTIFICATION_TOPIC
+import plutoproject.feature.whitelist_v2.infra.messaging.VisitorNotification
 import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.util.coroutine.PluginScope
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.toKotlinDuration
 import java.time.Duration as JavaDuration
@@ -34,7 +31,8 @@ import java.time.Duration as JavaDuration
 @Suppress("UNUSED")
 object VisitorListener : KoinComponent {
     private val config by inject<WhitelistConfig>()
-    private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
+    private val whitelist by inject<Whitelist>()
+    private val knownVisitors by inject<KnownVisitors>()
     private val visitorSessions = ConcurrentHashMap<UUID, VisitorSession>()
     private val luckpermsApi = LuckPermsProvider.get()
 
@@ -43,14 +41,13 @@ object VisitorListener : KoinComponent {
         val visitedServers: MutableSet<String> = mutableSetOf(),
         val ip: InetAddress,
         val virtualHost: InetSocketAddress?,
-        var actionbarJob: Job? = null
+        var actionbarJob: Job? = null,
     )
 
     @Subscribe(priority = Short.MAX_VALUE)
     fun PlayerChooseInitialServerEvent.onPlayerChooseServer() {
         val player = this.player
         if (whitelist.isKnownVisitor(player.uniqueId)) {
-            // 判断发送中文还是英文欢迎消息
             val welcomeMessage = if (shouldSendEnglishMessage(player)) {
                 PLAYER_VISITOR_WELCOME_ENGLISH
             } else {
@@ -59,16 +56,10 @@ object VisitorListener : KoinComponent {
             player.sendMessage(welcomeMessage)
             featureLogger.info("访客 ${player.username} (${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
 
-            // 启动 Actionbar 定时任务
             val session = visitorSessions[player.uniqueId]
             if (session != null) {
                 session.actionbarJob = startActionbarTask(player)
             }
-
-            // val targetServer = initialServer.orElse(null)
-            // if (targetServer != null) {
-            // TODO: 广播访客玩家 UUID 和即将连接的后端服务器信息给所有后端服务器
-            // }
         }
     }
 
@@ -81,15 +72,12 @@ object VisitorListener : KoinComponent {
         val notification = VisitorNotification(
             uniqueId = player.uniqueId,
             username = player.username,
-            joinedServer = server
+            joinedServer = server,
         )
         CharonFlowConnection.client.publish(VISITOR_NOTIFICATION_TOPIC, notification)
         featureLogger.info("通知后端：${player.username} (${player.uniqueId}), 连接至 $server")
     }
 
-    /**
-     * 启动 Actionbar 定时发送任务
-     */
     private fun startActionbarTask(player: Player): Job {
         val isEnglish = shouldSendEnglishMessage(player)
         val actionbarMessage = if (isEnglish) PLAYER_VISITOR_ACTIONBAR_ENGLISH else PLAYER_VISITOR_ACTIONBAR
@@ -97,7 +85,7 @@ object VisitorListener : KoinComponent {
         return PluginScope.launch {
             while (whitelist.isKnownVisitor(player.uniqueId)) {
                 player.sendActionBar(actionbarMessage)
-                delay(1000) // 每秒发送一次
+                delay(1000)
             }
         }
     }
@@ -106,9 +94,9 @@ object VisitorListener : KoinComponent {
         val clientLocale = player.playerSettings.locale
 
         val isChineseLocale = clientLocale.language == "zh" ||
-                clientLocale.toString() == "zh_CN" ||
-                clientLocale.toString() == "zh_HK" ||
-                clientLocale.toString() == "zh_TW"
+            clientLocale.toString() == "zh_CN" ||
+            clientLocale.toString() == "zh_HK" ||
+            clientLocale.toString() == "zh_TW"
 
         if (isChineseLocale) {
             return false
@@ -138,7 +126,6 @@ object VisitorListener : KoinComponent {
         }
     }
 
-    // 保证最后一个触发
     @Subscribe(priority = Short.MIN_VALUE)
     fun DisconnectEvent.onPlayerDisconnect() {
         val player = this.player
@@ -147,18 +134,17 @@ object VisitorListener : KoinComponent {
         }
         val session = visitorSessions.remove(player.uniqueId)
         if (session != null) {
-            // 取消 Actionbar 任务
             session.actionbarJob?.cancel()
             createVisitorRecord(player, session)
         }
-        // 讲实话我也不知道这个什么时候可能 null。。不过反正都退出了，先这样吧。
+
         val user = luckpermsApi.userManager.getUser(player.uniqueId)
         if (user != null) {
             user.data().clear()
             luckpermsApi.userManager.saveUser(user)
         }
         featureLogger.info("已清除访客 ${player.username} (${player.uniqueId}) 的 LuckPerms 数据。")
-        whitelist.removeKnownVisitor(player.uniqueId)
+        knownVisitors.remove(player.uniqueId)
         featureLogger.info("访客退出: ${player.username} (${player.uniqueId})")
     }
 
@@ -166,7 +152,7 @@ object VisitorListener : KoinComponent {
         visitorSessions[uuid] = VisitorSession(
             joinTime = Instant.now(),
             ip = ip,
-            virtualHost = virtualHost
+            virtualHost = virtualHost,
         )
     }
 
@@ -179,7 +165,7 @@ object VisitorListener : KoinComponent {
                 virtualHost = session.virtualHost ?: InetSocketAddress.createUnresolved("unknown", 0),
                 visitedAt = session.joinTime,
                 duration = duration,
-                visitedServers = session.visitedServers
+                visitedServers = session.visitedServers,
             )
         )
     }

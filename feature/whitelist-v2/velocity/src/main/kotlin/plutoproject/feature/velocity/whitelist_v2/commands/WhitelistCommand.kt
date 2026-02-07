@@ -13,11 +13,11 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
-import plutoproject.feature.common.api.whitelist_v2.WhitelistOperator
-import plutoproject.feature.common.api.whitelist_v2.WhitelistRevokeReason
-import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
 import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistOperator
+import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.FetchedData
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
@@ -27,6 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
 object WhitelistCommand : KoinComponent {
+    private val whitelist by inject<Whitelist>()
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
 
     // Pair 里的第一个元素为 true 即为超时导致的未获取
@@ -59,15 +60,15 @@ object WhitelistCommand : KoinComponent {
 
         val fetchedProfile = profile.second!!
 
-        if (Whitelist.isWhitelisted(fetchedProfile.uuid)) {
+        if (whitelist.isWhitelisted(fetchedProfile.uuid)) {
             sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", fetchedProfile.name))
             return
         }
 
-        val success = Whitelist.grantWhitelist(
+        val success = whitelist.grantWhitelist(
             uniqueId = fetchedProfile.uuid,
             username = fetchedProfile.name,
-            operator = operator
+            operator = operator,
         )
 
         if (success) {
@@ -81,7 +82,7 @@ object WhitelistCommand : KoinComponent {
     @Permission(PERMISSION_COMMAND_WHITELIST_REVOKE)
     suspend fun CommandSource.revoke(
         @Argument("name") name: String,
-        @Argument("reason") reason: WhitelistRevokeReason
+        @Argument("reason") reason: WhitelistRevokeReason,
     ) {
         sendMessage(COMMAND_WHITELIST_ADD_FETCHING)
         val operator = if (this is Player) WhitelistOperator.Administrator(uniqueId) else WhitelistOperator.Console
@@ -98,15 +99,15 @@ object WhitelistCommand : KoinComponent {
 
         val fetchedProfile = profile.second!!
 
-        if (!Whitelist.isWhitelisted(fetchedProfile.uuid)) {
+        if (!whitelist.isWhitelisted(fetchedProfile.uuid)) {
             sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", fetchedProfile.name))
             return
         }
 
-        val success = Whitelist.revokeWhitelist(
+        val success = whitelist.revokeWhitelist(
             uniqueId = fetchedProfile.uuid,
             operator = operator,
-            reason = reason
+            reason = reason,
         )
 
         if (success) {
@@ -132,7 +133,7 @@ object WhitelistCommand : KoinComponent {
         }
 
         val fetchedProfile = profile.second!!
-        val record = Whitelist.lookupWhitelistRecord(fetchedProfile.uuid)
+        val record = whitelist.lookupWhitelistRecord(fetchedProfile.uuid)
 
         if (record == null) {
             sendMessage(COMMAND_WHITELIST_LOOKUP_NO_RECORD.replace("<name>", fetchedProfile.name))
@@ -156,21 +157,21 @@ object WhitelistCommand : KoinComponent {
             raw(
                 COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE.replace(
                     "<status>",
-                    if (record.joinedAsVisitorBefore) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+                    if (record.joinedAsVisitorBefore) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE,
                 )
             )
             newline()
             raw(
                 COMMAND_WHITELIST_LOOKUP_MIGRATED.replace(
                     "<status>",
-                    if (record.isMigrated) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+                    if (record.isMigrated) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE,
                 )
             )
             newline()
             raw(
                 COMMAND_WHITELIST_LOOKUP_REVOKED.replace(
                     "<status>",
-                    if (record.isRevoked) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+                    if (record.isRevoked) COMMAND_WHITELIST_LOOKUP_BOOL_TRUE else COMMAND_WHITELIST_LOOKUP_BOOL_FALSE,
                 )
             )
             if (record.isRevoked) {
@@ -180,7 +181,7 @@ object WhitelistCommand : KoinComponent {
                 raw(
                     COMMAND_WHITELIST_LOOKUP_REVOKE_REASON.replace(
                         "<reason>",
-                        formatRevokeReason(record.revokeReason!!)
+                        formatRevokeReason(record.revokeReason!!),
                     )
                 )
                 newline()
@@ -191,7 +192,7 @@ object WhitelistCommand : KoinComponent {
 
     private suspend fun formatOperator(operator: WhitelistOperator): Component {
         return when (operator) {
-            is WhitelistOperator.Console -> COMMAND_WHITELIST_OPERATOR_CONSOLE
+            WhitelistOperator.Console -> COMMAND_WHITELIST_OPERATOR_CONSOLE
             is WhitelistOperator.Administrator -> {
                 val profile = ProfileLookup.lookupByUuid(operator.uniqueId, requestApi = false)
                 val name = profile?.name ?: operator.uniqueId.toString()

@@ -232,11 +232,9 @@ val PLAYER_VISITOR_WELCOME_ENGLISH
 val PLAYER_VISITOR_ACTIONBAR = component {
     text("访客探索中 ") with mochaText
     text("· 更多指引存于聊天栏") with mochaSubtext0
-    // text("访客探索中 · 更多指引存于聊天栏") with mochaSubtext0
 }
 
 val PLAYER_VISITOR_ACTIONBAR_ENGLISH = component {
     text("Exploring as a Visitor ") with mochaText
     text("· Further guidance resides in chat") with mochaSubtext0
-    // text("Exploring as a Visitor · Further guidance resides in chat") with mochaSubtext0
 }
