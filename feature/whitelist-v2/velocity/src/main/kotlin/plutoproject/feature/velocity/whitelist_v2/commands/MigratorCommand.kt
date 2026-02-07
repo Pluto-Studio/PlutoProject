@@ -1,34 +1,44 @@
 package plutoproject.feature.velocity.whitelist_v2.commands
 
 import com.velocitypowered.api.command.CommandSource
+import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.common.whitelist_v2.model.WhitelistOperatorModel
-import plutoproject.feature.common.whitelist_v2.model.WhitelistOperatorModelType
-import plutoproject.feature.common.whitelist_v2.model.WhitelistRecordModel
-import plutoproject.feature.common.whitelist_v2.repository.WhitelistRecordRepository
-import plutoproject.feature.velocity.whitelist.WhitelistModel
-import plutoproject.feature.velocity.whitelist.WhitelistRepository
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_COMPLETE
 import plutoproject.feature.velocity.whitelist_v2.COMMAND_WHITELIST_MIGRATE_START
 import plutoproject.feature.velocity.whitelist_v2.PERMISSION_COMMAND_WHITELIST_MIGRATE
 import plutoproject.feature.velocity.whitelist_v2.WhitelistConfig
+import plutoproject.feature.whitelist_v2.api.WhitelistOperator
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.data.convertToUuid
+import java.time.Clock
 
 @Suppress("UNUSED")
 object MigratorCommand : KoinComponent {
     private val config by inject<WhitelistConfig>()
-    private val oldWhitelistRepository = connectOldWhitelistRepo()
+    private val clock by inject<Clock>()
+    private val oldWhitelistCollection = connectOldWhitelistCollection()
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
 
-    private fun connectOldWhitelistRepo(): WhitelistRepository {
-        val collection = MongoConnection.getCollection<WhitelistModel>("whitelist_data")
-        return WhitelistRepository(collection)
+    @Serializable
+    private data class LegacyWhitelistModel(
+        @SerialName("_id") val id: String,
+        val rawName: String,
+        val addedAt: Long,
+    )
+
+    private fun connectOldWhitelistCollection() = MongoConnection.getCollection<LegacyWhitelistModel>("whitelist_data")
+
+    private suspend fun loadLegacyWhitelist(): List<LegacyWhitelistModel> {
+        return oldWhitelistCollection.find().toList()
     }
 
     @Command("whitelist migrate")
@@ -37,21 +47,23 @@ object MigratorCommand : KoinComponent {
         if (!config.enableMigrator) return
         sendMessage(COMMAND_WHITELIST_MIGRATE_START)
 
-        val oldRecords = oldWhitelistRepository.findAll()
-        val modelsToMigrate = mutableListOf<WhitelistRecordModel>()
-
-        oldRecords.forEach { oldRecord ->
-            val model = WhitelistRecordModel(
+        val oldRecords = loadLegacyWhitelist()
+        val recordsToMigrate = oldRecords.map { oldRecord ->
+            WhitelistRecordData(
                 uniqueId = oldRecord.id.convertToUuid(),
                 username = oldRecord.rawName,
-                granter = WhitelistOperatorModel(type = WhitelistOperatorModelType.CONSOLE),
+                granter = WhitelistOperator.Console,
+                createdAt = clock.instant(),
                 joinedAsVisitorBefore = false,
-                isMigrated = true
+                isMigrated = true,
+                isRevoked = false,
+                revoker = null,
+                revokeReason = null,
+                revokeAt = null,
             )
-            modelsToMigrate.add(model)
         }
 
-        whitelistRecordRepository.insertAll(modelsToMigrate)
-        sendMessage(COMMAND_WHITELIST_MIGRATE_COMPLETE.replace("<count>", modelsToMigrate.size.toString()))
+        whitelistRecordRepository.insertAll(recordsToMigrate)
+        sendMessage(COMMAND_WHITELIST_MIGRATE_COMPLETE.replace("<count>", recordsToMigrate.size.toString()))
     }
 }

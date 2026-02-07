@@ -157,16 +157,16 @@ Status markers:
 - [x] DDD-030 Move whitelist-v2 API types into `:feature:whitelist-v2:api` and remove Koin static access
 - [x] DDD-031 Implement `:feature:whitelist-v2:core` (ports + use-cases + JUnit5 unit tests)
 - [x] DDD-032 Move Mongo models/repos/index wiring into `:feature:whitelist-v2:infra-mongo` (+ Testcontainers tests)
-- [ ] DDD-033 Move messaging DTO/topic into `:feature:whitelist-v2:infra-messaging`
+- [x] DDD-033 Move messaging DTO/topic into `:feature:whitelist-v2:infra-messaging`
 
 ### Migrate Code: adapters
 
-- [ ] DDD-040 Move Paper whitelist-v2 code into `:feature:whitelist-v2:paper` and rewire DI to use `api/core`
-- [ ] DDD-041 Move Velocity whitelist-v2 code into `:feature:whitelist-v2:velocity` and rewire DI to use `api/core`
+- [x] DDD-040 Move Paper whitelist-v2 code into `:feature:whitelist-v2:paper` and rewire DI to use `api/core`
+- [x] DDD-041 Move Velocity whitelist-v2 code into `:feature:whitelist-v2:velocity` and rewire DI to use `api/core`
 
 ### Co-existence Wiring
 
-- [ ] DDD-050 Make old aggregators depend on new modules:
+- [x] DDD-050 Make old aggregators depend on new modules:
   - `feature-paper` -> `:feature:whitelist-v2:paper`
   - `feature-velocity` -> `:feature:whitelist-v2:velocity`
 

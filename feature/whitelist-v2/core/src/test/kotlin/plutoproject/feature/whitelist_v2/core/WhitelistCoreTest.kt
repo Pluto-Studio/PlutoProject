@@ -163,6 +163,18 @@ class WhitelistCoreTest {
             return findActiveByUniqueId(uniqueId) != null
         }
 
+        override suspend fun count(): Long {
+            return records.size.toLong()
+        }
+
+        override suspend fun countActive(): Long {
+            return records.values.count { !it.isRevoked }.toLong()
+        }
+
+        override suspend fun insertAll(records: List<WhitelistRecordData>) {
+            records.forEach { this.records[it.uniqueId] = it }
+        }
+
         override suspend fun saveOrUpdate(record: WhitelistRecordData) {
             records[record.uniqueId] = record
         }

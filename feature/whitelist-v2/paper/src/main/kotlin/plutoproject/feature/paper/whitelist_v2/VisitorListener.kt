@@ -12,30 +12,30 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
-import plutoproject.feature.common.api.whitelist_v2.Whitelist
-import plutoproject.feature.common.whitelist_v2.WhitelistImpl
+import org.koin.core.component.inject
+import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
 object VisitorListener : Listener, KoinComponent {
-    private val whitelist by lazy { get<Whitelist>() as WhitelistImpl }
+    private val whitelist by inject<Whitelist>()
+    private val knownVisitors by inject<KnownVisitors>()
     private val pendingVisitors = ConcurrentHashMap<UUID, Job>()
 
     fun onVisitorIncoming(uniqueId: UUID, username: String) {
-        whitelist.addKnownVisitor(uniqueId)
+        knownVisitors.add(uniqueId)
 
         val timeoutJob = PluginScope.launch {
             delay(30.seconds)
             if (whitelist.isKnownVisitor(uniqueId)) {
-                whitelist.removeKnownVisitor(uniqueId)
+                knownVisitors.remove(uniqueId)
             }
             pendingVisitors.remove(uniqueId)
             featureLogger.warning("待处理的访客 $username ($uniqueId) 超时未连接")
@@ -65,7 +65,7 @@ object VisitorListener : Listener, KoinComponent {
             val spawn = warpSpawn ?: player.world.spawnLocation
             player.teleport(spawn)
             player.gameMode = GameMode.SURVIVAL
-            whitelist.removeKnownVisitor(player.uniqueId)
+            knownVisitors.remove(player.uniqueId)
             pendingVisitors.remove(player.uniqueId)?.cancel()
             featureLogger.info("访客退出: ${player.name} (${player.uniqueId})")
         }

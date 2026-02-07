@@ -9,5 +9,11 @@ interface WhitelistRecordRepository {
 
     suspend fun hasActiveByUniqueId(uniqueId: UUID): Boolean
 
+    suspend fun count(): Long
+
+    suspend fun countActive(): Long
+
+    suspend fun insertAll(records: List<WhitelistRecordData>)
+
     suspend fun saveOrUpdate(record: WhitelistRecordData)
 }
