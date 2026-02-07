@@ -9,6 +9,8 @@ import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.module
+import plutoproject.feature.whitelist_v2.adapter.KnownVisitors
+import plutoproject.feature.whitelist_v2.adapter.WhitelistService
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import plutoproject.feature.whitelist_v2.core.WhitelistCore

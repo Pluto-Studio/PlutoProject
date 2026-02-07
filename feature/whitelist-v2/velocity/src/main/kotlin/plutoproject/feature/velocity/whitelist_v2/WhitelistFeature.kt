@@ -13,6 +13,8 @@ import plutoproject.feature.velocity.whitelist_v2.commands.WhitelistCommand
 import plutoproject.feature.velocity.whitelist_v2.commands.WhitelistVisitorCommand
 import plutoproject.feature.velocity.whitelist_v2.listeners.PlayerListener
 import plutoproject.feature.velocity.whitelist_v2.listeners.VisitorListener
+import plutoproject.feature.whitelist_v2.adapter.KnownVisitors
+import plutoproject.feature.whitelist_v2.adapter.WhitelistService
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository

@@ -8,6 +8,7 @@ import net.luckperms.api.node.types.InheritanceNode
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.feature.whitelist_v2.adapter.KnownVisitors
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.GeoIpConnection

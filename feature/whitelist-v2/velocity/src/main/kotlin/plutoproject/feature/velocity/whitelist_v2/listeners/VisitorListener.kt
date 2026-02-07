@@ -13,6 +13,7 @@ import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.velocity.whitelist_v2.*
+import plutoproject.feature.whitelist_v2.adapter.KnownVisitors
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.infra.messaging.VISITOR_NOTIFICATION_TOPIC

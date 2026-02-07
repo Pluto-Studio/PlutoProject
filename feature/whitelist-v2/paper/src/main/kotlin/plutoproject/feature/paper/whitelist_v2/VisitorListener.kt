@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import plutoproject.feature.whitelist_v2.adapter.KnownVisitors
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.paper.api.warp.WarpManager
 import plutoproject.framework.common.api.feature.FeatureManager
