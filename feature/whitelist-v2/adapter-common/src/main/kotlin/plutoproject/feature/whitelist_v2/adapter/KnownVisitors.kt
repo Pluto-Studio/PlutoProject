@@ -1,4 +1,4 @@
-package plutoproject.feature.velocity.whitelist_v2
+package plutoproject.feature.whitelist_v2.adapter
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap

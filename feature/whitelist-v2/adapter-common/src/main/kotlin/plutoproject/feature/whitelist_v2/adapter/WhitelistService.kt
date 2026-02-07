@@ -1,4 +1,4 @@
-package plutoproject.feature.paper.whitelist_v2
+package plutoproject.feature.whitelist_v2.adapter
 
 import plutoproject.feature.whitelist_v2.api.VisitorRecord
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
