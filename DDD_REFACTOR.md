@@ -172,8 +172,8 @@ Status markers:
 
 ### Cleanup + Verification
 
-- [ ] DDD-060 Remove old whitelist-v2 sources from `feature-common`, `feature-paper`, `feature-velocity`, `feature-common-api`
-- [ ] DDD-061 Run `./gradlew shadowJar` to ensure compilation
+ - [x] DDD-060 Remove old whitelist-v2 sources from `feature-common`, `feature-paper`, `feature-velocity`, `feature-common-api`
+ - [x] DDD-061 Run `./gradlew shadowJar` to ensure compilation
 - [x] DDD-062 Run unit tests for `:feature:whitelist-v2:core`
 - [x] DDD-063 Run integration tests for `:feature:whitelist-v2:infra-mongo`
 
