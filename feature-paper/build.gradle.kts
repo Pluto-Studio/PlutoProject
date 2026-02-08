@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api(projects.featurePaperApi)
     api(projects.featureCommon)
-    api(project(":feature:whitelist-v2:paper"))
+    api(project(":feature:whitelist-v2:adapter-paper"))
     ksp(projects.frameworkCommon)
     // KSP Processor 需要
     ksp(libs.kotlinx.serialization)

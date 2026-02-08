@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":feature:whitelist-v2:core"))
+    api(project(":feature:whitelist-v2:application"))
 
     api(project(":framework-common-api"))
 }
