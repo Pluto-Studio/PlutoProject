@@ -4,8 +4,8 @@ import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.application.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.application.WhitelistRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
 import java.util.UUID
 

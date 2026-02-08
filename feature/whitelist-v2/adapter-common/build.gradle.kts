@@ -4,5 +4,5 @@ plugins {
 
 dependencies {
     api(project(":feature:whitelist-v2:api"))
-    api(project(":feature:whitelist-v2:core"))
+    api(project(":feature:whitelist-v2:application"))
 }
