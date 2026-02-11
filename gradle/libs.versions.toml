@@ -2,7 +2,7 @@
 kotlin = "2.3.0"
 kotlinx-coroutine = "1.10.2"
 kotlinx-serialization = "1.10.0"
-mongodb = "5.4.0"
+mongodb = "5.6.2"
 nightconfig = "3.8.3"
 mccoroutine = "2.22.0"
 bytebuddy = "1.15.11"
