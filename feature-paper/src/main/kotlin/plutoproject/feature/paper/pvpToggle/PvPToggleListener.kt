@@ -1,6 +1,7 @@
 package plutoproject.feature.paper.pvpToggle
 
 import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -15,7 +16,11 @@ object PvPToggleListener : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun EntityDamageByEntityEvent.e() {
-        val damager = damager as? Player ?: return
+        val damager = when (val rawDamager = damager) {
+            is Player -> rawDamager
+            is Projectile -> rawDamager.shooter as? Player ?: return
+            else -> return
+        }
         val victim = entity as? Player ?: return
 
         if (damager.hasPermission(PVP_TOGGLE_BYPASS_PERMISSION)) {
