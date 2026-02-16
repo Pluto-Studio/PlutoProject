@@ -38,10 +38,12 @@ object PvPToggleListener : Listener {
         }
     }
 
+    @EventHandler
     suspend fun PlayerJoinEvent.e() {
         internalPvPToggle.loadPlayerData(player)
     }
 
+    @EventHandler
     fun PlayerQuitEvent.e() {
         internalPvPToggle.unloadPlayerData(player)
     }
