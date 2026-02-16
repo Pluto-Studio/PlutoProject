@@ -1,10 +1,10 @@
 package plutoproject.feature.paper.pvpToggle
 
-import com.github.shynixn.mccoroutine.bukkit.launch
+import kotlinx.coroutines.launch
 import org.bukkit.entity.Player
 import plutoproject.framework.common.api.databasepersist.DatabasePersist
 import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAdapter
-import plutoproject.framework.paper.util.plugin
+import plutoproject.framework.common.util.coroutine.PluginScope
 import java.util.*
 
 class PvPToggleImpl : InternalPvPToggle {
@@ -16,7 +16,7 @@ class PvPToggleImpl : InternalPvPToggle {
 
     override fun setPvPEnabled(player: Player, enabled: Boolean) {
         pvpEnabledCache[player.uniqueId] = enabled
-        plugin.launch {
+        PluginScope.launch {
             val container = DatabasePersist.getContainer(player.uniqueId)
             container.set(PVP_TOGGLE_PERSIST_KEY, BooleanTypeAdapter, enabled)
             container.save()
