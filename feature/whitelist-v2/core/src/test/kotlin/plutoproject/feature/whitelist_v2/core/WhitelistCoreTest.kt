@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist_v2.application
+package plutoproject.feature.whitelist_v2.core
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals

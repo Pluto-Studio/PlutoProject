@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist_v2.application
+package plutoproject.feature.whitelist_v2.core
 
 import java.net.InetAddress
 import java.util.UUID

@@ -14,7 +14,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.VisitorState
 import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
 import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
 import plutoproject.feature.whitelist_v2.api.Whitelist
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress

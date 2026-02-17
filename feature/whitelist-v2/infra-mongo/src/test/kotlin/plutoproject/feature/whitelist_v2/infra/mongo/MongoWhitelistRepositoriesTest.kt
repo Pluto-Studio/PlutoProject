@@ -16,8 +16,8 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.application.VisitorRecordData
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
 import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
 import java.net.InetAddress

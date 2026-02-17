@@ -13,8 +13,8 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_MIGR
 import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_MIGRATE
 import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordData
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.chat.component.replace

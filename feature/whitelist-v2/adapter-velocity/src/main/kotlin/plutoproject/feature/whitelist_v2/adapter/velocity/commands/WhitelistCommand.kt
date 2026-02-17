@@ -49,7 +49,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHI
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.api.profile.fetcher.FetchedData
 import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher

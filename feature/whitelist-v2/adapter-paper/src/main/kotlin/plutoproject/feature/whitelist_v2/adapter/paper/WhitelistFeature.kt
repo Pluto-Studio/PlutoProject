@@ -11,9 +11,9 @@ import org.koin.dsl.module
 import plutoproject.feature.whitelist_v2.adapter.common.KnownVisitors
 import plutoproject.feature.whitelist_v2.adapter.common.WhitelistService
 import plutoproject.feature.whitelist_v2.api.Whitelist
-import plutoproject.feature.whitelist_v2.application.VisitorRecordRepository
-import plutoproject.feature.whitelist_v2.application.WhitelistCore
-import plutoproject.feature.whitelist_v2.application.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
+import plutoproject.feature.whitelist_v2.core.WhitelistCore
+import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.MongoVisitorRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.MongoWhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection

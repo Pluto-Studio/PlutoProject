@@ -7,8 +7,8 @@ import com.mongodb.client.model.Filters.lte
 import com.mongodb.client.model.Indexes
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.toList
-import plutoproject.feature.whitelist_v2.application.VisitorRecordData
-import plutoproject.feature.whitelist_v2.application.VisitorRecordRepository
+import plutoproject.feature.whitelist_v2.core.VisitorRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
 import java.net.Inet6Address
 import java.net.InetAddress

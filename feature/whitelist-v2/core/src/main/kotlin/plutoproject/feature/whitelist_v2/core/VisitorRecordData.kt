@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist_v2.application
+package plutoproject.feature.whitelist_v2.core
 
 import plutoproject.feature.whitelist_v2.api.VisitorRecord
 import java.net.InetAddress

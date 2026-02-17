@@ -8,7 +8,7 @@ import plutoproject.feature.whitelist_v2.api.WhitelistRecord
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.feature.whitelist_v2.application.WhitelistCore
+import plutoproject.feature.whitelist_v2.core.WhitelistCore
 import java.net.InetAddress
 import java.util.UUID
 
