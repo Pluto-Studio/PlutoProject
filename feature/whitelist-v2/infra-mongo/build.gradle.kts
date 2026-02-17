@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":feature:whitelist-v2:application"))
+    api(project(":feature:whitelist-v2:core"))
 
     compileOnly(project(":framework-common-api"))
     compileOnly(libs.bundles.mongodb)

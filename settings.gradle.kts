@@ -33,22 +33,26 @@ include("feature-common")
 include("feature-paper")
 include("feature-velocity")
 
-// New hierarchical feature layout (DDD template)
-include(":feature:whitelist-v2:api")
-include(":feature:whitelist-v2:application")
-include(":feature:whitelist-v2:adapter-common")
-include(":feature:whitelist-v2:infra-mongo")
-include(":feature:whitelist-v2:infra-messaging")
-include(":feature:whitelist-v2:adapter-paper")
-include(":feature:whitelist-v2:adapter-velocity")
+fun includeProject(path: String, projectDir: String? = null) {
+    include(path)
 
-project(":feature:whitelist-v2:api").projectDir = file("feature/whitelist-v2/api")
-project(":feature:whitelist-v2:application").projectDir = file("feature/whitelist-v2/application")
-project(":feature:whitelist-v2:adapter-common").projectDir = file("feature/whitelist-v2/adapter-common")
-project(":feature:whitelist-v2:infra-mongo").projectDir = file("feature/whitelist-v2/infra-mongo")
-project(":feature:whitelist-v2:infra-messaging").projectDir = file("feature/whitelist-v2/infra-messaging")
-project(":feature:whitelist-v2:adapter-paper").projectDir = file("feature/whitelist-v2/adapter-paper")
-project(":feature:whitelist-v2:adapter-velocity").projectDir = file("feature/whitelist-v2/adapter-velocity")
+    val inferredProjectDir = when {
+        projectDir != null -> projectDir
+        path.startsWith(":") -> path.removePrefix(":").replace(":", "/")
+        else -> path
+    }
+
+    project(path).projectDir = file(inferredProjectDir)
+}
+
+// 新版 Feature 结构部分
+includeProject(":feature:whitelist-v2:api")
+includeProject(":feature:whitelist-v2:core")
+includeProject(":feature:whitelist-v2:adapter-common")
+includeProject(":feature:whitelist-v2:infra-mongo")
+includeProject(":feature:whitelist-v2:infra-messaging")
+includeProject(":feature:whitelist-v2:adapter-paper")
+includeProject(":feature:whitelist-v2:adapter-velocity")
 
 include("platform-paper")
 include("platform-velocity")
