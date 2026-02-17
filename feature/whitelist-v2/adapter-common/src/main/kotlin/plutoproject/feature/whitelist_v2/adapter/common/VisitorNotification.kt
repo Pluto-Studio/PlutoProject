@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist_v2.infra.messaging
+package plutoproject.feature.whitelist_v2.adapter.common
 
 import kotlinx.serialization.Serializable
 import plutoproject.framework.common.util.data.serializers.UuidAsByteArraySerializer

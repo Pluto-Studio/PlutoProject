@@ -50,7 +50,6 @@ includeProject(":feature:whitelist-v2:api")
 includeProject(":feature:whitelist-v2:core")
 includeProject(":feature:whitelist-v2:adapter-common")
 includeProject(":feature:whitelist-v2:infra-mongo")
-includeProject(":feature:whitelist-v2:infra-messaging")
 includeProject(":feature:whitelist-v2:adapter-paper")
 includeProject(":feature:whitelist-v2:adapter-velocity")
 

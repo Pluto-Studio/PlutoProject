@@ -21,8 +21,8 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
 import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.feature.whitelist_v2.infra.messaging.VISITOR_NOTIFICATION_TOPIC
-import plutoproject.feature.whitelist_v2.infra.messaging.VisitorNotification
+import plutoproject.feature.whitelist_v2.adapter.common.VISITOR_NOTIFICATION_TOPIC
+import plutoproject.feature.whitelist_v2.adapter.common.VisitorNotification
 import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.util.coroutine.PluginScope

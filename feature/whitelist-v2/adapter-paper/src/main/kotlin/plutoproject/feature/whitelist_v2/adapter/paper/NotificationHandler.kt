@@ -3,8 +3,8 @@ package plutoproject.feature.whitelist_v2.adapter.paper
 import club.plutoproject.charonflow.Subscription
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.infra.messaging.VISITOR_NOTIFICATION_TOPIC
-import plutoproject.feature.whitelist_v2.infra.messaging.VisitorNotification
+import plutoproject.feature.whitelist_v2.adapter.common.VISITOR_NOTIFICATION_TOPIC
+import plutoproject.feature.whitelist_v2.adapter.common.VisitorNotification
 import plutoproject.framework.common.api.connection.CharonFlowConnection
 
 private lateinit var subscription: Subscription
