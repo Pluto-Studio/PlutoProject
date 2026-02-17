@@ -5,7 +5,12 @@ plugins {
 dependencies {
     api(projects.featureVelocityApi)
     api(projects.featureCommon)
+    api(project(":feature:whitelist-v2:adapter-velocity"))
     ksp(projects.frameworkCommon)
     // KSP Processor 需要
     ksp(libs.kotlinx.serialization)
+}
+
+ksp {
+    arg("feature.moduleId", project.path.replace(":", "_"))
 }

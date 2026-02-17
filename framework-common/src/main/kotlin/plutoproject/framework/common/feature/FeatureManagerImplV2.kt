@@ -1,8 +1,5 @@
 package plutoproject.framework.common.feature
 
-import kotlinx.serialization.json.Json
-import okio.buffer
-import okio.source
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import plutoproject.framework.common.PlutoConfig
@@ -11,7 +8,6 @@ import plutoproject.framework.common.api.feature.metadata.AbstractFeature
 import plutoproject.framework.common.feature.dependency.FeatureDependencyGraph
 import plutoproject.framework.common.util.featureDataFolder
 import plutoproject.framework.common.util.jvm.findClass
-import plutoproject.framework.common.util.jvm.getResourceAsStreamFromJar
 import plutoproject.framework.common.util.platformType
 import java.io.File
 import java.util.logging.Logger
@@ -46,11 +42,7 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
      * 从 JAR 中读取 feature 清单文件
      */
     private fun readManifest(): Map<String, FeatureMetadata> {
-        val fileName = "${platformType.identifier}-features.json"
-        val inputStream = getResourceAsStreamFromJar(fileName) ?: return emptyMap()
-        val content = inputStream.source().buffer().readUtf8()
-        val features = Json.decodeFromString<List<FeatureMetadata>>(content)
-        return features.associateBy { it.id }
+        return FeatureManifestLoader.load(platformType)
     }
 
     override fun getMetadata(id: String): FeatureMetadata? = metadata[id]

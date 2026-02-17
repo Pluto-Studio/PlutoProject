@@ -33,5 +33,25 @@ include("feature-common")
 include("feature-paper")
 include("feature-velocity")
 
+fun includeProject(path: String, projectDir: String? = null) {
+    include(path)
+
+    val inferredProjectDir = when {
+        projectDir != null -> projectDir
+        path.startsWith(":") -> path.removePrefix(":").replace(":", "/")
+        else -> path
+    }
+
+    project(path).projectDir = file(inferredProjectDir)
+}
+
+// 新版 Feature 结构部分
+includeProject(":feature:whitelist-v2:api")
+includeProject(":feature:whitelist-v2:core")
+includeProject(":feature:whitelist-v2:adapter-common")
+includeProject(":feature:whitelist-v2:infra-mongo")
+includeProject(":feature:whitelist-v2:adapter-paper")
+includeProject(":feature:whitelist-v2:adapter-velocity")
+
 include("platform-paper")
 include("platform-velocity")

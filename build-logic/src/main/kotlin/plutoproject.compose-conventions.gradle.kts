@@ -1,5 +1,5 @@
 plugins {
-    id("plutoproject.base-conventions")
+    id("plutoproject.legacy-base-conventions")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
 }
