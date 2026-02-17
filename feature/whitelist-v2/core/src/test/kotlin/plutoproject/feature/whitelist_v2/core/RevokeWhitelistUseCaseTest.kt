@@ -30,8 +30,8 @@ class RevokeWhitelistUseCaseTest {
         )
         val useCase = RevokeWhitelistUseCase(whitelistRepo, clock)
 
-        val ok = useCase.execute(uid, WhitelistOperator.Console, WhitelistRevokeReason.REQUESTED)
-        assertTrue(ok)
+        val result = useCase.execute(uid, WhitelistOperator.Console, WhitelistRevokeReason.REQUESTED)
+        assertEquals(result, RevokeWhitelistUseCase.Result.Ok)
 
         val updated = whitelistRepo.records.getValue(uid)
         assertTrue(updated.isRevoked)

@@ -1,17 +1,14 @@
 package plutoproject.feature.whitelist_v2.core
 
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
 import java.time.Instant
 
 class GrantWhitelistUseCaseTest {
     @Test
-    fun `should return false when already active`() = runTest {
+    fun `should return already-granted when already active`() = runTest {
         val clock = fixedClock("2026-02-07T00:00:00Z")
         val uid = dummyUuid(1)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
@@ -33,13 +30,13 @@ class GrantWhitelistUseCaseTest {
         val visitorRepo = InMemoryVisitorRecordRepository()
         val useCase = GrantWhitelistUseCase(whitelistRepo, visitorRepo, clock)
 
-        val ok = useCase.execute(
+        val result = useCase.execute(
             uniqueId = uid,
             username = "new",
             operator = WhitelistOperator.Administrator(dummyUuid(0xAA)),
         )
 
-        assertFalse(ok)
+        assertEquals(result, GrantWhitelistUseCase.Result.AlreadyGranted)
         assertEquals(
             "old",
             whitelistRepo.records.getValue(uid).username
@@ -69,8 +66,8 @@ class GrantWhitelistUseCaseTest {
         val visitorRepo = InMemoryVisitorRecordRepository(hasByUniqueId = setOf(uid))
         val useCase = GrantWhitelistUseCase(whitelistRepo, visitorRepo, clock)
 
-        val ok = useCase.execute(uid, "newname", WhitelistOperator.Console)
-        assertTrue(ok)
+        val result = useCase.execute(uid, "newname", WhitelistOperator.Console)
+        assertEquals(result, GrantWhitelistUseCase.Result.Ok)
 
         val updated = whitelistRepo.records.getValue(uid)
         assertEquals("newname", updated.username)

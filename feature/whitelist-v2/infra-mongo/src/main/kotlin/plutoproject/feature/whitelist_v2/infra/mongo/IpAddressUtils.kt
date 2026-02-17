@@ -44,10 +44,12 @@ internal fun String.toIpRange(): IpRange {
     val ipPart = parts[0]
     val prefix = parts[1].toInt()
 
-    return if (ipPart.contains(".")) {
-        parseIpv4Cidr(ipPart, prefix)
-    } else {
+    // IPv4-mapped IPv6 addresses contain '.' as well (e.g. ::ffff:192.0.2.128),
+    // so we must prefer ':' detection for IPv6.
+    return if (ipPart.contains(":")) {
         parseIpv6Cidr(ipPart, prefix)
+    } else {
+        parseIpv4Cidr(ipPart, prefix)
     }
 }
 
