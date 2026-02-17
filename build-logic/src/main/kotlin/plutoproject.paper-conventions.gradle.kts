@@ -32,7 +32,6 @@ dependencies {
     }
     with(extensions.getByType<PlutoDependencyHandlerExtension>()) {
         downloadIfRequired(libs.cloud.paper)
-        downloadIfRequired(libs.anvilGui)
         downloadIfRequired(libs.bundles.mccoroutine.paper)
         downloadIfRequired(provider { compose.runtime })
         downloadIfRequired(provider { compose.runtimeSaveable })

@@ -65,8 +65,6 @@ dependencies {
     with(dependencyExtension) {
         downloadIfRequired(libs.bundles.language)
         downloadIfRequired(libs.bundles.mongodb)
-        downloadIfRequired(libs.bundles.nightconfig)
-        downloadIfRequired(libs.bundles.bytebuddy)
         downloadIfRequired(libs.bundles.koin)
         downloadIfRequired(libs.bundles.hoplite)
         downloadIfRequired(libs.bundles.commons)
