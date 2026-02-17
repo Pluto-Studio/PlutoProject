@@ -16,6 +16,7 @@ internal fun Player.playSitSound() {
         Material.GOLDEN_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_GOLD
         Material.DIAMOND_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_DIAMOND
         Material.NETHERITE_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_NETHERITE
+        Material.COPPER_LEGGINGS -> Sound.ITEM_ARMOR_EQUIP_COPPER
         else -> Sound.ITEM_ARMOR_EQUIP_GENERIC
     }
     world.playSound(location, sound, SoundCategory.BLOCKS, 1f, 1f)
