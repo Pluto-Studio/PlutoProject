@@ -7,6 +7,9 @@ import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
 import java.net.InetAddress
 import java.util.*
 
+/**
+ * 白名单服务 API 入口，可通过 Koin 获取实例。
+ */
 interface WhitelistService {
     /**
      * 检查指定 UUID 的玩家是否被授予了白名单。
