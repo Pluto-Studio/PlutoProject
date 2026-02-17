@@ -2,8 +2,10 @@ package plutoproject.feature.whitelist_v2.api
 
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
+import plutoproject.feature.whitelist_v2.api.result.WhitelistGrantResult
+import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
 import java.net.InetAddress
-import java.util.UUID
+import java.util.*
 
 interface WhitelistService {
     /**
@@ -28,9 +30,9 @@ interface WhitelistService {
      * @param uniqueId 要授予的玩家 UUID
      * @param username 要授予的玩家用户名
      * @param operator 白名单操作者
-     * @return 若添加成功则为 true，该玩家已被授予白名单则为 false
+     * @return 此操作对应的 [WhitelistGrantResult]
      */
-    suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean
+    suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): WhitelistGrantResult
 
     /**
      * 为指定 UUID 的玩家撤销白名单。
@@ -38,9 +40,13 @@ interface WhitelistService {
      * @param uniqueId 要撤销的玩家 UUID
      * @param operator 白名单操作者
      * @param reason 进行撤销的原因
-     * @return 若撤销成功则为 true，该玩家未被授予白名单则为 false
+     * @return 此操作对应的 [WhitelistRevokeResult]
      */
-    suspend fun revokeWhitelist(uniqueId: UUID, operator: WhitelistOperator, reason: WhitelistRevokeReason): Boolean
+    suspend fun revokeWhitelist(
+        uniqueId: UUID,
+        operator: WhitelistOperator,
+        reason: WhitelistRevokeReason
+    ): WhitelistRevokeResult
 
     /**
      * 检查指定 UUID 的玩家是否为已知的访客。

@@ -3,6 +3,8 @@ package plutoproject.feature.whitelist_v2.adapter.common.impl
 import plutoproject.feature.whitelist_v2.api.*
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
+import plutoproject.feature.whitelist_v2.api.result.WhitelistGrantResult
+import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
 import plutoproject.feature.whitelist_v2.core.usecase.*
 import java.net.InetAddress
 import java.util.*
@@ -31,20 +33,28 @@ class WhitelistServiceImpl(
         return WhitelistRecordImpl(record)
     }
 
-    override suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean {
+    override suspend fun grantWhitelist(
+        uniqueId: UUID,
+        username: String,
+        operator: WhitelistOperator
+    ): WhitelistGrantResult {
         val ok = grantWhitelistUseCase.execute(uniqueId, username, operator.toCore())
-        if (ok) {
+        if (ok == GrantWhitelistUseCase.Result.Ok) {
             invokeHook(WhitelistHookType.GrantWhitelist, WhitelistHookParam.GrantWhitelist(uniqueId, username))
         }
-        return ok
+        return ok.toApi()
     }
 
-    override suspend fun revokeWhitelist(uniqueId: UUID, operator: WhitelistOperator, reason: WhitelistRevokeReason): Boolean {
+    override suspend fun revokeWhitelist(
+        uniqueId: UUID,
+        operator: WhitelistOperator,
+        reason: WhitelistRevokeReason
+    ): WhitelistRevokeResult {
         val ok = revokeWhitelistUseCase.execute(uniqueId, operator.toCore(), reason.toCore())
-        if (ok) {
+        if (ok == RevokeWhitelistUseCase.Result.Ok) {
             invokeHook(WhitelistHookType.RevokeWhitelist, WhitelistHookParam.RevokeWhitelist(uniqueId))
         }
-        return ok
+        return ok.toApi()
     }
 
     override fun isKnownVisitor(uniqueId: UUID): Boolean {

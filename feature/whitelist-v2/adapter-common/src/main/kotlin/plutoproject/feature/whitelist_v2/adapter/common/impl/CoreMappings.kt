@@ -3,6 +3,10 @@ package plutoproject.feature.whitelist_v2.adapter.common.impl
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.api.result.WhitelistGrantResult
+import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
+import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
 import plutoproject.feature.whitelist_v2.core.VisitorRecordParams as CoreVisitorRecordParams
 import plutoproject.feature.whitelist_v2.core.WhitelistOperator as CoreWhitelistOperator
 import plutoproject.feature.whitelist_v2.core.WhitelistRevokeReason as CoreWhitelistRevokeReason
@@ -45,4 +49,18 @@ internal fun VisitorRecordParams.toCore(): CoreVisitorRecordParams {
         duration = duration,
         visitedServers = visitedServers,
     )
+}
+
+internal fun GrantWhitelistUseCase.Result.toApi(): WhitelistGrantResult {
+    return when (this) {
+        GrantWhitelistUseCase.Result.Ok -> WhitelistGrantResult.Ok
+        GrantWhitelistUseCase.Result.AlreadyGranted -> WhitelistGrantResult.AlreadyGranted
+    }
+}
+
+internal fun RevokeWhitelistUseCase.Result.toApi() : WhitelistRevokeResult {
+    return  when(this) {
+        RevokeWhitelistUseCase.Result.Ok -> WhitelistRevokeResult.Ok
+        RevokeWhitelistUseCase.Result.NotGranted -> WhitelistRevokeResult.NotGranted
+    }
 }

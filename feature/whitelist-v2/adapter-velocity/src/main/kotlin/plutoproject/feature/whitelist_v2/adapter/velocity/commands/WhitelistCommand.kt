@@ -101,7 +101,7 @@ object WhitelistCommand : KoinComponent {
             uniqueId = fetchedProfile.uuid,
             username = fetchedProfile.name,
             operator = operator,
-        )
+        ).isSuccessful
 
         if (success) {
             sendMessage(COMMAND_WHITELIST_ADD_SUCCEED.replace("<name>", fetchedProfile.name))
@@ -140,7 +140,7 @@ object WhitelistCommand : KoinComponent {
             uniqueId = fetchedProfile.uuid,
             operator = operator,
             reason = reason,
-        )
+        ).isSuccessful
 
         if (success) {
             sendMessage(COMMAND_WHITELIST_REMOVE_SUCCEED.replace("<name>", fetchedProfile.name))

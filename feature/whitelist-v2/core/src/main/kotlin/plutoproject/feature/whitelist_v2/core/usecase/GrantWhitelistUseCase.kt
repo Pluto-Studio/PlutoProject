@@ -1,20 +1,25 @@
 package plutoproject.feature.whitelist_v2.core.usecase
 
-import plutoproject.feature.whitelist_v2.core.WhitelistOperator
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
+import plutoproject.feature.whitelist_v2.core.WhitelistOperator
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import java.time.Clock
-import java.util.UUID
+import java.util.*
 
 class GrantWhitelistUseCase(
     private val whitelistRecords: WhitelistRecordRepository,
     private val visitorRecords: VisitorRecordRepository,
     private val clock: Clock,
 ) {
-    suspend fun execute(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean {
+    sealed class Result {
+        object Ok : Result()
+        object AlreadyGranted : Result()
+    }
+
+    suspend fun execute(uniqueId: UUID, username: String, operator: WhitelistOperator): Result {
         if (whitelistRecords.hasActiveByUniqueId(uniqueId)) {
-            return false
+            return Result.AlreadyGranted
         }
 
         val hasVisitorRecord = visitorRecords.hasByUniqueId(uniqueId)
@@ -42,6 +47,6 @@ class GrantWhitelistUseCase(
         )
 
         whitelistRecords.saveOrUpdate(record)
-        return true
+        return Result.Ok
     }
 }

@@ -4,7 +4,7 @@ import plutoproject.feature.whitelist_v2.core.VisitorRecordData
 import plutoproject.feature.whitelist_v2.core.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import java.time.Clock
-import java.util.UUID
+import java.util.*
 
 class CreateVisitorRecordUseCase(
     private val visitorRecords: VisitorRecordRepository,
