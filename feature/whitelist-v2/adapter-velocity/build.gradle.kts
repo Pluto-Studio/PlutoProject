@@ -1,5 +1,5 @@
 plugins {
-    id("plutoproject.velocity-conventions")
+    id("plutoproject.adapter-velocity-conventions")
 }
 
 dependencies {
@@ -14,12 +14,4 @@ dependencies {
     api(project(":framework-common-api"))
     api(project(":framework-velocity-api"))
     api(project(":feature-velocity-api"))
-
-    ksp(projects.frameworkCommon)
-    // KSP Processor 需要
-    ksp(libs.kotlinx.serialization)
-}
-
-ksp {
-    arg("feature.moduleId", project.path.replace(":", "_"))
 }

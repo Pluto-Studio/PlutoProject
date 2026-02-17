@@ -1,7 +1,7 @@
 import xyz.jpenilla.gremlin.gradle.WriteDependencySet
 
 plugins {
-    id("plutoproject.base-conventions")
+    id("plutoproject.legacy-base-conventions")
     id("xyz.jpenilla.gremlin-gradle")
 }
 

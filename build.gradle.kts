@@ -2,7 +2,7 @@ import java.time.Instant
 
 plugins {
     id("plutoproject.build-logic")
-    id("plutoproject.base-conventions")
+    id("plutoproject.legacy-base-conventions")
     id("plutoproject.dokka-conventions")
     alias(libs.plugins.shadow)
 }
