@@ -1,51 +1,27 @@
 package plutoproject.feature.whitelist_v2.adapter.velocity
 
-import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.dsl.module
+import plutoproject.feature.whitelist_v2.adapter.common.commonModule
 import plutoproject.feature.whitelist_v2.adapter.velocity.commands.MigratorCommand
 import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistCommand
 import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistVisitorCommand
 import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.PlayerListener
 import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.VisitorListener
-import plutoproject.feature.whitelist_v2.adapter.common.KnownVisitors
-import plutoproject.feature.whitelist_v2.adapter.common.WhitelistService
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
-import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.IsWhitelistedUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByCidrUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByIpUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupWhitelistRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
-import plutoproject.feature.whitelist_v2.infra.mongo.MongoVisitorRecordRepository
-import plutoproject.feature.whitelist_v2.infra.mongo.MongoWhitelistRecordRepository
-import plutoproject.framework.common.api.connection.MongoConnection
-import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
 import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.plugin
 import plutoproject.framework.velocity.util.server
-import java.time.Clock
 import java.util.logging.Logger
-
-private const val WHITELIST_PREFIX = "whitelist_v2_"
-private const val WHITELIST_RECORD_COLLECTION = "whitelist_records"
-private const val VISITOR_RECORD_COLLECTION = "visitor_records"
 
 lateinit var featureLogger: Logger
 
@@ -62,33 +38,6 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
         single<WhitelistConfig> { loadConfig(saveConfig()) }
     }
 
-    private val featureModule = module {
-        single { Clock.systemUTC() }
-        single { KnownVisitors() }
-
-        single<WhitelistRecordRepository> {
-            MongoWhitelistRecordRepository(getCollection(WHITELIST_RECORD_COLLECTION))
-        }
-        single<VisitorRecordRepository> {
-            val repo = MongoVisitorRecordRepository(getCollection(VISITOR_RECORD_COLLECTION))
-            PluginScope.launch(Dispatchers.IO) {
-                repo.ensureIndexes()
-            }
-            repo
-        }
-
-        single { IsWhitelistedUseCase(get()) }
-        single { LookupWhitelistRecordUseCase(get()) }
-        single { GrantWhitelistUseCase(get(), get(), get()) }
-        single { RevokeWhitelistUseCase(get(), get()) }
-        single { LookupVisitorRecordUseCase(get()) }
-        single { CreateVisitorRecordUseCase(get(), get()) }
-        single { LookupVisitorRecordsByCidrUseCase(get()) }
-        single { LookupVisitorRecordsByIpUseCase(get()) }
-
-        single<Whitelist> { WhitelistService(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    }
-
     override fun onEnable() {
         // 先只依赖注入 Config，用于下面的 LuckPerms API 检测
         configureKoin {
@@ -102,7 +51,7 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
         }
 
         configureKoin {
-            modules(featureModule)
+            modules(commonModule)
         }
 
         VisitorState.setEnabled(config.visitorMode.enable)
@@ -121,9 +70,5 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
         if (config.enableMigrator) {
             AnnotationParser.parse(MigratorCommand)
         }
-    }
-
-    private inline fun <reified T : Any> getCollection(name: String): MongoCollection<T> {
-        return MongoConnection.getCollection("$WHITELIST_PREFIX$name")
     }
 }
