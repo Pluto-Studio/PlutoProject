@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist_v2.adapter.common
+package plutoproject.feature.whitelist_v2.adapter.common.impl
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap

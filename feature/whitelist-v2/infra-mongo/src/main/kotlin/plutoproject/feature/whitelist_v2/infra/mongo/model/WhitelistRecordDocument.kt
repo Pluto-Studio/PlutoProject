@@ -1,7 +1,7 @@
 package plutoproject.feature.whitelist_v2.infra.mongo.model
 
 import kotlinx.serialization.Serializable
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.core.WhitelistRevokeReason
 import plutoproject.framework.common.util.data.serializers.bson.InstantAsBsonDateTimeSerializer
 import plutoproject.framework.common.util.data.serializers.bson.UuidAsBsonBinarySerializer
 import java.time.Instant

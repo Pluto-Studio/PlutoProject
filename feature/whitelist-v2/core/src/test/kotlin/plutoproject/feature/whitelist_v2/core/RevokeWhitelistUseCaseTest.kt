@@ -4,8 +4,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
 import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
 import java.time.Instant
 

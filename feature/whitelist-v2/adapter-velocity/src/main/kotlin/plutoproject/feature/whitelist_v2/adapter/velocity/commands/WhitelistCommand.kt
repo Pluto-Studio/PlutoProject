@@ -46,7 +46,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHI
 import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_LOOKUP
 import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_REVOKE
 import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_STATISTIC
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
@@ -59,7 +59,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
 object WhitelistCommand : KoinComponent {
-    private val whitelist by inject<Whitelist>()
+    private val service by inject<WhitelistService>()
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
 
     // Pair 里的第一个元素为 true 即为超时导致的未获取
@@ -92,12 +92,12 @@ object WhitelistCommand : KoinComponent {
 
         val fetchedProfile = profile.second!!
 
-        if (whitelist.isWhitelisted(fetchedProfile.uuid)) {
+        if (service.isWhitelisted(fetchedProfile.uuid)) {
             sendMessage(COMMAND_WHITELIST_ADD_ALREADY_EXISTS.replace("<name>", fetchedProfile.name))
             return
         }
 
-        val success = whitelist.grantWhitelist(
+        val success = service.grantWhitelist(
             uniqueId = fetchedProfile.uuid,
             username = fetchedProfile.name,
             operator = operator,
@@ -131,12 +131,12 @@ object WhitelistCommand : KoinComponent {
 
         val fetchedProfile = profile.second!!
 
-        if (!whitelist.isWhitelisted(fetchedProfile.uuid)) {
+        if (!service.isWhitelisted(fetchedProfile.uuid)) {
             sendMessage(COMMAND_WHITELIST_REMOVE_NOT_FOUND.replace("<name>", fetchedProfile.name))
             return
         }
 
-        val success = whitelist.revokeWhitelist(
+        val success = service.revokeWhitelist(
             uniqueId = fetchedProfile.uuid,
             operator = operator,
             reason = reason,
@@ -165,7 +165,7 @@ object WhitelistCommand : KoinComponent {
         }
 
         val fetchedProfile = profile.second!!
-        val record = whitelist.lookupWhitelistRecord(fetchedProfile.uuid)
+        val record = service.lookupWhitelistRecord(fetchedProfile.uuid)
 
         if (record == null) {
             sendMessage(COMMAND_WHITELIST_LOOKUP_NO_RECORD.replace("<name>", fetchedProfile.name))

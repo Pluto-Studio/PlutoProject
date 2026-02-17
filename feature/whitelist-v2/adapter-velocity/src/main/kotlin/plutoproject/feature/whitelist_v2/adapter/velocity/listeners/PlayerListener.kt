@@ -7,13 +7,13 @@ import net.luckperms.api.LuckPermsProvider
 import net.luckperms.api.node.types.InheritanceNode
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.adapter.common.KnownVisitors
+import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
 import plutoproject.feature.whitelist_v2.adapter.velocity.ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION
 import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_NOT_WHITELISTED
 import plutoproject.feature.whitelist_v2.adapter.velocity.VisitorState
 import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
 import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import java.net.InetAddress
@@ -25,13 +25,13 @@ import kotlin.jvm.optionals.getOrNull
 object PlayerListener : KoinComponent {
     private val config by inject<WhitelistConfig>()
     private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
-    private val whitelist by inject<Whitelist>()
+    private val service by inject<WhitelistService>()
     private val knownVisitors by inject<KnownVisitors>()
     private val luckpermsApi = LuckPermsProvider.get()
 
     @Subscribe
     suspend fun LoginEvent.onPlayerLogin() {
-        if (!whitelist.isWhitelisted(player.uniqueId)) {
+        if (!service.isWhitelisted(player.uniqueId)) {
             if (VisitorState.isVisitorModeEnabled) {
                 knownVisitors.add(player.uniqueId)
 

@@ -5,7 +5,7 @@ import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
 import java.net.InetAddress
 import java.util.UUID
 
-interface Whitelist {
+interface WhitelistService {
     /**
      * 检查指定 UUID 的玩家是否被授予了白名单。
      *

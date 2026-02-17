@@ -11,7 +11,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistComm
 import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistVisitorCommand
 import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.PlayerListener
 import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.VisitorListener
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
@@ -32,7 +32,7 @@ lateinit var featureLogger: Logger
 @Suppress("UNUSED")
 class WhitelistFeature : VelocityFeature(), KoinComponent {
     private val config by inject<WhitelistConfig>()
-    private val whitelist by inject<Whitelist>()
+    private val service by inject<WhitelistService>()
 
     private val configModule = module {
         single<WhitelistConfig> { loadConfig(saveConfig()) }
@@ -60,8 +60,8 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
         server.eventManager.registerSuspend(plugin, PlayerListener)
         server.eventManager.registerSuspend(plugin, VisitorListener)
 
-        whitelist.registerHook(WhitelistHookType.GrantWhitelist, ::onWhitelistGrant)
-        whitelist.registerHook(WhitelistHookType.RevokeWhitelist, ::onWhitelistRevoke)
+        service.registerHook(WhitelistHookType.GrantWhitelist, ::onWhitelistGrant)
+        service.registerHook(WhitelistHookType.RevokeWhitelist, ::onWhitelistRevoke)
     }
 
     private fun registerCommands() {

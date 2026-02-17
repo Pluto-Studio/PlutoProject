@@ -6,7 +6,9 @@ import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
+import plutoproject.feature.whitelist_v2.adapter.common.impl.WhitelistServiceImpl
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.feature.whitelist_v2.core.usecase.*
@@ -49,5 +51,5 @@ val commonModule = module {
     singleOf(::LookupVisitorRecordsByCidrUseCase)
     singleOf(::LookupVisitorRecordsByIpUseCase)
 
-    singleOf(::WhitelistService) bind Whitelist::class
+    singleOf(::WhitelistServiceImpl) bind WhitelistService::class
 }

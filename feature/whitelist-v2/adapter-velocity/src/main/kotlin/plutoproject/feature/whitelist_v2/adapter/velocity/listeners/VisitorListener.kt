@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import net.luckperms.api.LuckPermsProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.adapter.common.KnownVisitors
+import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
 import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_ACTIONBAR
 import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_ACTIONBAR_ENGLISH
 import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_WELCOME
@@ -20,7 +20,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_WELCOME
 import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
 import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.infra.messaging.VISITOR_NOTIFICATION_TOPIC
 import plutoproject.feature.whitelist_v2.infra.messaging.VisitorNotification
 import plutoproject.framework.common.api.connection.CharonFlowConnection
@@ -37,7 +37,7 @@ import java.time.Duration as JavaDuration
 @Suppress("UNUSED")
 object VisitorListener : KoinComponent {
     private val config by inject<WhitelistConfig>()
-    private val whitelist by inject<Whitelist>()
+    private val service by inject<WhitelistService>()
     private val knownVisitors by inject<KnownVisitors>()
     private val visitorSessions = ConcurrentHashMap<UUID, VisitorSession>()
     private val luckpermsApi = LuckPermsProvider.get()
@@ -53,7 +53,7 @@ object VisitorListener : KoinComponent {
     @Subscribe(priority = Short.MAX_VALUE)
     fun PlayerChooseInitialServerEvent.onPlayerChooseServer() {
         val player = this.player
-        if (whitelist.isKnownVisitor(player.uniqueId)) {
+        if (service.isKnownVisitor(player.uniqueId)) {
             val welcomeMessage = if (shouldSendEnglishMessage(player)) {
                 PLAYER_VISITOR_WELCOME_ENGLISH
             } else {
@@ -71,7 +71,7 @@ object VisitorListener : KoinComponent {
 
     @Subscribe(priority = Short.MIN_VALUE)
     suspend fun ServerPreConnectEvent.onServerPreConnect() {
-        if (!whitelist.isKnownVisitor(player.uniqueId)) {
+        if (!service.isKnownVisitor(player.uniqueId)) {
             return
         }
         val server = originalServer.serverInfo.name
@@ -89,7 +89,7 @@ object VisitorListener : KoinComponent {
         val actionbarMessage = if (isEnglish) PLAYER_VISITOR_ACTIONBAR_ENGLISH else PLAYER_VISITOR_ACTIONBAR
 
         return PluginScope.launch {
-            while (whitelist.isKnownVisitor(player.uniqueId)) {
+            while (service.isKnownVisitor(player.uniqueId)) {
                 player.sendActionBar(actionbarMessage)
                 delay(1000)
             }
@@ -126,7 +126,7 @@ object VisitorListener : KoinComponent {
     @Subscribe
     fun ServerConnectedEvent.onServerConnected() {
         val player = this.player
-        if (whitelist.isKnownVisitor(player.uniqueId)) {
+        if (service.isKnownVisitor(player.uniqueId)) {
             val session = visitorSessions[player.uniqueId]
             session?.visitedServers?.add(server.serverInfo.name)
         }
@@ -135,7 +135,7 @@ object VisitorListener : KoinComponent {
     @Subscribe(priority = Short.MIN_VALUE)
     fun DisconnectEvent.onPlayerDisconnect() {
         val player = this.player
-        if (!whitelist.isKnownVisitor(player.uniqueId)) {
+        if (!service.isKnownVisitor(player.uniqueId)) {
             return
         }
         val session = visitorSessions.remove(player.uniqueId)
@@ -164,7 +164,7 @@ object VisitorListener : KoinComponent {
 
     private fun createVisitorRecord(player: Player, session: VisitorSession) = PluginScope.launch {
         val duration = JavaDuration.between(session.joinTime, Instant.now()).toKotlinDuration()
-        whitelist.createVisitorRecord(
+        service.createVisitorRecord(
             player.uniqueId,
             VisitorRecordParams(
                 ipAddress = session.ip,

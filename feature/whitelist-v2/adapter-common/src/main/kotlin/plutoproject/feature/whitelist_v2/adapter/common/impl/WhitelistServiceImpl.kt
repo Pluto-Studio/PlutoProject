@@ -1,27 +1,15 @@
-package plutoproject.feature.whitelist_v2.adapter.common
+package plutoproject.feature.whitelist_v2.adapter.common.impl
 
-import plutoproject.feature.whitelist_v2.api.VisitorRecord
-import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.api.Whitelist
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRecord
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.api.*
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.IsWhitelistedUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByCidrUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByIpUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.LookupWhitelistRecordUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.*
 import java.net.InetAddress
-import java.util.UUID
+import java.util.*
 
 private typealias WhitelistHook = (WhitelistHookParam) -> Unit
 
-class WhitelistService(
+class WhitelistServiceImpl(
     private val isWhitelistedUseCase: IsWhitelistedUseCase,
     private val lookupWhitelistRecordUseCase: LookupWhitelistRecordUseCase,
     private val grantWhitelistUseCase: GrantWhitelistUseCase,
@@ -31,7 +19,7 @@ class WhitelistService(
     private val lookupVisitorRecordsByCidrUseCase: LookupVisitorRecordsByCidrUseCase,
     private val lookupVisitorRecordsByIpUseCase: LookupVisitorRecordsByIpUseCase,
     private val knownVisitors: KnownVisitors,
-) : Whitelist {
+) : WhitelistService {
     private val registeredHooks = mutableMapOf<WhitelistHookType<*>, MutableSet<WhitelistHook>>()
 
     override suspend fun isWhitelisted(uniqueId: UUID): Boolean {
@@ -39,11 +27,12 @@ class WhitelistService(
     }
 
     override suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecord? {
-        return lookupWhitelistRecordUseCase.execute(uniqueId)
+        val record = lookupWhitelistRecordUseCase.execute(uniqueId) ?: return null
+        return WhitelistRecordImpl(record)
     }
 
     override suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean {
-        val ok = grantWhitelistUseCase.execute(uniqueId, username, operator)
+        val ok = grantWhitelistUseCase.execute(uniqueId, username, operator.toCore())
         if (ok) {
             invokeHook(WhitelistHookType.GrantWhitelist, WhitelistHookParam.GrantWhitelist(uniqueId, username))
         }
@@ -51,7 +40,7 @@ class WhitelistService(
     }
 
     override suspend fun revokeWhitelist(uniqueId: UUID, operator: WhitelistOperator, reason: WhitelistRevokeReason): Boolean {
-        val ok = revokeWhitelistUseCase.execute(uniqueId, operator, reason)
+        val ok = revokeWhitelistUseCase.execute(uniqueId, operator.toCore(), reason.toCore())
         if (ok) {
             invokeHook(WhitelistHookType.RevokeWhitelist, WhitelistHookParam.RevokeWhitelist(uniqueId))
         }
@@ -63,19 +52,19 @@ class WhitelistService(
     }
 
     override suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecord> {
-        return lookupVisitorRecordUseCase.execute(uniqueId)
+        return lookupVisitorRecordUseCase.execute(uniqueId).map(::VisitorRecordImpl)
     }
 
     override suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord {
-        return createVisitorRecordUseCase.execute(uniqueId, params)
+        return VisitorRecordImpl(createVisitorRecordUseCase.execute(uniqueId, params.toCore()))
     }
 
     override suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord> {
-        return lookupVisitorRecordsByCidrUseCase.execute(cidr)
+        return lookupVisitorRecordsByCidrUseCase.execute(cidr).map(::VisitorRecordImpl)
     }
 
     override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord> {
-        return lookupVisitorRecordsByIpUseCase.execute(ipAddress)
+        return lookupVisitorRecordsByIpUseCase.execute(ipAddress).map(::VisitorRecordImpl)
     }
 
     @Suppress("UNCHECKED_CAST")

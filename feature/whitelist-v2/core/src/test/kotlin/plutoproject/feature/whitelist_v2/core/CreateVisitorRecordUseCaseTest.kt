@@ -3,7 +3,6 @@ package plutoproject.feature.whitelist_v2.core
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
 import java.net.InetAddress
 import java.net.InetSocketAddress

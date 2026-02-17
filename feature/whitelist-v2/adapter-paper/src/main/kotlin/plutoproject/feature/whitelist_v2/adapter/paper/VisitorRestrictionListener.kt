@@ -13,14 +13,14 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.api.Whitelist
+import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.time.ticks
 import plutoproject.framework.paper.util.server
 
 @Suppress("UNUSED")
 object VisitorRestrictionListener : Listener, KoinComponent {
-    private val whitelist by inject<Whitelist>()
+    private val service by inject<WhitelistService>()
 
     private var visitorSpeedLimitationJob: Job? = null
 
@@ -38,7 +38,7 @@ object VisitorRestrictionListener : Listener, KoinComponent {
             return
         }
         server.onlinePlayers
-            .filter { whitelist.isKnownVisitor(it.uniqueId) && it.gameMode == GameMode.SPECTATOR }
+            .filter { service.isKnownVisitor(it.uniqueId) && it.gameMode == GameMode.SPECTATOR }
             .forEach {
                 // setFlySpeed 只是发送数据包，可以异步
                 it.flySpeed = 0.1f
@@ -52,7 +52,7 @@ object VisitorRestrictionListener : Listener, KoinComponent {
     @EventHandler
     fun onPlayerChat(event: AsyncChatEvent) {
         val player = event.player
-        if (whitelist.isKnownVisitor(player.uniqueId)) {
+        if (service.isKnownVisitor(player.uniqueId)) {
             player.sendMessage(VISITOR_CHAT_DENIED)
             event.isCancelled = true
         }
@@ -61,7 +61,7 @@ object VisitorRestrictionListener : Listener, KoinComponent {
     @EventHandler
     fun onPlayerStartSpectatingEntity(event: PlayerStartSpectatingEntityEvent) {
         val player = event.player
-        if (whitelist.isKnownVisitor(player.uniqueId)) {
+        if (service.isKnownVisitor(player.uniqueId)) {
             event.isCancelled = true
         }
     }
@@ -69,7 +69,7 @@ object VisitorRestrictionListener : Listener, KoinComponent {
     @EventHandler
     fun onPlayerTeleport(event: PlayerTeleportEvent) {
         val player = event.player
-        if (whitelist.isKnownVisitor(player.uniqueId) && event.cause == PlayerTeleportEvent.TeleportCause.SPECTATE) {
+        if (service.isKnownVisitor(player.uniqueId) && event.cause == PlayerTeleportEvent.TeleportCause.SPECTATE) {
             event.isCancelled = true
         }
     }
@@ -77,7 +77,7 @@ object VisitorRestrictionListener : Listener, KoinComponent {
     @EventHandler
     fun onPlayerAdvancementCriterionGrant(event: PlayerAdvancementCriterionGrantEvent) {
         val player = event.player
-        if (whitelist.isKnownVisitor(player.uniqueId)) {
+        if (service.isKnownVisitor(player.uniqueId)) {
             event.isCancelled = true
         }
     }
