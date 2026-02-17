@@ -1,13 +1,9 @@
 package plutoproject.feature.whitelist_v2.core
 
-import plutoproject.feature.whitelist_v2.api.VisitorRecord
-import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRecord
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.api.*
 import java.net.InetAddress
 import java.time.Clock
-import java.util.UUID
+import java.util.*
 
 class WhitelistCore(
     private val whitelistRecords: WhitelistRecordRepository,
@@ -30,30 +26,26 @@ class WhitelistCore(
         val hasVisitorRecord = visitorRecords.hasByUniqueId(uniqueId)
         val existing = whitelistRecords.findByUniqueId(uniqueId)
 
-        val record = if (existing != null) {
-            existing.copy(
-                username = username,
-                granter = operator,
-                joinedAsVisitorBefore = hasVisitorRecord,
-                isRevoked = false,
-                revoker = null,
-                revokeReason = null,
-                revokeAt = null,
-            )
-        } else {
-            WhitelistRecordData(
-                uniqueId = uniqueId,
-                username = username,
-                granter = operator,
-                createdAt = clock.instant(),
-                joinedAsVisitorBefore = hasVisitorRecord,
-                isMigrated = false,
-                isRevoked = false,
-                revoker = null,
-                revokeReason = null,
-                revokeAt = null,
-            )
-        }
+        val record = existing?.copy(
+            username = username,
+            granter = operator,
+            joinedAsVisitorBefore = hasVisitorRecord,
+            isRevoked = false,
+            revoker = null,
+            revokeReason = null,
+            revokeAt = null,
+        ) ?: WhitelistRecordData(
+            uniqueId = uniqueId,
+            username = username,
+            granter = operator,
+            createdAt = clock.instant(),
+            joinedAsVisitorBefore = hasVisitorRecord,
+            isMigrated = false,
+            isRevoked = false,
+            revoker = null,
+            revokeReason = null,
+            revokeAt = null,
+        )
 
         whitelistRecords.saveOrUpdate(record)
         return true
