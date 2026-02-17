@@ -28,9 +28,9 @@ class WhitelistServiceImpl(
         return isWhitelistedUseCase.execute(uniqueId)
     }
 
-    override suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecord? {
+    override suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecordInfo? {
         val record = lookupWhitelistRecordUseCase.execute(uniqueId) ?: return null
-        return WhitelistRecordImpl(record)
+        return WhitelistRecordInfoImpl(record)
     }
 
     override suspend fun grantWhitelist(
@@ -61,20 +61,20 @@ class WhitelistServiceImpl(
         return knownVisitors.contains(uniqueId)
     }
 
-    override suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecord> {
-        return lookupVisitorRecordUseCase.execute(uniqueId).map(::VisitorRecordImpl)
+    override suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecordInfo> {
+        return lookupVisitorRecordUseCase.execute(uniqueId).map(::VisitorRecordInfoImpl)
     }
 
-    override suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord {
-        return VisitorRecordImpl(createVisitorRecordUseCase.execute(uniqueId, params.toCore()))
+    override suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecordInfo {
+        return VisitorRecordInfoImpl(createVisitorRecordUseCase.execute(uniqueId, params.toCore()))
     }
 
-    override suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord> {
-        return lookupVisitorRecordsByCidrUseCase.execute(cidr).map(::VisitorRecordImpl)
+    override suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecordInfo> {
+        return lookupVisitorRecordsByCidrUseCase.execute(cidr).map(::VisitorRecordInfoImpl)
     }
 
-    override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord> {
-        return lookupVisitorRecordsByIpUseCase.execute(ipAddress).map(::VisitorRecordImpl)
+    override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecordInfo> {
+        return lookupVisitorRecordsByIpUseCase.execute(ipAddress).map(::VisitorRecordInfoImpl)
     }
 
     @Suppress("UNCHECKED_CAST")

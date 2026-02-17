@@ -8,17 +8,13 @@ import net.luckperms.api.node.types.InheritanceNode
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
-import plutoproject.feature.whitelist_v2.adapter.velocity.ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION
-import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_NOT_WHITELISTED
-import plutoproject.feature.whitelist_v2.adapter.velocity.VisitorState
-import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
-import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
+import plutoproject.feature.whitelist_v2.adapter.velocity.*
 import plutoproject.feature.whitelist_v2.api.WhitelistService
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.UUID
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 @Suppress("UNUSED")
@@ -101,7 +97,10 @@ object PlayerListener : KoinComponent {
             return
         }
 
-        whitelistRecordRepository.saveOrUpdate(record.copy(username = player.username))
+        val usernameChanged = record.apply {
+            changeUsername(player.username)
+        }
+        whitelistRecordRepository.saveOrUpdate(usernameChanged)
     }
 
     private fun logVisitorLogin(

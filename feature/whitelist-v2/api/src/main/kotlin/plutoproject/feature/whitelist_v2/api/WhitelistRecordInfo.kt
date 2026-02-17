@@ -3,7 +3,7 @@ package plutoproject.feature.whitelist_v2.api
 import java.time.Instant
 import java.util.UUID
 
-interface WhitelistRecord {
+interface WhitelistRecordInfo {
     /**
      * 该白名单记录的玩家 UUID。
      */

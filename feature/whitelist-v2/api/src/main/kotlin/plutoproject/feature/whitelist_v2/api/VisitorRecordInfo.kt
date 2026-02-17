@@ -11,7 +11,7 @@ import kotlin.time.Duration
  *
  * 每位以访客身份连接到服务器的玩家，在退出时都会创建一份记录。
  */
-interface VisitorRecord {
+interface VisitorRecordInfo {
     /**
      * 该访客记录的玩家 UUID。
      */

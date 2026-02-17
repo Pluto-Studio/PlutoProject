@@ -15,13 +15,13 @@ internal fun dummyUuid(value: Long): UUID {
 }
 
 internal class InMemoryWhitelistRecordRepository(
-    val records: MutableMap<UUID, WhitelistRecordData> = mutableMapOf(),
+    val records: MutableMap<UUID, WhitelistRecord> = mutableMapOf(),
 ) : WhitelistRecordRepository {
-    override suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecordData? {
+    override suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecord? {
         return records[uniqueId]
     }
 
-    override suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecordData? {
+    override suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecord? {
         return records[uniqueId]?.takeIf { !it.isRevoked }
     }
 
@@ -37,36 +37,36 @@ internal class InMemoryWhitelistRecordRepository(
         return records.values.count { !it.isRevoked }.toLong()
     }
 
-    override suspend fun insertAll(records: List<WhitelistRecordData>) {
+    override suspend fun insertAll(records: List<WhitelistRecord>) {
         records.forEach { this.records[it.uniqueId] = it }
     }
 
-    override suspend fun saveOrUpdate(record: WhitelistRecordData) {
+    override suspend fun saveOrUpdate(record: WhitelistRecord) {
         records[record.uniqueId] = record
     }
 }
 
 internal class InMemoryVisitorRecordRepository(
     private val hasByUniqueId: Set<UUID> = emptySet(),
-    val records: MutableList<VisitorRecordData> = mutableListOf(),
+    val records: MutableList<VisitorRecord> = mutableListOf(),
 ) : VisitorRecordRepository {
     override suspend fun hasByUniqueId(uniqueId: UUID): Boolean {
         return uniqueId in hasByUniqueId || records.any { it.uniqueId == uniqueId }
     }
 
-    override suspend fun findByUniqueId(uniqueId: UUID): List<VisitorRecordData> {
+    override suspend fun findByUniqueId(uniqueId: UUID): List<VisitorRecord> {
         return records.filter { it.uniqueId == uniqueId }
     }
 
-    override suspend fun save(record: VisitorRecordData) {
+    override suspend fun save(record: VisitorRecord) {
         records.add(record)
     }
 
-    override suspend fun findByCidr(cidr: String): List<VisitorRecordData> {
+    override suspend fun findByCidr(cidr: String): List<VisitorRecord> {
         return emptyList()
     }
 
-    override suspend fun findByIpAddress(ipAddress: InetAddress): List<VisitorRecordData> {
+    override suspend fun findByIpAddress(ipAddress: InetAddress): List<VisitorRecord> {
         return emptyList()
     }
 }

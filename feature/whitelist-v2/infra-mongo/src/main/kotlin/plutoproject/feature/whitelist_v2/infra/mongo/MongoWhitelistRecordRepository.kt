@@ -4,7 +4,7 @@ import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
 import java.util.UUID
@@ -14,13 +14,13 @@ class MongoWhitelistRecordRepository(
 ) : WhitelistRecordRepository {
     private val upsert = ReplaceOptions().upsert(true)
 
-    override suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecordData? {
+    override suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecord? {
         return collection.find(eq(WhitelistRecordDocument::uniqueId.name, uniqueId))
             .firstOrNull()
             ?.toDomain()
     }
 
-    override suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecordData? {
+    override suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecord? {
         return collection.find(eq(WhitelistRecordDocument::uniqueId.name, uniqueId))
             .firstOrNull()
             ?.takeIf { !it.isRevoked }
@@ -39,12 +39,12 @@ class MongoWhitelistRecordRepository(
         return collection.countDocuments(eq(WhitelistRecordDocument::isRevoked.name, false))
     }
 
-    override suspend fun insertAll(records: List<WhitelistRecordData>) {
+    override suspend fun insertAll(records: List<WhitelistRecord>) {
         if (records.isEmpty()) return
         collection.insertMany(records.map { it.toDocument() })
     }
 
-    override suspend fun saveOrUpdate(record: WhitelistRecordData) {
+    override suspend fun saveOrUpdate(record: WhitelistRecord) {
         val document = record.toDocument()
         collection.replaceOne(eq(WhitelistRecordDocument::uniqueId.name, document.uniqueId), document, upsert)
     }

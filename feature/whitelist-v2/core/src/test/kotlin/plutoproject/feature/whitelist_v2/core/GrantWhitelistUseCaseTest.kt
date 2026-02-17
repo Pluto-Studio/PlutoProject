@@ -16,7 +16,7 @@ class GrantWhitelistUseCaseTest {
         val uid = dummyUuid(1)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
             records = mutableMapOf(
-                uid to WhitelistRecordData(
+                uid to WhitelistRecord(
                     uniqueId = uid,
                     username = "old",
                     granter = WhitelistOperator.Console,
@@ -52,7 +52,7 @@ class GrantWhitelistUseCaseTest {
         val uid = dummyUuid(2)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
             records = mutableMapOf(
-                uid to WhitelistRecordData(
+                uid to WhitelistRecord(
                     uniqueId = uid,
                     username = "old",
                     granter = WhitelistOperator.Console,

@@ -12,7 +12,7 @@ import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_MIGR
 import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_MIGRATE_START
 import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_MIGRATE
 import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import plutoproject.feature.whitelist_v2.core.WhitelistOperator
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection
@@ -49,7 +49,7 @@ object MigratorCommand : KoinComponent {
 
         val oldRecords = loadLegacyWhitelist()
         val recordsToMigrate = oldRecords.map { oldRecord ->
-            WhitelistRecordData(
+            WhitelistRecord(
                 uniqueId = oldRecord.id.convertToUuid(),
                 username = oldRecord.rawName,
                 granter = WhitelistOperator.Console,

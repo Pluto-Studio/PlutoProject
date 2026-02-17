@@ -17,15 +17,11 @@ class RevokeWhitelistUseCase(
 
     suspend fun execute(uniqueId: UUID, operator: WhitelistOperator, reason: WhitelistRevokeReason): Result {
         val record = whitelistRecords.findActiveByUniqueId(uniqueId) ?: return Result.NotGranted
+        val revoked = record.apply {
+            revoke(operator = operator, reason = reason, time = clock.instant())
+        }
 
-        whitelistRecords.saveOrUpdate(
-            record.copy(
-                isRevoked = true,
-                revoker = operator,
-                revokeReason = reason,
-                revokeAt = clock.instant(),
-            )
-        )
+        whitelistRecords.saveOrUpdate(revoked)
         return Result.Ok
     }
 }

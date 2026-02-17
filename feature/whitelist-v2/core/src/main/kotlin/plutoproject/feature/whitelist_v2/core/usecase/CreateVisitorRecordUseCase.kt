@@ -1,6 +1,6 @@
 package plutoproject.feature.whitelist_v2.core.usecase
 
-import plutoproject.feature.whitelist_v2.core.VisitorRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecord
 import plutoproject.feature.whitelist_v2.core.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import java.time.Clock
@@ -10,8 +10,8 @@ class CreateVisitorRecordUseCase(
     private val visitorRecords: VisitorRecordRepository,
     private val clock: Clock,
 ) {
-    suspend fun execute(uniqueId: UUID, params: VisitorRecordParams): VisitorRecordData {
-        val record = VisitorRecordData(
+    suspend fun execute(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord {
+        val record = VisitorRecord(
             uniqueId = uniqueId,
             ipAddress = params.ipAddress,
             virtualHost = params.virtualHost,

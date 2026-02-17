@@ -7,7 +7,7 @@ import com.mongodb.client.model.Filters.lte
 import com.mongodb.client.model.Indexes
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.toList
-import plutoproject.feature.whitelist_v2.core.VisitorRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecord
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
 import java.net.Inet6Address
@@ -31,25 +31,25 @@ class MongoVisitorRecordRepository(
         return collection.find(eq("uniqueId", uniqueId)).limit(1).toList().isNotEmpty()
     }
 
-    override suspend fun findByUniqueId(uniqueId: UUID): List<VisitorRecordData> {
+    override suspend fun findByUniqueId(uniqueId: UUID): List<VisitorRecord> {
         return collection.find(eq("uniqueId", uniqueId))
             .sort(Indexes.descending("createdAt"))
             .toList()
             .map { it.toDomain() }
     }
 
-    override suspend fun save(record: VisitorRecordData) {
+    override suspend fun save(record: VisitorRecord) {
         collection.insertOne(record.toDocument())
     }
 
-    override suspend fun findByCidr(cidr: String): List<VisitorRecordData> {
+    override suspend fun findByCidr(cidr: String): List<VisitorRecord> {
         return when (val range = cidr.toIpRange()) {
             is IpRange.Ipv4 -> findByIpv4Range(range)
             is IpRange.Ipv6 -> findByIpv6Range(range)
         }
     }
 
-    override suspend fun findByIpAddress(ipAddress: InetAddress): List<VisitorRecordData> {
+    override suspend fun findByIpAddress(ipAddress: InetAddress): List<VisitorRecord> {
         val (high, low) = ipAddress.toLongs()
         val version = if (ipAddress is Inet6Address) 6 else 4
 
@@ -62,7 +62,7 @@ class MongoVisitorRecordRepository(
         ).toList().map { it.toDomain() }
     }
 
-    private suspend fun findByIpv4Range(range: IpRange.Ipv4): List<VisitorRecordData> {
+    private suspend fun findByIpv4Range(range: IpRange.Ipv4): List<VisitorRecord> {
         return collection.find(
             and(
                 eq("ipAddress.ipVersion", 4),
@@ -72,7 +72,7 @@ class MongoVisitorRecordRepository(
         ).toList().map { it.toDomain() }
     }
 
-    private suspend fun findByIpv6Range(range: IpRange.Ipv6): List<VisitorRecordData> {
+    private suspend fun findByIpv6Range(range: IpRange.Ipv6): List<VisitorRecord> {
         val query = if (range.startHigh == range.endHigh) {
             and(
                 eq("ipAddress.ipVersion", 6),

@@ -6,7 +6,7 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.time.Duration
 
-data class VisitorRecordData(
+data class VisitorRecord(
     val uniqueId: UUID,
     val ipAddress: InetAddress,
     val virtualHost: InetSocketAddress,

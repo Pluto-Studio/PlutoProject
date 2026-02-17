@@ -22,7 +22,7 @@ interface WhitelistService {
      * @param uniqueId 要查询的玩家 UUID
      * @return 该玩家的白名单记录，若未查询到相关记录则为 null
      */
-    suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecord?
+    suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecordInfo?
 
     /**
      * 为指定 UUID 的玩家授予白名单。
@@ -68,7 +68,7 @@ interface WhitelistService {
      * @param uniqueId 要查询的玩家 UUID
      * @return 该玩家的来访记录，按先后顺序排列
      */
-    suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecord>
+    suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecordInfo>
 
     /**
      * 为指定 UUID 的玩家创建访客记录。
@@ -76,7 +76,7 @@ interface WhitelistService {
      * @param uniqueId 要创建的玩家 UUID
      * @param params 访客记录参数
      */
-    suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord
+    suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecordInfo
 
     /**
      * 根据 CIDR 网段查询访客记录。
@@ -84,7 +84,7 @@ interface WhitelistService {
      * @param cidr 要查询的 CIDR 格式网段
      * @return 该网段内的所有访客记录，按先后顺序排列
      */
-    suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord>
+    suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecordInfo>
 
     /**
      * 根据精确 IP 地址查询访客记录。
@@ -92,7 +92,7 @@ interface WhitelistService {
      * @param ipAddress 要查询的 IP 地址
      * @return 该 IP 的所有访客记录，按先后顺序排列
      */
-    suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord>
+    suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecordInfo>
 
     /**
      * 注册白名单系统钩子。

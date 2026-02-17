@@ -1,15 +1,15 @@
 package plutoproject.feature.whitelist_v2.adapter.common.impl
 
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRecord
+import plutoproject.feature.whitelist_v2.api.WhitelistRecordInfo
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import java.time.Instant
 import java.util.*
 
-class WhitelistRecordImpl(
-    private val data: WhitelistRecordData,
-) : WhitelistRecord {
+class WhitelistRecordInfoImpl(
+    private val data: WhitelistRecord,
+) : WhitelistRecordInfo {
     override val uniqueId: UUID
         get() = data.uniqueId
 

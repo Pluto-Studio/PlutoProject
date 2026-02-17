@@ -1,16 +1,16 @@
 package plutoproject.feature.whitelist_v2.adapter.common.impl
 
-import plutoproject.feature.whitelist_v2.api.VisitorRecord
-import plutoproject.feature.whitelist_v2.core.VisitorRecordData
+import plutoproject.feature.whitelist_v2.api.VisitorRecordInfo
+import plutoproject.feature.whitelist_v2.core.VisitorRecord
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
 import java.util.UUID
 import kotlin.time.Duration
 
-class VisitorRecordImpl(
-    private val data: VisitorRecordData,
-) : VisitorRecord {
+class VisitorRecordInfoImpl(
+    private val data: VisitorRecord,
+) : VisitorRecordInfo {
     override val uniqueId: UUID
         get() = data.uniqueId
 

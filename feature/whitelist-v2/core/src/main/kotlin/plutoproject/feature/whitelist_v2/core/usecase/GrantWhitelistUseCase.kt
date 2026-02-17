@@ -2,7 +2,7 @@ package plutoproject.feature.whitelist_v2.core.usecase
 
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
 import plutoproject.feature.whitelist_v2.core.WhitelistOperator
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import java.time.Clock
 import java.util.*
@@ -23,17 +23,11 @@ class GrantWhitelistUseCase(
         }
 
         val hasVisitorRecord = visitorRecords.hasByUniqueId(uniqueId)
-        val existing = whitelistRecords.findByUniqueId(uniqueId)
+        val reGranted = whitelistRecords.findByUniqueId(uniqueId)?.apply {
+            grant(username = username, operator = operator, joinedAsVisitorBefore = hasVisitorRecord)
+        }
 
-        val record = existing?.copy(
-            username = username,
-            granter = operator,
-            joinedAsVisitorBefore = hasVisitorRecord,
-            isRevoked = false,
-            revoker = null,
-            revokeReason = null,
-            revokeAt = null,
-        ) ?: WhitelistRecordData(
+        val record = reGranted ?: WhitelistRecord(
             uniqueId = uniqueId,
             username = username,
             granter = operator,

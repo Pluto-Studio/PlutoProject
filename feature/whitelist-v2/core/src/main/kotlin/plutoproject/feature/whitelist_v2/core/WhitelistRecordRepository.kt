@@ -3,9 +3,9 @@ package plutoproject.feature.whitelist_v2.core
 import java.util.UUID
 
 interface WhitelistRecordRepository {
-    suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecordData?
+    suspend fun findByUniqueId(uniqueId: UUID): WhitelistRecord?
 
-    suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecordData?
+    suspend fun findActiveByUniqueId(uniqueId: UUID): WhitelistRecord?
 
     suspend fun hasActiveByUniqueId(uniqueId: UUID): Boolean
 
@@ -13,7 +13,7 @@ interface WhitelistRecordRepository {
 
     suspend fun countActive(): Long
 
-    suspend fun insertAll(records: List<WhitelistRecordData>)
+    suspend fun insertAll(records: List<WhitelistRecord>)
 
-    suspend fun saveOrUpdate(record: WhitelistRecordData)
+    suspend fun saveOrUpdate(record: WhitelistRecord)
 }

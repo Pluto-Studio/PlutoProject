@@ -1,7 +1,7 @@
 package plutoproject.feature.whitelist_v2.infra.mongo
 
-import plutoproject.feature.whitelist_v2.core.VisitorRecordData
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecord
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import plutoproject.feature.whitelist_v2.core.WhitelistOperator
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistOperatorDocument
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistOperatorDocumentType
@@ -13,8 +13,8 @@ import java.net.Inet6Address
 import java.net.InetAddress
 import kotlin.time.Duration.Companion.milliseconds
 
-internal fun WhitelistRecordDocument.toDomain(): WhitelistRecordData {
-    return WhitelistRecordData(
+internal fun WhitelistRecordDocument.toDomain(): WhitelistRecord {
+    return WhitelistRecord(
         uniqueId = uniqueId,
         username = username,
         granter = granter.toDomain(),
@@ -28,7 +28,7 @@ internal fun WhitelistRecordDocument.toDomain(): WhitelistRecordData {
     )
 }
 
-internal fun WhitelistRecordData.toDocument(): WhitelistRecordDocument {
+internal fun WhitelistRecord.toDocument(): WhitelistRecordDocument {
     return WhitelistRecordDocument(
         uniqueId = uniqueId,
         username = username,
@@ -43,8 +43,8 @@ internal fun WhitelistRecordData.toDocument(): WhitelistRecordDocument {
     )
 }
 
-internal fun VisitorRecordDocument.toDomain(): VisitorRecordData {
-    return VisitorRecordData(
+internal fun VisitorRecordDocument.toDomain(): VisitorRecord {
+    return VisitorRecord(
         uniqueId = uniqueId,
         ipAddress = InetAddress.getByAddress(ipAddress.ipBinary),
         virtualHost = virtualHost.parseInetSocketAddress(),
@@ -55,7 +55,7 @@ internal fun VisitorRecordDocument.toDomain(): VisitorRecordData {
     )
 }
 
-internal fun VisitorRecordData.toDocument(): VisitorRecordDocument {
+internal fun VisitorRecord.toDocument(): VisitorRecordDocument {
     val (high, low) = ipAddress.toLongs()
     val version = if (ipAddress is Inet6Address) 6 else 4
 

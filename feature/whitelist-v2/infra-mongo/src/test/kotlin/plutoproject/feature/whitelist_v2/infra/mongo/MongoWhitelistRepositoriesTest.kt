@@ -12,8 +12,8 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import plutoproject.feature.whitelist_v2.core.VisitorRecordData
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordData
+import plutoproject.feature.whitelist_v2.core.VisitorRecord
+import plutoproject.feature.whitelist_v2.core.WhitelistRecord
 import plutoproject.feature.whitelist_v2.core.WhitelistOperator
 import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
 import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
@@ -44,7 +44,7 @@ class MongoWhitelistRepositoriesTest {
         val repo = MongoWhitelistRecordRepository(collection)
 
         val uid = UUID.fromString("00000000-0000-0000-0000-000000000101")
-        val record = WhitelistRecordData(
+        val record = WhitelistRecord(
             uniqueId = uid,
             username = "abc",
             granter = WhitelistOperator.Console,
@@ -84,7 +84,7 @@ class MongoWhitelistRepositoriesTest {
 
         val uid = UUID.fromString("00000000-0000-0000-0000-000000000201")
         val ip = InetAddress.getByName("127.0.0.1")
-        val record = VisitorRecordData(
+        val record = VisitorRecord(
             uniqueId = uid,
             ipAddress = ip,
             virtualHost = InetSocketAddress("localhost", 25565),

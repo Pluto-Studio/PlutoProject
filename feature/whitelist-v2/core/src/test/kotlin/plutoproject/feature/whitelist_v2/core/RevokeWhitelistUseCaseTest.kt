@@ -14,7 +14,7 @@ class RevokeWhitelistUseCaseTest {
         val uid = dummyUuid(3)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
             records = mutableMapOf(
-                uid to WhitelistRecordData(
+                uid to WhitelistRecord(
                     uniqueId = uid,
                     username = "abc",
                     granter = WhitelistOperator.Console,
