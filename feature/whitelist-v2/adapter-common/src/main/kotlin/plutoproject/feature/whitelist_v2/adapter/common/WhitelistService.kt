@@ -8,28 +8,42 @@ import plutoproject.feature.whitelist_v2.api.WhitelistRecord
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.feature.whitelist_v2.core.WhitelistCore
+import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.IsWhitelistedUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByCidrUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByIpUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupWhitelistRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
 import java.net.InetAddress
 import java.util.UUID
 
 private typealias WhitelistHook = (WhitelistHookParam) -> Unit
 
 class WhitelistService(
-    private val core: WhitelistCore,
+    private val isWhitelistedUseCase: IsWhitelistedUseCase,
+    private val lookupWhitelistRecordUseCase: LookupWhitelistRecordUseCase,
+    private val grantWhitelistUseCase: GrantWhitelistUseCase,
+    private val revokeWhitelistUseCase: RevokeWhitelistUseCase,
+    private val lookupVisitorRecordUseCase: LookupVisitorRecordUseCase,
+    private val createVisitorRecordUseCase: CreateVisitorRecordUseCase,
+    private val lookupVisitorRecordsByCidrUseCase: LookupVisitorRecordsByCidrUseCase,
+    private val lookupVisitorRecordsByIpUseCase: LookupVisitorRecordsByIpUseCase,
     private val knownVisitors: KnownVisitors,
 ) : Whitelist {
     private val registeredHooks = mutableMapOf<WhitelistHookType<*>, MutableSet<WhitelistHook>>()
 
     override suspend fun isWhitelisted(uniqueId: UUID): Boolean {
-        return core.isWhitelisted(uniqueId)
+        return isWhitelistedUseCase.execute(uniqueId)
     }
 
     override suspend fun lookupWhitelistRecord(uniqueId: UUID): WhitelistRecord? {
-        return core.lookupWhitelistRecord(uniqueId)
+        return lookupWhitelistRecordUseCase.execute(uniqueId)
     }
 
     override suspend fun grantWhitelist(uniqueId: UUID, username: String, operator: WhitelistOperator): Boolean {
-        val ok = core.grantWhitelist(uniqueId, username, operator)
+        val ok = grantWhitelistUseCase.execute(uniqueId, username, operator)
         if (ok) {
             invokeHook(WhitelistHookType.GrantWhitelist, WhitelistHookParam.GrantWhitelist(uniqueId, username))
         }
@@ -37,7 +51,7 @@ class WhitelistService(
     }
 
     override suspend fun revokeWhitelist(uniqueId: UUID, operator: WhitelistOperator, reason: WhitelistRevokeReason): Boolean {
-        val ok = core.revokeWhitelist(uniqueId, operator, reason)
+        val ok = revokeWhitelistUseCase.execute(uniqueId, operator, reason)
         if (ok) {
             invokeHook(WhitelistHookType.RevokeWhitelist, WhitelistHookParam.RevokeWhitelist(uniqueId))
         }
@@ -49,19 +63,19 @@ class WhitelistService(
     }
 
     override suspend fun lookupVisitorRecord(uniqueId: UUID): List<VisitorRecord> {
-        return core.lookupVisitorRecord(uniqueId)
+        return lookupVisitorRecordUseCase.execute(uniqueId)
     }
 
     override suspend fun createVisitorRecord(uniqueId: UUID, params: VisitorRecordParams): VisitorRecord {
-        return core.createVisitorRecord(uniqueId, params)
+        return createVisitorRecordUseCase.execute(uniqueId, params)
     }
 
     override suspend fun lookupVisitorRecordsByCidr(cidr: String): List<VisitorRecord> {
-        return core.lookupVisitorRecordsByCidr(cidr)
+        return lookupVisitorRecordsByCidrUseCase.execute(cidr)
     }
 
     override suspend fun lookupVisitorRecordsByIp(ipAddress: InetAddress): List<VisitorRecord> {
-        return core.lookupVisitorRecordsByIp(ipAddress)
+        return lookupVisitorRecordsByIpUseCase.execute(ipAddress)
     }
 
     @Suppress("UNCHECKED_CAST")

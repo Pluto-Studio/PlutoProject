@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
 import plutoproject.feature.whitelist_v2.api.WhitelistOperator
 import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Clock
@@ -18,7 +21,7 @@ import java.time.ZoneOffset
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
-class WhitelistCoreTest {
+class WhitelistUseCaseTest {
     @Test
     fun `grantWhitelist returns false when already active`() = runBlocking {
         val clock = fixedClock("2026-02-07T00:00:00Z")
@@ -39,9 +42,9 @@ class WhitelistCoreTest {
             )
         )
         val visitorRepo = InMemoryVisitorRecordRepository()
-        val core = WhitelistCore(whitelistRepo, visitorRepo, clock)
+        val useCase = GrantWhitelistUseCase(whitelistRepo, visitorRepo, clock)
 
-        val ok = core.grantWhitelist(
+        val ok = useCase.execute(
             uniqueId = UUID.fromString("00000000-0000-0000-0000-000000000001"),
             username = "new",
             operator = WhitelistOperator.Administrator(UUID.fromString("00000000-0000-0000-0000-0000000000aa")),
@@ -72,9 +75,9 @@ class WhitelistCoreTest {
             )
         )
         val visitorRepo = InMemoryVisitorRecordRepository(hasByUniqueId = setOf(uid))
-        val core = WhitelistCore(whitelistRepo, visitorRepo, clock)
+        val useCase = GrantWhitelistUseCase(whitelistRepo, visitorRepo, clock)
 
-        val ok = core.grantWhitelist(uid, "newname", WhitelistOperator.Console)
+        val ok = useCase.execute(uid, "newname", WhitelistOperator.Console)
         assertTrue(ok)
 
         val updated = whitelistRepo.records.getValue(uid)
@@ -108,9 +111,9 @@ class WhitelistCoreTest {
                 )
             )
         )
-        val core = WhitelistCore(whitelistRepo, InMemoryVisitorRecordRepository(), clock)
+        val useCase = RevokeWhitelistUseCase(whitelistRepo, clock)
 
-        val ok = core.revokeWhitelist(uid, WhitelistOperator.Console, WhitelistRevokeReason.REQUESTED)
+        val ok = useCase.execute(uid, WhitelistOperator.Console, WhitelistRevokeReason.REQUESTED)
         assertTrue(ok)
 
         val updated = whitelistRepo.records.getValue(uid)
@@ -124,10 +127,10 @@ class WhitelistCoreTest {
     fun `createVisitorRecord persists and returns created record`() = runBlocking {
         val clock = fixedClock("2026-02-07T00:00:00Z")
         val visitorRepo = InMemoryVisitorRecordRepository()
-        val core = WhitelistCore(InMemoryWhitelistRecordRepository(), visitorRepo, clock)
+        val useCase = CreateVisitorRecordUseCase(visitorRepo, clock)
 
         val uid = UUID.fromString("00000000-0000-0000-0000-000000000004")
-        val record = core.createVisitorRecord(
+        val record = useCase.execute(
             uniqueId = uid,
             params = VisitorRecordParams(
                 ipAddress = InetAddress.getByName("127.0.0.1"),

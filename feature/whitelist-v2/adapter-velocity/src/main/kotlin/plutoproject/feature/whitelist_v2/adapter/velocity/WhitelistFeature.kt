@@ -18,8 +18,15 @@ import plutoproject.feature.whitelist_v2.adapter.common.WhitelistService
 import plutoproject.feature.whitelist_v2.api.Whitelist
 import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
 import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
-import plutoproject.feature.whitelist_v2.core.WhitelistCore
 import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
+import plutoproject.feature.whitelist_v2.core.usecase.CreateVisitorRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.IsWhitelistedUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByCidrUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupVisitorRecordsByIpUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.LookupWhitelistRecordUseCase
+import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
 import plutoproject.feature.whitelist_v2.infra.mongo.MongoVisitorRecordRepository
 import plutoproject.feature.whitelist_v2.infra.mongo.MongoWhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection
@@ -69,8 +76,17 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
             }
             repo
         }
-        single { WhitelistCore(get(), get(), get()) }
-        single<Whitelist> { WhitelistService(get(), get()) }
+
+        single { IsWhitelistedUseCase(get()) }
+        single { LookupWhitelistRecordUseCase(get()) }
+        single { GrantWhitelistUseCase(get(), get(), get()) }
+        single { RevokeWhitelistUseCase(get(), get()) }
+        single { LookupVisitorRecordUseCase(get()) }
+        single { CreateVisitorRecordUseCase(get(), get()) }
+        single { LookupVisitorRecordsByCidrUseCase(get()) }
+        single { LookupVisitorRecordsByIpUseCase(get()) }
+
+        single<Whitelist> { WhitelistService(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     }
 
     override fun onEnable() {
