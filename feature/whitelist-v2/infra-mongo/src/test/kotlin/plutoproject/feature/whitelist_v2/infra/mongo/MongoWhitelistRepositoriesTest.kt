@@ -32,7 +32,7 @@ class MongoWhitelistRepositoriesTest {
     private val mongo = MongoDBContainer("mongo:7.0.14")
 
     @Test
-    fun `save and load whitelist record`() = runBlocking {
+    fun `whitelist record should be saved and loaded`() = runBlocking {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = MongoClient.create(
@@ -70,7 +70,7 @@ class MongoWhitelistRepositoriesTest {
     }
 
     @Test
-    fun `save and query visitor record by ip`() = runBlocking {
+    fun `visitor record should be queryable by ip`() = runBlocking {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = MongoClient.create(
