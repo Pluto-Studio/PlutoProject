@@ -3,12 +3,9 @@ package plutoproject.feature.whitelist_v2.infra.mongo
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.bson.UuidRepresentation
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.testcontainers.DockerClientFactory
@@ -23,7 +20,7 @@ import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocume
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -32,7 +29,7 @@ class MongoWhitelistRepositoriesTest {
     private val mongo = MongoDBContainer("mongo:7.0.14")
 
     @Test
-    fun `whitelist record should be saved and loaded`() = runBlocking {
+    fun `whitelist record should be saved and loaded`() = runTest {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = MongoClient.create(
@@ -70,7 +67,7 @@ class MongoWhitelistRepositoriesTest {
     }
 
     @Test
-    fun `visitor record should be queryable by ip`() = runBlocking {
+    fun `visitor record should be queryable by ip`() = runTest {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = MongoClient.create(

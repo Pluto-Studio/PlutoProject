@@ -14,6 +14,9 @@ dependencies {
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers)
     testImplementation(libs.testcontainers.junit.jupiter)
+
+    testImplementation(libs.kotlinx.coroutine.core)
+    testImplementation(libs.kotlinx.coroutine.test)
 }
 
 tasks.withType<Test>().configureEach {

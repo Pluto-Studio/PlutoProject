@@ -4,6 +4,4 @@ plugins {
 
 dependencies {
     api(project(":feature:whitelist-v2:api"))
-
-    testImplementation(libs.kotlinx.coroutine.core)
 }

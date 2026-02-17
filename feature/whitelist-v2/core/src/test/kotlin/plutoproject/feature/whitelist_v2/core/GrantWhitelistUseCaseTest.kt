@@ -1,6 +1,6 @@
 package plutoproject.feature.whitelist_v2.core
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -13,7 +13,7 @@ import java.time.Instant
 
 class GrantWhitelistUseCaseTest {
     @Test
-    fun `should return false when already active`() = runBlocking {
+    fun `should return false when already active`() = runTest {
         val clock = fixedClock("2026-02-07T00:00:00Z")
         val uid = dummyUuid(1)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
@@ -49,7 +49,7 @@ class GrantWhitelistUseCaseTest {
     }
 
     @Test
-    fun `should reactivate revoked record and keep createdAt`() = runBlocking {
+    fun `should reactivate revoked record and keep createdAt`() = runTest {
         val clock = fixedClock("2026-02-07T00:00:00Z")
         val uid = dummyUuid(2)
         val whitelistRepo = InMemoryWhitelistRecordRepository(

@@ -1,6 +1,6 @@
 package plutoproject.feature.whitelist_v2.core
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class CreateVisitorRecordUseCaseTest {
     @Test
-    fun `should persist record and return it`() = runBlocking {
+    fun `should persist record and return it`() = runTest {
         val clock = fixedClock("2026-02-07T00:00:00Z")
         val visitorRepo = InMemoryVisitorRecordRepository()
         val useCase = CreateVisitorRecordUseCase(visitorRepo, clock)

@@ -1,6 +1,6 @@
 package plutoproject.feature.whitelist_v2.core
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -11,7 +11,7 @@ import java.time.Instant
 
 class RevokeWhitelistUseCaseTest {
     @Test
-    fun `should set revocation fields when record is active`() = runBlocking {
+    fun `should set revocation fields when record is active`() = runTest {
         val clock = fixedClock("2026-02-07T12:00:00Z")
         val uid = dummyUuid(3)
         val whitelistRepo = InMemoryWhitelistRecordRepository(
