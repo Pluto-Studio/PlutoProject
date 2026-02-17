@@ -16,4 +16,12 @@ dependencies {
 
     api(project(":framework-paper-api"))
     api(project(":feature-paper-api"))
+
+    ksp(projects.frameworkCommon)
+    // KSP Processor 需要
+    ksp(libs.kotlinx.serialization)
+}
+
+ksp {
+    arg("feature.moduleId", project.path.replace(":", "_"))
 }

@@ -16,9 +16,11 @@ import plutoproject.framework.common.api.feature.metadata.DependencyMetadata
 import java.io.OutputStreamWriter
 
 private const val ANNOTATION_CLASS_NAME = "plutoproject.framework.common.api.feature.annotation.Feature"
+private const val KSP_OPTION_MODULE_ID = "feature.moduleId"
 
 class FeatureSymbolProcessor(
-    private val codeGenerator: CodeGenerator
+    private val codeGenerator: CodeGenerator,
+    private val options: Map<String, String>,
 ) : SymbolProcessor {
     private val features = mutableMapOf<Platform, MutableList<FeatureMetadata>>()
 
@@ -84,19 +86,50 @@ class FeatureSymbolProcessor(
     }
 
     override fun finish() {
-        features.forEach { (platform, platformFeatures) ->
-            generateJsonFile(platform, platformFeatures)
+        if (features.isEmpty()) return
+
+        val moduleId = options[KSP_OPTION_MODULE_ID]?.trim().orEmpty()
+        check(moduleId.isNotEmpty()) {
+            "Missing KSP option '$KSP_OPTION_MODULE_ID'. Add in build.gradle.kts: ksp { arg(\"$KSP_OPTION_MODULE_ID\", project.path.replace(\":\", \"_\")) }"
         }
+
+        check(features.size == 1) {
+            val platforms = features.keys.joinToString(", ") { it.name }
+            "A single Gradle module must only contain features for one platform. Found: $platforms (moduleId=$moduleId)"
+        }
+
+        val (platform, platformFeatures) = features.entries.single()
+        generateJsonFile(platform, moduleId, platformFeatures)
     }
 
-    private fun generateJsonFile(platform: Platform, features: List<FeatureMetadata>) {
-        val json = Json.encodeToString(features)
-        val file = codeGenerator.createNewFile(
-            dependencies = Dependencies(true),
-            packageName = "",
-            fileName = platform.platformManifestFileName,
-            extensionName = "json"
-        )
-        OutputStreamWriter(file, "UTF-8").use { it.write(json) }
+    private fun generateJsonFile(platform: Platform, moduleId: String, features: List<FeatureMetadata>) {
+        val platformDir = when (platform) {
+            Platform.PAPER -> "paper"
+            Platform.VELOCITY -> "velocity"
+        }
+
+        val outputPath = "META-INF/plutoproject/features/$platformDir/$moduleId"
+        val json = Json.encodeToString(features.sortedBy { it.id })
+
+        val file = try {
+            // KSP 2.x
+            val method = codeGenerator::class.java.methods.firstOrNull {
+                it.name == "createNewFileByPath" &&
+                    it.parameterTypes.contentEquals(arrayOf(Dependencies::class.java, String::class.java, String::class.java))
+            } ?: error("createNewFileByPath not found")
+
+            @Suppress("UNCHECKED_CAST")
+            method.invoke(codeGenerator, Dependencies(true), outputPath, "json") as java.io.OutputStream
+        } catch (_: Throwable) {
+            // Fallback: some KSP versions allow path separators in fileName
+            codeGenerator.createNewFile(
+                dependencies = Dependencies(true),
+                packageName = "",
+                fileName = outputPath,
+                extensionName = "json"
+            )
+        }
+
+        OutputStreamWriter(file, Charsets.UTF_8).use { it.write(json) }
     }
 }

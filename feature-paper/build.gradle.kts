@@ -10,3 +10,7 @@ dependencies {
     // KSP Processor 需要
     ksp(libs.kotlinx.serialization)
 }
+
+ksp {
+    arg("feature.moduleId", project.path.replace(":", "_"))
+}
