@@ -44,7 +44,7 @@ Guidance for coding agents (LLMs) in this repo; follow to keep changes consisten
   - External/platform ops via ports (`XXXPort`) or repositories (`XXXRepository`), implemented in `adapter`/`infra` modules.
   - DB repository interfaces accept Domain objects; map Domain <-> DB models inside repo impl (e.g., `MongoMappers.kt`).
   - Use explicit result types for multi-outcome use cases (no `Boolean` collapse).
-  - Avoid platform/infra side effects in core unless required for "complete" business behavior; adapters react to core results.
+  - Avoid platform/infra side effects in core unless required for "complete" business behavior (e.g., deduct currency, teleport player); adapters react to core results.
   - Designed to be unit-testable; write tests.
 - `infra-mongo`:
   - Persisted models + repo implementations live here.
