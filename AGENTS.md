@@ -1,7 +1,5 @@
 # AGENTS.md
 
-Guidance for coding agents (LLMs) in this repo; follow to keep changes consistent, testable, and review-friendly.
-
 ## Overview
 
 - PlutoProject Minecraft server core plugin; supports Paper + Velocity.
@@ -65,25 +63,6 @@ Guidance for coding agents (LLMs) in this repo; follow to keep changes consisten
   - Adapters include platform entrypoints (events/commands) and API implementations.
   - `adapter-common` cross-platform; `adapter-paper` Paper entrypoints; `adapter-velocity` Velocity entrypoints.
   - Dual-platform features are often not "same logic twice" (proxy <-> backend comms); expect platform-specific responsibilities.
-
-### Protected Directories & Files
-
-Never edit these unless explicitly instructed:
-
-- `.github/`
-- `.kotlin/`
-- `.idea/`
-- `.gradle/`
-- `.gitignore`
-- `build/`
-- `LICENSE`
-- `README.md`
-- `AGENTS.md` (this file)
-- `gradle.properties`
-- `gradlew`
-- `gradlew.bat`
-
-Creating new source files under Gradle module `feature/` or `framework-*/` is allowed and preferred over editing unrelated modules.
 
 ## Useful Commands
 
