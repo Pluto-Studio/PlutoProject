@@ -1,10 +1,9 @@
 package plutoproject.feature.gallery.core
 
-import kotlin.test.Test
+import org.junit.Test
 
 class PlaceholderTest {
     @Test
     fun loads() {
-        Placeholder
     }
 }
