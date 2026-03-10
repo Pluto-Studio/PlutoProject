@@ -39,17 +39,18 @@ class TilePool(
      * 每个 Tile Data 的布局（按字段顺序）：
      *
      * ```text
-     * [paletteSize: 1 byte]
-     * [paletteBytes: paletteSize bytes] // 每个 byte 是一个原版 Map Color
+     * [paletteSize: 1 byte] // 0 表示 256
+     * [paletteBytes: effectivePaletteSize bytes] // 每个 byte 是一个原版 Map Color
      * [segmentBytes: 2 bytes, unsigned, little-endian]
      * [segments: segmentBytes bytes]
      * ```
      *
-     * `paletteSize` 决定每个像素的 palette index 的位宽（bpp, bits per pixel index）：
+     * `effectivePaletteSize` 决定每个像素的 palette index 的位宽（bpp, bits per pixel index）：
      *
      * ```text
-     * bpp = ceil(log2(paletteSize))
-     * paletteSize == 1 -> bpp = 0 (整块 tile 都是 palette[0])
+     * effectivePaletteSize = (paletteSize == 0 ? 256 : paletteSize)
+     * bpp = ceil(log2(effectivePaletteSize))
+     * effectivePaletteSize == 1 -> bpp = 0 (整块 tile 都是 palette[0])
      * ```
      *
      * `segments` 用来表示 128*128=16384 个像素的 palette index，采用「control + payload」的分段压缩流：

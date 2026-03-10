@@ -22,7 +22,7 @@
 
 - [x] Milestone 0：核心类型与契约
 - [x] Milestone 1：MapColor 调色板与 RGB565 查表
-- [ ] Milestone 2：TilePool 编码/解码工具
+- [x] Milestone 2：TilePool 编码/解码工具
 - [ ] Milestone 3：TilePoolBuilder + Dedup 阶段
 - [ ] Milestone 4：几何阶段（Reposition + Scale）
 - [ ] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
@@ -46,10 +46,10 @@
 
 ### Milestone 2：TilePool 编码/解码工具
 
-- [ ] 实现 `TileEncoder`：`ByteArray(16384)` mapColor -> TilePool tile bytes（palette + segmentBytes + segments）
-- [ ] 实现 `TileDecoder`：TilePool tile bytes -> `ByteArray(16384)`（用于测试/必要时 dedup 碰撞验证）
-- [ ] 边界处理：`paletteSize==0 => 256`；`paletteSize==1 => bpp==0 => segments 可为空`；`segmentBytes` 为 U16 little-endian
-- [ ] 测试：encode->decode 字节级一致；覆盖 paletteSize `1/2/16/255/256` 与 run/literal 组合
+- [x] 实现 `encodeTile`：`ByteArray(16384)` mapColor -> TilePool tile bytes（palette + segmentBytes + segments）
+- [x] 实现 `decodeTile`：TilePool tile bytes -> `ByteArray(16384)`（用于测试/必要时 dedup 碰撞验证）
+- [x] 边界处理：`paletteSize==0 => 256`；`paletteSize==1 => bpp==0 => segments 可为空`；`segmentBytes` 为 U16 little-endian
+- [x] 测试：encode->decode 字节级一致；覆盖 paletteSize `1/2/16/255/256` 与 run/literal 组合
 
 ### Milestone 3：TilePoolBuilder + Dedup 阶段
 
