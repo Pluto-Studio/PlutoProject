@@ -16,6 +16,7 @@ gremlin = "0.0.6"
 ksp = "2.3.5"
 junit = "5.11.4"
 testcontainers = "1.20.4"
+hash4j = "0.30.0"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-rc3" }
@@ -61,6 +62,7 @@ guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-20260131.074812-13" }
+hash4j = { module = "com.dynatrace.hash4j:hash4j", version.ref = "hash4j" }
 
 # Test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }

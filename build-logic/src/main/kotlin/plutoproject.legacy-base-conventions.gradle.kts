@@ -30,6 +30,7 @@ dependencies {
         downloadIfRequired(libs.aedile)
         downloadIfRequired(libs.guava)
         downloadIfRequired(libs.okio)
+        downloadIfRequired(libs.hash4j)
         downloadIfRequired(libs.charonflow)
     }
 }

@@ -23,7 +23,7 @@
 - [x] Milestone 0：核心类型与契约
 - [x] Milestone 1：MapColor 调色板与 RGB565 查表
 - [x] Milestone 2：TilePool 编码/解码工具
-- [ ] Milestone 3：TilePoolBuilder + Dedup 阶段
+- [x] Milestone 3：TilePoolBuilder + Dedup 阶段
 - [ ] Milestone 4：几何阶段（Reposition + Scale）
 - [ ] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 - [ ] Milestone 6：TileSplit（128x128）与静态渲染贯通
@@ -53,14 +53,14 @@
 
 ### Milestone 3：TilePoolBuilder + Dedup 阶段
 
-- [ ] 引入依赖 `com.dynatrace.hash4j:hash4j`（通过 `gradle/libs.versions.toml` 版本目录管理）
-- [ ] 实现 `TilePoolBuilder`：追加 tile bytes，维护 `offsets/blob`，`build(): TilePool`
-- [ ] 实现 `TileDeduper`：
+- [x] 引入依赖 `com.dynatrace.hash4j:hash4j`（通过 `gradle/libs.versions.toml` 版本目录管理）
+- [x] 实现 `TilePoolBuilder`：追加 tile bytes，维护 `offsets/blob`，`build(): TilePool`
+- [x] 实现 `TileDeduper`：
   - 输入：tile 原始 mapColor（来自 splitter 的 work buffer/view）
   - 输出：tilePoolIndex（U16，写入 `ShortArray tileIndexes`）
   - 约束：unique tiles > 65536 => `Status.UNIQUE_TILE_OVERFLOW`
-- [ ] Hash 策略：使用 hash4j `XXH3_64bits` 对 `ByteArray(16384)` tile mapColor 计算 `Long` hash；碰撞时用比较/解码校验保证正确性
-- [ ] 测试：重复 tile 复用 index；可控碰撞分支仍正确；溢出错误
+- [x] Hash 策略：使用 hash4j `XXH3_64bits` 对 `ByteArray(16384)` tile mapColor 计算 `Long` hash；碰撞时用比较/解码校验保证正确性
+- [x] 测试：重复 tile 复用 index；可控碰撞分支仍正确；溢出错误
 
 ### Milestone 4：几何阶段（Reposition + Scale）
 
