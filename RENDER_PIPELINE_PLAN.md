@@ -18,12 +18,24 @@
 
 ## 里程碑与分点计划
 
+### TODO（当前跟踪）
+
+- [x] Milestone 0：核心类型与契约
+- [ ] Milestone 1：MapColor 调色板与 RGB565 查表
+- [ ] Milestone 2：TilePool 编码/解码工具
+- [ ] Milestone 3：TilePoolBuilder + Dedup 阶段
+- [ ] Milestone 4：几何阶段（Reposition + Scale）
+- [ ] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
+- [ ] Milestone 6：TileSplit（128x128）与静态渲染贯通
+- [ ] Milestone 7：FrameSampler + 动图渲染贯通
+- [ ] Milestone 8：性能与内存收敛
+
 ### Milestone 0：核心类型与契约
 
-- [ ] 在 `feature/gallery/core` 定义输入/输出/配置类型：`RgbaImage8888`、`RenderProfile`、`RenderResult/Status`
-- [ ] 定义 UseCases：`RenderStaticImageUseCase`、`RenderAnimatedImageUseCase`（`suspend fun execute(...)`）
-- [ ] 明确并写入 KDoc：像素 row-major；tile 顺序左->右/上->下；Animated 帧拼接顺序
-- [ ] 单元测试：数组长度与溢出检查（tileCount/frameCount/tileIndexes 长度），Status 分支覆盖
+- [x] 在 `feature/gallery/core` 定义输入/输出/配置类型：`RgbaImage8888`、`RenderProfile`、`RenderResult/Status`
+- [x] 定义 UseCases：`RenderStaticImageUseCase`、`RenderAnimatedImageUseCase`（`suspend fun execute(...)`）
+- [x] 明确并写入 KDoc：像素 row-major；tile 顺序左->右/上->下；Animated 帧拼接顺序
+- [x] 单元测试：数组长度与溢出检查（tileCount/frameCount/tileIndexes 长度），Status 分支覆盖
 
 ### Milestone 1：MapColor 调色板与 RGB565 查表
 
