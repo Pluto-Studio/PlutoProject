@@ -21,7 +21,7 @@
 ### TODO（当前跟踪）
 
 - [x] Milestone 0：核心类型与契约
-- [ ] Milestone 1：MapColor 调色板与 RGB565 查表
+- [x] Milestone 1：MapColor 调色板与 RGB565 查表
 - [ ] Milestone 2：TilePool 编码/解码工具
 - [ ] Milestone 3：TilePoolBuilder + Dedup 阶段
 - [ ] Milestone 4：几何阶段（Reposition + Scale）
@@ -39,10 +39,10 @@
 
 ### Milestone 1：MapColor 调色板与 RGB565 查表
 
-- [ ] 在 core 实现 `MapColorPalette`（`candidates: ByteArray`、`rgbOfMapColor: IntArray(256)`）
-- [ ] 实现调色板来源：只内置每个 baseColor 的 HIGH RGB（62 个），用固定亮度系数推导 4 个 modifier（与 `MINECRAFT_MAP_COLORS.md` 一致）
-- [ ] 实现 `calcRgb565ToMapColor(): ByteArray(65536)`；tie-break 规则固定（距离相等取 byte 更小）
-- [ ] 测试：查表输出永不为 `1..3`；构建稳定可复现；抽样点映射结果稳定
+- [x] 在 core 实现 `MapColorPalette`（`candidates: ByteArray`、`rgbOfMapColor: IntArray(256)`）
+- [x] 实现调色板来源：只内置每个 baseColor 的 HIGH RGB（62 个），用固定亮度系数推导 4 个 modifier（与 `MINECRAFT_MAP_COLORS.md` 一致）
+- [x] 实现 `calcRgb565ToMapColor(): ByteArray(65536)`；tie-break 规则固定（距离相等取 byte 更小）
+- [x] 测试：查表输出永不为 `1..3`；构建稳定可复现；抽样点映射结果稳定
 
 ### Milestone 2：TilePool 编码/解码工具
 
@@ -88,7 +88,7 @@
 ### Milestone 7：FrameSampler + 动图渲染贯通
 
 - [ ] 定义 `FrameSampler`（挂在 `RenderProfile`）：输入 GIF delays（1/100s）并应用 `minDelayMillis=20`，输出等间隔输出帧序列 `srcFrameIndexByOutFrame`
-- [ ] 默认采样：`repeat = ceil(effectiveDelayMillis / quantumMillis)`，`quantumMillis` 默认 20；可加 `maxOutFrameCount` 保护
+- [ ] 默认采样：`repeat = ceil(effectiveDelayMillis / frameSampleIntervalMillis)`，`frameSampleIntervalMillis` 默认 20；可加 `maxOutFrameCount` 保护
 - [ ] `durationMillis = sum(effectiveDelayMillis)`
 - [ ] 实现 `RenderAnimatedImageUseCase`：
   - 对每个“用到的 source frame”只渲染一次（memoize），repeat/outFrame 直接复制 tileIndexes 段
