@@ -8,6 +8,7 @@ import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.DefaultAlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
 import plutoproject.feature.gallery.core.render.mapcolor.newDefaultMapColorQuantizer
+import plutoproject.feature.gallery.core.render.tile.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.TileSplitter
 
 /**
@@ -30,6 +31,7 @@ internal class DefaultStaticImageRenderer(
         val scaledImage = scalerOf(request.profile.scaleAlgorithm).scale(request.sourceImage, transform)
         val composited = alphaCompositor.composite(scaledImage, request.profile.alphaBackgroundColorRgb)
         val mapColorPixels = mapColorQuantizer.quantize(composited, request.profile.ditherAlgorithm)
+        val deduper = TileDeduper()
 
         val splitResult = TileSplitter.splitAndDedupe(
             mapColorPixels = mapColorPixels,
@@ -37,12 +39,18 @@ internal class DefaultStaticImageRenderer(
             height = targetResolution.height,
             mapXBlocks = request.mapXBlocks,
             mapYBlocks = request.mapYBlocks,
+            deduper = deduper,
         )
 
         if (splitResult.status != RenderStatus.SUCCEED) {
             RenderResult.failed(splitResult.status)
         } else {
-            RenderResult.succeed(splitResult.imageData!!)
+            RenderResult.succeed(
+                StaticImageData(
+                    tilePool = deduper.buildTilePool(),
+                    tileIndexes = splitResult.tileIndexes!!,
+                )
+            )
         }
     } catch (_: Exception) {
         RenderResult.failed(RenderStatus.PIPELINE_FAILED)

@@ -1,11 +1,10 @@
 package plutoproject.feature.gallery.core.render.tile
 
-import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.render.RenderStatus
 
 internal data class TileSplitAndDedupeResult(
     val status: RenderStatus,
-    val imageData: StaticImageData?,
+    val tileIndexes: ShortArray?,
 )
 
 /**
@@ -14,12 +13,24 @@ internal data class TileSplitAndDedupeResult(
  * tile 顺序约定：从左到右、从上到下。
  */
 internal object TileSplitter {
+    /**
+     * 将整图 mapColor 像素切分为 128x128 tile，并写入传入的 [deduper]。
+     *
+     * 返回值说明：
+     * - [TileSplitAndDedupeResult.tileIndexes] 为当前输入图对应的 tilePool 索引矩阵
+     * - 这些索引仅在“同一个 [deduper] 最终 `buildTilePool()` 的结果”中有意义
+     *
+     * 典型用途：
+     * - 静态图：调用方创建一个 deduper，调用本函数一次，再 `buildTilePool()`
+     * - 动图：跨帧复用同一个 deduper，调用本函数多次，实现跨帧 dedup
+     */
     fun splitAndDedupe(
         mapColorPixels: ByteArray,
         width: Int,
         height: Int,
         mapXBlocks: Int,
         mapYBlocks: Int,
+        deduper: TileDeduper,
     ): TileSplitAndDedupeResult {
         require(width == mapXBlocks * TILE_SIDE_PIXELS) {
             "width mismatch: width=$width, mapXBlocks=$mapXBlocks"
@@ -34,7 +45,6 @@ internal object TileSplitter {
         val tileCount = mapXBlocks * mapYBlocks
         val tileIndexes = ShortArray(tileCount)
         val tileWorkBuffer = ByteArray(TILE_PIXEL_COUNT)
-        val deduper = TileDeduper()
 
         var tileLinearIndex = 0
         var tileY = 0
@@ -57,7 +67,7 @@ internal object TileSplitter {
                     TileDedupeResult.UniqueTileOverflow -> {
                         return TileSplitAndDedupeResult(
                             status = RenderStatus.UNIQUE_TILE_OVERFLOW,
-                            imageData = null,
+                            tileIndexes = null,
                         )
                     }
                 }
@@ -70,10 +80,7 @@ internal object TileSplitter {
 
         return TileSplitAndDedupeResult(
             status = RenderStatus.SUCCEED,
-            imageData = StaticImageData(
-                tilePool = deduper.buildTilePool(),
-                tileIndexes = tileIndexes,
-            ),
+            tileIndexes = tileIndexes,
         )
     }
 }

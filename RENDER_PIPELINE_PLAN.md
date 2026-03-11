@@ -27,7 +27,7 @@
 - [x] Milestone 4：几何阶段（Reposition + Scale）
 - [x] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 - [x] Milestone 6：TileSplit（128x128）与静态渲染贯通
-- [ ] Milestone 7：FrameSampler + 动图渲染贯通
+- [x] Milestone 7：FrameSampler + 动图渲染贯通
 - [ ] Milestone 8：性能与内存收敛
 
 ### Milestone 0：核心类型与契约
@@ -87,14 +87,14 @@
 
 ### Milestone 7：FrameSampler + 动图渲染贯通
 
-- [ ] 定义 `FrameSampler`（挂在 `RenderProfile`）：输入 GIF delays（1/100s）并应用 `minDelayMillis=20`，输出等间隔输出帧序列 `srcFrameIndexByOutFrame`
-- [ ] 默认采样：`repeat = ceil(effectiveDelayMillis / frameSampleIntervalMillis)`，`frameSampleIntervalMillis` 默认 20；可加 `maxOutFrameCount` 保护
-- [ ] `durationMillis = sum(effectiveDelayMillis)`
-- [ ] 实现 `RenderAnimatedImageUseCase`：
+- [x] 定义 `FrameSampler`（挂在 `RenderProfile`）：输入 GIF delays（1/100s）并应用 `minDelayMillis=20`，输出等间隔输出帧序列 `outToSourceFrameIndex`
+- [x] 默认采样：`repeat = ceil(effectiveDelayMillis / frameSampleIntervalMillis)`，`frameSampleIntervalMillis` 默认 20；可加 `maxOutFrameCount` 保护
+- [x] `durationMillis = sum(effectiveDelayMillis)`
+- [x] 实现 `RenderAnimatedImageUseCase`：
   - 对每个“用到的 source frame”只渲染一次（memoize），repeat/outFrame 直接复制 tileIndexes 段
   - 复用同一个 `TilePoolBuilder` 做跨帧 dedup
   - 产出 `AnimatedImageData(frameCount, durationMillis, tilePool, tileIndexes)`
-- [ ] 测试：repeat 生效（长 delay 帧产生多个 out frame 且 tileIndexes 相同）；跨帧 tile 复用；溢出报错
+- [x] 测试：repeat 生效（长 delay 帧产生多个 out frame 且 tileIndexes 相同）；跨帧 tile 复用；溢出报错
 
 ### Milestone 8：性能与内存收敛
 
