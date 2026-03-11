@@ -4,6 +4,16 @@ import kotlin.math.max
 import kotlin.math.min
 import plutoproject.feature.gallery.core.render.RepositionMode
 
+/**
+ * 目标像素坐标 -> 源图连续坐标 的变换参数。
+ *
+ * [sourceStartX]/[sourceStartY] + [sourceSpanWidth]/[sourceSpanHeight]
+ * 可理解为“采样窗口”：目标画布会从源图这个窗口取色。
+ *
+ * - COVER：窗口在至少一个轴上小于源图（等比铺满后裁边）
+ * - CONTAIN：窗口在至少一个轴上大于源图（等比完整显示后留透明边）
+ * - STRETCH：窗口等于源图（无裁剪无留边，但可能变形）
+ */
 internal data class DestToSourceTransform(
     val destinationWidth: Int,
     val destinationHeight: Int,
@@ -35,6 +45,12 @@ internal data class DestToSourceTransform(
 }
 
 internal fun interface Repositioner {
+    /**
+     * 计算采样窗口（dest -> src 变换）。
+     *
+     * 注意这里返回的是“目标到源”的反向映射参数，而不是“源到目标”映射表。
+     * 这样后续按目标像素逐个反查采样时，不会出现空洞像素。
+     */
     fun reposition(
         sourceWidth: Int,
         sourceHeight: Int,

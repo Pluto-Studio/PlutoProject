@@ -8,8 +8,11 @@ import plutoproject.feature.gallery.core.render.RgbaImage8888
 
 internal object BilinearScaler : Scaler {
     override fun scale(source: RgbaImage8888, transform: DestToSourceTransform): RgbaImage8888 {
+        // 先选择一个合适的 mipmap 层，避免大幅缩小时直接双线性带来的混叠。
         val selectedLevel = selectMipmapLevel(source, transform)
 
+        // 目标坐标域是 [0, destinationWidth) x [0, destinationHeight)。
+        // 对该网格中的每个像素点都进行一次反向采样，确保目标图被完整填充。
         val destinationPixels = IntArray(transform.destinationWidth * transform.destinationHeight)
         var outputIndex = 0
         var destinationY = 0
@@ -75,6 +78,7 @@ private fun selectMipmapLevel(
             currentSpanHeight > transform.destinationHeight * 2.0) &&
         (currentImage.width > 1 || currentImage.height > 1)
     ) {
+        // 每次逐半下采样，同时把采样窗口映射到新层级坐标系。
         val nextImage = halfDownsample(currentImage)
         if (nextImage.width == currentImage.width && nextImage.height == currentImage.height) {
             break
@@ -180,6 +184,7 @@ private fun bilinearChannel(
 }
 
 private fun pixelOrTransparent(source: RgbaImage8888, x: Int, y: Int): Int {
+    // CONTAIN 场景下采样窗口可能超出源图；越界像素按透明处理。
     if (x !in 0 until source.width || y !in 0 until source.height) {
         return 0x00000000
     }

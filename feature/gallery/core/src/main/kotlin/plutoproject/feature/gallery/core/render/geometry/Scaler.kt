@@ -10,6 +10,9 @@ internal data class TargetResolution(
     val height: Int,
 )
 
+/**
+ * 目标渲染分辨率：每个地图方块固定 128x128 像素。
+ */
 internal fun calcTargetResolution(mapXBlocks: Int, mapYBlocks: Int): TargetResolution {
     require(mapXBlocks > 0) { "mapXBlocks must be > 0" }
     require(mapYBlocks > 0) { "mapYBlocks must be > 0" }
@@ -30,6 +33,9 @@ internal fun calcTargetResolution(mapXBlocks: Int, mapYBlocks: Int): TargetResol
 }
 
 internal fun interface Scaler {
+    /**
+     * 按 dest->src 变换生成目标 RGBA 图。
+     */
     fun scale(source: RgbaImage8888, transform: DestToSourceTransform): RgbaImage8888
 }
 
