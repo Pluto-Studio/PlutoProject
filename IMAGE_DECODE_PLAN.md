@@ -69,13 +69,13 @@
 
 ### Milestone 0：契约与格式识别
 
-- [ ] 定义 `DecodeImageRequest/Result/Status/Constraints` 与 `DecodedImage`
-- [ ] 实现 `sniffFormat(bytes, fileNameHint)`（magic 优先）
+- [x] 定义 `DecodeImageRequest/Result/Status/Constraints` 与 `DecodedImage`
+- [x] 实现 `sniffFormat(bytes, fileNameHint)`（magic 优先）
   - PNG: `89 50 4E 47 0D 0A 1A 0A`
   - JPEG: `FF D8 FF`
   - GIF: `GIF87a` / `GIF89a`
   - WEBP: `RIFF....WEBP`（至少校验 RIFF + WEBP 标记）
-- [ ] `DecodeImageUseCase`
+- [x] `DecodeImageUseCase`
   - 入口约束校验：`maxBytes/maxPixels/maxFrames` + 溢出检查
   - `when(format)` 分发到对应 decoder
   - cancellation：阶段边界 `ensureActive()`；`CancellationException` 直接 rethrow
