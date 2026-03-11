@@ -24,6 +24,8 @@ internal class DefaultAnimatedImageRenderer(
     private val logger: Logger = Logger.getLogger(DefaultAnimatedImageRenderer::class.java.name),
 ) : AnimatedImageRenderer {
     override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> = try {
+        checkpoint()
+
         val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
         checkpoint()
 
@@ -94,6 +96,8 @@ internal class DefaultAnimatedImageRenderer(
         targetResolution: TargetResolution,
         deduper: TileDeduper,
     ): ShortArray {
+        checkpoint()
+
         val sourceImage = request.sourceFrames[sourceFrameIndex].image
         checkpoint()
 

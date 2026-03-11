@@ -25,6 +25,8 @@ internal class DefaultStaticImageRenderer(
     private val logger: Logger = Logger.getLogger(DefaultStaticImageRenderer::class.java.name),
 ) : StaticImageRenderer {
     override suspend fun render(request: RenderStaticImageRequest): RenderResult<StaticImageData> = try {
+        checkpoint()
+
         val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
         checkpoint()
 
