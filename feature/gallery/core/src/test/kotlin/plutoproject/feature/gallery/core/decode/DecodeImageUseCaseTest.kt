@@ -55,19 +55,19 @@ class DecodeImageUseCaseTest {
     @Test
     fun `should choose decoder by detected format`() = runTest {
         var pngInvoked = false
-        var jpgInvoked = false
+        var gifInvoked = false
         val expected = DecodedImage.Static(sampleRgbaImage(width = 1, height = 1))
         val useCase = DecodeImageUseCase(
             pngDecoder = { _, _ ->
                 pngInvoked = true
                 DecodeResult.succeed(expected)
             },
-            jpgDecoder = { _, _ ->
-                jpgInvoked = true
+            jpgDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
+            webpDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
+            gifDecoder = { _, _ ->
+                gifInvoked = true
                 DecodeResult.failed(DecodeStatus.DECODE_FAILED)
             },
-            webpDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
-            gifDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = pngMagicBytes()))
@@ -76,7 +76,7 @@ class DecodeImageUseCaseTest {
         assertTrue(result.data != null)
         assertSame(expected, result.data)
         assertTrue(pngInvoked)
-        assertFalse(jpgInvoked)
+        assertFalse(gifInvoked)
     }
 
     @Test

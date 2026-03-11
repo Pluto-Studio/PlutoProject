@@ -17,7 +17,7 @@
   - adapter 负责把 `Path/InputStream/上传数据` 读成 `ByteArray`，并可在 adapter 做更严格的 `maxBytes` 限制。
 - UseCase 固定分发骨架：先识别格式（magic bytes 优先），再调用对应 decoder。
 - decoder 注入写死（4 个参数）：`pngDecoder/jpgDecoder/webpDecoder/gifDecoder`。
-  - 当前格式数量有限且未来大概率不扩展，写死分支可读性最好。
+  - 当前默认实现中，`png/jpg/webp` 都可指向同一个 `StaticImageDecoder`，同时保留按格式自定义扩展点。
   - 若未来扩展格式，再考虑 list/registry。
 - 动图与静态图输出不同，但不需要两套 decoder 接口：
   - 统一输出 `DecodedImage`（sealed）：`Static` / `Animated`。
@@ -83,11 +83,10 @@
 
 ### Milestone 1：静态图 decoder（PNG/JPEG/WEBP）
 
-- [ ] `PngDecoder/JpegDecoder/WebpDecoder`（内部实现可复用 ImageIO 读取逻辑）
+- [x] `StaticImageDecoder`（统一支持 PNG/JPEG/WEBP，内部复用 ImageIO 读取逻辑）
   - `ImageIO.createImageInputStream(ByteArrayInputStream(bytes))`
   - 读 `BufferedImage`，转换为 `RgbaImage8888`
-    - 快路径：`TYPE_INT_ARGB` 且 `DataBufferInt` -> 直接获取像素数组（必要时 copy）
-    - fallback：`getRGB(0, 0, w, h, dst, 0, w)`
+    - 第一版统一走像素收敛：`getRGB(0, 0, w, h, dst, 0, w)`（保持色彩/像素语义一致）
   - 校验：`w/h > 0`、`w*h` 溢出、`maxBytes/maxPixels` 超限
 
 ### Milestone 2：GIF decoder（正确合成帧）
@@ -130,13 +129,11 @@
   - `DecodeImageUseCase.kt`
   - `DecodeModels.kt`（request/result/status/constraints/DecodedImage）
   - `ImageFormatSniffer.kt`
-  - `decoder/PngDecoder.kt`
-  - `decoder/JpegDecoder.kt`
-  - `decoder/WebpDecoder.kt`
+  - `decoder/StaticImageDecoder.kt`
   - `decoder/GifDecoder.kt`
 - `feature/gallery/core/src/test/kotlin/plutoproject/feature/gallery/core/decode/`
   - `ImageFormatSnifferTest.kt`
-  - `PngJpegDecoderTest.kt`
+  - `StaticImageDecoderTest.kt`
   - `WebpDecoderTest.kt`
   - `GifDecoderTest.kt`
 
