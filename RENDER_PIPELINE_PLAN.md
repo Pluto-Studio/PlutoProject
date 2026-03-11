@@ -24,7 +24,7 @@
 - [x] Milestone 1：MapColor 调色板与 RGB565 查表
 - [x] Milestone 2：TilePool 编码/解码工具
 - [x] Milestone 3：TilePoolBuilder + Dedup 阶段
-- [ ] Milestone 4：几何阶段（Reposition + Scale）
+- [x] Milestone 4：几何阶段（Reposition + Scale）
 - [ ] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 - [ ] Milestone 6：TileSplit（128x128）与静态渲染贯通
 - [ ] Milestone 7：FrameSampler + 动图渲染贯通
@@ -64,10 +64,10 @@
 
 ### Milestone 4：几何阶段（Reposition + Scale）
 
-- [ ] 定义 `Repositioner` 接口与 3 种策略：cover/contain/stretch（输出 dest->src transform 参数）
-- [ ] 定义 `Scaler` 接口：Bilinear（必做）；Lanczos（可选后置）；缩小采用逐半接近再收敛（mipmap）
-- [ ] 输出统一为目标分辨率：`width = mapXBlocks*128`、`height = mapYBlocks*128`，仍为 RGBA8888（`IntArray`）
-- [ ] 测试：cover/contain 的边界采样点、缩放后尺寸、极端宽高比不崩
+- [x] 定义 `Repositioner` 接口与 3 种策略：cover/contain/stretch（输出 dest->src transform 参数）
+- [x] 定义 `Scaler` 接口：Bilinear（必做）；Lanczos（可选后置）；缩小采用逐半接近再收敛（mipmap）
+- [x] 输出统一为目标分辨率：`width = mapXBlocks*128`、`height = mapYBlocks*128`，仍为 RGBA8888（`IntArray`）
+- [x] 测试：cover/contain 的边界采样点、缩放后尺寸、极端宽高比不崩
 
 ### Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 
