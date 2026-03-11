@@ -25,7 +25,7 @@
 - [x] Milestone 2：TilePool 编码/解码工具
 - [x] Milestone 3：TilePoolBuilder + Dedup 阶段
 - [x] Milestone 4：几何阶段（Reposition + Scale）
-- [ ] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
+- [x] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 - [ ] Milestone 6：TileSplit（128x128）与静态渲染贯通
 - [ ] Milestone 7：FrameSampler + 动图渲染贯通
 - [ ] Milestone 8：性能与内存收敛
@@ -71,13 +71,13 @@
 
 ### Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
 
-- [ ] 定义 `AlphaCompositor`：`alpha==0 -> transparent`；`alpha>0` 与背景色合成到 RGB（背景色在 `RenderProfile`）
-- [ ] 定义 `MapColorQuantizer`：输出 `ByteArray finalPixels`；内部支持策略：
+- [x] 定义 `AlphaCompositor`：`alpha==0 -> transparent`；`alpha>0` 与背景色合成到 RGB（背景色在 `RenderProfile`）
+- [x] 定义 `MapColorQuantizer`：输出 `ByteArray finalPixels`；内部支持策略：
   - None：直接查 `rgb565ToMapColor`
   - Ordered：Bayer 阈值矩阵扰动后查表
   - Floyd：误差扩散；每像素 quantize 得到 mapColor，再用 `rgbOfMapColor` 还原量化色计算误差；固定点实现，避免 float/GC
-- [ ] 约束：非透明像素永不输出 `0..3`；透明像素只输出 `0`
-- [ ] 测试：透明边缘合成；ordered/floyd 输出范围与确定性；floyd 按整图处理（不按 tile 并行）
+- [x] 约束：非透明像素永不输出 `0..3`；透明像素只输出 `0`
+- [x] 测试：透明边缘合成；ordered/floyd 输出范围与确定性；floyd 按整图处理（不按 tile 并行）
 
 ### Milestone 6：TileSplit（128x128）与静态渲染贯通
 

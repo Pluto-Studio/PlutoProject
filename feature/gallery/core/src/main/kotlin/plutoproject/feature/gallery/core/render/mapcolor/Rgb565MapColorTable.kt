@@ -55,6 +55,8 @@ internal fun rgb24ToRgb565(rgb24: Int): Int {
     val green = (rgb24 ushr 8) and 0xFF
     val blue = rgb24 and 0xFF
 
+    // RGB565 位宽：R5 + G6 + B5。
+    // 这里的量化用于“查表索引空间压缩”，不是最终显示格式。
     val red5 = red ushr 3
     val green6 = green ushr 2
     val blue5 = blue ushr 3
