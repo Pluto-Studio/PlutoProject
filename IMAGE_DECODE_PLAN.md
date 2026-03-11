@@ -91,8 +91,8 @@
 
 ### Milestone 2：GIF decoder（正确合成帧）
 
-- [ ] `GifDecoder` 输出 `DecodedImage.Animated(frames)`
-- [ ] 必须输出“时间线完整帧”：优化 GIF（只存 patch）也要合成
+- [x] `GifDecoder` 输出 `DecodedImage.Animated(frames)`
+- [x] 必须输出“时间线完整帧”：优化 GIF（只存 patch）也要合成
   - 读取逻辑屏幕尺寸（全图宽高）
   - 每帧 metadata：left/top/width/height、`delayTime`（centiseconds）、`disposalMethod`
   - 维护全尺寸 ARGB canvas（`IntArray`）
@@ -102,7 +102,7 @@
     - `restoreToBackgroundColor`: 将当前 patch 区域清为透明
     - `restoreToPrevious`: 回滚到绘制该帧前的快照（仅在需要时保存，避免每帧复制）
   - 每帧边界 checkpoint：`ensureActive()`
-- [ ] 约束：`maxFrames`、`maxPixels`（基于逻辑屏幕 `width*height`）
+- [x] 约束：`maxFrames`、`maxPixels`（基于逻辑屏幕 `width*height`）
 
 ### Milestone 3：依赖接入（TwelveMonkeys WebP）
 

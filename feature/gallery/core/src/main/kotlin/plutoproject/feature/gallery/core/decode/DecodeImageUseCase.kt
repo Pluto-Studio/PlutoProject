@@ -3,9 +3,9 @@ package plutoproject.feature.gallery.core.decode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import plutoproject.feature.gallery.core.decode.decoder.GifDecoder
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.decode.decoder.StaticImageDecoder
-import plutoproject.feature.gallery.core.decode.decoder.UnsupportedGifDecoder
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -13,7 +13,7 @@ class DecodeImageUseCase(
     private val pngDecoder: ImageDecoder = StaticImageDecoder,
     private val jpgDecoder: ImageDecoder = StaticImageDecoder,
     private val webpDecoder: ImageDecoder = StaticImageDecoder,
-    private val gifDecoder: ImageDecoder = UnsupportedGifDecoder,
+    private val gifDecoder: ImageDecoder = GifDecoder,
     private val logger: Logger = Logger.getLogger(DecodeImageUseCase::class.java.name),
 ) {
     suspend fun execute(request: DecodeImageRequest): DecodeResult<DecodedImage> = try {
