@@ -221,7 +221,10 @@ private fun drawPatch(
         val dstBase = y * canvasWidth
         for (x in clippedLeft until clippedRight) {
             val srcX = x - patchLeft
-            canvas[dstBase + x] = patchPixels[srcBase + srcX]
+            val srcPixel = patchPixels[srcBase + srcX]
+            if ((srcPixel ushr 24) != 0) {
+                canvas[dstBase + x] = srcPixel
+            }
         }
     }
 }
