@@ -26,7 +26,7 @@
 - [x] Milestone 3：TilePoolBuilder + Dedup 阶段
 - [x] Milestone 4：几何阶段（Reposition + Scale）
 - [x] Milestone 5：Alpha 处理 + MapColorQuantize（含抖动策略）
-- [ ] Milestone 6：TileSplit（128x128）与静态渲染贯通
+- [x] Milestone 6：TileSplit（128x128）与静态渲染贯通
 - [ ] Milestone 7：FrameSampler + 动图渲染贯通
 - [ ] Milestone 8：性能与内存收敛
 
@@ -81,9 +81,9 @@
 
 ### Milestone 6：TileSplit（128x128）与静态渲染贯通
 
-- [ ] 实现 `TileSplitter`：遍历 tile 顺序；用可复用 work buffer（避免 per-tile allocation）把 128x128 bytes 喂给 Deduper
-- [ ] 实现 `RenderStaticImageUseCase`：串起 Milestone 4/5/6 + dedup/builder，产出 `StaticImageData(tilePool, tileIndexes)`
-- [ ] 测试：tileIndexes 顺序/长度；同色大图应产出很小 tilePool；`mapXBlocks/mapYBlocks` 边界
+- [x] 实现 `TileSplitter`：遍历 tile 顺序；用可复用 work buffer（避免 per-tile allocation）把 128x128 bytes 喂给 Deduper
+- [x] 实现 `RenderStaticImageUseCase`：串起 Milestone 4/5/6 + dedup/builder，产出 `StaticImageData(tilePool, tileIndexes)`
+- [x] 测试：tileIndexes 顺序/长度；同色大图应产出很小 tilePool；`mapXBlocks/mapYBlocks` 边界
 
 ### Milestone 7：FrameSampler + 动图渲染贯通
 
