@@ -96,11 +96,58 @@
   - 产出 `AnimatedImageData(frameCount, durationMillis, tilePool, tileIndexes)`
 - [x] 测试：repeat 生效（长 delay 帧产生多个 out frame 且 tileIndexes 相同）；跨帧 tile 复用；溢出报错
 
-### Milestone 8：性能与内存收敛
+### Milestone 8：后续优化计划（暂不实施）
 
-- [ ] 引入 `RenderWorkspace`/scratch buffers：误差缓冲、行缓冲、tile work buffer、palette index map 等统一复用
-- [ ] 热路径避免装箱/集合：必要时用自定义 open-addressing map 替换 `HashMap`
-- [ ] 做一轮粗基准：典型尺寸（1x1、4x4、8x8）静态/动图渲染耗时与内存峰值记录
+- [ ] `OPT-01` Tile 编码（GC/CPU 热点）
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/tile/TileEncoder.kt`
+  - 现状：`encodeTile(...)` 每个 tile 都会分配 `IntArray(TILE_PIXEL_COUNT)`（16384 int ≈ 64KB），以及 `IntArray(256)`、`ByteArray(256)`、`BitWriter` 内部 buffer、`segments ByteArray`、最终 `tileData ByteArray`
+  - 影响：切块后每张图是 `mapXBlocks*mapYBlocks` 个 tile；动图每个“被采样到的源帧”也会跑一遍，GC 压力明显
+  - 优化方向：引入 per-render workspace，复用 palette 映射、literal/run 临时缓存、bit writer buffer；编码走“写入复用 buffer + 返回长度”模式；尽量避免整 tile 级 `pixelPaletteIndexes` 大数组
+
+- [ ] `OPT-02` MapColor 查表构建缓存（启动/首次渲染成本）
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/mapcolor/MapColorQuantizer.kt`
+  - 现状：`newDefaultMapColorQuantizer()` 每次会 `MapColorPalette.vanilla()` + `calcRgb565ToMapColor(...)`（65536 * candidates 距离比较）
+  - 影响：如果 renderer 不是单例复用，会重复做重活
+  - 优化方向：palette + table 做全局 lazy 单例/缓存（线程安全、仅构建一次）
+
+- [ ] `OPT-03` AlphaCompositor / Quantizer 中间大数组（峰值内存 + 分配）
+  - 位置：
+    - `feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/mapcolor/AlphaCompositor.kt`
+    - `feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/mapcolor/MapColorQuantizer.kt`
+  - 现状：每帧分配 `rgb24Pixels IntArray` + `transparentMask BooleanArray` + `mapColorPixels ByteArray`
+  - 优化方向：
+    - 轻量：workspace 复用这些数组
+    - 激进：将“alpha 合成 + 量化”融合为单 pass，直接从 `RgbaImage8888.pixels` 写 `ByteArray mapColorPixels`
+
+- [ ] `OPT-04` Floyd–Steinberg 误差缓冲复用
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/mapcolor/MapColorQuantizer.kt`
+  - 现状：每次 `quantizeFloydSteinberg` 分配 6 个 `IntArray(width+2)`
+  - 优化方向：放入 workspace，按最大宽度扩容复用（逐行 `fill(0)` 保持）
+
+- [ ] `OPT-05` FrameSampler 装箱/集合优化（中等）
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/FrameSampler.kt`
+  - 现状：使用 `ArrayList<Int>` 累积输出帧映射（发生装箱）
+  - 优化方向：两遍扫描先算 `outFrameCount` 再一次性分配 `IntArray`，或引入无装箱 `IntArrayBuilder`
+
+- [ ] `OPT-06` 几何缩放的 double/floor 计算优化（中等，偏 CPU）
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/geometry/BilinearScaler.kt`
+  - 现状：每像素执行 double 计算、`floor`、4 点采样与插值
+  - 优化方向：预计算每列 sourceX/每行 sourceY，增量步进替代重复除法，必要时自定义 `fastFloor`
+
+- [ ] `OPT-07` TileDeduper 容器优化（视 unique tile 数量）
+  - 位置：`feature/gallery/core/src/main/kotlin/plutoproject/feature/gallery/core/render/tile/TileDeduper.kt`
+  - 现状：`HashMap<Long, IntIndexBucket>` 会有 Long 装箱与节点对象开销
+  - 优化方向：必要时替换为 primitive long->bucket 的 open addressing map，或至少按预估 tile 数预设容量
+
+- [ ] `OPT-08` Profile/安全阈值（防极端输入打爆）
+  - 位置：`RenderProfile` / `FrameSampler` / Animated 渲染入口
+  - 现状：缺少 `maxOutFrameCount`、`maxDurationMillis` 等硬阈值
+  - 优化方向：增加可配置或固定阈值，并返回明确状态码，限制极端 GIF 带来的计算/内存消耗
+
+- [ ] `OPT-09` 基准与画像（验收基线）
+  - 位置：`feature/gallery/core` 基准与记录文档
+  - 现状：尚无系统化基准数据
+  - 优化方向：补充典型场景（1x1、4x4、8x8；静态/动图）的耗时、分配、峰值内存与结果记录
 
 ## 文件/包建议（实现时可调整）
 
