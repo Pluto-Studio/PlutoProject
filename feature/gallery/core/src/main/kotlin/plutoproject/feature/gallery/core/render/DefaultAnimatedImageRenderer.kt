@@ -1,7 +1,8 @@
 package plutoproject.feature.gallery.core.render
 
-import java.util.logging.Level
-import java.util.logging.Logger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.render.geometry.TargetResolution
 import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
@@ -13,6 +14,8 @@ import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
 import plutoproject.feature.gallery.core.render.mapcolor.newDefaultMapColorQuantizer
 import plutoproject.feature.gallery.core.render.tile.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.TileSplitter
+import java.util.logging.Level
+import java.util.logging.Logger
 
 internal class DefaultAnimatedImageRenderer(
     private val frameSampler: FrameSampler = DefaultFrameSampler,
@@ -22,16 +25,19 @@ internal class DefaultAnimatedImageRenderer(
 ) : AnimatedImageRenderer {
     override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> = try {
         val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
+        checkpoint()
+
         if (frameSampleResult.status != RenderStatus.SUCCEED) {
             return RenderResult.failed(frameSampleResult.status)
         }
+
         val outToSourceFrameIndex = frameSampleResult.outToSourceFrameIndex!!
         val durationMillis = frameSampleResult.durationMillis!!
-
         val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
+        checkpoint()
+
         val singleFrameTileCount = request.mapXBlocks * request.mapYBlocks
-        val totalTileIndexesLengthLong = singleFrameTileCount.toLong() *
-                outToSourceFrameIndex.size.toLong()
+        val totalTileIndexesLengthLong = singleFrameTileCount.toLong() * outToSourceFrameIndex.size.toLong()
         if (totalTileIndexesLengthLong > Int.MAX_VALUE.toLong()) {
             return RenderResult.failed(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW)
         }
@@ -39,9 +45,11 @@ internal class DefaultAnimatedImageRenderer(
         val allFrameTileIndexes = ShortArray(totalTileIndexesLengthLong.toInt())
         val deduper = TileDeduper()
         val renderedFrameCache = HashMap<Int, ShortArray>()
-
         var outFrameIndex = 0
+        checkpoint()
+
         while (outFrameIndex < outToSourceFrameIndex.size) {
+            checkpoint()
             val srcFrameIndex = outToSourceFrameIndex[outFrameIndex]
             val frameTileIndexes = renderedFrameCache[srcFrameIndex]
                 ?: renderSourceFrameTileIndexes(
@@ -57,6 +65,7 @@ internal class DefaultAnimatedImageRenderer(
             )
             outFrameIndex++
         }
+        checkpoint()
 
         RenderResult.succeed(
             AnimatedImageData(
@@ -68,6 +77,8 @@ internal class DefaultAnimatedImageRenderer(
         )
     } catch (e: RenderPipelineException) {
         RenderResult.failed(e.status)
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         logger.log(
             Level.SEVERE,
@@ -77,13 +88,14 @@ internal class DefaultAnimatedImageRenderer(
         RenderResult.failed(RenderStatus.PIPELINE_FAILED)
     }
 
-    private fun renderSourceFrameTileIndexes(
+    private suspend fun renderSourceFrameTileIndexes(
         request: RenderAnimatedImageRequest,
         sourceFrameIndex: Int,
         targetResolution: TargetResolution,
         deduper: TileDeduper,
     ): ShortArray {
         val sourceImage = request.sourceFrames[sourceFrameIndex].image
+        checkpoint()
 
         val transform = repositionerOf(request.profile.repositionMode).reposition(
             sourceWidth = sourceImage.width,
@@ -91,9 +103,16 @@ internal class DefaultAnimatedImageRenderer(
             destinationWidth = targetResolution.width,
             destinationHeight = targetResolution.height,
         )
+        checkpoint()
+
         val scaledImage = scalerOf(request.profile.scaleAlgorithm).scale(sourceImage, transform)
+        checkpoint()
+
         val composited = alphaCompositor.composite(scaledImage, request.profile.alphaBackgroundColorRgb)
+        checkpoint()
+
         val mapColorPixels = mapColorQuantizer.quantize(composited, request.profile.ditherAlgorithm)
+        checkpoint()
 
         val splitResult = TileSplitter.splitAndDedupe(
             mapColorPixels = mapColorPixels,
@@ -103,11 +122,18 @@ internal class DefaultAnimatedImageRenderer(
             mapYBlocks = request.mapYBlocks,
             deduper = deduper,
         )
+        checkpoint()
+
         if (splitResult.status != RenderStatus.SUCCEED) {
             throw RenderPipelineException(splitResult.status)
         }
+
         return splitResult.tileIndexes!!
     }
+}
+
+private suspend fun checkpoint() {
+    currentCoroutineContext().ensureActive()
 }
 
 /**
