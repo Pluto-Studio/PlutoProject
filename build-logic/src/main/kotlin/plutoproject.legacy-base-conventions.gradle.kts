@@ -31,6 +31,7 @@ dependencies {
         downloadIfRequired(libs.guava)
         downloadIfRequired(libs.okio)
         downloadIfRequired(libs.hash4j)
+        downloadIfRequired(libs.imageioWebp)
         downloadIfRequired(libs.charonflow)
     }
 }

@@ -17,6 +17,7 @@ ksp = "2.3.5"
 junit = "5.11.4"
 testcontainers = "1.20.4"
 hash4j = "0.30.0"
+twelvemonkeys = "3.13.0"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-rc3" }
@@ -63,6 +64,7 @@ ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", v
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-20260131.074812-13" }
 hash4j = { module = "com.dynatrace.hash4j:hash4j", version.ref = "hash4j" }
+imageioWebp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
 
 # Test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }

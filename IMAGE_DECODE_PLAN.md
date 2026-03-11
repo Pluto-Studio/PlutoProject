@@ -106,11 +106,11 @@
 
 ### Milestone 3：依赖接入（TwelveMonkeys WebP）
 
-- [ ] 依赖坐标：`com.twelvemonkeys.imageio:imageio-webp:3.13.0`（通过 ImageIO SPI 提供 WebP reader）
-- [ ] `gradle/libs.versions.toml` 增加 TwelveMonkeys WebP 坐标
-- [ ] `feature/gallery/core/build.gradle.kts`：`compileOnly` + `testImplementation`
-- [ ] `build-logic/...legacy-base-conventions...`：`downloadIfRequired(...)` 让 platform 运行时下载
-- [ ] 目标：平台运行时 classpath 含 SPI 后，`ImageIO.read` 自动可解 WebP
+- [x] 依赖坐标：`com.twelvemonkeys.imageio:imageio-webp:3.13.0`（通过 ImageIO SPI 提供 WebP reader）
+- [x] `gradle/libs.versions.toml` 增加 TwelveMonkeys WebP 坐标
+- [x] `feature/gallery/core/build.gradle.kts`：`compileOnly` + `testImplementation`
+- [x] `build-logic/...legacy-base-conventions...`：`downloadIfRequired(...)` 让 platform 运行时下载
+- [x] 目标：平台运行时 classpath 含 SPI 后，`ImageIO.read` 自动可解 WebP
 
 ### Milestone 4：测试（正确性优先）
 
