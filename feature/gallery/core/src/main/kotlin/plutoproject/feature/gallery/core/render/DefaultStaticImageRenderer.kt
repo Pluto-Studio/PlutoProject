@@ -1,5 +1,7 @@
 package plutoproject.feature.gallery.core.render
 
+import java.util.logging.Level
+import java.util.logging.Logger
 import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
 import plutoproject.feature.gallery.core.render.geometry.repositionerOf
@@ -17,6 +19,7 @@ import plutoproject.feature.gallery.core.render.tile.TileSplitter
 internal class DefaultStaticImageRenderer(
     private val alphaCompositor: AlphaCompositor = DefaultAlphaCompositor,
     private val mapColorQuantizer: MapColorQuantizer = newDefaultMapColorQuantizer(),
+    private val logger: Logger = Logger.getLogger(DefaultStaticImageRenderer::class.java.name),
 ) : StaticImageRenderer {
     override suspend fun render(request: RenderStaticImageRequest): RenderResult<StaticImageData> = try {
         val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
@@ -52,7 +55,12 @@ internal class DefaultStaticImageRenderer(
                 )
             )
         }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        logger.log(
+            Level.SEVERE,
+            "Static image render pipeline failed with internal error: mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
+            e,
+        )
         RenderResult.failed(RenderStatus.PIPELINE_FAILED)
     }
 }

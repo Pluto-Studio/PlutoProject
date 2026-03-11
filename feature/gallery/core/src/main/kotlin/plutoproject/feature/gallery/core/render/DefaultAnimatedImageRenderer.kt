@@ -1,5 +1,7 @@
 package plutoproject.feature.gallery.core.render
 
+import java.util.logging.Level
+import java.util.logging.Logger
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.render.geometry.TargetResolution
 import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
@@ -16,59 +18,63 @@ internal class DefaultAnimatedImageRenderer(
     private val frameSampler: FrameSampler = DefaultFrameSampler,
     private val alphaCompositor: AlphaCompositor = DefaultAlphaCompositor,
     private val mapColorQuantizer: MapColorQuantizer = newDefaultMapColorQuantizer(),
+    private val logger: Logger = Logger.getLogger(DefaultAnimatedImageRenderer::class.java.name),
 ) : AnimatedImageRenderer {
-    override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> {
-        return try {
-            val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
-            if (frameSampleResult.status != RenderStatus.SUCCEED) {
-                return RenderResult.failed(frameSampleResult.status)
-            }
-            val outToSourceFrameIndex = frameSampleResult.outToSourceFrameIndex!!
-            val durationMillis = frameSampleResult.durationMillis!!
-
-            val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
-            val singleFrameTileCount = request.mapXBlocks * request.mapYBlocks
-            val totalTileIndexesLengthLong = singleFrameTileCount.toLong() *
-                outToSourceFrameIndex.size.toLong()
-            if (totalTileIndexesLengthLong > Int.MAX_VALUE.toLong()) {
-                return RenderResult.failed(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW)
-            }
-
-            val allFrameTileIndexes = ShortArray(totalTileIndexesLengthLong.toInt())
-            val deduper = TileDeduper()
-            val renderedFrameCache = HashMap<Int, ShortArray>()
-
-            var outFrameIndex = 0
-            while (outFrameIndex < outToSourceFrameIndex.size) {
-                val srcFrameIndex = outToSourceFrameIndex[outFrameIndex]
-                val frameTileIndexes = renderedFrameCache[srcFrameIndex]
-                    ?: renderSourceFrameTileIndexes(
-                        request = request,
-                        sourceFrameIndex = srcFrameIndex,
-                        targetResolution = targetResolution,
-                        deduper = deduper,
-                    ).also { renderedFrameCache[srcFrameIndex] = it }
-
-                frameTileIndexes.copyInto(
-                    destination = allFrameTileIndexes,
-                    destinationOffset = outFrameIndex * singleFrameTileCount,
-                )
-                outFrameIndex++
-            }
-
-            RenderResult.succeed(
-                AnimatedImageData(
-                    frameCount = outToSourceFrameIndex.size,
-                    durationMillis = durationMillis,
-                    tilePool = deduper.buildTilePool(),
-                    tileIndexes = allFrameTileIndexes,
-                )
-            )
-        } catch (e: RenderPipelineException) {
-            RenderResult.failed(e.status)
-        } catch (_: Exception) {
-            RenderResult.failed(RenderStatus.PIPELINE_FAILED)
+    override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> = try {
+        val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
+        if (frameSampleResult.status != RenderStatus.SUCCEED) {
+            return RenderResult.failed(frameSampleResult.status)
         }
+        val outToSourceFrameIndex = frameSampleResult.outToSourceFrameIndex!!
+        val durationMillis = frameSampleResult.durationMillis!!
+
+        val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
+        val singleFrameTileCount = request.mapXBlocks * request.mapYBlocks
+        val totalTileIndexesLengthLong = singleFrameTileCount.toLong() *
+                outToSourceFrameIndex.size.toLong()
+        if (totalTileIndexesLengthLong > Int.MAX_VALUE.toLong()) {
+            return RenderResult.failed(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW)
+        }
+
+        val allFrameTileIndexes = ShortArray(totalTileIndexesLengthLong.toInt())
+        val deduper = TileDeduper()
+        val renderedFrameCache = HashMap<Int, ShortArray>()
+
+        var outFrameIndex = 0
+        while (outFrameIndex < outToSourceFrameIndex.size) {
+            val srcFrameIndex = outToSourceFrameIndex[outFrameIndex]
+            val frameTileIndexes = renderedFrameCache[srcFrameIndex]
+                ?: renderSourceFrameTileIndexes(
+                    request = request,
+                    sourceFrameIndex = srcFrameIndex,
+                    targetResolution = targetResolution,
+                    deduper = deduper,
+                ).also { renderedFrameCache[srcFrameIndex] = it }
+
+            frameTileIndexes.copyInto(
+                destination = allFrameTileIndexes,
+                destinationOffset = outFrameIndex * singleFrameTileCount,
+            )
+            outFrameIndex++
+        }
+
+        RenderResult.succeed(
+            AnimatedImageData(
+                frameCount = outToSourceFrameIndex.size,
+                durationMillis = durationMillis,
+                tilePool = deduper.buildTilePool(),
+                tileIndexes = allFrameTileIndexes,
+            )
+        )
+    } catch (e: RenderPipelineException) {
+        RenderResult.failed(e.status)
+    } catch (e: Exception) {
+        logger.log(
+            Level.SEVERE,
+            "Animated image render pipeline failed with internal error: sourceFrameCount=${request.sourceFrames.size}, mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
+            e,
+        )
+        RenderResult.failed(RenderStatus.PIPELINE_FAILED)
     }
 
     private fun renderSourceFrameTileIndexes(
