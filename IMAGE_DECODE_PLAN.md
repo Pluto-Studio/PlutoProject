@@ -114,10 +114,10 @@
 
 ### Milestone 4：测试（正确性优先）
 
-- [ ] sniffFormat：覆盖 4 种头 + 非法输入
-- [ ] PNG/JPEG：测试中动态生成 `BufferedImage` -> `ImageIO.write` 得到 bytes -> decode -> 断言宽高 + 抽样像素
-- [ ] WEBP：内嵌 base64 的最小 webp 样本（避免依赖 writer）
-- [ ] GIF：内嵌 base64 样本，覆盖：
+- [x] sniffFormat：覆盖 4 种头 + 非法输入
+- [x] PNG/JPEG：测试中动态生成 `BufferedImage` -> `ImageIO.write` 得到 bytes -> decode -> 断言宽高 + 抽样像素
+- [x] WEBP：内嵌 base64 的最小 webp 样本（避免依赖 writer）
+- [x] GIF：内嵌 base64 样本，覆盖：
   - 优化帧（非全尺寸 patch）合成正确
   - `restoreToBackgroundColor` 清除区域正确
   - `restoreToPrevious` 回滚正确
