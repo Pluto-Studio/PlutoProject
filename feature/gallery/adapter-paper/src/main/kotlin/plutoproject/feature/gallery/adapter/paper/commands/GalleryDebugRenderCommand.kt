@@ -20,14 +20,15 @@ import plutoproject.feature.gallery.core.TilePool
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
 import plutoproject.feature.gallery.core.decode.DecodeImageUseCase
 import plutoproject.feature.gallery.core.decode.DecodeStatus
+import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
 import plutoproject.feature.gallery.core.render.RepositionMode
 import plutoproject.feature.gallery.core.render.RenderAnimatedImageRequest
 import plutoproject.feature.gallery.core.render.RenderProfile
+import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.ScaleAlgorithm
 import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
-import plutoproject.feature.gallery.core.render.RenderStatus
 import plutoproject.feature.gallery.core.render.tile.decodeTile
 import plutoproject.feature.gallery.core.usecase.newRenderAnimatedImageUseCase
 import plutoproject.feature.gallery.core.usecase.newRenderStaticImageUseCase
@@ -96,7 +97,7 @@ object GalleryDebugRenderCommand {
             decodeNanos = System.nanoTime() - started
             result
         }
-        if (decodeResult.status != DecodeStatus.SUCCEED) {
+        if (decodeResult is DecodeResult.Failure) {
             sendMessage(
                 "[Gallery] Decode failed: ${decodeResult.status}, " +
                     "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
@@ -106,7 +107,7 @@ object GalleryDebugRenderCommand {
             return@ensurePlayer
         }
 
-        val decodedImage = decodeResult.data
+        val decodedImage = (decodeResult as? DecodeResult.Success)?.data
             ?: run {
                 sendMessage(
                     "[Gallery] Decode failed: empty data, " +
@@ -127,7 +128,7 @@ object GalleryDebugRenderCommand {
             result
         }
 
-        if (rendered.status != RenderStatus.SUCCEED) {
+        if (rendered is RenderResult.Failure) {
             sendMessage(
                 "[Gallery] Render failed: ${rendered.status}, " +
                     "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
@@ -138,7 +139,7 @@ object GalleryDebugRenderCommand {
             return@ensurePlayer
         }
 
-        val tilePack = rendered.tilePack
+        val tilePack = (rendered as? RenderResult.Success)?.imageData
             ?: run {
                 sendMessage(
                     "[Gallery] Render failed: empty image data, " +
@@ -210,7 +211,7 @@ object GalleryDebugRenderCommand {
         blocksX: Int,
         blocksY: Int,
         profile: RenderProfile,
-    ): TilePackRenderResult {
+    ): RenderResult<TilePack> {
         val renderResult = newRenderStaticImageUseCase().execute(
             RenderStaticImageRequest(
                 sourceImage = decoded.image,
@@ -219,10 +220,12 @@ object GalleryDebugRenderCommand {
                 profile = profile,
             )
         )
-        return TilePackRenderResult(
-            status = renderResult.status,
-            tilePack = renderResult.imageData?.toTilePackForStatic(),
-        )
+        return when (renderResult) {
+            is RenderResult.Failure -> RenderResult.Failure(renderResult.status)
+            is RenderResult.Success -> RenderResult.Success(
+                imageData = renderResult.imageData?.toTilePackForStatic(),
+            )
+        }
     }
 
     private suspend fun renderAnimated(
@@ -230,7 +233,7 @@ object GalleryDebugRenderCommand {
         blocksX: Int,
         blocksY: Int,
         profile: RenderProfile,
-    ): TilePackRenderResult {
+    ): RenderResult<TilePack> {
         val renderResult = newRenderAnimatedImageUseCase().execute(
             RenderAnimatedImageRequest(
                 sourceFrames = decoded.frames,
@@ -239,10 +242,12 @@ object GalleryDebugRenderCommand {
                 profile = profile,
             )
         )
-        return TilePackRenderResult(
-            status = renderResult.status,
-            tilePack = renderResult.imageData?.toTilePackForFirstFrame(blocksX * blocksY),
-        )
+        return when (renderResult) {
+            is RenderResult.Failure -> RenderResult.Failure(renderResult.status)
+            is RenderResult.Success -> RenderResult.Success(
+                imageData = renderResult.imageData?.toTilePackForFirstFrame(blocksX * blocksY),
+            )
+        }
     }
 
     private fun giveTileMaps(
@@ -391,11 +396,6 @@ private class FixedTileMapRenderer(
 private data class TilePack(
     val tilePool: TilePool,
     val tileIndexes: ShortArray,
-)
-
-private data class TilePackRenderResult(
-    val status: RenderStatus,
-    val tilePack: TilePack?,
 )
 
 private data class GiveMapsResult(

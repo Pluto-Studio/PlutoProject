@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.render.DefaultStaticImageRenderer
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
 import plutoproject.feature.gallery.core.render.RenderProfile
+import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
-import plutoproject.feature.gallery.core.render.RenderStatus
 import plutoproject.feature.gallery.core.render.RepositionMode
 import plutoproject.feature.gallery.core.render.RgbaImage8888
 
@@ -31,8 +31,8 @@ class RenderStaticPipelineIntegrationTest {
             ),
         )
 
-        assertEquals(RenderStatus.SUCCEED, result.status)
-        val imageData = result.imageData!!
+        assertTrue(result is RenderResult.Success)
+        val imageData = (result as RenderResult.Success).imageData!!
         assertEquals(4, imageData.tileIndexes.size)
         assertEquals(listOf(0, 1, 2, 3), imageData.tileIndexes.map { it.toU16Int() })
     }
@@ -52,8 +52,8 @@ class RenderStaticPipelineIntegrationTest {
             ),
         )
 
-        assertEquals(RenderStatus.SUCCEED, result.status)
-        val imageData = result.imageData!!
+        assertTrue(result is RenderResult.Success)
+        val imageData = (result as RenderResult.Success).imageData!!
         assertEquals(16, imageData.tileIndexes.size)
         assertEquals(1, imageData.tilePool.offsets.size - 1)
         assertTrue(imageData.tileIndexes.all { it.toU16Int() == 0 })
@@ -74,8 +74,8 @@ class RenderStaticPipelineIntegrationTest {
             ),
         )
 
-        assertEquals(RenderStatus.SUCCEED, result.status)
-        assertEquals(6, result.imageData!!.tileIndexes.size)
+        assertTrue(result is RenderResult.Success)
+        assertEquals(6, (result as RenderResult.Success).imageData!!.tileIndexes.size)
     }
 }
 

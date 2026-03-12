@@ -102,25 +102,36 @@ enum class RenderStatus {
 
 /**
  * 预渲染结果。
- *
- * - [status] 为 [RenderStatus.SUCCEED] 时，期望 [imageData] 非空
- * - [status] 失败时，期望 [imageData] 为空
  */
-data class RenderResult<T>(
-    val status: RenderStatus,
-    val imageData: T?,
-) {
-    companion object {
-        fun <T> succeed(imageData: T): RenderResult<T> = RenderResult(
-            status = RenderStatus.SUCCEED,
-            imageData = imageData,
-        )
+sealed class RenderResult<T> {
+    abstract val status: RenderStatus
+    abstract val imageData: T?
 
-        fun <T> failed(status: RenderStatus): RenderResult<T> {
+    data class Failure<T>(
+        override val status: RenderStatus,
+    ) : RenderResult<T>() {
+        init {
             require(status != RenderStatus.SUCCEED) {
                 "failed status cannot be SUCCEED"
             }
-            return RenderResult(status = status, imageData = null)
         }
+
+        override val imageData: T? = null
+    }
+
+    data class Success<T>(override val imageData: T?) : RenderResult<T>() {
+        override val status: RenderStatus = RenderStatus.SUCCEED
+
+        init {
+            require(status == RenderStatus.SUCCEED) {
+                "success status must be SUCCEED"
+            }
+        }
+    }
+
+    companion object {
+        fun <T> succeed(imageData: T): RenderResult<T> = Success(imageData = imageData)
+
+        fun <T> failed(status: RenderStatus): RenderResult<T> = Failure(status = status)
     }
 }

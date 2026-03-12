@@ -18,13 +18,11 @@ class RenderAnimatedImageUseCase(
         val singleFrameTileCount = tileCountValidation.tileCount
             ?: return RenderResult.failed(tileCountValidation.status!!)
 
-        val result = renderer.render(request)
-        if (result.status != RenderStatus.SUCCEED) {
-            return RenderResult.failed(result.status)
+        val imageData = when (val result = renderer.render(request)) {
+            is RenderResult.Failure -> return RenderResult.failed(result.status)
+            is RenderResult.Success -> result.imageData
+                ?: return RenderResult.failed(RenderStatus.INCONSISTENT_RENDER_RESULT)
         }
-
-        val imageData = result.imageData
-            ?: return RenderResult.failed(RenderStatus.INCONSISTENT_RENDER_RESULT)
 
         if (imageData.frameCount <= 0) {
             return RenderResult.failed(RenderStatus.INVALID_RENDERED_FRAME_COUNT)

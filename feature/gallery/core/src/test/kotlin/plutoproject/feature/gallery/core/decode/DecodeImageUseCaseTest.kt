@@ -2,11 +2,7 @@ package plutoproject.feature.gallery.core.decode
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
@@ -19,7 +15,7 @@ class DecodeImageUseCaseTest {
         val useCase = useCaseWith(
             png = { _, _ ->
                 invoked = true
-                DecodeResult.failed(DecodeStatus.DECODE_FAILED)
+                DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
             }
         )
 
@@ -30,8 +26,8 @@ class DecodeImageUseCaseTest {
             )
         )
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.IMAGE_TOO_LARGE, result.status)
-        assertNull(result.data)
         assertFalse(invoked)
     }
 
@@ -41,14 +37,14 @@ class DecodeImageUseCaseTest {
         val useCase = useCaseWith(
             png = { _, _ ->
                 invoked = true
-                DecodeResult.failed(DecodeStatus.DECODE_FAILED)
+                DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
             }
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = byteArrayOf(1, 2, 3)))
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.UNSUPPORTED_FORMAT, result.status)
-        assertNull(result.data)
         assertFalse(invoked)
     }
 
@@ -60,21 +56,21 @@ class DecodeImageUseCaseTest {
         val useCase = DecodeImageUseCase(
             pngDecoder = { _, _ ->
                 pngInvoked = true
-                DecodeResult.succeed(expected)
+                DecodeResult.Success(expected)
             },
-            jpgDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
-            webpDecoder = { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
+            jpgDecoder = { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
+            webpDecoder = { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
             gifDecoder = { _, _ ->
                 gifInvoked = true
-                DecodeResult.failed(DecodeStatus.DECODE_FAILED)
+                DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
             },
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = pngMagicBytes()))
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
-        assertTrue(result.data != null)
-        assertSame(expected, result.data)
+        assertSame(expected, (result as DecodeResult.Success).data)
         assertTrue(pngInvoked)
         assertFalse(gifInvoked)
     }
@@ -82,39 +78,34 @@ class DecodeImageUseCaseTest {
     @Test
     fun `should pass through decoder failure status`() = runTest {
         val useCase = useCaseWith(
-            png = { _, _ -> DecodeResult.failed(DecodeStatus.INVALID_IMAGE) }
+            png = { _, _ -> DecodeResult.Failure(DecodeStatus.INVALID_IMAGE) }
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = pngMagicBytes()))
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.INVALID_IMAGE, result.status)
-        assertNull(result.data)
     }
 
     @Test
     fun `should return decode-failed when decoder returns succeed with null data`() = runTest {
         val useCase = useCaseWith(
             png = { _, _ ->
-                DecodeResult(
-                    status = DecodeStatus.SUCCEED,
-                    data = null,
-                )
+                DecodeResult.Success(null)
             }
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = pngMagicBytes()))
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.DECODE_FAILED, result.status)
-        assertNull(result.data)
     }
 
     @Test
     fun `should return image-too-large when decoded static image exceeds max-pixels`() = runTest {
         val useCase = useCaseWith(
             png = { _, _ ->
-                DecodeResult.succeed(
-                    DecodedImage.Static(sampleRgbaImage(width = 2, height = 2))
-                )
+                DecodeResult.Success(DecodedImage.Static(sampleRgbaImage(width = 2, height = 2)))
             }
         )
 
@@ -125,21 +116,21 @@ class DecodeImageUseCaseTest {
             )
         )
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.IMAGE_TOO_LARGE, result.status)
-        assertNull(result.data)
     }
 
     @Test
     fun `should return too-many-frames when decoded animated image exceeds max-frames`() = runTest {
         val useCase = useCaseWith(
             gif = { _, _ ->
-                DecodeResult.succeed(
+                DecodeResult.Success(
                     DecodedImage.Animated(
                         frames = listOf(
                             AnimatedSourceFrame(sampleRgbaImage(), delayCentiseconds = 1),
                             AnimatedSourceFrame(sampleRgbaImage(), delayCentiseconds = 1),
                         )
-                    )
+                    ),
                 )
             }
         )
@@ -151,8 +142,8 @@ class DecodeImageUseCaseTest {
             )
         )
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.TOO_MANY_FRAMES, result.status)
-        assertNull(result.data)
     }
 
     @Test
@@ -173,10 +164,10 @@ class DecodeImageUseCaseTest {
 }
 
 private fun useCaseWith(
-    png: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
-    jpg: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
-    webp: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
-    gif: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.failed(DecodeStatus.DECODE_FAILED) },
+    png: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
+    jpg: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
+    webp: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
+    gif: ImageDecoder = ImageDecoder { _, _ -> DecodeResult.Failure(DecodeStatus.DECODE_FAILED) },
 ): DecodeImageUseCase = DecodeImageUseCase(
     pngDecoder = png,
     jpgDecoder = jpg,

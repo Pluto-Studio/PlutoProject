@@ -59,6 +59,8 @@ class StaticImageDecoderTest {
         val pngResult = StaticImageDecoder.decode(encode(pngSource, "png"), constraints)
         val jpgResult = StaticImageDecoder.decode(encode(jpgSource, "jpg"), constraints)
 
+        assertTrue(pngResult is DecodeResult.Failure)
+        assertTrue(jpgResult is DecodeResult.Failure)
         assertEquals(DecodeStatus.IMAGE_TOO_LARGE, pngResult.status)
         assertEquals(DecodeStatus.IMAGE_TOO_LARGE, jpgResult.status)
     }

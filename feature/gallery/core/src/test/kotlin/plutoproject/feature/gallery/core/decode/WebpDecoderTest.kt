@@ -2,7 +2,7 @@ package plutoproject.feature.gallery.core.decode
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.StaticImageDecoder
 import java.util.Base64
@@ -15,6 +15,7 @@ class WebpDecoderTest {
             constraints = DecodeConstraints(),
         )
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val image = (result.data as DecodedImage.Static).image
         assertEquals(1, image.width)
@@ -33,8 +34,8 @@ class WebpDecoderTest {
             constraints = DecodeConstraints(),
         )
 
+        assertTrue(result is DecodeResult.Failure)
         assertEquals(DecodeStatus.INVALID_IMAGE, result.status)
-        assertNull(result.data)
     }
 }
 

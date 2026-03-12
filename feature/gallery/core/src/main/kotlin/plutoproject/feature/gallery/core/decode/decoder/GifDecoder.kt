@@ -22,9 +22,9 @@ object GifDecoder : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
         decodeInternal(bytes = bytes, constraints = constraints)
     } catch (_: IIOException) {
-        DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     } catch (_: IllegalArgumentException) {
-        DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
 }
 
@@ -33,11 +33,11 @@ private suspend fun decodeInternal(
     constraints: DecodeConstraints,
 ): DecodeResult<DecodedImage> = withContext(Dispatchers.IO) {
     val imageInput = ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
-        ?: return@withContext DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        ?: return@withContext DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
 
     imageInput.use { input ->
         val reader = ImageIO.getImageReadersByFormatName("gif").asSequence().firstOrNull()
-            ?: return@withContext DecodeResult.failed(DecodeStatus.DECODE_FAILED)
+            ?: return@withContext DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
         try {
             reader.input = input
             return@withContext decodeGifFrames(reader, constraints)
@@ -55,25 +55,25 @@ private suspend fun decodeGifFrames(
     val width = screenSize.width
     val height = screenSize.height
     if (width <= 0 || height <= 0) {
-        return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
 
     val pixelCount = width.toLong() * height.toLong()
     if (pixelCount > Int.MAX_VALUE.toLong()) {
-        return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
     if (pixelCount > constraints.maxPixels.toLong()) {
-        return DecodeResult.failed(DecodeStatus.IMAGE_TOO_LARGE)
+        return DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
     }
 
     val frameCount = withContext(Dispatchers.IO) {
         reader.getNumImages(true)
     }
     if (frameCount <= 0) {
-        return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
     if (frameCount > constraints.maxFrames) {
-        return DecodeResult.failed(DecodeStatus.TOO_MANY_FRAMES)
+        return DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
     }
 
     val canvas = IntArray(pixelCount.toInt())
@@ -91,11 +91,11 @@ private suspend fun decodeGifFrames(
 
         val patchImage = withContext(Dispatchers.IO) {
             reader.read(index)
-        } ?: return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        } ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         val patchWidth = patchImage.width
         val patchHeight = patchImage.height
         if (patchWidth <= 0 || patchHeight <= 0) {
-            return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+            return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         }
 
         val patchPixels = IntArray(patchWidth * patchHeight)
@@ -134,7 +134,7 @@ private suspend fun decodeGifFrames(
         )
     }
 
-    return DecodeResult.succeed(DecodedImage.Animated(frames))
+    return DecodeResult.Success(DecodedImage.Animated(frames))
 }
 
 private fun readLogicalScreenSize(reader: ImageReader): IntSize {

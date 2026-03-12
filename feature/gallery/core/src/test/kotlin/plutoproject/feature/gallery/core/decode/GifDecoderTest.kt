@@ -12,6 +12,7 @@ class GifDecoderTest {
     fun `gif decoder should compose partial patches into full timeline frames`() = runTest {
         val result = GifDecoder.decode(decodeBase64(GIF_PATCH_TIMELINE_BASE64), DecodeConstraints())
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
         assertEquals(2, data.frames.size)
@@ -25,6 +26,7 @@ class GifDecoderTest {
     fun `gif decoder should apply restore-to-background disposal with clipping`() = runTest {
         val result = GifDecoder.decode(decodeBase64(GIF_RESTORE_BACKGROUND_CLIPPED_BASE64), DecodeConstraints())
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
         assertEquals(3, data.frames.size)
@@ -38,6 +40,7 @@ class GifDecoderTest {
     fun `gif decoder should apply restore-to-previous disposal`() = runTest {
         val result = GifDecoder.decode(decodeBase64(GIF_RESTORE_PREVIOUS_BASE64), DecodeConstraints())
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
         assertEquals(3, data.frames.size)
@@ -50,6 +53,7 @@ class GifDecoderTest {
     fun `gif decoder should keep canvas pixels when patch pixel is transparent`() = runTest {
         val result = GifDecoder.decode(decodeBase64(GIF_TRANSPARENT_PATCH_OVERLAY_BASE64), DecodeConstraints())
 
+        assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
         assertEquals(2, data.frames.size)
@@ -70,6 +74,8 @@ class GifDecoderTest {
             DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 1, maxFrames = 10),
         )
 
+        assertTrue(tooManyFrames is DecodeResult.Failure)
+        assertTrue(tooManyPixels is DecodeResult.Failure)
         assertEquals(DecodeStatus.TOO_MANY_FRAMES, tooManyFrames.status)
         assertTrue(tooManyFrames.data == null)
         assertEquals(DecodeStatus.IMAGE_TOO_LARGE, tooManyPixels.status)

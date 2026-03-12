@@ -10,6 +10,7 @@ import plutoproject.feature.gallery.core.render.DefaultAnimatedImageRenderer
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
 import plutoproject.feature.gallery.core.render.RenderAnimatedImageRequest
 import plutoproject.feature.gallery.core.render.RenderProfile
+import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.RenderStatus
 import plutoproject.feature.gallery.core.render.RepositionMode
 import plutoproject.feature.gallery.core.render.RgbaImage8888
@@ -32,8 +33,8 @@ class RenderAnimatedPipelineIntegrationTest {
 
         val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
 
-        assertEquals(RenderStatus.SUCCEED, result.status)
-        val data = result.imageData!!
+        assertTrue(result is RenderResult.Success)
+        val data = (result as RenderResult.Success).imageData!!
         assertEquals(4, data.frameCount)
         assertEquals(70, data.durationMillis)
 
@@ -61,8 +62,8 @@ class RenderAnimatedPipelineIntegrationTest {
 
         val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
 
-        assertEquals(RenderStatus.SUCCEED, result.status)
-        val data = result.imageData!!
+        assertTrue(result is RenderResult.Success)
+        val data = (result as RenderResult.Success).imageData!!
         assertEquals(2, data.frameCount)
         assertEquals(1, data.tilePool.offsets.size - 1)
         assertArrayEquals(shortArrayOf(0, 0), data.tileIndexes)
@@ -81,6 +82,7 @@ class RenderAnimatedPipelineIntegrationTest {
 
         val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_RENDERED_DURATION_MILLIS, result.status)
     }
 }

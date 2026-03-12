@@ -3,7 +3,6 @@ package plutoproject.feature.gallery.core.usecase
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,8 +22,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest(mapXBlocks = 0, mapYBlocks = 1))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_TILE_COUNT, result.status)
-        assertNull(result.imageData)
         assertFalse(invoked)
     }
 
@@ -38,8 +37,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest(mapXBlocks = Int.MAX_VALUE, mapYBlocks = 2))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.TILE_COUNT_OVERFLOW, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -52,16 +51,15 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.PIPELINE_FAILED, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
     fun `should return inconsistent-render-result when succeed result has null image data`() = runTest {
         val useCase = RenderStaticImageUseCase(
             renderer = {
-                RenderResult(
-                    status = RenderStatus.SUCCEED,
+                RenderResult.Success(
                     imageData = null,
                 )
             }
@@ -69,8 +67,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INCONSISTENT_RENDER_RESULT, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -83,8 +81,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest(mapXBlocks = 1, mapYBlocks = 1))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.TILE_INDEXES_LENGTH_MISMATCH, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -102,8 +100,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest(mapXBlocks = 1, mapYBlocks = 1))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.UNIQUE_TILE_OVERFLOW, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -117,8 +115,8 @@ class RenderStaticImageUseCaseTest {
 
         val result = useCase.execute(staticRequest(mapXBlocks = 2, mapYBlocks = 2))
 
+        assertTrue(result is RenderResult.Success)
         assertEquals(RenderStatus.SUCCEED, result.status)
-        assertTrue(result.imageData != null)
-        assertSame(renderedData, result.imageData)
+        assertSame(renderedData, (result as RenderResult.Success).imageData)
     }
 }

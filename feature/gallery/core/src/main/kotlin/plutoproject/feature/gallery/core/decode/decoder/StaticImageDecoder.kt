@@ -13,34 +13,34 @@ import javax.imageio.ImageIO
 
 object StaticImageDecoder : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
-        val image = readBufferedImage(bytes) ?: return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        val image = readBufferedImage(bytes) ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         val width = image.width
         val height = image.height
         val pixelCount = width.toLong() * height.toLong()
 
         if (width <= 0 || height <= 0 || pixelCount > Int.MAX_VALUE.toLong()) {
-            return DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+            return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         }
         if (pixelCount > constraints.maxPixels.toLong()) {
-            return DecodeResult.failed(DecodeStatus.IMAGE_TOO_LARGE)
+            return DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
         }
 
         val pixels = IntArray(pixelCount.toInt())
         image.getRGB(0, 0, width, height, pixels, 0, width)
 
-        DecodeResult.succeed(
+        DecodeResult.Success(
             DecodedImage.Static(
                 image = RgbaImage8888(
                     width = width,
                     height = height,
                     pixels = pixels,
                 )
-            )
+            ),
         )
     } catch (_: IIOException) {
-        DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     } catch (_: IllegalArgumentException) {
-        DecodeResult.failed(DecodeStatus.INVALID_IMAGE)
+        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
 }
 

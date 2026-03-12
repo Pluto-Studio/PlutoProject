@@ -20,11 +20,11 @@ class DecodeImageUseCase(
         checkpoint()
 
         if (request.bytes.size > request.constraints.maxBytes) {
-            return DecodeResult.failed(DecodeStatus.IMAGE_TOO_LARGE)
+            return DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
         }
 
         val format = ImageFormatSniffer.sniff(request.bytes, request.fileNameHint)
-            ?: return DecodeResult.failed(DecodeStatus.UNSUPPORTED_FORMAT)
+            ?: return DecodeResult.Failure(DecodeStatus.UNSUPPORTED_FORMAT)
         checkpoint()
 
         val decoder = when (format) {
@@ -39,11 +39,11 @@ class DecodeImageUseCase(
         )
         checkpoint()
 
-        if (decodeResult.status != DecodeStatus.SUCCEED) {
-            return DecodeResult.failed(decodeResult.status)
+        val decodedImage = when (decodeResult) {
+            is DecodeResult.Failure -> return DecodeResult.Failure(decodeResult.status)
+            is DecodeResult.Success -> decodeResult.data
+                ?: return DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
         }
-
-        val decodedImage = decodeResult.data ?: return DecodeResult.failed(DecodeStatus.DECODE_FAILED)
         validateDecodedImage(decodedImage, request.constraints)
     } catch (e: CancellationException) {
         throw e
@@ -53,7 +53,7 @@ class DecodeImageUseCase(
             "Image decode failed with internal error: bytes=${request.bytes.size}, fileNameHint=${request.fileNameHint}",
             e,
         )
-        DecodeResult.failed(DecodeStatus.DECODE_FAILED)
+        DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
     }
 
     private fun validateDecodedImage(
@@ -63,24 +63,24 @@ class DecodeImageUseCase(
         return when (image) {
             is DecodedImage.Static -> {
                 if (!withinPixelLimit(image.image.width, image.image.height, constraints.maxPixels)) {
-                    DecodeResult.failed(DecodeStatus.IMAGE_TOO_LARGE)
+                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
                 } else {
-                    DecodeResult.succeed(image)
+                    DecodeResult.Success(image)
                 }
             }
 
             is DecodedImage.Animated -> {
                 if (image.frames.size > constraints.maxFrames) {
-                    return DecodeResult.failed(DecodeStatus.TOO_MANY_FRAMES)
+                    return DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
                 }
 
                 val exceedsPixelLimit = image.frames.any {
                     !withinPixelLimit(it.image.width, it.image.height, constraints.maxPixels)
                 }
                 if (exceedsPixelLimit) {
-                    DecodeResult.failed(DecodeStatus.IMAGE_TOO_LARGE)
+                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
                 } else {
-                    DecodeResult.succeed(image)
+                    DecodeResult.Success(data = image)
                 }
             }
         }

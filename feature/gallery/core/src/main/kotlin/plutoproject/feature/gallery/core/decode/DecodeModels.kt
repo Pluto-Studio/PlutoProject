@@ -71,19 +71,25 @@ enum class DecodeStatus {
     DECODE_FAILED,
 }
 
-data class DecodeResult<T>(
-    val status: DecodeStatus,
-    val data: T?,
-) {
-    companion object {
-        fun <T> succeed(data: T): DecodeResult<T> = DecodeResult(
-            status = DecodeStatus.SUCCEED,
-            data = data,
-        )
+sealed class DecodeResult<T> {
+    abstract val status: DecodeStatus
+    abstract val data: T?
 
-        fun <T> failed(status: DecodeStatus): DecodeResult<T> {
+    data class Failure<T>(
+        override val status: DecodeStatus,
+    ) : DecodeResult<T>() {
+        init {
             require(status != DecodeStatus.SUCCEED) { "failed status cannot be SUCCEED" }
-            return DecodeResult(status = status, data = null)
+        }
+
+        override val data: T? = null
+    }
+
+    data class Success<T>(override val data: T?) : DecodeResult<T>() {
+        override val status: DecodeStatus = DecodeStatus.SUCCEED
+
+        init {
+            require(status == DecodeStatus.SUCCEED) { "success status must be SUCCEED" }
         }
     }
 }

@@ -3,7 +3,6 @@ package plutoproject.feature.gallery.core.usecase
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -23,8 +22,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 0))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_SOURCE_FRAME_COUNT, result.status)
-        assertNull(result.imageData)
         assertFalse(invoked)
     }
 
@@ -38,8 +37,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 1, mapXBlocks = 1, mapYBlocks = 0))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_TILE_COUNT, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -52,8 +51,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 1, mapXBlocks = Int.MAX_VALUE, mapYBlocks = 2))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.TILE_COUNT_OVERFLOW, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -66,16 +65,15 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.PIPELINE_FAILED, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
     fun `should return inconsistent-render-result when succeed result has null image data`() = runTest {
         val useCase = RenderAnimatedImageUseCase(
             renderer = {
-                RenderResult(
-                    status = RenderStatus.SUCCEED,
+                RenderResult.Success(
                     imageData = null,
                 )
             }
@@ -83,8 +81,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INCONSISTENT_RENDER_RESULT, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -103,8 +101,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_RENDERED_FRAME_COUNT, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -123,8 +121,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_RENDERED_DURATION_MILLIS, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -143,8 +141,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 1, mapXBlocks = 50_000, mapYBlocks = 1))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -163,8 +161,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 1, mapXBlocks = 1, mapYBlocks = 1))
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.TILE_INDEXES_LENGTH_MISMATCH, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -184,8 +182,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest())
 
+        assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.UNIQUE_TILE_OVERFLOW, result.status)
-        assertNull(result.imageData)
     }
 
     @Test
@@ -204,8 +202,8 @@ class RenderAnimatedImageUseCaseTest {
 
         val result = useCase.execute(animatedRequest(sourceFrameCount = 2, mapXBlocks = 2, mapYBlocks = 2))
 
+        assertTrue(result is RenderResult.Success)
         assertEquals(RenderStatus.SUCCEED, result.status)
-        assertTrue(result.imageData != null)
-        assertSame(renderedData, result.imageData)
+        assertSame(renderedData, (result as RenderResult.Success).imageData)
     }
 }
