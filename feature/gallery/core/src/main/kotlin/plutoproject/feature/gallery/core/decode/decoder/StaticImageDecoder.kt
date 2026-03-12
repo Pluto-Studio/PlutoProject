@@ -13,9 +13,9 @@ import javax.imageio.ImageIO
 
 object StaticImageDecoder : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
-        val image = readBufferedImage(bytes) ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
-        val width = image.width
-        val height = image.height
+        val metadata = readImageMetadata(bytes) ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
+        val width = metadata.width
+        val height = metadata.height
         val pixelCount = width.toLong() * height.toLong()
 
         if (width <= 0 || height <= 0 || pixelCount > Int.MAX_VALUE.toLong()) {
@@ -25,6 +25,7 @@ object StaticImageDecoder : ImageDecoder {
             return DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
         }
 
+        val image = readBufferedImage(bytes) ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         val pixels = IntArray(pixelCount.toInt())
         image.getRGB(0, 0, width, height, pixels, 0, width)
 
@@ -47,3 +48,24 @@ object StaticImageDecoder : ImageDecoder {
 private suspend fun readBufferedImage(bytes: ByteArray) = withContext(Dispatchers.IO) {
     ImageIO.read(ByteArrayInputStream(bytes))
 }
+
+private suspend fun readImageMetadata(bytes: ByteArray): ImageMetadata? = withContext(Dispatchers.IO) {
+    val imageInput = ImageIO.createImageInputStream(ByteArrayInputStream(bytes)) ?: return@withContext null
+    imageInput.use { input ->
+        val reader = ImageIO.getImageReaders(input).asSequence().firstOrNull() ?: return@withContext null
+        return@withContext try {
+            reader.input = input
+            ImageMetadata(
+                width = reader.getWidth(0),
+                height = reader.getHeight(0),
+            )
+        } finally {
+            reader.dispose()
+        }
+    }
+}
+
+private data class ImageMetadata(
+    val width: Int,
+    val height: Int,
+)
