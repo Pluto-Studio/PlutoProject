@@ -1,34 +1,28 @@
 package plutoproject.feature.gallery.core.render
 
-internal data class FrameSampleResult(
-    val status: RenderStatus,
-    /**
-     * 输出帧到源帧的映射表：`sourceFrameIndex = outToSourceFrameIndex[outFrameIndex]`。
-     *
-     * 说明：
-     * - 这是按 `outFrameIndex` 顺序排列的稠密查表数组，不是用于存储原始帧数据。
-     * - 重复值表示“同一 source frame 被重复输出”（用于表达长 delay）。
-     */
-    val outToSourceFrameIndex: IntArray?,
-    val durationMillis: Int?,
-) {
-    companion object {
-        fun succeed(outToSourceFrameIndex: IntArray, durationMillis: Int): FrameSampleResult = FrameSampleResult(
-            status = RenderStatus.SUCCEED,
-            outToSourceFrameIndex = outToSourceFrameIndex,
-            durationMillis = durationMillis,
-        )
+internal sealed class FrameSampleResult {
+    abstract val status: RenderStatus
 
-        fun failed(status: RenderStatus): FrameSampleResult {
+    class Failure(override val status: RenderStatus) : FrameSampleResult() {
+        init {
             require(status != RenderStatus.SUCCEED) {
                 "failed status cannot be SUCCEED"
             }
-            return FrameSampleResult(
-                status = status,
-                outToSourceFrameIndex = null,
-                durationMillis = null,
-            )
         }
+    }
+
+    class Success(
+        /**
+         * 输出帧到源帧的映射表：```sourceFrameIndex = outToSourceFrameIndex[outFrameIndex]```。
+         *
+         * 说明：
+         * - 这是按 `outFrameIndex` 顺序排列的稠密查表数组，不是用于存储原始帧数据。
+         * - 重复值表示“同一 source frame 被重复输出”（用于表达长 delay）。
+         */
+        val outToSourceFrameIndex: IntArray,
+        val durationMillis: Int,
+    ) : FrameSampleResult() {
+        override val status: RenderStatus = RenderStatus.SUCCEED
     }
 }
 
@@ -51,17 +45,17 @@ internal object DefaultFrameSampler : FrameSampler {
 
             durationMillisLong += effectiveDelayMillisLong
             if (durationMillisLong > Int.MAX_VALUE.toLong()) {
-                return FrameSampleResult.failed(RenderStatus.INVALID_RENDERED_DURATION_MILLIS)
+                return FrameSampleResult.Failure(RenderStatus.INVALID_RENDERED_DURATION_MILLIS)
             }
 
             val repeatLong = (effectiveDelayMillisLong + profile.frameSampleIntervalMillis - 1L) /
                 profile.frameSampleIntervalMillis.toLong()
             if (repeatLong <= 0L) {
-                return FrameSampleResult.failed(RenderStatus.INVALID_RENDERED_FRAME_COUNT)
+                return FrameSampleResult.Failure(RenderStatus.INVALID_RENDERED_FRAME_COUNT)
             }
 
             if (outFrameIndexes.size.toLong() + repeatLong > Int.MAX_VALUE.toLong()) {
-                return FrameSampleResult.failed(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW)
+                return FrameSampleResult.Failure(RenderStatus.TILE_INDEXES_LENGTH_OVERFLOW)
             }
 
             var repeat = 0L
@@ -73,7 +67,7 @@ internal object DefaultFrameSampler : FrameSampler {
             srcFrameIndex++
         }
 
-        return FrameSampleResult.succeed(
+        return FrameSampleResult.Success(
             outToSourceFrameIndex = outFrameIndexes.toIntArray(),
             durationMillis = durationMillisLong.toInt(),
         )

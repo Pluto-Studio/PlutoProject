@@ -29,12 +29,10 @@ internal class DefaultAnimatedImageRenderer(
         val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
         checkpoint()
 
-        if (frameSampleResult.status != RenderStatus.SUCCEED) {
-            return RenderResult.failed(frameSampleResult.status)
+        val (outToSourceFrameIndex, durationMillis) = when (frameSampleResult) {
+            is FrameSampleResult.Failure -> return RenderResult.Failure(frameSampleResult.status)
+            is FrameSampleResult.Success -> frameSampleResult.outToSourceFrameIndex to frameSampleResult.durationMillis
         }
-
-        val outToSourceFrameIndex = frameSampleResult.outToSourceFrameIndex!!
-        val durationMillis = frameSampleResult.durationMillis!!
         val targetResolution = calcTargetResolution(request.mapXBlocks, request.mapYBlocks)
         checkpoint()
 

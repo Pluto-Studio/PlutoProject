@@ -3,6 +3,7 @@ package plutoproject.feature.gallery.core.render
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class FrameSamplerTest {
@@ -19,8 +20,9 @@ class FrameSamplerTest {
 
         val result = DefaultFrameSampler.sample(sourceFrames, profile)
 
+        assertTrue(result is FrameSampleResult.Success)
         assertEquals(RenderStatus.SUCCEED, result.status)
-        assertArrayEquals(intArrayOf(0, 1, 1, 1), result.outToSourceFrameIndex)
+        assertArrayEquals(intArrayOf(0, 1, 1, 1), (result as FrameSampleResult.Success).outToSourceFrameIndex)
         assertEquals(70, result.durationMillis)
     }
 
@@ -36,9 +38,8 @@ class FrameSamplerTest {
 
         val result = DefaultFrameSampler.sample(sourceFrames, profile)
 
+        assertTrue(result is FrameSampleResult.Failure)
         assertEquals(RenderStatus.INVALID_RENDERED_DURATION_MILLIS, result.status)
-        assertNull(result.outToSourceFrameIndex)
-        assertNull(result.durationMillis)
     }
 }
 
