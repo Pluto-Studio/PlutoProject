@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
 import plutoproject.feature.gallery.core.render.RgbaImage8888
+import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
 
 class DecodeImageUseCaseTest {
     @Test

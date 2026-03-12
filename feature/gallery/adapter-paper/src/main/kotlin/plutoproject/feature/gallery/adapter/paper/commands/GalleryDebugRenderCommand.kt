@@ -18,8 +18,7 @@ import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.TilePool
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
-import plutoproject.feature.gallery.core.decode.DecodeImageUseCase
-import plutoproject.feature.gallery.core.decode.DecodeStatus
+import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
