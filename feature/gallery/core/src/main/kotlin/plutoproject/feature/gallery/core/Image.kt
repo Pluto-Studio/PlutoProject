@@ -2,56 +2,72 @@ package plutoproject.feature.gallery.core
 
 import java.util.*
 
+private val USERNAME_REGEX = Regex("^[A-Za-z0-9_]{3,16}$")
+
 /**
- * 地图画基类，包含动图和静态图的共享属性。
+ * 地图画。
  */
-abstract class Image<T> {
+class Image(
     /**
      * 地图画的 ID，在整个系统中唯一。
      */
-    abstract val id: UUID
+    val id: UUID,
+
+    /**
+     * 地图画类型。
+     * @see ImageType
+     */
+    val type: ImageType,
 
     /**
      * 创建此地图画的玩家 UUID。
      */
-    abstract val owner: UUID
+    val owner: UUID,
 
     /**
      * 创建此地图画的玩家名称，发现玩家名称修改后会同步。
      */
-    abstract val ownerName: String
+    ownerName: String,
 
     /**
      * 地图画的名称。
      */
-    abstract val name: String
+    name: String,
 
     /**
      * 地图宽度方块数。
      *
      * 实际宽像素量为 [mapWidthBlocks] * 128。
      */
-    abstract val mapWidthBlocks: Int
+    val mapWidthBlocks: Int,
 
     /**
      * 地图高度方块数。
      *
      * 实际高像素量为 [mapHeightBlocks] * 128。
      */
-    abstract val mapHeightBlocks: Int
+    val mapHeightBlocks: Int,
 
     /**
      * 为这个地图所有分区分配的 Map ID，每个 Map ID 在系统中都是独一无二的。
      *
      * 每 128*128 的分区会被分为一个块，按照从左到右、从上到下的顺序陈列在数组内。
      */
-    abstract val tileMapIds: IntArray
+    val tileMapIds: IntArray,
+) {
+    var ownerName = ownerName
+        private set
 
-    abstract val imageData: T
+    var name = name
+        private set
 
-    internal abstract fun changeOwnerName(name: String)
+    internal fun changeOwnerName(name: String) {
+        require(USERNAME_REGEX.matches(name)) { "Invalid owner username: $name" }
+        ownerName = name
+    }
 
-    internal abstract fun rename(name: String)
-
-    internal abstract fun replaceData(data: T)
+    internal fun rename(name: String) {
+        // TODO: 名称规范检查
+        this.name = name
+    }
 }
