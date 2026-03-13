@@ -49,9 +49,9 @@ abstract class Image<T> {
 
     abstract val imageData: T
 
-    abstract fun changeOwnerName(name: String)
+    internal abstract fun changeOwnerName(name: String)
 
-    abstract fun rename(name: String)
+    internal abstract fun rename(name: String)
 
-    abstract fun replaceData(data: T)
+    internal abstract fun replaceData(data: T)
 }
