@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.infra.mongo
 
+import org.bson.BsonBinary
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.Image
 import plutoproject.feature.gallery.core.ImageDataEntry
@@ -37,15 +38,14 @@ internal fun Image.toDocument(): ImageDocument {
 }
 
 internal fun ImageDataEntryDocument.toDomain(): ImageDataEntry<*> {
-    val domainType = type.toDomain()
-    return when (domainType) {
+    return when (val domainType = type.toDomain()) {
         ImageType.STATIC -> ImageDataEntry(
             belongsTo = belongsTo,
             type = domainType,
             data = StaticImageData(
                 tilePool = TilePool(
                     offsets = tilePoolOffsets,
-                    blob = tilePoolBlob,
+                    blob = tilePoolBlob.data,
                 ),
                 tileIndexes = tileIndexes,
             ),
@@ -63,7 +63,7 @@ internal fun ImageDataEntryDocument.toDomain(): ImageDataEntry<*> {
                 },
                 tilePool = TilePool(
                     offsets = tilePoolOffsets,
-                    blob = tilePoolBlob,
+                    blob = tilePoolBlob.data,
                 ),
                 tileIndexes = tileIndexes,
             ),
@@ -81,7 +81,7 @@ internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
                 belongsTo = belongsTo,
                 type = type.toDocument(),
                 tilePoolOffsets = staticData.tilePool.offsets,
-                tilePoolBlob = staticData.tilePool.blob,
+                tilePoolBlob = BsonBinary(staticData.tilePool.blob),
                 tileIndexes = staticData.tileIndexes,
                 frameCount = null,
                 durationMillis = null,
@@ -96,7 +96,7 @@ internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
                 belongsTo = belongsTo,
                 type = type.toDocument(),
                 tilePoolOffsets = animatedData.tilePool.offsets,
-                tilePoolBlob = animatedData.tilePool.blob,
+                tilePoolBlob = BsonBinary(animatedData.tilePool.blob),
                 tileIndexes = animatedData.tileIndexes,
                 frameCount = animatedData.frameCount,
                 durationMillis = animatedData.durationMillis,

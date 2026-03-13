@@ -31,11 +31,11 @@ class ImageDataEntry<T : Any>(
 
     private fun checkImageData(data: T) = when (type) {
         ImageType.STATIC -> require(data is StaticImageData) {
-            "Image data type mismatch: expected ${StaticImageData::class.simpleName}, got ${data::class.simpleName}"
+            "Image data type mismatch: expected StaticImageData, got ${data::class.simpleName}"
         }
 
         ImageType.ANIMATED -> require(data is AnimatedImageData) {
-            "Image data type mismatch: expected ${AnimatedImageData::class.simpleName}, got ${data::class.simpleName}"
+            "Image data type mismatch: expected AnimatedImageData, got ${data::class.simpleName}"
         }
     }
 }
