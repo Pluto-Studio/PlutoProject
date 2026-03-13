@@ -12,8 +12,8 @@ class StaticImage(
     override val owner: UUID,
     private var _ownerName: String,
     private var _name: String,
-    override val mapXBlocks: Int,
-    override val mapYBlocks: Int,
+    override val mapWidthBlocks: Int,
+    override val mapHeightBlocks: Int,
     override val tileMapIds: IntArray,
     private var _imageData: StaticImageData,
 ) : Image<StaticImageData>() {

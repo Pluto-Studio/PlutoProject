@@ -27,18 +27,18 @@ abstract class Image<T> {
     abstract val name: String
 
     /**
-     * 地图画在 X 轴方向的方块数。
+     * 地图宽度方块数。
      *
-     * 实际 X 分辨率为 [mapXBlocks] * 128。
+     * 实际宽像素量为 [mapWidthBlocks] * 128。
      */
-    abstract val mapXBlocks: Int
+    abstract val mapWidthBlocks: Int
 
     /**
-     * 地图画在 Y 轴方向的方块数。
+     * 地图高度方块数。
      *
-     * 实际 Y 分辨率为 [mapYBlocks] * 128。
+     * 实际高像素量为 [mapHeightBlocks] * 128。
      */
-    abstract val mapYBlocks: Int
+    abstract val mapHeightBlocks: Int
 
     /**
      * 为这个地图所有分区分配的 Map ID，每个 Map ID 在系统中都是独一无二的。
