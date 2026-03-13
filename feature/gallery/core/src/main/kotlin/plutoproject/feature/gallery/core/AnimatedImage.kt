@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.core
 
+import plutoproject.feature.gallery.core.util.isValidOwnerName
 import java.util.*
 
 /**
@@ -25,6 +26,7 @@ class AnimatedImage(
         get() = _imageData
 
     override fun changeOwnerName(name: String) {
+        require(isValidOwnerName(name)) { "Invalid Minecraft username: $name" }
         _ownerName = name
     }
 
