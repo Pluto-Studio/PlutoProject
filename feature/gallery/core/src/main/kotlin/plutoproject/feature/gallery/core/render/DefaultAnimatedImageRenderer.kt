@@ -9,19 +9,17 @@ import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
 import plutoproject.feature.gallery.core.render.geometry.repositionerOf
 import plutoproject.feature.gallery.core.render.geometry.scalerOf
 import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
-import plutoproject.feature.gallery.core.render.mapcolor.DefaultAlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
-import plutoproject.feature.gallery.core.render.mapcolor.newDefaultMapColorQuantizer
 import plutoproject.feature.gallery.core.render.tile.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.TileSplitter
 import java.util.logging.Level
 import java.util.logging.Logger
 
-internal class DefaultAnimatedImageRenderer(
-    private val frameSampler: FrameSampler = DefaultFrameSampler,
-    private val alphaCompositor: AlphaCompositor = DefaultAlphaCompositor,
-    private val mapColorQuantizer: MapColorQuantizer = newDefaultMapColorQuantizer(),
-    private val logger: Logger = Logger.getLogger(DefaultAnimatedImageRenderer::class.java.name),
+class DefaultAnimatedImageRenderer(
+    private val frameSampler: FrameSampler,
+    private val alphaCompositor: AlphaCompositor,
+    private val mapColorQuantizer: MapColorQuantizer,
+    private val logger: Logger,
 ) : AnimatedImageRenderer {
     override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> = try {
         checkpoint()

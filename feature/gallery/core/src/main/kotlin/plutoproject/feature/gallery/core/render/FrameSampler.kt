@@ -1,6 +1,6 @@
 package plutoproject.feature.gallery.core.render
 
-internal sealed class FrameSampleResult {
+sealed class FrameSampleResult {
     abstract val status: RenderStatus
 
     class Failure(override val status: RenderStatus) : FrameSampleResult() {
@@ -26,9 +26,11 @@ internal sealed class FrameSampleResult {
     }
 }
 
-internal fun interface FrameSampler {
+fun interface FrameSampler {
     fun sample(sourceFrames: List<AnimatedSourceFrame>, profile: RenderProfile): FrameSampleResult
 }
+
+fun defaultFrameSampler(): FrameSampler = DefaultFrameSampler
 
 internal object DefaultFrameSampler : FrameSampler {
     override fun sample(sourceFrames: List<AnimatedSourceFrame>, profile: RenderProfile): FrameSampleResult {

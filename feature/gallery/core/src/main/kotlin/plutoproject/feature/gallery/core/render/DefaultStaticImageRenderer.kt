@@ -8,9 +8,7 @@ import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
 import plutoproject.feature.gallery.core.render.geometry.repositionerOf
 import plutoproject.feature.gallery.core.render.geometry.scalerOf
 import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
-import plutoproject.feature.gallery.core.render.mapcolor.DefaultAlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
-import plutoproject.feature.gallery.core.render.mapcolor.newDefaultMapColorQuantizer
 import plutoproject.feature.gallery.core.render.tile.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.TileSplitter
 import java.util.logging.Level
@@ -19,10 +17,10 @@ import java.util.logging.Logger
 /**
  * 静态图渲染默认实现：几何 -> Alpha 合成 -> MapColor 量化 -> Tile 切分与去重。
  */
-internal class DefaultStaticImageRenderer(
-    private val alphaCompositor: AlphaCompositor = DefaultAlphaCompositor,
-    private val mapColorQuantizer: MapColorQuantizer = newDefaultMapColorQuantizer(),
-    private val logger: Logger = Logger.getLogger(DefaultStaticImageRenderer::class.java.name),
+class DefaultStaticImageRenderer(
+    private val alphaCompositor: AlphaCompositor,
+    private val mapColorQuantizer: MapColorQuantizer,
+    private val logger: Logger,
 ) : StaticImageRenderer {
     override suspend fun render(request: RenderStaticImageRequest): RenderResult<StaticImageData> = try {
         checkpoint()

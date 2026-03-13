@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream
 import javax.imageio.IIOException
 import javax.imageio.ImageIO
 
-object StaticImageDecoder : ImageDecoder {
+private class DefaultStaticImageDecoder : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
         val metadata = readImageMetadata(bytes) ?: return DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
         val width = metadata.width
@@ -44,6 +44,8 @@ object StaticImageDecoder : ImageDecoder {
         DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
 }
+
+fun defaultStaticImageDecoder(): ImageDecoder = DefaultStaticImageDecoder()
 
 private suspend fun readBufferedImage(bytes: ByteArray) = withContext(Dispatchers.IO) {
     ImageIO.read(ByteArrayInputStream(bytes))

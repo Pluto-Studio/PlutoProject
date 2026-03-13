@@ -4,12 +4,14 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.decode.decoder.StaticImageDecoder
+import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 class StaticImageDecoderTest {
+    private val decoder = defaultStaticImageDecoder()
+
     @Test
     fun `png decoder should decode rgba image with exact pixels`() = runTest {
         val source = BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB).apply {
@@ -17,7 +19,7 @@ class StaticImageDecoderTest {
             setRGB(1, 0, 0xFF00FF00.toInt())
         }
 
-        val result = StaticImageDecoder.decode(
+        val result = decoder.decode(
             bytes = encode(source, "png"),
             constraints = DecodeConstraints(),
         )
@@ -37,7 +39,7 @@ class StaticImageDecoderTest {
             setRGB(1, 0, 0x003355CC)
         }
 
-        val result = StaticImageDecoder.decode(
+        val result = decoder.decode(
             bytes = encode(source, "jpg"),
             constraints = DecodeConstraints(),
         )
@@ -56,8 +58,8 @@ class StaticImageDecoderTest {
         val jpgSource = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
         val constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 3, maxFrames = 500)
 
-        val pngResult = StaticImageDecoder.decode(encode(pngSource, "png"), constraints)
-        val jpgResult = StaticImageDecoder.decode(encode(jpgSource, "jpg"), constraints)
+        val pngResult = decoder.decode(encode(pngSource, "png"), constraints)
+        val jpgResult = decoder.decode(encode(jpgSource, "jpg"), constraints)
 
         assertTrue(pngResult is DecodeResult.Failure)
         assertTrue(jpgResult is DecodeResult.Failure)
@@ -67,7 +69,7 @@ class StaticImageDecoderTest {
 
     @Test
     fun `jpeg decoder should return invalid-image for malformed bytes`() = runTest {
-        val result = StaticImageDecoder.decode(
+        val result = decoder.decode(
             bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2, 3),
             constraints = DecodeConstraints(),
         )

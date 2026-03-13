@@ -8,6 +8,7 @@ import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
 import plutoproject.feature.gallery.core.render.RgbaImage8888
 import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
+import java.util.logging.Logger
 
 class DecodeImageUseCaseTest {
     @Test
@@ -65,6 +66,7 @@ class DecodeImageUseCaseTest {
                 gifInvoked = true
                 DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
             },
+            logger = Logger.getLogger("DecodeImageUseCaseTest"),
         )
 
         val result = useCase.execute(DecodeImageRequest(bytes = pngMagicBytes()))
@@ -174,6 +176,7 @@ private fun useCaseWith(
     jpgDecoder = jpg,
     webpDecoder = webp,
     gifDecoder = gif,
+    logger = Logger.getLogger("DecodeImageUseCaseTest"),
 )
 
 private fun pngMagicBytes(): ByteArray = byteArrayOf(

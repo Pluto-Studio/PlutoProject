@@ -11,7 +11,7 @@ import plutoproject.feature.gallery.core.render.RgbaImage8888
  *   1) [transparentMask]：标记完全透明像素（alpha==0）
  *   2) [rgb24Pixels]：非透明像素与背景色合成后的 RGB24（0xRRGGBB）
  */
-internal data class CompositedRgbImage(
+data class CompositedRgbImage(
     val width: Int,
     val height: Int,
     val rgb24Pixels: IntArray,
@@ -28,7 +28,7 @@ internal data class CompositedRgbImage(
     }
 }
 
-internal fun interface AlphaCompositor {
+fun interface AlphaCompositor {
     /**
      * 将 RGBA8888 归一化为“透明掩码 + RGB24”。
      *
@@ -37,6 +37,8 @@ internal fun interface AlphaCompositor {
      */
     fun composite(source: RgbaImage8888, backgroundRgb24: Int): CompositedRgbImage
 }
+
+fun defaultAlphaCompositor(): AlphaCompositor = DefaultAlphaCompositor
 
 internal object DefaultAlphaCompositor : AlphaCompositor {
     override fun composite(source: RgbaImage8888, backgroundRgb24: Int): CompositedRgbImage {

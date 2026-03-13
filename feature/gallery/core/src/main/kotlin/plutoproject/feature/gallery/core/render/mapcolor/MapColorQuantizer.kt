@@ -12,7 +12,7 @@ private val ORDERED_BAYER_4X4 = intArrayOf(
     15, 7, 13, 5,
 )
 
-internal fun interface MapColorQuantizer {
+fun interface MapColorQuantizer {
     /**
      * 将 AlphaCompositor 产物量化为 mapColor bytes。
      *
@@ -22,6 +22,8 @@ internal fun interface MapColorQuantizer {
      */
     fun quantize(composited: CompositedRgbImage, ditherAlgorithm: DitherAlgorithm): ByteArray
 }
+
+fun defaultMapColorQuantizer(): MapColorQuantizer = newDefaultMapColorQuantizer()
 
 /**
  * MapColor 量化默认实现。

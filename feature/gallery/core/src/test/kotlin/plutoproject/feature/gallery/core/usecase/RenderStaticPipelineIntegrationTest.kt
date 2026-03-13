@@ -11,8 +11,17 @@ import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
 import plutoproject.feature.gallery.core.render.RepositionMode
 import plutoproject.feature.gallery.core.render.RgbaImage8888
+import plutoproject.feature.gallery.core.render.mapcolor.defaultAlphaCompositor
+import plutoproject.feature.gallery.core.render.mapcolor.defaultMapColorQuantizer
+import java.util.logging.Logger
 
 class RenderStaticPipelineIntegrationTest {
+    private val renderer = DefaultStaticImageRenderer(
+        alphaCompositor = defaultAlphaCompositor(),
+        mapColorQuantizer = defaultMapColorQuantizer(),
+        logger = Logger.getLogger(DefaultStaticImageRenderer::class.java.name),
+    )
+
     @Test
     fun `should keep tile indexes in left-right top-bottom order`() = runTest {
         val source = mutableImage(width = 256, height = 256)
@@ -21,7 +30,7 @@ class RenderStaticPipelineIntegrationTest {
         fillRect(source, x = 0, y = 128, width = 128, height = 128, argb = argb(255, 255, 255, 255))
         fillRect(source, x = 128, y = 128, width = 128, height = 128, argb = argb(255, 64, 64, 255))
 
-        val useCase = RenderStaticImageUseCase(DefaultStaticImageRenderer())
+        val useCase = RenderStaticImageUseCase(renderer)
         val result = useCase.execute(
             RenderStaticImageRequest(
                 sourceImage = source,
@@ -42,7 +51,7 @@ class RenderStaticPipelineIntegrationTest {
         val source = mutableImage(width = 512, height = 512)
         fillRect(source, x = 0, y = 0, width = 512, height = 512, argb = argb(255, 127, 178, 56))
 
-        val useCase = RenderStaticImageUseCase(DefaultStaticImageRenderer())
+        val useCase = RenderStaticImageUseCase(renderer)
         val result = useCase.execute(
             RenderStaticImageRequest(
                 sourceImage = source,
@@ -64,7 +73,7 @@ class RenderStaticPipelineIntegrationTest {
         val source = mutableImage(width = 384, height = 256)
         fillRect(source, x = 0, y = 0, width = 384, height = 256, argb = argb(255, 30, 200, 120))
 
-        val useCase = RenderStaticImageUseCase(DefaultStaticImageRenderer())
+        val useCase = RenderStaticImageUseCase(renderer)
         val result = useCase.execute(
             RenderStaticImageRequest(
                 sourceImage = source,

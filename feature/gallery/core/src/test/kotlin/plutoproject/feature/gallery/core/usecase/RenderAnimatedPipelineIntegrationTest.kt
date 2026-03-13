@@ -14,8 +14,19 @@ import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.RenderStatus
 import plutoproject.feature.gallery.core.render.RepositionMode
 import plutoproject.feature.gallery.core.render.RgbaImage8888
+import plutoproject.feature.gallery.core.render.defaultFrameSampler
+import plutoproject.feature.gallery.core.render.mapcolor.defaultAlphaCompositor
+import plutoproject.feature.gallery.core.render.mapcolor.defaultMapColorQuantizer
+import java.util.logging.Logger
 
 class RenderAnimatedPipelineIntegrationTest {
+    private val renderer = DefaultAnimatedImageRenderer(
+        frameSampler = defaultFrameSampler(),
+        alphaCompositor = defaultAlphaCompositor(),
+        mapColorQuantizer = defaultMapColorQuantizer(),
+        logger = Logger.getLogger(DefaultAnimatedImageRenderer::class.java.name),
+    )
+
     @Test
     fun `should repeat long-delay frame and keep repeated frame tile indexes identical`() = runTest {
         val frame0 = solidImage(128, 128, argb(255, 255, 0, 0))
@@ -31,7 +42,7 @@ class RenderAnimatedPipelineIntegrationTest {
             profile = defaultNoDitherProfile(),
         )
 
-        val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
+        val result = RenderAnimatedImageUseCase(renderer).execute(request)
 
         assertTrue(result is RenderResult.Success)
         val data = (result as RenderResult.Success).imageData!!
@@ -60,7 +71,7 @@ class RenderAnimatedPipelineIntegrationTest {
             profile = defaultNoDitherProfile(),
         )
 
-        val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
+        val result = RenderAnimatedImageUseCase(renderer).execute(request)
 
         assertTrue(result is RenderResult.Success)
         val data = (result as RenderResult.Success).imageData!!
@@ -80,7 +91,7 @@ class RenderAnimatedPipelineIntegrationTest {
             profile = RenderProfile(frameSampleIntervalMillis = 1),
         )
 
-        val result = RenderAnimatedImageUseCase(DefaultAnimatedImageRenderer()).execute(request)
+        val result = RenderAnimatedImageUseCase(renderer).execute(request)
 
         assertTrue(result is RenderResult.Failure)
         assertEquals(RenderStatus.INVALID_RENDERED_DURATION_MILLIS, result.status)

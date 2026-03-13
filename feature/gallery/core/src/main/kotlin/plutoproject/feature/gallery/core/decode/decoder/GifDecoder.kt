@@ -18,7 +18,7 @@ import javax.imageio.metadata.IIOMetadata
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 
-object GifDecoder : ImageDecoder {
+private class DefaultGifDecoder : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
         decodeInternal(bytes = bytes, constraints = constraints)
     } catch (_: IIOException) {
@@ -27,6 +27,8 @@ object GifDecoder : ImageDecoder {
         DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
     }
 }
+
+fun defaultGifDecoder(): ImageDecoder = DefaultGifDecoder()
 
 private suspend fun decodeInternal(
     bytes: ByteArray,

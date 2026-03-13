@@ -14,11 +14,12 @@ import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import org.incendo.cloud.annotation.specifier.Quoted
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.TilePool
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
-import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
@@ -29,8 +30,9 @@ import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.ScaleAlgorithm
 import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
 import plutoproject.feature.gallery.core.render.tile.decodeTile
-import plutoproject.feature.gallery.core.usecase.newRenderAnimatedImageUseCase
-import plutoproject.feature.gallery.core.usecase.newRenderStaticImageUseCase
+import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
+import plutoproject.feature.gallery.core.usecase.RenderAnimatedImageUseCase
+import plutoproject.feature.gallery.core.usecase.RenderStaticImageUseCase
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.server
@@ -39,9 +41,12 @@ import java.net.HttpURLConnection
 import java.net.URI
 
 @Suppress("UNUSED")
-object GalleryDebugRenderCommand {
+object GalleryDebugRenderCommand : KoinComponent {
     private const val PERMISSION = "plutoproject.gallery.command.debug.render"
     private const val MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
+    private val decodeImageUseCase by inject<DecodeImageUseCase>()
+    private val renderStaticImageUseCase by inject<RenderStaticImageUseCase>()
+    private val renderAnimatedImageUseCase by inject<RenderAnimatedImageUseCase>()
 
     @Command("gallery debug render <url> <blocksX> <blocksY> [dither] [bgRgbHex] [scale] [reposition]")
     @Permission(PERMISSION)
@@ -87,7 +92,7 @@ object GalleryDebugRenderCommand {
 
         val decodeResult = run {
             val started = System.nanoTime()
-            val result = DecodeImageUseCase().execute(
+            val result = decodeImageUseCase.execute(
                 DecodeImageRequest(
                     bytes = bytes,
                     fileNameHint = extractFileNameHint(url),
@@ -211,7 +216,7 @@ object GalleryDebugRenderCommand {
         blocksY: Int,
         profile: RenderProfile,
     ): RenderResult<TilePack> {
-        val renderResult = newRenderStaticImageUseCase().execute(
+        val renderResult = renderStaticImageUseCase.execute(
             RenderStaticImageRequest(
                 sourceImage = decoded.image,
                 mapXBlocks = blocksX,
@@ -233,7 +238,7 @@ object GalleryDebugRenderCommand {
         blocksY: Int,
         profile: RenderProfile,
     ): RenderResult<TilePack> {
-        val renderResult = newRenderAnimatedImageUseCase().execute(
+        val renderResult = renderAnimatedImageUseCase.execute(
             RenderAnimatedImageRequest(
                 sourceFrames = decoded.frames,
                 mapXBlocks = blocksX,

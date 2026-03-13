@@ -10,18 +10,16 @@ import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodeStatus
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
-import plutoproject.feature.gallery.core.decode.decoder.GifDecoder
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
-import plutoproject.feature.gallery.core.decode.decoder.StaticImageDecoder
 import java.util.logging.Level
 import java.util.logging.Logger
 
 class DecodeImageUseCase(
-    private val pngDecoder: ImageDecoder = StaticImageDecoder,
-    private val jpgDecoder: ImageDecoder = StaticImageDecoder,
-    private val webpDecoder: ImageDecoder = StaticImageDecoder,
-    private val gifDecoder: ImageDecoder = GifDecoder,
-    private val logger: Logger = Logger.getLogger(DecodeImageUseCase::class.java.name),
+    private val pngDecoder: ImageDecoder,
+    private val jpgDecoder: ImageDecoder,
+    private val webpDecoder: ImageDecoder,
+    private val gifDecoder: ImageDecoder,
+    private val logger: Logger,
 ) {
     suspend fun execute(request: DecodeImageRequest): DecodeResult<DecodedImage> = try {
         checkpoint()

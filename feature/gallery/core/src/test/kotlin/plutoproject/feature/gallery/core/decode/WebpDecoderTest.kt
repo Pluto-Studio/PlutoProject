@@ -4,13 +4,15 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.decode.decoder.StaticImageDecoder
+import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import java.util.Base64
 
 class WebpDecoderTest {
+    private val decoder = defaultStaticImageDecoder()
+
     @Test
     fun `static image decoder should decode embedded webp sample`() = runTest {
-        val result = StaticImageDecoder.decode(
+        val result = decoder.decode(
             bytes = decodeBase64(WEBP_1X1_TRANSPARENT_BASE64),
             constraints = DecodeConstraints(),
         )
@@ -25,7 +27,7 @@ class WebpDecoderTest {
 
     @Test
     fun `static image decoder should return invalid-image for malformed webp bytes`() = runTest {
-        val result = StaticImageDecoder.decode(
+        val result = decoder.decode(
             bytes = byteArrayOf(
                 'R'.code.toByte(), 'I'.code.toByte(), 'F'.code.toByte(), 'F'.code.toByte(),
                 0, 0, 0, 0,
