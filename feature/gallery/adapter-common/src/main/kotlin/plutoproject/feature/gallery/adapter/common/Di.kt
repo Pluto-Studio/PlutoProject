@@ -47,7 +47,6 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
 }
 
 val commonModule = module {
-    single { Clock.systemUTC() }
     singleOf(::ImageManager)
 
     single<ImageRepository> {
