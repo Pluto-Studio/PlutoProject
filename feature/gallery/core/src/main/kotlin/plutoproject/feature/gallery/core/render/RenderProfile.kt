@@ -6,9 +6,9 @@ package plutoproject.feature.gallery.core.render
  * 该配置只决定每个步骤采用的实现与参数，不允许重排步骤顺序。
  */
 data class RenderProfile(
-    val repositionMode: RepositionMode = RepositionMode.COVER,
-    val scaleAlgorithm: ScaleAlgorithm = ScaleAlgorithm.BILINEAR,
-    val ditherAlgorithm: DitherAlgorithm = DitherAlgorithm.ORDERED_BAYER,
+    val repositionMode: RepositionMode = RepositionMode.CONTAIN,
+    val scaleAlgorithm: ScaleAlgorithm = ScaleAlgorithm.LANCZOS,
+    val ditherAlgorithm: DitherAlgorithm = DitherAlgorithm.FLOYD_STEINBERG,
     /** RGB 24-bit（0xRRGGBB）。 */
     val alphaBackgroundColorRgb: Int = 0xFFFFFF,
     /**
