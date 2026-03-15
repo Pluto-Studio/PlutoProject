@@ -41,5 +41,5 @@ internal fun interface Scaler {
 
 internal fun scalerOf(algorithm: ScaleAlgorithm): Scaler = when (algorithm) {
     ScaleAlgorithm.BILINEAR -> BilinearScaler
-    ScaleAlgorithm.LANCZOS -> TODO("Lanczos scaler is not implemented yet")
+    ScaleAlgorithm.LANCZOS -> LanczosScaler
 }

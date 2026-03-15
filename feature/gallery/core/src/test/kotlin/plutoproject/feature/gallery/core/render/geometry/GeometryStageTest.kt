@@ -98,6 +98,49 @@ class GeometryStageTest {
     }
 
     @Test
+    fun `lanczos scaler should preserve dimensions and identity sampling`() {
+        val source = RgbaImage8888(
+            width = 2,
+            height = 2,
+            pixels = intArrayOf(
+                rgba(255, 255, 0, 0),
+                rgba(255, 0, 255, 0),
+                rgba(255, 0, 0, 255),
+                rgba(255, 255, 255, 255),
+            ),
+        )
+
+        val transform = StretchRepositioner.reposition(
+            sourceWidth = source.width,
+            sourceHeight = source.height,
+            destinationWidth = source.width,
+            destinationHeight = source.height,
+        )
+
+        val scaled = LanczosScaler.scale(source, transform)
+
+        assertEquals(2, scaled.width)
+        assertEquals(2, scaled.height)
+        assertEquals(source.pixels.toList(), scaled.pixels.toList())
+    }
+
+    @Test
+    fun `lanczos contain sampling should keep out-of-source area transparent`() {
+        val source = solidImage(width = 4, height = 2, color = rgba(255, 200, 10, 10))
+        val transform = ContainRepositioner.reposition(
+            sourceWidth = source.width,
+            sourceHeight = source.height,
+            destinationWidth = 4,
+            destinationHeight = 4,
+        )
+
+        val scaled = LanczosScaler.scale(source, transform)
+
+        assertEquals(0, alpha(scaled.pixels[0]))
+        assertTrue(alpha(scaled.pixels[4 + 1]) > 0)
+    }
+
+    @Test
     fun `target resolution should be map blocks times 128`() {
         val resolution = calcTargetResolution(mapXBlocks = 3, mapYBlocks = 2)
 
