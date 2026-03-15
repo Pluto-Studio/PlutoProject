@@ -1,7 +1,40 @@
 package plutoproject.feature.gallery.core.decode
 
-import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
 import plutoproject.feature.gallery.core.render.RgbaImage8888
+
+data class AnimatedFrameTiming(
+    val sourceFrameIndex: Int,
+    val delayCentiseconds: Int,
+) {
+    init {
+        require(sourceFrameIndex >= 0) { "sourceFrameIndex must be >= 0" }
+        require(delayCentiseconds >= 0) { "delayCentiseconds must be >= 0" }
+    }
+}
+
+data class DecodedAnimatedFrame(
+    val sourceFrameIndex: Int,
+    val delayCentiseconds: Int,
+    val image: RgbaImage8888,
+) {
+    init {
+        require(sourceFrameIndex >= 0) { "sourceFrameIndex must be >= 0" }
+        require(delayCentiseconds >= 0) { "delayCentiseconds must be >= 0" }
+    }
+}
+
+interface DecodedAnimatedFrameStream : AutoCloseable {
+    suspend fun nextFrame(): DecodedAnimatedFrame?
+}
+
+interface DecodedAnimatedImageSource {
+    val width: Int
+    val height: Int
+    val frameCount: Int
+    val frameTimeline: List<AnimatedFrameTiming>
+
+    suspend fun openFrameStream(): DecodedAnimatedFrameStream
+}
 
 sealed interface DecodedImage {
     data class Static(
@@ -9,7 +42,7 @@ sealed interface DecodedImage {
     ) : DecodedImage
 
     data class Animated(
-        val frames: List<AnimatedSourceFrame>,
+        val source: DecodedAnimatedImageSource,
     ) : DecodedImage
 }
 
@@ -23,11 +56,13 @@ data class DecodeConstraints(
     val maxBytes: Int = 25 * 1024 * 1024,
     val maxPixels: Int = 16_777_216,
     val maxFrames: Int = 500,
+    val maxTotalFramePixels: Long = 33_554_432L,
 ) {
     init {
         require(maxBytes > 0) { "maxBytes must be > 0" }
         require(maxPixels > 0) { "maxPixels must be > 0" }
         require(maxFrames > 0) { "maxFrames must be > 0" }
+        require(maxTotalFramePixels > 0L) { "maxTotalFramePixels must be > 0" }
     }
 }
 

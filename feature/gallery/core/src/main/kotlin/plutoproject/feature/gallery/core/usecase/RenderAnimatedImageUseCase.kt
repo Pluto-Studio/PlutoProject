@@ -10,7 +10,7 @@ class RenderAnimatedImageUseCase(
     private val renderer: AnimatedImageRenderer,
 ) {
     suspend fun execute(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> {
-        if (request.sourceFrames.isEmpty()) {
+        if (request.source.frameCount <= 0) {
             return RenderResult.failed(RenderStatus.INVALID_SOURCE_FRAME_COUNT)
         }
 

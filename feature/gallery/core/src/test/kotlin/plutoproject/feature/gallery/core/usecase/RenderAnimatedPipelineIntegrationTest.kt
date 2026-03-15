@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
+import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrame
 import plutoproject.feature.gallery.core.render.DefaultAnimatedImageRenderer
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
 import plutoproject.feature.gallery.core.render.RenderAnimatedImageRequest
@@ -33,9 +33,11 @@ class RenderAnimatedPipelineIntegrationTest {
         val frame1 = solidImage(128, 128, argb(255, 0, 255, 0))
 
         val request = RenderAnimatedImageRequest(
-            sourceFrames = listOf(
-                AnimatedSourceFrame(frame0, delayCentiseconds = 1),
-                AnimatedSourceFrame(frame1, delayCentiseconds = 5),
+            source = testAnimatedImageSource(
+                listOf(
+                    DecodedAnimatedFrame(sourceFrameIndex = 0, delayCentiseconds = 1, image = frame0),
+                    DecodedAnimatedFrame(sourceFrameIndex = 1, delayCentiseconds = 5, image = frame1),
+                )
             ),
             mapXBlocks = 1,
             mapYBlocks = 1,
@@ -62,9 +64,11 @@ class RenderAnimatedPipelineIntegrationTest {
         val identical = solidImage(128, 128, argb(255, 127, 178, 56))
 
         val request = RenderAnimatedImageRequest(
-            sourceFrames = listOf(
-                AnimatedSourceFrame(identical, delayCentiseconds = 2),
-                AnimatedSourceFrame(identical, delayCentiseconds = 2),
+            source = testAnimatedImageSource(
+                listOf(
+                    DecodedAnimatedFrame(sourceFrameIndex = 0, delayCentiseconds = 2, image = identical),
+                    DecodedAnimatedFrame(sourceFrameIndex = 1, delayCentiseconds = 2, image = identical),
+                )
             ),
             mapXBlocks = 1,
             mapYBlocks = 1,
@@ -83,8 +87,14 @@ class RenderAnimatedPipelineIntegrationTest {
     @Test
     fun `should return overflow status when sampled duration is too large`() = runTest {
         val request = RenderAnimatedImageRequest(
-            sourceFrames = listOf(
-                AnimatedSourceFrame(solidImage(1, 1, argb(255, 255, 255, 255)), delayCentiseconds = Int.MAX_VALUE),
+            source = testAnimatedImageSource(
+                listOf(
+                    DecodedAnimatedFrame(
+                        sourceFrameIndex = 0,
+                        delayCentiseconds = Int.MAX_VALUE,
+                        image = solidImage(1, 1, argb(255, 255, 255, 255)),
+                    ),
+                )
             ),
             mapXBlocks = 1,
             mapYBlocks = 1,

@@ -5,7 +5,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
-import plutoproject.feature.gallery.core.render.AnimatedSourceFrame
 import plutoproject.feature.gallery.core.render.RgbaImage8888
 import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
 import java.util.logging.Logger
@@ -129,10 +128,11 @@ class DecodeImageUseCaseTest {
             gif = { _, _ ->
                 DecodeResult.Success(
                     DecodedImage.Animated(
-                        frames = listOf(
-                            AnimatedSourceFrame(sampleRgbaImage(), delayCentiseconds = 1),
-                            AnimatedSourceFrame(sampleRgbaImage(), delayCentiseconds = 1),
-                        )
+                        source = fakeAnimatedSource(
+                            sourceWidth = 1,
+                            sourceHeight = 1,
+                            frameCount = 2,
+                        ),
                     ),
                 )
             }
@@ -189,3 +189,25 @@ private fun sampleRgbaImage(width: Int = 1, height: Int = 1): RgbaImage8888 = Rg
     height = height,
     pixels = IntArray(width * height) { 0xFFFFFFFF.toInt() },
 )
+
+private fun fakeAnimatedSource(
+    sourceWidth: Int,
+    sourceHeight: Int,
+    frameCount: Int,
+): DecodedAnimatedImageSource {
+    return object : DecodedAnimatedImageSource {
+        override val width: Int = sourceWidth
+        override val height: Int = sourceHeight
+        override val frameCount: Int = frameCount
+        override val frameTimeline: List<AnimatedFrameTiming> = List(frameCount) {
+            AnimatedFrameTiming(sourceFrameIndex = it, delayCentiseconds = 1)
+        }
+
+        override suspend fun openFrameStream(): DecodedAnimatedFrameStream {
+            return object : DecodedAnimatedFrameStream {
+                override suspend fun nextFrame(): DecodedAnimatedFrame? = null
+                override fun close() = Unit
+            }
+        }
+    }
+}

@@ -1,5 +1,7 @@
 package plutoproject.feature.gallery.core.render
 
+import plutoproject.feature.gallery.core.decode.AnimatedFrameTiming
+
 sealed class FrameSampleResult {
     abstract val status: RenderStatus
 
@@ -27,19 +29,19 @@ sealed class FrameSampleResult {
 }
 
 fun interface FrameSampler {
-    fun sample(sourceFrames: List<AnimatedSourceFrame>, profile: RenderProfile): FrameSampleResult
+    fun sample(frameTimeline: List<AnimatedFrameTiming>, profile: RenderProfile): FrameSampleResult
 }
 
 fun defaultFrameSampler(): FrameSampler = DefaultFrameSampler
 
 internal object DefaultFrameSampler : FrameSampler {
-    override fun sample(sourceFrames: List<AnimatedSourceFrame>, profile: RenderProfile): FrameSampleResult {
-        val outFrameIndexes = ArrayList<Int>(sourceFrames.size)
+    override fun sample(frameTimeline: List<AnimatedFrameTiming>, profile: RenderProfile): FrameSampleResult {
+        val outFrameIndexes = ArrayList<Int>(frameTimeline.size)
         var durationMillisLong = 0L
 
         var srcFrameIndex = 0
-        while (srcFrameIndex < sourceFrames.size) {
-            val delayCentiseconds = sourceFrames[srcFrameIndex].delayCentiseconds
+        while (srcFrameIndex < frameTimeline.size) {
+            val delayCentiseconds = frameTimeline[srcFrameIndex].delayCentiseconds
             val effectiveDelayMillisLong = maxOf(
                 delayCentiseconds.toLong() * 10L,
                 profile.minFrameDelayMillis.toLong(),

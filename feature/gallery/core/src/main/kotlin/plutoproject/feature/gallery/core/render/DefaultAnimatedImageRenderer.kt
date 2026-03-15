@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import plutoproject.feature.gallery.core.AnimatedImageData
+import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrame
 import plutoproject.feature.gallery.core.render.geometry.TargetResolution
 import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
 import plutoproject.feature.gallery.core.render.geometry.repositionerOf
@@ -24,7 +25,7 @@ class DefaultAnimatedImageRenderer(
     override suspend fun render(request: RenderAnimatedImageRequest): RenderResult<AnimatedImageData> = try {
         checkpoint()
 
-        val frameSampleResult = frameSampler.sample(request.sourceFrames, request.profile)
+        val frameSampleResult = frameSampler.sample(request.source.frameTimeline, request.profile)
         checkpoint()
 
         val (outToSourceFrameIndex, durationMillis) = when (frameSampleResult) {
@@ -43,6 +44,23 @@ class DefaultAnimatedImageRenderer(
         val allFrameTileIndexes = ShortArray(totalTileIndexesLengthLong.toInt())
         val deduper = TileDeduper()
         val renderedFrameCache = HashMap<Int, ShortArray>()
+        val requiredSourceFrameIndexes = collectRequiredSourceFrameIndexes(
+            outToSourceFrameIndex = outToSourceFrameIndex,
+            sourceFrameCount = request.source.frameCount,
+        ) ?: return RenderResult.failed(RenderStatus.INVALID_SOURCE_FRAME_COUNT)
+
+        renderRequiredFrames(
+            request = request,
+            targetResolution = targetResolution,
+            deduper = deduper,
+            requiredSourceFrameIndexes = requiredSourceFrameIndexes,
+            renderedFrameCache = renderedFrameCache,
+        )
+
+        if (!renderedFrameCache.keys.containsAll(requiredSourceFrameIndexes)) {
+            return RenderResult.failed(RenderStatus.INVALID_SOURCE_FRAME_COUNT)
+        }
+
         var outFrameIndex = 0
         checkpoint()
 
@@ -50,12 +68,7 @@ class DefaultAnimatedImageRenderer(
             checkpoint()
             val srcFrameIndex = outToSourceFrameIndex[outFrameIndex]
             val frameTileIndexes = renderedFrameCache[srcFrameIndex]
-                ?: renderSourceFrameTileIndexes(
-                    request = request,
-                    sourceFrameIndex = srcFrameIndex,
-                    targetResolution = targetResolution,
-                    deduper = deduper,
-                ).also { renderedFrameCache[srcFrameIndex] = it }
+                ?: return RenderResult.failed(RenderStatus.INVALID_SOURCE_FRAME_COUNT)
 
             frameTileIndexes.copyInto(
                 destination = allFrameTileIndexes,
@@ -80,21 +93,57 @@ class DefaultAnimatedImageRenderer(
     } catch (e: Exception) {
         logger.log(
             Level.SEVERE,
-            "Animated image render pipeline failed with internal error: sourceFrameCount=${request.sourceFrames.size}, mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
+            "Animated image render pipeline failed with internal error: sourceFrameCount=${request.source.frameCount}, mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
             e,
         )
         RenderResult.failed(RenderStatus.PIPELINE_FAILED)
     }
 
+    private suspend fun renderRequiredFrames(
+        request: RenderAnimatedImageRequest,
+        targetResolution: TargetResolution,
+        deduper: TileDeduper,
+        requiredSourceFrameIndexes: Set<Int>,
+        renderedFrameCache: MutableMap<Int, ShortArray>,
+    ) {
+        val stream = request.source.openFrameStream()
+        try {
+            while (true) {
+                checkpoint()
+                val frame = stream.nextFrame() ?: break
+                val sourceFrameIndex = frame.sourceFrameIndex
+                if (sourceFrameIndex !in requiredSourceFrameIndexes) {
+                    continue
+                }
+                if (renderedFrameCache.containsKey(sourceFrameIndex)) {
+                    continue
+                }
+
+                renderedFrameCache[sourceFrameIndex] = renderSourceFrameTileIndexes(
+                    request = request,
+                    sourceFrame = frame,
+                    targetResolution = targetResolution,
+                    deduper = deduper,
+                )
+
+                if (renderedFrameCache.size == requiredSourceFrameIndexes.size) {
+                    return
+                }
+            }
+        } finally {
+            stream.close()
+        }
+    }
+
     private suspend fun renderSourceFrameTileIndexes(
         request: RenderAnimatedImageRequest,
-        sourceFrameIndex: Int,
+        sourceFrame: DecodedAnimatedFrame,
         targetResolution: TargetResolution,
         deduper: TileDeduper,
     ): ShortArray {
         checkpoint()
 
-        val sourceImage = request.sourceFrames[sourceFrameIndex].image
+        val sourceImage = sourceFrame.image
         checkpoint()
 
         val transform = repositionerOf(request.profile.repositionMode).reposition(
@@ -130,6 +179,20 @@ class DefaultAnimatedImageRenderer(
 
         return splitResult.tileIndexes!!
     }
+}
+
+private fun collectRequiredSourceFrameIndexes(
+    outToSourceFrameIndex: IntArray,
+    sourceFrameCount: Int,
+): Set<Int>? {
+    val required = HashSet<Int>(outToSourceFrameIndex.size)
+    for (index in outToSourceFrameIndex) {
+        if (index !in 0 until sourceFrameCount) {
+            return null
+        }
+        required += index
+    }
+    return required
 }
 
 private suspend fun checkpoint() {

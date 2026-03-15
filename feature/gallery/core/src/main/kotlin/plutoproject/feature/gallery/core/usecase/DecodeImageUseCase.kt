@@ -75,14 +75,21 @@ class DecodeImageUseCase(
             }
 
             is DecodedImage.Animated -> {
-                if (image.frames.size > constraints.maxFrames) {
+                if (image.source.frameCount > constraints.maxFrames) {
                     return DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
                 }
 
-                val exceedsPixelLimit = image.frames.any {
-                    !withinPixelLimit(it.image.width, it.image.height, constraints.maxPixels)
-                }
+                val exceedsPixelLimit = !withinPixelLimit(
+                    width = image.source.width,
+                    height = image.source.height,
+                    maxPixels = constraints.maxPixels,
+                )
+                val totalFramePixels = image.source.width.toLong() *
+                    image.source.height.toLong() *
+                    image.source.frameCount.toLong()
                 if (exceedsPixelLimit) {
+                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
+                } else if (totalFramePixels > constraints.maxTotalFramePixels) {
                     DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
                 } else {
                     DecodeResult.Success(data = image)

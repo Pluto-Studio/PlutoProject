@@ -32,7 +32,7 @@ enum class RenderStatus {
     /**
      * 动图输入源帧数量不合法。
      *
-     * 典型原因：`sourceFrames.isEmpty()`。
+     * 典型原因：`source.frameCount <= 0`。
      *
      * 通常由 UseCase 在调用 renderer 前返回。
      */

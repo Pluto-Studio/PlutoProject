@@ -240,7 +240,7 @@ object GalleryDebugRenderCommand : KoinComponent {
     ): RenderResult<TilePack> {
         val renderResult = renderAnimatedImageUseCase.execute(
             RenderAnimatedImageRequest(
-                sourceFrames = decoded.frames,
+                source = decoded.source,
                 mapXBlocks = blocksX,
                 mapYBlocks = blocksY,
                 profile = profile,

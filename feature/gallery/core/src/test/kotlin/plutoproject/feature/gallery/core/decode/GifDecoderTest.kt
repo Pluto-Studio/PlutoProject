@@ -17,11 +17,12 @@ class GifDecoderTest {
         assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
-        assertEquals(2, data.frames.size)
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), data.frames[0].image.pixels.toList())
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), data.frames[1].image.pixels.toList())
-        assertEquals(1, data.frames[0].delayCentiseconds)
-        assertEquals(7, data.frames[1].delayCentiseconds)
+        val frames = readAllFrames(data.source)
+        assertEquals(2, frames.size)
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].image.pixels.toList())
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].image.pixels.toList())
+        assertEquals(1, frames[0].delayCentiseconds)
+        assertEquals(7, frames[1].delayCentiseconds)
     }
 
     @Test
@@ -31,11 +32,12 @@ class GifDecoderTest {
         assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
-        assertEquals(3, data.frames.size)
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), data.frames[0].image.pixels.toList())
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), data.frames[1].image.pixels.toList())
-        assertEquals(listOf(0xFF0000FF.toInt(), 0x00000000), data.frames[2].image.pixels.toList())
-        assertEquals(0, data.frames[1].delayCentiseconds)
+        val frames = readAllFrames(data.source)
+        assertEquals(3, frames.size)
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].image.pixels.toList())
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].image.pixels.toList())
+        assertEquals(listOf(0xFF0000FF.toInt(), 0x00000000), frames[2].image.pixels.toList())
+        assertEquals(0, frames[1].delayCentiseconds)
     }
 
     @Test
@@ -45,10 +47,11 @@ class GifDecoderTest {
         assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
-        assertEquals(3, data.frames.size)
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), data.frames[0].image.pixels.toList())
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), data.frames[1].image.pixels.toList())
-        assertEquals(listOf(0xFF0000FF.toInt(), 0xFFFF0000.toInt()), data.frames[2].image.pixels.toList())
+        val frames = readAllFrames(data.source)
+        assertEquals(3, frames.size)
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].image.pixels.toList())
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].image.pixels.toList())
+        assertEquals(listOf(0xFF0000FF.toInt(), 0xFFFF0000.toInt()), frames[2].image.pixels.toList())
     }
 
     @Test
@@ -58,9 +61,10 @@ class GifDecoderTest {
         assertTrue(result is DecodeResult.Success)
         assertEquals(DecodeStatus.SUCCEED, result.status)
         val data = result.data as DecodedImage.Animated
-        assertEquals(2, data.frames.size)
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), data.frames[0].image.pixels.toList())
-        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), data.frames[1].image.pixels.toList())
+        val frames = readAllFrames(data.source)
+        assertEquals(2, frames.size)
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].image.pixels.toList())
+        assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[1].image.pixels.toList())
     }
 
     @Test
@@ -118,3 +122,17 @@ private const val GIF_TRANSPARENT_PATCH_OVERLAY_BASE64 =
     "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkEAQEAAAAsAQAAAAEAAQDAAAAAAAAACAQAAQQEADs="
 
 private fun decodeBase64(value: String): ByteArray = Base64.getDecoder().decode(value)
+
+private suspend fun readAllFrames(source: DecodedAnimatedImageSource): List<DecodedAnimatedFrame> {
+    val stream = source.openFrameStream()
+    try {
+        val frames = mutableListOf<DecodedAnimatedFrame>()
+        while (true) {
+            val frame = stream.nextFrame() ?: break
+            frames += frame
+        }
+        return frames
+    } finally {
+        stream.close()
+    }
+}
