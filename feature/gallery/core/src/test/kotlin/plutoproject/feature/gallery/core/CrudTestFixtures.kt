@@ -59,3 +59,20 @@ internal class InMemoryImageDataEntryRepository(
         storage.remove(belongsTo)
     }
 }
+
+internal class InMemorySystemInformationRepository(
+    initialLastAllocatedId: Int? = null,
+) : SystemInformationRepository {
+    var lastAllocatedId: Int? = initialLastAllocatedId
+        private set
+
+    override suspend fun allocateMapIds(count: Int, allocationRange: AllocationRange): Int? {
+        val current = lastAllocatedId ?: (allocationRange.start - 1)
+        val next = current + count
+        if (next > allocationRange.end) {
+            return null
+        }
+        lastAllocatedId = next
+        return next
+    }
+}

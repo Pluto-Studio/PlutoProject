@@ -3,6 +3,8 @@ package plutoproject.feature.gallery.infra.mongo
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.kotlin.client.coroutine.MongoClient
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.bson.UuidRepresentation
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -16,6 +18,7 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import plutoproject.feature.gallery.core.AnimatedImageData
+import plutoproject.feature.gallery.core.AllocationRange
 import plutoproject.feature.gallery.core.Image
 import plutoproject.feature.gallery.core.ImageDataEntry
 import plutoproject.feature.gallery.core.ImageType
@@ -23,6 +26,7 @@ import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.TilePool
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
+import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 import java.util.UUID
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -139,6 +143,46 @@ class MongoGalleryRepositoriesTest {
         repo.deleteByBelongsTo(animatedBelongsTo)
         assertNull(repo.findByBelongsTo(animatedBelongsTo))
         assertNotNull(repo.findByBelongsTo(staticBelongsTo))
+    }
+
+    @Test
+    fun `system information repository should allocate contiguous range and reject overflow`() = runTest {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable)
+
+        val client = newClient()
+        val collection = client.getDatabase("test").getCollection<MapIdSystemInformationDocument>("gallery_system_information")
+        val repo = MongoSystemInformationRepository(collection)
+        val range = AllocationRange(start = 100, end = 110)
+
+        val first = repo.allocateMapIds(count = 5, allocationRange = range)
+        val second = repo.allocateMapIds(count = 3, allocationRange = range)
+        val overflow = repo.allocateMapIds(count = 4, allocationRange = range)
+
+        assertEquals(104, first)
+        assertEquals(107, second)
+        assertNull(overflow)
+    }
+
+    @Test
+    fun `system information repository should be concurrency safe`() = runTest {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable)
+
+        val client = newClient()
+        val collection = client.getDatabase("test").getCollection<MapIdSystemInformationDocument>("gallery_system_information_concurrent")
+        val repo = MongoSystemInformationRepository(collection)
+        val range = AllocationRange(start = 1_000, end = 2_000)
+
+        val results = (1..50)
+            .map {
+                async {
+                    repo.allocateMapIds(count = 1, allocationRange = range)
+                }
+            }
+            .awaitAll()
+
+        assertEquals(50, results.filterNotNull().size)
+        assertEquals(50, results.filterNotNull().distinct().size)
+        assertEquals((1_000..1_049).toList(), results.filterNotNull().sorted())
     }
 
     private fun newClient(): MongoClient {
