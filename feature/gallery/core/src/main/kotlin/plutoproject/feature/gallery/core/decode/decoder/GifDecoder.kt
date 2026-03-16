@@ -75,9 +75,6 @@ private suspend fun decodeInternal(
             }
 
             val frameTimeline = scanFrameTimeline(reader, frameCount)
-            if (frameTimeline == null) {
-                return@withContext DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
-            }
 
             DecodeResult.Success(
                 DecodedImage.Animated(
@@ -103,7 +100,7 @@ private suspend fun decodeInternal(
     }
 }
 
-private suspend fun scanFrameTimeline(reader: ImageReader, frameCount: Int): List<AnimatedFrameTiming>? {
+private suspend fun scanFrameTimeline(reader: ImageReader, frameCount: Int): List<AnimatedFrameTiming> {
     val timeline = ArrayList<AnimatedFrameTiming>(frameCount)
     for (index in 0 until frameCount) {
         checkpoint()
