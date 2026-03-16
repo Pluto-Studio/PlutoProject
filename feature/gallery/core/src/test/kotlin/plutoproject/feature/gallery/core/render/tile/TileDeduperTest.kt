@@ -3,7 +3,6 @@ package plutoproject.feature.gallery.core.render.tile
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.TilePool
 
 class TileDeduperTest {
     @Test
@@ -19,8 +18,8 @@ class TileDeduperTest {
         assertEquals(2, deduper.uniqueTileCount)
 
         val tilePool = deduper.buildTilePool()
-        assertArrayEquals(firstTile, decodeTile(tileDataAt(tilePool, 0)))
-        assertArrayEquals(secondTile, decodeTile(tileDataAt(tilePool, 1)))
+        assertArrayEquals(firstTile, decodeTile(tilePool.extractTileData(0)))
+        assertArrayEquals(secondTile, decodeTile(tilePool.extractTileData(1)))
     }
 
     @Test
@@ -54,14 +53,4 @@ class TileDeduperTest {
 private fun solidTile(mapColor: Int): ByteArray {
     require(mapColor in 0..255) { "mapColor must be in [0, 255], actual=$mapColor" }
     return ByteArray(TILE_PIXEL_COUNT) { mapColor.toByte() }
-}
-
-private fun tileDataAt(tilePool: TilePool, tilePoolIndex: Int): ByteArray {
-    require(tilePoolIndex in 0 until tilePool.offsets.size - 1) {
-        "tilePoolIndex out of range: index=$tilePoolIndex, tileCount=${tilePool.offsets.size - 1}"
-    }
-
-    val start = tilePool.offsets[tilePoolIndex]
-    val end = tilePool.offsets[tilePoolIndex + 1]
-    return tilePool.blob.copyOfRange(start, end)
 }

@@ -268,7 +268,7 @@ object GalleryDebugRenderCommand : KoinComponent {
             for (x in 0 until mapXBlocks) {
                 val tileIndex = y * mapXBlocks + x
                 val tilePoolIndex = tilePack.tileIndexes[tileIndex].toInt() and 0xFFFF
-                val tilePixels = decodeTile(extractTileData(tilePack.tilePool, tilePoolIndex))
+                val tilePixels = decodeTile(tilePack.tilePool.extractTileData(tilePoolIndex))
                 val item = createMapItem(player, x, y, tilePixels, sourceUrl)
                 val remaining = player.inventory.addItem(item)
                 if (remaining.isNotEmpty()) {
@@ -303,15 +303,6 @@ object GalleryDebugRenderCommand : KoinComponent {
         mapMeta.lore = listOf("url=$sourceUrl", "tile=($tileX,$tileY)")
         mapItem.itemMeta = mapMeta
         return mapItem
-    }
-
-    private fun extractTileData(tilePool: TilePool, tilePoolIndex: Int): ByteArray {
-        require(tilePoolIndex in 0 until tilePool.offsets.size - 1) {
-            "tilePoolIndex out of bounds: $tilePoolIndex"
-        }
-        val start = tilePool.offsets[tilePoolIndex]
-        val end = tilePool.offsets[tilePoolIndex + 1]
-        return tilePool.blob.copyOfRange(start, end)
     }
 
     private fun extractFileNameHint(url: String): String? {

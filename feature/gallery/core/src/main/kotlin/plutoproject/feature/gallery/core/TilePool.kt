@@ -78,4 +78,19 @@ class TilePool(
      * - 整个 `segments` 在结尾用 0 补齐到字节边界。
      */
     val blob: ByteArray,
-)
+) {
+    /**
+     * 按 [tilePoolIndex] 提取单个 Tile 的原始压缩字节。
+     *
+     * 返回值对应 [blob] 中区间 `[offsets[tilePoolIndex], offsets[tilePoolIndex + 1])` 的拷贝，
+     * 调用方可安全修改返回的数组而不影响池内数据。
+     */
+    fun extractTileData(tilePoolIndex: Int): ByteArray {
+        require(tilePoolIndex in 0 until offsets.size - 1) {
+            "tilePoolIndex out of bounds: $tilePoolIndex"
+        }
+        val start = offsets[tilePoolIndex]
+        val end = offsets[tilePoolIndex + 1]
+        return blob.copyOfRange(start, end)
+    }
+}
