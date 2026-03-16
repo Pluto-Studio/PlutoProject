@@ -7,10 +7,11 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.logging.Logger
 import javax.imageio.ImageIO
 
 class StaticImageDecoderTest {
-    private val decoder = defaultStaticImageDecoder()
+    private val decoder = defaultStaticImageDecoder(Logger.getLogger("StaticImageDecoderTest"))
 
     @Test
     fun `png decoder should decode rgba image with exact pixels`() = runTest {
@@ -68,13 +69,13 @@ class StaticImageDecoderTest {
     }
 
     @Test
-    fun `jpeg decoder should return invalid-image for malformed bytes`() = runTest {
+    fun `jpeg decoder should return decode-failed for malformed bytes`() = runTest {
         val result = decoder.decode(
             bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2, 3),
             constraints = DecodeConstraints(),
         )
 
-        assertEquals(DecodeStatus.INVALID_IMAGE, result.status)
+        assertEquals(DecodeStatus.DECODE_FAILED, result.status)
         assertTrue(result.data == null)
     }
 }

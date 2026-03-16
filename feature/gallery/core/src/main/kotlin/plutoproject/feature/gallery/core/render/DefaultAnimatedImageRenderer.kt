@@ -92,7 +92,7 @@ class DefaultAnimatedImageRenderer(
         throw e
     } catch (e: Exception) {
         logger.log(
-            Level.SEVERE,
+            Level.WARNING,
             "Animated image render pipeline failed with internal error: sourceFrameCount=${request.source.frameCount}, mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
             e,
         )

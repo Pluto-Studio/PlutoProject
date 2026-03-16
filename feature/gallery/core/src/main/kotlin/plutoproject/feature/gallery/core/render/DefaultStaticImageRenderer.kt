@@ -70,7 +70,7 @@ class DefaultStaticImageRenderer(
         throw e
     } catch (e: Exception) {
         logger.log(
-            Level.SEVERE,
+            Level.WARNING,
             "Static image render pipeline failed with internal error: mapXBlocks=${request.mapXBlocks}, mapYBlocks=${request.mapYBlocks}",
             e,
         )

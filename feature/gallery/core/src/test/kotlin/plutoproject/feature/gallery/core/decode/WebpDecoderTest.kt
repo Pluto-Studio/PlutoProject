@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import java.util.Base64
+import java.util.logging.Logger
 
 class WebpDecoderTest {
-    private val decoder = defaultStaticImageDecoder()
+    private val decoder = defaultStaticImageDecoder(Logger.getLogger("WebpDecoderTest"))
 
     @Test
     fun `static image decoder should decode embedded webp sample`() = runTest {

@@ -1,6 +1,7 @@
 package plutoproject.feature.gallery.core.decode.decoder
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
@@ -8,20 +9,28 @@ import plutoproject.feature.gallery.core.decode.DecodeStatus
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.render.RgbaImage8888
 import java.io.ByteArrayInputStream
-import javax.imageio.IIOException
 import javax.imageio.ImageIO
+import java.util.logging.Level
+import java.util.logging.Logger
 
-private class DefaultStaticImageDecoder : ImageDecoder {
+private class DefaultStaticImageDecoder(
+    private val logger: Logger,
+) : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
         decodeInternal(bytes = bytes, constraints = constraints)
-    } catch (_: IIOException) {
-        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
-    } catch (_: IllegalArgumentException) {
-        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        logger.log(
+            Level.WARNING,
+            "Static image decode failed with internal error: bytes=${bytes.size}, maxPixels=${constraints.maxPixels}",
+            e,
+        )
+        DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
     }
 }
 
-fun defaultStaticImageDecoder(): ImageDecoder = DefaultStaticImageDecoder()
+fun defaultStaticImageDecoder(logger: Logger): ImageDecoder = DefaultStaticImageDecoder(logger = logger)
 
 private suspend fun decodeInternal(
     bytes: ByteArray,

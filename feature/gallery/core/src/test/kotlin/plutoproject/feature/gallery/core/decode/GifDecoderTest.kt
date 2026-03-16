@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.defaultGifDecoder
 import java.util.Base64
+import java.util.logging.Logger
 
 class GifDecoderTest {
-    private val decoder = defaultGifDecoder()
+    private val decoder = defaultGifDecoder(Logger.getLogger("GifDecoderTest"))
 
     @Test
     fun `gif decoder should compose partial patches into full timeline frames`() = runTest {

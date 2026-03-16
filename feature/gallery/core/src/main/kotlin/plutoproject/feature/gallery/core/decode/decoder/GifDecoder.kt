@@ -1,6 +1,7 @@
 package plutoproject.feature.gallery.core.decode.decoder
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -16,22 +17,30 @@ import plutoproject.feature.gallery.core.decode.DecodedAnimatedImageSource
 import plutoproject.feature.gallery.core.decode.DecodedImage
 import plutoproject.feature.gallery.core.render.RgbaImage8888
 import java.io.ByteArrayInputStream
-import javax.imageio.IIOException
 import javax.imageio.ImageIO
 import javax.imageio.ImageReader
 import javax.imageio.metadata.IIOMetadata
+import java.util.logging.Level
+import java.util.logging.Logger
 
-private class DefaultGifDecoder : ImageDecoder {
+private class DefaultGifDecoder(
+    private val logger: Logger,
+) : ImageDecoder {
     override suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<DecodedImage> = try {
         decodeInternal(bytes = bytes, constraints = constraints)
-    } catch (_: IIOException) {
-        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
-    } catch (_: IllegalArgumentException) {
-        DecodeResult.Failure(DecodeStatus.INVALID_IMAGE)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Throwable) {
+        logger.log(
+            Level.WARNING,
+            "Gif decode failed with internal error: bytes=${bytes.size}, maxPixels=${constraints.maxPixels}, maxFrames=${constraints.maxFrames}",
+            e,
+        )
+        DecodeResult.Failure(DecodeStatus.DECODE_FAILED)
     }
 }
 
-fun defaultGifDecoder(): ImageDecoder = DefaultGifDecoder()
+fun defaultGifDecoder(logger: Logger): ImageDecoder = DefaultGifDecoder(logger = logger)
 
 private suspend fun decodeInternal(
     bytes: ByteArray,

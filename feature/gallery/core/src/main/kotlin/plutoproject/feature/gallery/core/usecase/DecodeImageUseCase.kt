@@ -54,7 +54,7 @@ class DecodeImageUseCase(
         throw e
     } catch (e: Exception) {
         logger.log(
-            Level.SEVERE,
+            Level.WARNING,
             "Image decode failed with internal error: bytes=${request.bytes.size}, fileNameHint=${request.fileNameHint}",
             e,
         )

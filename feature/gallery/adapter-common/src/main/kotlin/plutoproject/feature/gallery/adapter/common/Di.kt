@@ -37,8 +37,8 @@ val commonModule = module {
         MongoImageDataEntryRepository(getCollection<ImageDataEntryDocument>(IMAGE_DATA_ENTRY_COLLECTION))
     }
 
-    single<ImageDecoder>(named("gallery_static_decoder")) { defaultStaticImageDecoder() }
-    single<ImageDecoder>(named("gallery_gif_decoder")) { defaultGifDecoder() }
+    single<ImageDecoder>(named("gallery_static_decoder")) { defaultStaticImageDecoder(logger = get(named("gallery_logger"))) }
+    single<ImageDecoder>(named("gallery_gif_decoder")) { defaultGifDecoder(logger = get(named("gallery_logger"))) }
 
     single { defaultFrameSampler() }
     single { defaultAlphaCompositor() }
