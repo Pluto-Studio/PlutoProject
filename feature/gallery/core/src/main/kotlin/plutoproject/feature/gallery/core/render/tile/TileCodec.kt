@@ -1,7 +1,7 @@
 package plutoproject.feature.gallery.core.render.tile
 
 /**
- * 将一个 128x128 的 mapColor tile 编码为 TilePool tile bytes。
+ * 将一份 128*128 的 Map Color 数组编码成 TilePool 内存储的 Tile Data 格式。
  */
 fun encodeTile(tileMapColors: ByteArray): ByteArray {
     require(tileMapColors.size == TILE_PIXEL_COUNT) {
@@ -120,7 +120,7 @@ private fun writeLiteralSegment(
 }
 
 /**
- * 将 TilePool tile bytes 解码为 128x128 的 mapColor tile。
+ * 将一份 TilePool 内存储的 Tile Data 解码成 128*128 的 Map Color 数组。
  */
 fun decodeTile(tileData: ByteArray): ByteArray {
     require(tileData.isNotEmpty()) { "tileData must not be empty" }
