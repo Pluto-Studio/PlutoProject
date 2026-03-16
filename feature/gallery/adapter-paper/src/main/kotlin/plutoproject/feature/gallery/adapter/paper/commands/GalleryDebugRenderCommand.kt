@@ -66,7 +66,7 @@ object GalleryDebugRenderCommand : KoinComponent {
             reposition = reposition,
         ).getOrElse {
             sendMessage("[Gallery] Invalid render options: ${it.message}")
-            sendMessage("[Gallery] dither=none|bayer|fs, bgRgbHex=RRGGBB, scale=bilinear|lanczos, reposition=cover|contain|stretch")
+            sendMessage("[Gallery] dither=none|bayer|fs, bgRgbHex=RRGGBB, scale=bilinear, reposition=cover|contain|stretch")
             return@ensurePlayer
         }
 
@@ -336,7 +336,6 @@ object GalleryDebugRenderCommand : KoinComponent {
     private fun parseScale(raw: String?): ScaleAlgorithm {
         return when (raw?.trim()?.lowercase()) {
             null, "", "bilinear", "linear" -> ScaleAlgorithm.BILINEAR
-            "lanczos" -> ScaleAlgorithm.LANCZOS
             else -> error("unsupported scale '$raw'")
         }
     }

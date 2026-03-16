@@ -41,5 +41,4 @@ internal fun interface Scaler {
 
 internal fun scalerOf(algorithm: ScaleAlgorithm): Scaler = when (algorithm) {
     ScaleAlgorithm.BILINEAR -> BilinearScaler
-    ScaleAlgorithm.LANCZOS -> LanczosScaler
 }

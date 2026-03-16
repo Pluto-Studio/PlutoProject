@@ -7,7 +7,7 @@ package plutoproject.feature.gallery.core.render
  */
 data class RenderProfile(
     val repositionMode: RepositionMode = RepositionMode.CONTAIN,
-    val scaleAlgorithm: ScaleAlgorithm = ScaleAlgorithm.LANCZOS,
+    val scaleAlgorithm: ScaleAlgorithm = ScaleAlgorithm.BILINEAR,
     val ditherAlgorithm: DitherAlgorithm = DitherAlgorithm.FLOYD_STEINBERG,
     /** RGB 24-bit（0xRRGGBB）。 */
     val alphaBackgroundColorRgb: Int = 0xFFFFFF,
@@ -45,7 +45,6 @@ enum class RepositionMode {
 
 enum class ScaleAlgorithm {
     BILINEAR,
-    LANCZOS,
 }
 
 enum class DitherAlgorithm {

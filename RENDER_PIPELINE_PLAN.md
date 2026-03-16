@@ -65,7 +65,7 @@
 ### Milestone 4：几何阶段（Reposition + Scale）
 
 - [x] 定义 `Repositioner` 接口与 3 种策略：cover/contain/stretch（输出 dest->src transform 参数）
-- [x] 定义 `Scaler` 接口：Bilinear（必做）；Lanczos（可选后置）；缩小采用逐半接近再收敛（mipmap）
+- [x] 定义 `Scaler` 接口：Bilinear；缩小采用逐半接近再收敛（mipmap）
 - [x] 输出统一为目标分辨率：`width = mapXBlocks*128`、`height = mapYBlocks*128`，仍为 RGBA8888（`IntArray`）
 - [x] 测试：cover/contain 的边界采样点、缩放后尺寸、极端宽高比不崩
 
