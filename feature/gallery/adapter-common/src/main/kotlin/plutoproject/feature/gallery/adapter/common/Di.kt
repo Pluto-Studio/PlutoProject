@@ -4,13 +4,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import plutoproject.feature.gallery.core.DefaultDisplayScheduler
-import plutoproject.feature.gallery.core.DisplayInstanceRepository
-import plutoproject.feature.gallery.core.DisplayManager
-import plutoproject.feature.gallery.core.ImageDataEntryRepository
-import plutoproject.feature.gallery.core.ImageManager
-import plutoproject.feature.gallery.core.ImageRepository
-import plutoproject.feature.gallery.core.SystemInformationRepository
+import plutoproject.feature.gallery.core.*
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.decode.decoder.defaultGifDecoder
 import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
@@ -29,6 +23,7 @@ import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocu
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.serverName
+import java.time.Clock
 
 private const val GALLERY_PREFIX = "gallery_"
 private const val IMAGE_COLLECTION = "image"
@@ -41,6 +36,7 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
 }
 
 val commonModule = module {
+    single<Clock>(named("gallery_clock")) { Clock.systemUTC() }
     single<ImageRepository> {
         MongoImageRepository(getCollection<ImageDocument>(IMAGE_COLLECTION))
     }
@@ -81,7 +77,15 @@ val commonModule = module {
 
     singleOf(::ImageManager)
     singleOf(::DisplayManager)
-    singleOf(::DefaultDisplayScheduler)
+
+    single<DisplayScheduler> {
+        DefaultDisplayScheduler(
+            clock = get(named("gallery_clock")),
+            coroutineScope = get(named("gallery_coroutine_scope")),
+            schedulerContext = get(named("gallery_scheduler_context")),
+            awakeContext = get(named("gallery_awake_context"))
+        )
+    }
 
     single {
         DecodeImageUseCase(
@@ -92,6 +96,7 @@ val commonModule = module {
             logger = get(named("gallery_logger")),
         )
     }
+
     singleOf(::RenderStaticImageUseCase)
     singleOf(::RenderAnimatedImageUseCase)
 

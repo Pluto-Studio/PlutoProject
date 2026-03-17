@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.core
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -9,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
 class DefaultDisplayScheduler(
+    private val clock: Clock,
+
     /**
      * 运行调度器自身任务和 [DisplayJob] 唤醒任务的 [CoroutineScope]。
      */
@@ -69,7 +72,7 @@ class DefaultDisplayScheduler(
             return@synchronized LoopAction.Exit
         }
 
-        val now = Instant.now()
+        val now = Instant.now(clock)
         val dueJobs = collectDueJobs(now)
         if (dueJobs.isNotEmpty()) {
             return@synchronized LoopAction.Wake(dueJobs)
@@ -95,7 +98,7 @@ class DefaultDisplayScheduler(
     }
 
     private suspend fun awaitNextSignal(awakeAt: Instant) {
-        val waitMillis = Duration.between(Instant.now(), awakeAt).toMillis()
+        val waitMillis = Duration.between(Instant.now(clock), awakeAt).toMillis()
             .coerceAtLeast(0)
 
         if (waitMillis == 0L) {
