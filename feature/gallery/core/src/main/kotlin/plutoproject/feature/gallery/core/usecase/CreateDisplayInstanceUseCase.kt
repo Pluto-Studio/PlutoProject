@@ -28,32 +28,30 @@ class CreateDisplayInstanceUseCase(
         originY: Double,
         originZ: Double,
         itemFrameIds: List<UUID>,
-    ): Result {
-        return displayManager.withDisplayInstanceOperationLock(id) {
-            val existed = displayManager.getLoadedDisplayInstance(id)
-                ?: displayInstances.findById(id)
-            if (existed != null) {
-                return@withDisplayInstanceOperationLock Result.AlreadyExisted(existed)
-            }
-
-            val displayInstance = DisplayInstance(
-                id = id,
-                belongsTo = belongsTo,
-                world = world,
-                chunkX = chunkX,
-                chunkZ = chunkZ,
-                facing = facing,
-                widthBlocks = widthBlocks,
-                heightBlocks = heightBlocks,
-                originX = originX,
-                originY = originY,
-                originZ = originZ,
-                itemFrameIds = itemFrameIds,
-            )
-
-            displayManager.loadDisplayInstance(displayInstance)
-            displayInstances.save(displayInstance)
-            Result.Ok(displayInstance)
+    ): Result = displayManager.withDisplayInstanceOperationLock(id) {
+        val existed = displayManager.getLoadedDisplayInstance(id)
+            ?: displayInstances.findById(id)
+        if (existed != null) {
+            return@withDisplayInstanceOperationLock Result.AlreadyExisted(existed)
         }
+
+        val displayInstance = DisplayInstance(
+            id = id,
+            belongsTo = belongsTo,
+            world = world,
+            chunkX = chunkX,
+            chunkZ = chunkZ,
+            facing = facing,
+            widthBlocks = widthBlocks,
+            heightBlocks = heightBlocks,
+            originX = originX,
+            originY = originY,
+            originZ = originZ,
+            itemFrameIds = itemFrameIds,
+        )
+
+        displayManager.loadDisplayInstance(displayInstance)
+        displayInstances.save(displayInstance)
+        Result.Ok(displayInstance)
     }
 }

@@ -13,15 +13,13 @@ class DeleteDisplayInstanceUseCase(
         object NotExisted : Result()
     }
 
-    suspend fun execute(id: UUID): Result {
-        return displayManager.withDisplayInstanceOperationLock(id) {
-            if (displayManager.getLoadedDisplayInstance(id) == null && displayInstances.findById(id) == null) {
-                return@withDisplayInstanceOperationLock Result.NotExisted
-            }
-
-            displayManager.unloadDisplayInstance(id)
-            displayInstances.deleteById(id)
-            Result.Ok
+    suspend fun execute(id: UUID): Result = displayManager.withDisplayInstanceOperationLock(id) {
+        if (displayManager.getLoadedDisplayInstance(id) == null && displayInstances.findById(id) == null) {
+            return@withDisplayInstanceOperationLock Result.NotExisted
         }
+
+        displayManager.unloadDisplayInstance(id)
+        displayInstances.deleteById(id)
+        Result.Ok
     }
 }

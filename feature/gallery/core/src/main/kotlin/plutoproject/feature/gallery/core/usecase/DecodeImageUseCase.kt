@@ -3,13 +3,7 @@ package plutoproject.feature.gallery.core.usecase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import plutoproject.feature.gallery.core.decode.DecodableImageFormat
-import plutoproject.feature.gallery.core.decode.DecodeConstraints
-import plutoproject.feature.gallery.core.decode.DecodeImageRequest
-import plutoproject.feature.gallery.core.decode.DecodeResult
-import plutoproject.feature.gallery.core.decode.DecodeStatus
-import plutoproject.feature.gallery.core.decode.DecodedImage
-import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
+import plutoproject.feature.gallery.core.decode.*
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -64,36 +58,34 @@ class DecodeImageUseCase(
     private fun validateDecodedImage(
         image: DecodedImage,
         constraints: DecodeConstraints,
-    ): DecodeResult<DecodedImage> {
-        return when (image) {
-            is DecodedImage.Static -> {
-                if (!withinPixelLimit(image.image.width, image.image.height, constraints.maxPixels)) {
-                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
-                } else {
-                    DecodeResult.Success(image)
-                }
+    ): DecodeResult<DecodedImage> = when (image) {
+        is DecodedImage.Static -> {
+            if (!withinPixelLimit(image.image.width, image.image.height, constraints.maxPixels)) {
+                DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
+            } else {
+                DecodeResult.Success(image)
+            }
+        }
+
+        is DecodedImage.Animated -> {
+            if (image.source.frameCount > constraints.maxFrames) {
+                return DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
             }
 
-            is DecodedImage.Animated -> {
-                if (image.source.frameCount > constraints.maxFrames) {
-                    return DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
-                }
-
-                val exceedsPixelLimit = !withinPixelLimit(
-                    width = image.source.width,
-                    height = image.source.height,
-                    maxPixels = constraints.maxPixels,
-                )
-                val totalFramePixels = image.source.width.toLong() *
+            val exceedsPixelLimit = !withinPixelLimit(
+                width = image.source.width,
+                height = image.source.height,
+                maxPixels = constraints.maxPixels,
+            )
+            val totalFramePixels = image.source.width.toLong() *
                     image.source.height.toLong() *
                     image.source.frameCount.toLong()
-                if (exceedsPixelLimit) {
-                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
-                } else if (totalFramePixels > constraints.maxTotalFramePixels) {
-                    DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
-                } else {
-                    DecodeResult.Success(data = image)
-                }
+            if (exceedsPixelLimit) {
+                DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
+            } else if (totalFramePixels > constraints.maxTotalFramePixels) {
+                DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
+            } else {
+                DecodeResult.Success(data = image)
             }
         }
     }

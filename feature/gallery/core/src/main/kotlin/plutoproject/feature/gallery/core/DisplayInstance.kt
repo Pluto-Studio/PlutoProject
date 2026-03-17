@@ -33,7 +33,6 @@ class DisplayInstance(
     val itemFrameIds: List<UUID>
 )
 
-
 enum class ItemFrameFacing {
     NORTH, SOUTH, EAST, WEST, UP, DOWN
 }
