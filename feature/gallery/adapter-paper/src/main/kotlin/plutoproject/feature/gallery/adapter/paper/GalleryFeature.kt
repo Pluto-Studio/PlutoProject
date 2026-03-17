@@ -1,9 +1,12 @@
 package plutoproject.feature.gallery.adapter.paper
 
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.commonModule
 import plutoproject.feature.gallery.adapter.paper.commands.GalleryDebugRenderCommand
+import plutoproject.feature.gallery.core.ViewPort
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.inject.configureKoin
@@ -18,6 +21,7 @@ import java.util.logging.Logger
 class GalleryFeature : PaperFeature() {
     private val module = module {
         single<Logger>(named("gallery_logger")) { this@GalleryFeature.logger }
+        singleOf(::PaperViewPort) bind ViewPort::class
     }
 
     override fun onEnable() {
