@@ -19,11 +19,14 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.AllocationRange
+import plutoproject.feature.gallery.core.DisplayInstance
 import plutoproject.feature.gallery.core.Image
 import plutoproject.feature.gallery.core.ImageDataEntry
 import plutoproject.feature.gallery.core.ImageType
+import plutoproject.feature.gallery.core.ItemFrameFacing
 import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.TilePool
+import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
@@ -143,6 +146,69 @@ class MongoGalleryRepositoriesTest {
         repo.deleteByBelongsTo(animatedBelongsTo)
         assertNull(repo.findByBelongsTo(animatedBelongsTo))
         assertNotNull(repo.findByBelongsTo(staticBelongsTo))
+    }
+
+    @Test
+    fun `display instance repository should support save find lookup and delete`() = runTest {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable)
+
+        val client = newClient()
+        val collection = client.getDatabase("test").getCollection<DisplayInstanceDocument>("gallery_display_instances")
+        val repo = MongoDisplayInstanceRepository(collection)
+
+        val belongsTo = UUID.fromString("00000000-0000-0000-0000-000000000411")
+        val first = DisplayInstance(
+            id = UUID.fromString("00000000-0000-0000-0000-000000000412"),
+            belongsTo = belongsTo,
+            world = "world",
+            chunkX = 12,
+            chunkZ = 34,
+            facing = ItemFrameFacing.NORTH,
+            widthBlocks = 2,
+            heightBlocks = 2,
+            originX = 100.5,
+            originY = 64.0,
+            originZ = -20.25,
+            itemFrameIds = listOf(
+                UUID.fromString("00000000-0000-0000-0000-000000000413"),
+                UUID.fromString("00000000-0000-0000-0000-000000000414"),
+            ),
+        )
+        val second = DisplayInstance(
+            id = UUID.fromString("00000000-0000-0000-0000-000000000415"),
+            belongsTo = belongsTo,
+            world = "world_nether",
+            chunkX = 12,
+            chunkZ = 34,
+            facing = ItemFrameFacing.WEST,
+            widthBlocks = 1,
+            heightBlocks = 1,
+            originX = 10.0,
+            originY = 70.0,
+            originZ = 10.0,
+            itemFrameIds = listOf(UUID.fromString("00000000-0000-0000-0000-000000000416")),
+        )
+
+        repo.save(first)
+        repo.save(second)
+
+        val loaded = repo.findById(first.id)
+        assertNotNull(loaded)
+        loaded!!
+        assertEquals(ItemFrameFacing.NORTH, loaded.facing)
+        assertEquals(12, loaded.chunkX)
+        assertEquals(34, loaded.chunkZ)
+        assertEquals(2, loaded.itemFrameIds.size)
+
+        val byBelongs = repo.findByBelongsTo(belongsTo)
+        assertEquals(2, byBelongs.size)
+
+        val byChunk = repo.findByChunk(12, 34)
+        assertEquals(2, byChunk.size)
+
+        repo.deleteById(first.id)
+        assertNull(repo.findById(first.id))
+        assertNotNull(repo.findById(second.id))
     }
 
     @Test

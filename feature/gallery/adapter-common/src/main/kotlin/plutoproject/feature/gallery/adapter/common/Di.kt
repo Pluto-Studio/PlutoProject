@@ -4,7 +4,10 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import plutoproject.feature.gallery.core.DisplayInstanceRepository
+import plutoproject.feature.gallery.core.DisplayManager
 import plutoproject.feature.gallery.core.ImageDataEntryRepository
+import plutoproject.feature.gallery.core.ImageManager
 import plutoproject.feature.gallery.core.ImageRepository
 import plutoproject.feature.gallery.core.SystemInformationRepository
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
@@ -14,9 +17,11 @@ import plutoproject.feature.gallery.core.render.*
 import plutoproject.feature.gallery.core.render.mapcolor.defaultAlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.defaultMapColorQuantizer
 import plutoproject.feature.gallery.core.usecase.*
+import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoSystemInformationRepository
+import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
@@ -27,6 +32,7 @@ import plutoproject.framework.common.util.serverName
 private const val GALLERY_PREFIX = "gallery_"
 private const val IMAGE_COLLECTION = "image"
 private const val IMAGE_DATA_ENTRY_COLLECTION = "image_data"
+private const val DISPLAY_INSTANCE_COLLECTION = "display_instance"
 private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
 
 private inline fun <reified T : Any> getCollection(name: String): MongoCollection<T> {
@@ -36,6 +42,9 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
 val commonModule = module {
     single<ImageRepository> {
         MongoImageRepository(getCollection<ImageDocument>(IMAGE_COLLECTION))
+    }
+    single<DisplayInstanceRepository> {
+        MongoDisplayInstanceRepository(getCollection<DisplayInstanceDocument>(DISPLAY_INSTANCE_COLLECTION))
     }
     single<ImageDataEntryRepository> {
         MongoImageDataEntryRepository(getCollection<ImageDataEntryDocument>(IMAGE_DATA_ENTRY_COLLECTION))
@@ -69,6 +78,9 @@ val commonModule = module {
         )
     }
 
+    singleOf(::ImageManager)
+    singleOf(::DisplayManager)
+
     single {
         DecodeImageUseCase(
             pngDecoder = get(named("gallery_static_decoder")),
@@ -88,6 +100,12 @@ val commonModule = module {
     singleOf(::RenameImageUseCase)
     singleOf(::ChangeImageOwnerNameUseCase)
     singleOf(::LookupImageByOwnerUseCase)
+
+    singleOf(::CreateDisplayInstanceUseCase)
+    singleOf(::DeleteDisplayInstanceUseCase)
+    singleOf(::GetDisplayInstanceUseCase)
+    singleOf(::LookupDisplayInstanceByBelongsUseCase)
+    singleOf(::LookupDisplayInstanceByChunkUseCase)
 
     singleOf(::CreateImageDataEntryUseCase)
     singleOf(::GetImageDataEntryUseCase)

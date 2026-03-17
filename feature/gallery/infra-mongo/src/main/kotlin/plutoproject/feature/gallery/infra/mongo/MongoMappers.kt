@@ -1,15 +1,53 @@
 package plutoproject.feature.gallery.infra.mongo
 
 import org.bson.BsonBinary
+import plutoproject.feature.gallery.core.DisplayInstance
 import plutoproject.feature.gallery.core.AnimatedImageData
 import plutoproject.feature.gallery.core.Image
 import plutoproject.feature.gallery.core.ImageDataEntry
 import plutoproject.feature.gallery.core.ImageType
+import plutoproject.feature.gallery.core.ItemFrameFacing
 import plutoproject.feature.gallery.core.StaticImageData
 import plutoproject.feature.gallery.core.TilePool
+import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageTypeDocument
+import plutoproject.feature.gallery.infra.mongo.model.ItemFrameFacingDocument
+
+internal fun DisplayInstanceDocument.toDomain(): DisplayInstance {
+    return DisplayInstance(
+        id = id,
+        belongsTo = belongsTo,
+        world = world,
+        chunkX = chunkX,
+        chunkZ = chunkZ,
+        facing = facing.toDomain(),
+        widthBlocks = widthBlocks,
+        heightBlocks = heightBlocks,
+        originX = originX,
+        originY = originY,
+        originZ = originZ,
+        itemFrameIds = itemFrameIds,
+    )
+}
+
+internal fun DisplayInstance.toDocument(): DisplayInstanceDocument {
+    return DisplayInstanceDocument(
+        id = id,
+        belongsTo = belongsTo,
+        world = world,
+        chunkX = chunkX,
+        chunkZ = chunkZ,
+        facing = facing.toDocument(),
+        widthBlocks = widthBlocks,
+        heightBlocks = heightBlocks,
+        originX = originX,
+        originY = originY,
+        originZ = originZ,
+        itemFrameIds = itemFrameIds,
+    )
+}
 
 internal fun ImageDocument.toDomain(): Image {
     return Image(
@@ -116,5 +154,27 @@ internal fun ImageType.toDocument(): ImageTypeDocument {
     return when (this) {
         ImageType.STATIC -> ImageTypeDocument.STATIC
         ImageType.ANIMATED -> ImageTypeDocument.ANIMATED
+    }
+}
+
+internal fun ItemFrameFacingDocument.toDomain(): ItemFrameFacing {
+    return when (this) {
+        ItemFrameFacingDocument.NORTH -> ItemFrameFacing.NORTH
+        ItemFrameFacingDocument.SOUTH -> ItemFrameFacing.SOUTH
+        ItemFrameFacingDocument.EAST -> ItemFrameFacing.EAST
+        ItemFrameFacingDocument.WEST -> ItemFrameFacing.WEST
+        ItemFrameFacingDocument.UP -> ItemFrameFacing.UP
+        ItemFrameFacingDocument.DOWN -> ItemFrameFacing.DOWN
+    }
+}
+
+internal fun ItemFrameFacing.toDocument(): ItemFrameFacingDocument {
+    return when (this) {
+        ItemFrameFacing.NORTH -> ItemFrameFacingDocument.NORTH
+        ItemFrameFacing.SOUTH -> ItemFrameFacingDocument.SOUTH
+        ItemFrameFacing.EAST -> ItemFrameFacingDocument.EAST
+        ItemFrameFacing.WEST -> ItemFrameFacingDocument.WEST
+        ItemFrameFacing.UP -> ItemFrameFacingDocument.UP
+        ItemFrameFacing.DOWN -> ItemFrameFacingDocument.DOWN
     }
 }

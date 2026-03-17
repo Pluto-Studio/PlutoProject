@@ -24,6 +24,28 @@ internal fun sampleImage(
     )
 }
 
+internal fun sampleDisplayInstance(
+    id: UUID = dummyUuid(901),
+    belongsTo: UUID = dummyUuid(902),
+    chunkX: Int = 10,
+    chunkZ: Int = 20,
+): DisplayInstance {
+    return DisplayInstance(
+        id = id,
+        belongsTo = belongsTo,
+        world = "world",
+        chunkX = chunkX,
+        chunkZ = chunkZ,
+        facing = ItemFrameFacing.NORTH,
+        widthBlocks = 2,
+        heightBlocks = 2,
+        originX = 100.5,
+        originY = 64.0,
+        originZ = -32.25,
+        itemFrameIds = listOf(dummyUuid(903), dummyUuid(904), dummyUuid(905), dummyUuid(906)),
+    )
+}
+
 internal class InMemoryImageRepository(
     private val storage: MutableMap<UUID, Image> = mutableMapOf(),
 ) : ImageRepository {
@@ -57,6 +79,30 @@ internal class InMemoryImageDataEntryRepository(
 
     override suspend fun deleteByBelongsTo(belongsTo: UUID) {
         storage.remove(belongsTo)
+    }
+}
+
+internal open class InMemoryDisplayInstanceRepository(
+    private val storage: MutableMap<UUID, DisplayInstance> = mutableMapOf(),
+) : DisplayInstanceRepository {
+    override suspend fun findById(id: UUID): DisplayInstance? {
+        return storage[id]
+    }
+
+    override suspend fun findByBelongsTo(belongsTo: UUID): List<DisplayInstance> {
+        return storage.values.filter { it.belongsTo == belongsTo }
+    }
+
+    override suspend fun findByChunk(chunkX: Int, chunkZ: Int): List<DisplayInstance> {
+        return storage.values.filter { it.chunkX == chunkX && it.chunkZ == chunkZ }
+    }
+
+    override suspend fun save(displayInstance: DisplayInstance) {
+        storage[displayInstance.id] = displayInstance
+    }
+
+    override suspend fun deleteById(id: UUID) {
+        storage.remove(id)
     }
 }
 
