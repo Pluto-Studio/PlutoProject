@@ -38,6 +38,28 @@ class ImageCrudUseCaseTest {
     }
 
     @Test
+    fun `create should return already existed when id exists`() = runTest {
+        val repo = InMemoryImageRepository()
+        val manager = ImageManager()
+        val useCase = CreateImageUseCase(repo, manager)
+        val existed = sampleImage(id = dummyUuid(1000))
+        repo.save(existed)
+
+        val result = useCase.execute(
+            id = existed.id,
+            type = ImageType.STATIC,
+            owner = dummyUuid(2000),
+            ownerName = "owner",
+            name = "name",
+            mapWidthBlocks = 1,
+            mapHeightBlocks = 1,
+            tileMapIds = intArrayOf(1),
+        )
+
+        assertEquals(CreateImageUseCase.Result.AlreadyExisted(existed), result)
+    }
+
+    @Test
     fun `get should call manager lifecycle to load and cache image`() = runTest {
         val repo = InMemoryImageRepository()
         val manager = ImageManager()
@@ -84,8 +106,9 @@ class ImageCrudUseCaseTest {
     }
 
     @Test
-    fun `delete and lookup by owner should operate on repository`() = runTest {
+    fun `delete should unload from manager and remove from repository`() = runTest {
         val repo = InMemoryImageRepository()
+        val manager = ImageManager()
         val owner = dummyUuid(201)
         val other = dummyUuid(202)
         val first = sampleImage(id = dummyUuid(104), owner = owner)
@@ -96,12 +119,25 @@ class ImageCrudUseCaseTest {
         repo.save(third)
 
         val lookup = LookupImageByOwnerUseCase(repo)
-        val delete = DeleteImageUseCase(repo)
+        val delete = DeleteImageUseCase(repo, manager)
 
         val ownerImages = (lookup.execute(owner) as LookupImageByOwnerUseCase.Result.Ok).images
         assertEquals(2, ownerImages.size)
 
+        manager.loadImage(first)
         delete.execute(first.id)
         assertNull(repo.findById(first.id))
+        assertNull(manager.getLoadedImage(first.id))
+    }
+
+    @Test
+    fun `delete should return not existed when image is absent`() = runTest {
+        val repo = InMemoryImageRepository()
+        val manager = ImageManager()
+        val useCase = DeleteImageUseCase(repo, manager)
+
+        val result = useCase.execute(dummyUuid(2001))
+
+        assertEquals(DeleteImageUseCase.Result.NotExisted, result)
     }
 }

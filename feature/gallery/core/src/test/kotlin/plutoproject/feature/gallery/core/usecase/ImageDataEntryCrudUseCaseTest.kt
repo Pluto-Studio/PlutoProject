@@ -34,6 +34,28 @@ class ImageDataEntryCrudUseCaseTest {
     }
 
     @Test
+    fun `create should return already existed when belongsTo exists`() = runTest {
+        val repo = InMemoryImageDataEntryRepository()
+        val manager = ImageManager()
+        val useCase = CreateImageDataEntryUseCase(repo, manager)
+        val belongsTo = dummyUuid(330)
+        val existed = ImageDataEntry(
+            belongsTo = belongsTo,
+            type = ImageType.STATIC,
+            data = staticImageData(tileIndexesSize = 2),
+        )
+        repo.save(existed)
+
+        val result = useCase.execute(
+            belongsTo = belongsTo,
+            type = ImageType.STATIC,
+            data = staticImageData(tileIndexesSize = 1),
+        )
+
+        assertEquals(CreateImageDataEntryUseCase.Result.AlreadyExisted(existed), result)
+    }
+
+    @Test
     fun `get should call manager lifecycle to load and cache entry`() = runTest {
         val repo = InMemoryImageDataEntryRepository()
         val manager = ImageManager()
@@ -97,7 +119,7 @@ class ImageDataEntryCrudUseCaseTest {
     }
 
     @Test
-    fun `delete should remove entry from repository only`() = runTest {
+    fun `delete should unload from manager and remove from repository`() = runTest {
         val repo = InMemoryImageDataEntryRepository()
         val manager = ImageManager()
         val belongsTo = dummyUuid(305)
@@ -108,12 +130,23 @@ class ImageDataEntryCrudUseCaseTest {
         )
         repo.save(entry)
         manager.loadImageDataEntry(entry)
-        val useCase = DeleteImageDataEntryUseCase(repo)
+        val useCase = DeleteImageDataEntryUseCase(repo, manager)
 
         val result = useCase.execute(belongsTo)
 
         assertEquals(DeleteImageDataEntryUseCase.Result.Ok, result)
         assertNull(repo.findByBelongsTo(belongsTo))
-        assertNotNull(manager.getLoadedImageDataEntry(belongsTo))
+        assertNull(manager.getLoadedImageDataEntry(belongsTo))
+    }
+
+    @Test
+    fun `delete should return not existed when entry is absent`() = runTest {
+        val repo = InMemoryImageDataEntryRepository()
+        val manager = ImageManager()
+        val useCase = DeleteImageDataEntryUseCase(repo, manager)
+
+        val result = useCase.execute(dummyUuid(331))
+
+        assertEquals(DeleteImageDataEntryUseCase.Result.NotExisted, result)
     }
 }

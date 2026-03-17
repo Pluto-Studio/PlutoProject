@@ -12,6 +12,7 @@ class CreateImageUseCase(
 ) {
     sealed class Result {
         data class Ok(val image: Image) : Result()
+        data class AlreadyExisted(val image: Image) : Result()
     }
 
     suspend fun execute(
@@ -24,6 +25,12 @@ class CreateImageUseCase(
         mapHeightBlocks: Int,
         tileMapIds: IntArray,
     ): Result {
+        val existed = imageManager.getLoadedImage(id)
+            ?: images.findById(id)
+        if (existed != null) {
+            return Result.AlreadyExisted(existed)
+        }
+
         val image = Image(
             id = id,
             type = type,

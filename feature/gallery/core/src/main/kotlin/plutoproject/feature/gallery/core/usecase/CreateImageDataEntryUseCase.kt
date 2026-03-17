@@ -12,6 +12,7 @@ class CreateImageDataEntryUseCase(
 ) {
     sealed class Result {
         data class Ok(val entry: ImageDataEntry<*>) : Result()
+        data class AlreadyExisted(val entry: ImageDataEntry<*>) : Result()
     }
 
     suspend fun <T : Any> execute(
@@ -19,6 +20,12 @@ class CreateImageDataEntryUseCase(
         type: ImageType,
         data: T,
     ): Result {
+        val existed = imageManager.getLoadedImageDataEntry(belongsTo)
+            ?: entries.findByBelongsTo(belongsTo)
+        if (existed != null) {
+            return Result.AlreadyExisted(existed)
+        }
+
         val entry = ImageDataEntry(
             belongsTo = belongsTo,
             type = type,
