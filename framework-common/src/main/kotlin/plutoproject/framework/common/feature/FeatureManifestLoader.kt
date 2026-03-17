@@ -15,12 +15,14 @@ internal object FeatureManifestLoader {
         ignoreUnknownKeys = true
     }
 
-    fun load(platformType: PlatformType): Map<String, FeatureMetadata> {
+    fun load(platformType: PlatformType): ManifestLoadResult {
         val platformId = platformType.identifier
         val modularPrefix = "META-INF/plutoproject/features/$platformId/"
         val legacyPath = "$platformId-features.json"
 
         val merged = LinkedHashMap<String, LoadedFeatureMetadata>()
+        val invalidFeatures = linkedMapOf<String, String>()
+        val globalErrors = mutableListOf<String>()
 
         val jar = locatePlutoJarFile()
         if (jar == null) {
@@ -29,10 +31,19 @@ internal object FeatureManifestLoader {
                     "将尝试仅加载旧版清单：$legacyPath"
             )
 
-            val legacyContent = readClasspathResourceOrNull(legacyPath) ?: return emptyMap()
-            val legacy = FeatureManifestSource(legacyPath, legacyContent)
-            mergeInto(merged, legacy)
-            return merged.mapValues { it.value.metadata }
+            val legacyContent = readClasspathResourceOrNull(legacyPath)
+                ?: return ManifestLoadResult(emptyMap(), emptyMap(), emptyList())
+            mergeInto(
+                target = merged,
+                invalidFeatures = invalidFeatures,
+                globalErrors = globalErrors,
+                source = FeatureManifestSource(legacyPath, legacyContent),
+            )
+            return ManifestLoadResult(
+                metadata = merged.mapValues { it.value.metadata },
+                invalidFeatures = invalidFeatures,
+                globalErrors = globalErrors,
+            )
         }
 
         jar.use { jf ->
@@ -48,31 +59,53 @@ internal object FeatureManifestLoader {
 
             modularEntries.forEach { entryName ->
                 val content = jf.getInputStream(jf.getEntry(entryName)).source().buffer().readUtf8()
-                mergeInto(merged, FeatureManifestSource(entryName, content))
+                mergeInto(
+                    target = merged,
+                    invalidFeatures = invalidFeatures,
+                    globalErrors = globalErrors,
+                    source = FeatureManifestSource(entryName, content),
+                )
             }
 
             jf.getEntry(legacyPath)?.let { legacyEntry ->
                 val content = jf.getInputStream(legacyEntry).source().buffer().readUtf8()
-                mergeInto(merged, FeatureManifestSource(legacyPath, content))
+                mergeInto(
+                    target = merged,
+                    invalidFeatures = invalidFeatures,
+                    globalErrors = globalErrors,
+                    source = FeatureManifestSource(legacyPath, content),
+                )
             }
         }
 
-        return merged.mapValues { it.value.metadata }
+        return ManifestLoadResult(
+            metadata = merged.mapValues { it.value.metadata },
+            invalidFeatures = invalidFeatures,
+            globalErrors = globalErrors,
+        )
     }
 
     private fun mergeInto(
         target: LinkedHashMap<String, LoadedFeatureMetadata>,
+        invalidFeatures: MutableMap<String, String>,
+        globalErrors: MutableList<String>,
         source: FeatureManifestSource,
     ) {
         val list = try {
             json.decodeFromString<List<FeatureMetadata>>(source.content)
         } catch (e: Exception) {
-            throw IllegalStateException(
-                "解析 Feature 清单失败：${source.path}。请检查 JSON 格式是否正确，以及是否符合 FeatureMetadata 的 schema。",
-                e,
-            )
+            globalErrors += buildString {
+                append("解析 Feature 清单失败：${source.path}。请检查 JSON 格式是否正确，以及是否符合 FeatureMetadata 的 schema。")
+                append(" 原因：${e.message ?: e::class.simpleName}")
+            }
+            return
         }
+
         list.forEach { meta ->
+            if (meta.id in invalidFeatures) {
+                return@forEach
+            }
+
             val existing = target[meta.id]
             if (existing == null) {
                 target[meta.id] = LoadedFeatureMetadata(meta, source.path)
@@ -80,18 +113,18 @@ internal object FeatureManifestLoader {
             }
 
             if (existing.metadata.entrypoint != meta.entrypoint) {
-                error(
-                    "检测到重复的 Feature ID：'${meta.id}'，且来自多个清单文件。" +
-                        "但入口类不一致：'${existing.metadata.entrypoint}'（${existing.source}）" +
-                        " vs '${meta.entrypoint}'（${source.path}）"
-                )
+                invalidFeatures[meta.id] =
+                    "检测到重复的 Feature ID：'${meta.id}'，且来自多个清单文件，但入口类不一致：" +
+                        "'${existing.metadata.entrypoint}'（${existing.source}）vs '${meta.entrypoint}'（${source.path}）"
+                target.remove(meta.id)
+                return@forEach
             }
 
             if (existing.metadata != meta) {
-                error(
+                invalidFeatures[meta.id] =
                     "检测到重复的 Feature ID：'${meta.id}'，且来自多个清单文件，但元数据内容不一致。" +
                         "来源：${existing.source}、${source.path}"
-                )
+                target.remove(meta.id)
             }
         }
     }
@@ -119,6 +152,12 @@ internal object FeatureManifestLoader {
         }
         return null
     }
+
+    internal data class ManifestLoadResult(
+        val metadata: Map<String, FeatureMetadata>,
+        val invalidFeatures: Map<String, String>,
+        val globalErrors: List<String>,
+    )
 
     private data class FeatureManifestSource(
         val path: String,

@@ -38,81 +38,65 @@ interface FeatureManager {
      * 查找指定 ID 的 Feature 元数据并加载。
      *
      * 该 Feature 必须在配置中启用，可通过 [isEnabledInConfig] 检查。
-     *
-     * @throws IllegalStateException 指定 Feature 的 ID 不存在、循环依赖或未在配置中启用。
      */
-    fun loadFeature(id: String): Feature
+    fun loadFeature(id: String): FeatureProcessResult
 
     /**
      * 启用指定 ID 的 Feature，若已加载则跳过。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未加载或不存在。
      */
-    fun enableFeature(id: String): Feature
+    fun enableFeature(id: String): FeatureProcessResult
 
     /**
      * 重载指定 ID 的 Feature。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未启用或不存在。
      */
-    fun reloadFeature(id: String): Feature
+    fun reloadFeature(id: String): FeatureProcessResult
 
     /**
      * 关闭指定 ID 的 Feature，若已关闭则跳过。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未启用或不存在。
      */
-    fun disableFeature(id: String): Feature
+    fun disableFeature(id: String): FeatureProcessResult
 
     /**
      * 查找指定 ID 的 Feature 元数据并加载。
      *
      * 这些 Feature 必须在配置中启用，可通过 [isEnabledInConfig] 检查。
-     *
-     * @throws IllegalStateException 指定 Feature 的 ID 不存在、循环依赖或未在配置中启用。
      */
-    fun loadFeatures(vararg ids: String)
+    fun loadFeatures(vararg ids: String): Map<String, FeatureProcessResult>
 
     /**
      * 启用指定 ID 的 Feature，若已加载则跳过。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未加载或不存在。
      */
-    fun enableFeatures(vararg ids: String)
+    fun enableFeatures(vararg ids: String): Map<String, FeatureProcessResult>
 
     /**
      * 重载指定 ID 的 Feature。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未启用或不存在。
      */
-    fun reloadFeatures(vararg ids: String)
+    fun reloadFeatures(vararg ids: String): Map<String, FeatureProcessResult>
 
     /**
      * 关闭指定 ID 的 Feature，若已关闭则跳过。
-     *
-     * @throws IllegalStateException 指定 ID 的 Feature 未启用或不存在。
      */
-    fun disableFeatures(vararg ids: String)
+    fun disableFeatures(vararg ids: String): Map<String, FeatureProcessResult>
 
     /**
      * 加载所有在配置文件中启用自动加载的模块。
      */
-    fun loadAll()
+    fun loadAll(): Map<String, FeatureProcessResult>
 
     /**
      * 启用所有已加载的模块。
      */
-    fun enableAll()
+    fun enableAll(): Map<String, FeatureProcessResult>
 
     /**
      * 重载所有已启用的模块。
      */
-    fun reloadAll()
+    fun reloadAll(): Map<String, FeatureProcessResult>
 
     /**
      * 关闭所有已启用的模块。
      */
-    fun disableAll()
+    fun disableAll(): Map<String, FeatureProcessResult>
 
     /**
      * 获取指定 ID 的 Feature 实例。

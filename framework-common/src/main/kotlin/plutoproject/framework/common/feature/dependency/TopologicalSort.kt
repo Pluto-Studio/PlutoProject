@@ -95,24 +95,25 @@ object TopologicalSort {
         val path = mutableListOf<String>()
         
         fun dfs(node: String) {
-            if (node in recursionStack) {
-                // 找到循环
-                val cycleStart = path.indexOf(node)
-                if (cycleStart >= 0) {
-                    val cycle = path.subList(cycleStart, path.size) + node
-                    cycles.add(cycle.toList())
-                }
-                return
-            }
-            
-            if (node in visited) return
-            
             visited.add(node)
             recursionStack.add(node)
             path.add(node)
             
             edges[node]?.forEach { neighbor ->
-                if (neighbor in nodes) {
+                if (neighbor !in nodes) {
+                    return@forEach
+                }
+
+                if (neighbor in recursionStack) {
+                    val cycleStart = path.indexOf(neighbor)
+                    if (cycleStart >= 0) {
+                        val cycle = path.subList(cycleStart, path.size).toList() + neighbor
+                        cycles.add(cycle)
+                    }
+                    return@forEach
+                }
+
+                if (neighbor !in visited) {
                     dfs(neighbor)
                 }
             }
@@ -123,9 +124,6 @@ object TopologicalSort {
         
         nodes.forEach { node ->
             if (node !in visited) {
-                visited.clear()
-                recursionStack.clear()
-                path.clear()
                 dfs(node)
             }
         }

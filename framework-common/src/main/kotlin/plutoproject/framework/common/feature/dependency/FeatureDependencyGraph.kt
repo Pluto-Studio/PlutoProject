@@ -2,6 +2,7 @@ package plutoproject.framework.common.feature.dependency
 
 import plutoproject.framework.common.api.feature.FeatureMetadata
 import plutoproject.framework.common.api.feature.Load
+import plutoproject.framework.common.api.feature.metadata.DependencyMetadata
 import java.util.logging.Logger
 
 /**
@@ -26,6 +27,9 @@ class FeatureDependencyGraph(
     
     // 存在循环依赖被禁用的 features
     private val permanentlyDisabled = mutableSetOf<String>()
+
+    // 每个 feature 所属的循环依赖集合
+    private val cycleGroups = mutableMapOf<String, Set<String>>()
     
     init {
         // 构建所有边
@@ -44,6 +48,8 @@ class FeatureDependencyGraph(
         metadata.values.forEach { meta ->
             meta.dependencies.forEach { dep ->
                 if (dep.id in metadata) {
+                    depEdges[meta.id]?.add(dep.id)
+
                     // 添加反向边
                     revEdges[dep.id]?.add(meta.id)
                     
@@ -72,12 +78,19 @@ class FeatureDependencyGraph(
         val cycles = TopologicalSort.detectCycles(metadata.keys, dependencyEdges)
         
         cycles.forEach { cycle ->
-            logger.severe("检测到循环依赖：${cycle.joinToString(" -> ")} -> ${cycle.first()}")
-            permanentlyDisabled.addAll(cycle)
+            logger.severe("检测到循环依赖：${cycle.joinToString(" -> ")}")
+            val cycleMembers = cycle.toSet()
+            permanentlyDisabled.addAll(cycleMembers)
+            cycleMembers.forEach { featureId ->
+                val mergedMembers = cycleGroups[featureId].orEmpty() + cycleMembers
+                mergedMembers.forEach { memberId ->
+                    cycleGroups[memberId] = cycleGroups[memberId].orEmpty() + mergedMembers
+                }
+            }
         }
 
         if (permanentlyDisabled.isNotEmpty()) {
-            logger.severe("以下 Feature 因循环依赖被禁用：${permanentlyDisabled.joinToString(", ")}")
+            logger.severe("以下功能模块因循环依赖被跳过：${permanentlyDisabled.joinToString(", ")}")
         }
     }
     
@@ -94,6 +107,10 @@ class FeatureDependencyGraph(
     fun isPermanentlyDisabled(id: String): Boolean {
         return id in permanentlyDisabled
     }
+
+    fun getCycleGroup(id: String): Set<String> {
+        return cycleGroups[id] ?: emptySet()
+    }
     
     /**
      * 获取 feature 的元数据
@@ -107,6 +124,11 @@ class FeatureDependencyGraph(
      */
     fun getDependencies(id: String): Set<String> {
         return dependencyEdges[id] ?: emptySet()
+    }
+
+    fun getRequiredDependencies(id: String): List<DependencyMetadata> {
+        val meta = metadata[id] ?: return emptyList()
+        return meta.dependencies.filter { it.required }
     }
     
     /**
