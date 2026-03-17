@@ -158,7 +158,7 @@ class FeatureDependencyGraph(
      */
     fun getLoadOrder(): List<FeatureMetadata> {
         val available = getAvailableFeatures()
-        val order = TopologicalSort.sort(available, dependencyEdges, beforeEdges, afterEdges)
+        val order = TopologicalSort.sort(available, emptyMap(), beforeEdges, afterEdges)
         
         return order.mapNotNull { metadata[it] }
     }
