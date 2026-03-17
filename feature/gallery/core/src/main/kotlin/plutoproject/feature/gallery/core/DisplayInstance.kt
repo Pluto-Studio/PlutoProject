@@ -2,7 +2,7 @@ package plutoproject.feature.gallery.core
 
 import java.util.*
 
-class DisplayInstance(
+data class DisplayInstance(
     val id: UUID,
     val belongsTo: UUID,
     val world: String,

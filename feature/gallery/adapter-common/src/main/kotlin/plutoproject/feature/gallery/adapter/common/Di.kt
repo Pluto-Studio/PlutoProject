@@ -4,6 +4,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import plutoproject.feature.gallery.core.DefaultDisplayScheduler
 import plutoproject.feature.gallery.core.DisplayInstanceRepository
 import plutoproject.feature.gallery.core.DisplayManager
 import plutoproject.feature.gallery.core.ImageDataEntryRepository
@@ -80,6 +81,7 @@ val commonModule = module {
 
     singleOf(::ImageManager)
     singleOf(::DisplayManager)
+    singleOf(::DefaultDisplayScheduler)
 
     single {
         DecodeImageUseCase(
