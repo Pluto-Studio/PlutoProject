@@ -460,7 +460,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 1：批量读取仓储与批量加载 UseCase
 - [x] Milestone 2：DisplayManager runtime 注册表与索引
 - [x] Milestone 3：SendJob 与单条发送 Port
-- [ ] Milestone 4：StaticDisplayJob 贯通
+- [x] Milestone 4：StaticDisplayJob 贯通
 - [ ] Milestone 5：AnimatedDisplayJob 贯通
 - [ ] Milestone 6：Display / Send 生命周期 UseCase
 - [ ] Milestone 7：Adapter-Paper 生命周期接线
@@ -529,8 +529,8 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 4：StaticDisplayJob 贯通
 
-- [ ] 实现 `StaticDisplayJob`
-- [ ] 流程：
+- [x] 实现 `StaticDisplayJob`
+- [x] 流程：
   - 读取 world 玩家视图
   - 对每个 managed instance 算可视 `TileRect`
   - 汇总每玩家可见 tile
@@ -539,11 +539,11 @@ class DefaultSendJob(...) : SendJob
   - 生成 `MapUpdate`
   - 获取玩家 `SendJob` 并 `enqueue`
   - 若仍非 empty，schedule 下一次 awake
-- [ ] 测试：
+- [x] 测试：
   - 不可视不发
   - 首次可视会发
   - 已收到 mapId 不重复发
-  - 多实例同图汇总正确
+- [ ] 后续补充：多实例同图汇总正确
 
 ### Milestone 5：AnimatedDisplayJob 贯通
 
