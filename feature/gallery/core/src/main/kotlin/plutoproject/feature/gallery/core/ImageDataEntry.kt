@@ -38,4 +38,15 @@ class ImageDataEntry<T : Any>(
             "Image data type mismatch: expected AnimatedImageData, got ${data::class.simpleName}"
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as ImageDataEntry<*>
+        return belongsTo == other.belongsTo
+    }
+
+    override fun hashCode(): Int {
+        return belongsTo.hashCode()
+    }
 }
