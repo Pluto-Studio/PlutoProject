@@ -3,7 +3,7 @@ package plutoproject.feature.gallery.core.render
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import plutoproject.feature.gallery.core.AnimatedImageData
+import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrame
 import plutoproject.feature.gallery.core.render.geometry.TargetResolution
 import plutoproject.feature.gallery.core.render.geometry.calcTargetResolution
@@ -11,7 +11,7 @@ import plutoproject.feature.gallery.core.render.geometry.repositionerOf
 import plutoproject.feature.gallery.core.render.geometry.scalerOf
 import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
-import plutoproject.feature.gallery.core.render.tile.TileDeduper
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.TileSplitter
 import java.util.logging.Level
 import java.util.logging.Logger

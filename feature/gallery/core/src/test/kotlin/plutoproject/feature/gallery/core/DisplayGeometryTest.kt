@@ -3,6 +3,12 @@ package plutoproject.feature.gallery.core
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.display.DisplayGeometry
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.display.PlayerView
+import plutoproject.feature.gallery.core.display.TileRect
+import plutoproject.feature.gallery.core.display.Vec3
 
 class DisplayGeometryTest {
     @Test

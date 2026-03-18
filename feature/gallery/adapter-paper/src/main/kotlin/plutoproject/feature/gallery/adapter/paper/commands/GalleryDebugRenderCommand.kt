@@ -16,9 +16,9 @@ import org.incendo.cloud.annotations.Permission
 import org.incendo.cloud.annotation.specifier.Quoted
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import plutoproject.feature.gallery.core.AnimatedImageData
-import plutoproject.feature.gallery.core.StaticImageData
-import plutoproject.feature.gallery.core.TilePool
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
@@ -29,10 +29,10 @@ import plutoproject.feature.gallery.core.render.RenderProfile
 import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.ScaleAlgorithm
 import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
-import plutoproject.feature.gallery.core.render.tile.decodeTile
-import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
-import plutoproject.feature.gallery.core.usecase.RenderAnimatedImageUseCase
-import plutoproject.feature.gallery.core.usecase.RenderStaticImageUseCase
+import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.image.usecase.DecodeImageUseCase
+import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
+import plutoproject.feature.gallery.core.render.usecase.RenderStaticImageUseCase
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.server

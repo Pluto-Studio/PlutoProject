@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.render.usecase.MAX_UNIQUE_TILE_COUNT
+import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
 import plutoproject.feature.gallery.core.render.RenderResult
 import plutoproject.feature.gallery.core.render.RenderStatus
 

@@ -6,8 +6,8 @@ import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
-import plutoproject.feature.gallery.core.ImageDataEntry
-import plutoproject.feature.gallery.core.ImageDataEntryRepository
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import java.util.UUID
 

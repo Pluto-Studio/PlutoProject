@@ -1,8 +1,8 @@
 package plutoproject.feature.gallery.core.usecase
 
-import plutoproject.feature.gallery.core.AnimatedImageData
-import plutoproject.feature.gallery.core.StaticImageData
-import plutoproject.feature.gallery.core.TilePool
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 import plutoproject.feature.gallery.core.decode.AnimatedFrameTiming
 import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrame
 import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrameStream

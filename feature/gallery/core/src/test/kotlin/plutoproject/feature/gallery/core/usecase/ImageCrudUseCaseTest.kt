@@ -6,10 +6,16 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.ImageManager
-import plutoproject.feature.gallery.core.ImageType
+import plutoproject.feature.gallery.core.image.ImageManager
+import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.InMemoryImageRepository
 import plutoproject.feature.gallery.core.dummyUuid
+import plutoproject.feature.gallery.core.image.usecase.ChangeImageOwnerNameUseCase
+import plutoproject.feature.gallery.core.image.usecase.CreateImageUseCase
+import plutoproject.feature.gallery.core.image.usecase.DeleteImageUseCase
+import plutoproject.feature.gallery.core.image.usecase.GetImageUseCase
+import plutoproject.feature.gallery.core.image.usecase.LookupImageByOwnerUseCase
+import plutoproject.feature.gallery.core.image.usecase.RenameImageUseCase
 import plutoproject.feature.gallery.core.sampleImage
 
 class ImageCrudUseCaseTest {

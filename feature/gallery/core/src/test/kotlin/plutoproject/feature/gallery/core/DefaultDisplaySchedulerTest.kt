@@ -7,10 +7,16 @@ import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.SchedulerState
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.util.*
+import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultDisplaySchedulerTest {

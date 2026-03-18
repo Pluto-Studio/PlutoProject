@@ -10,8 +10,8 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.commonModule
 import plutoproject.feature.gallery.adapter.paper.commands.GalleryDebugRenderCommand
-import plutoproject.feature.gallery.core.MapUpdatePort
-import plutoproject.feature.gallery.core.ViewPort
+import plutoproject.feature.gallery.core.display.MapUpdatePort
+import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.coroutine.PluginScope

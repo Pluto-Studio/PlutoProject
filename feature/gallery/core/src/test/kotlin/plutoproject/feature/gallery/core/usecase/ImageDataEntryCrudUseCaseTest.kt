@@ -6,13 +6,17 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.AnimatedImageData
-import plutoproject.feature.gallery.core.ImageDataEntry
-import plutoproject.feature.gallery.core.ImageManager
-import plutoproject.feature.gallery.core.ImageType
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageManager
+import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.InMemoryImageDataEntryRepository
-import plutoproject.feature.gallery.core.StaticImageData
+import plutoproject.feature.gallery.core.image.StaticImageData
 import plutoproject.feature.gallery.core.dummyUuid
+import plutoproject.feature.gallery.core.image.usecase.CreateImageDataEntryUseCase
+import plutoproject.feature.gallery.core.image.usecase.DeleteImageDataEntryUseCase
+import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntryUseCase
+import plutoproject.feature.gallery.core.image.usecase.ReplaceImageDataEntryUseCase
 
 class ImageDataEntryCrudUseCaseTest {
     @Test

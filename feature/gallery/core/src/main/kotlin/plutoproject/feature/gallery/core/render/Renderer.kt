@@ -1,7 +1,7 @@
 package plutoproject.feature.gallery.core.render
 
-import plutoproject.feature.gallery.core.AnimatedImageData
-import plutoproject.feature.gallery.core.StaticImageData
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.StaticImageData
 
 /**
  * 静态图预渲染器。

@@ -1,6 +1,10 @@
 package plutoproject.feature.gallery.core.render.tile
 
 import plutoproject.feature.gallery.core.render.RenderStatus
+import plutoproject.feature.gallery.core.render.tile.codec.TILE_PIXEL_COUNT
+import plutoproject.feature.gallery.core.render.tile.codec.TILE_SIDE_PIXELS
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileDedupeResult
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileDeduper
 
 internal data class TileSplitAndDedupeResult(
     val status: RenderStatus,

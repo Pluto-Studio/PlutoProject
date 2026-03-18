@@ -8,17 +8,24 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.InMemoryDisplayInstanceRepository
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.usecase.CreateDisplayInstanceUseCase
+import plutoproject.feature.gallery.core.display.usecase.DeleteDisplayInstanceUseCase
+import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstanceUseCase
+import plutoproject.feature.gallery.core.display.usecase.LookupDisplayInstanceByBelongsUseCase
+import plutoproject.feature.gallery.core.display.usecase.LookupDisplayInstanceByChunkUseCase
 import plutoproject.feature.gallery.core.dummyUuid
 import plutoproject.feature.gallery.core.sampleDisplayInstance
+import java.util.UUID
 
 class DisplayInstanceCrudUseCaseTest {
     @Test
     fun `create should load manager first and then persist`() = runTest {
         val manager = DisplayManager()
         val repo = object : InMemoryDisplayInstanceRepository() {
-            override suspend fun save(displayInstance: plutoproject.feature.gallery.core.DisplayInstance) {
+            override suspend fun save(displayInstance: DisplayInstance) {
                 assertNotNull(manager.getLoadedDisplayInstance(displayInstance.id))
                 super.save(displayInstance)
             }
@@ -94,7 +101,7 @@ class DisplayInstanceCrudUseCaseTest {
         val manager = DisplayManager()
         val display = sampleDisplayInstance(id = dummyUuid(1003))
         val repo = object : InMemoryDisplayInstanceRepository(mutableMapOf(display.id to display)) {
-            override suspend fun deleteById(id: java.util.UUID) {
+            override suspend fun deleteById(id: UUID) {
                 assertNull(manager.getLoadedDisplayInstance(id))
                 super.deleteById(id)
             }

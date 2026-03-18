@@ -5,11 +5,13 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.DisplayManager
-import plutoproject.feature.gallery.core.MapUpdate
-import plutoproject.feature.gallery.core.SendJob
-import plutoproject.feature.gallery.core.SendJobFactory
-import plutoproject.feature.gallery.core.SendJobState
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.job.SendJob
+import plutoproject.feature.gallery.core.display.job.SendJobFactory
+import plutoproject.feature.gallery.core.display.job.SendJobState
+import plutoproject.feature.gallery.core.display.usecase.StartSendJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StopSendJobUseCase
 import plutoproject.feature.gallery.core.dummyUuid
 import java.util.UUID
 

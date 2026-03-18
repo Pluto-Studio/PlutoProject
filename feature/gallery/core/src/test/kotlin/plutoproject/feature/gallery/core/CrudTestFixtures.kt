@@ -1,5 +1,15 @@
 package plutoproject.feature.gallery.core
 
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
+import plutoproject.feature.gallery.core.image.ImageRepository
+import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 import java.util.UUID
 
 internal fun dummyUuid(value: Long): UUID {

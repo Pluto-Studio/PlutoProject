@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.render.RgbaImage8888
-import plutoproject.feature.gallery.core.usecase.DecodeImageUseCase
+import plutoproject.feature.gallery.core.image.usecase.DecodeImageUseCase
 import java.util.logging.Logger
 
 class DecodeImageUseCaseTest {

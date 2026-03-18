@@ -8,10 +8,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.MapUpdatePort
+import plutoproject.feature.gallery.core.display.job.DefaultSendJob
+import plutoproject.feature.gallery.core.display.job.SendJobState
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
+import kotlin.coroutines.CoroutineContext
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DefaultSendJobTest {
@@ -120,7 +126,7 @@ class DefaultSendJobTest {
 
     private fun newSendJob(
         scope: TestScope,
-        loopContext: kotlin.coroutines.CoroutineContext = StandardTestDispatcher(scope.testScheduler),
+        loopContext: CoroutineContext = StandardTestDispatcher(scope.testScheduler),
         maxQueueSize: Int = 8,
         maxUpdatesInSpan: Int = 2,
         updateLimitSpanMs: Long = 50,
@@ -142,7 +148,7 @@ class DefaultSendJobTest {
         return object : Clock() {
             override fun getZone() = ZoneOffset.UTC
 
-            override fun withZone(zone: java.time.ZoneId?): Clock = this
+            override fun withZone(zone: ZoneId?): Clock = this
 
             override fun instant(): Instant {
                 return Instant.ofEpochMilli(scope.testScheduler.currentTime)

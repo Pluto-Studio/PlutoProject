@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.AllocationRange
 import plutoproject.feature.gallery.core.InMemorySystemInformationRepository
+import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 
 class AllocateMapIdUseCaseTest {
     @Test

@@ -1,9 +1,9 @@
 package plutoproject.feature.gallery.adapter.paper
 
 import org.bukkit.Bukkit
-import plutoproject.feature.gallery.core.PlayerView
-import plutoproject.feature.gallery.core.Vec3
-import plutoproject.feature.gallery.core.ViewPort
+import plutoproject.feature.gallery.core.display.PlayerView
+import plutoproject.feature.gallery.core.display.Vec3
+import plutoproject.feature.gallery.core.display.ViewPort
 
 class PaperViewPort : ViewPort {
     override fun getPlayerViews(world: String): List<PlayerView> {

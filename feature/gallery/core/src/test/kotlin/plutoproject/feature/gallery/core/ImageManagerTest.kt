@@ -6,6 +6,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageManager
+import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 
 class ImageManagerTest {
     @Test

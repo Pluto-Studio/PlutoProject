@@ -3,6 +3,11 @@ package plutoproject.feature.gallery.core.render.tile
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.render.tile.codec.TILE_PIXEL_COUNT
+import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileDedupeResult
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileDeduper
+import plutoproject.feature.gallery.core.render.tile.dedupe.TileMapColorHasher
 
 class TileDeduperTest {
     @Test

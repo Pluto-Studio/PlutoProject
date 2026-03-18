@@ -4,6 +4,13 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.render.tile.codec.BitReader
+import plutoproject.feature.gallery.core.render.tile.codec.MAX_PALETTE_SIZE
+import plutoproject.feature.gallery.core.render.tile.codec.TILE_PIXEL_COUNT
+import plutoproject.feature.gallery.core.render.tile.codec.bitsPerPixel
+import plutoproject.feature.gallery.core.render.tile.codec.decodePaletteSize
+import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.render.tile.codec.encodeTile
 
 class TileCodecTest {
     @Test

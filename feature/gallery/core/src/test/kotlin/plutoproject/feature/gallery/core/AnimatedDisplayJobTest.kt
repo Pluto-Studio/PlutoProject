@@ -4,9 +4,28 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.render.tile.encodeTile
+import plutoproject.feature.gallery.core.display.job.AnimatedDisplayJob
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.PlayerView
+import plutoproject.feature.gallery.core.display.SchedulerState
+import plutoproject.feature.gallery.core.display.Vec3
+import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.gallery.core.display.job.SendJob
+import plutoproject.feature.gallery.core.display.job.SendJobState
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.image.TilePool
+import plutoproject.feature.gallery.core.render.tile.codec.encodeTile
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
 
@@ -289,7 +308,7 @@ class AnimatedDisplayJobTest {
     ) : Clock() {
         override fun getZone() = ZoneOffset.UTC
 
-        override fun withZone(zone: java.time.ZoneId?): Clock = this
+        override fun withZone(zone: ZoneId?): Clock = this
 
         override fun instant(): Instant = Instant.ofEpochMilli(currentMillis)
     }

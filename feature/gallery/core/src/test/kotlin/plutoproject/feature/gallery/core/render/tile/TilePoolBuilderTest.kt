@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.render.tile.dedupe.TilePoolBuilder
 
 class TilePoolBuilderTest {
     @Test

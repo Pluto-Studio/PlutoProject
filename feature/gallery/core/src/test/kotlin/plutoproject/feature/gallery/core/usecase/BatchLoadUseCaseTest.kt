@@ -4,12 +4,15 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.DisplayManager
-import plutoproject.feature.gallery.core.ImageManager
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.InMemoryDisplayInstanceRepository
 import plutoproject.feature.gallery.core.InMemoryImageDataEntryRepository
 import plutoproject.feature.gallery.core.InMemoryImageRepository
+import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstancesByIdsUseCase
 import plutoproject.feature.gallery.core.dummyUuid
+import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntriesByBelongsToUseCase
+import plutoproject.feature.gallery.core.image.usecase.GetImagesByIdsUseCase
 import plutoproject.feature.gallery.core.sampleDisplayInstance
 import plutoproject.feature.gallery.core.sampleImage
 import plutoproject.feature.gallery.core.sampleStaticImageDataEntry

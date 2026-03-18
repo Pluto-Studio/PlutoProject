@@ -1,11 +1,19 @@
 package plutoproject.feature.gallery.adapter.paper
 
 import org.bukkit.Chunk
-import plutoproject.feature.gallery.core.DisplayManager
-import plutoproject.feature.gallery.core.DisplayScheduler
-import plutoproject.feature.gallery.core.ImageManager
-import plutoproject.feature.gallery.core.usecase.*
-import java.util.*
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.image.ImageManager
+import plutoproject.feature.gallery.core.display.usecase.AttachDisplayInstanceToJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.DetachDisplayInstanceFromJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstancesByIdsUseCase
+import plutoproject.feature.gallery.core.display.usecase.StartDisplayJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StartSendJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StopDisplayJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StopSendJobUseCase
+import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntriesByBelongsToUseCase
+import plutoproject.feature.gallery.core.image.usecase.GetImagesByIdsUseCase
+import java.util.UUID
 
 class GalleryRuntimeCoordinator(
     private val chunkDisplayIndexStorage: PaperChunkDisplayIndexStorage,

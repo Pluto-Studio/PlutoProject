@@ -6,6 +6,11 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
 import java.util.UUID
 
 class DisplayRuntimeContractTest {

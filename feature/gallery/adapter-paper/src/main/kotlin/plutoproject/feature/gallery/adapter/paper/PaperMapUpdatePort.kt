@@ -4,8 +4,8 @@ import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket
 import net.minecraft.world.level.saveddata.maps.MapId
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData
 import org.bukkit.Bukkit
-import plutoproject.feature.gallery.core.MapUpdate
-import plutoproject.feature.gallery.core.MapUpdatePort
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.framework.paper.util.entity.sendPacket
 import java.util.UUID
 

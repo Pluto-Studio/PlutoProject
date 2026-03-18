@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.DecodedAnimatedFrame
+import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
 import plutoproject.feature.gallery.core.render.DefaultAnimatedImageRenderer
 import plutoproject.feature.gallery.core.render.DitherAlgorithm
 import plutoproject.feature.gallery.core.render.RenderAnimatedImageRequest

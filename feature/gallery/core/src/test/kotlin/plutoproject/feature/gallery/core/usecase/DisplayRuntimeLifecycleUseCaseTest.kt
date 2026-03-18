@@ -1,20 +1,22 @@
 package plutoproject.feature.gallery.core.usecase
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.DisplayInstance
-import plutoproject.feature.gallery.core.DisplayJob
-import plutoproject.feature.gallery.core.DisplayJobFactory
-import plutoproject.feature.gallery.core.DisplayManager
-import plutoproject.feature.gallery.core.DisplayScheduler
-import plutoproject.feature.gallery.core.Image
-import plutoproject.feature.gallery.core.ImageDataEntry
-import plutoproject.feature.gallery.core.ImageType
-import plutoproject.feature.gallery.core.SchedulerState
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.display.SchedulerState
+import plutoproject.feature.gallery.core.display.usecase.AttachDisplayInstanceToJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.DetachDisplayInstanceFromJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StartDisplayJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.StopDisplayJobUseCase
 import plutoproject.feature.gallery.core.dummyUuid
 import plutoproject.feature.gallery.core.sampleDisplayInstance
 import plutoproject.feature.gallery.core.sampleImage
@@ -53,7 +55,12 @@ class DisplayRuntimeLifecycleUseCaseTest {
         val manager = DisplayManager()
         val existed = FakeDisplayJob(dummyUuid(7011))
         manager.registerDisplayJob(existed)
-        val useCase = StartDisplayJobUseCase(fixedClock(0L), RecordingDisplayScheduler(), manager, RecordingDisplayJobFactory(FakeDisplayJob(dummyUuid(7012))))
+        val useCase = StartDisplayJobUseCase(
+            fixedClock(0L),
+            RecordingDisplayScheduler(),
+            manager,
+            RecordingDisplayJobFactory(FakeDisplayJob(dummyUuid(7012)))
+        )
 
         val result = useCase.execute(
             sampleDisplayInstance(id = dummyUuid(7013), belongsTo = existed.belongsTo),

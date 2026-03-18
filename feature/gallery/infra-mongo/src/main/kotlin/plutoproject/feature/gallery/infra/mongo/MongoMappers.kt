@@ -1,14 +1,14 @@
 package plutoproject.feature.gallery.infra.mongo
 
 import org.bson.BsonBinary
-import plutoproject.feature.gallery.core.DisplayInstance
-import plutoproject.feature.gallery.core.AnimatedImageData
-import plutoproject.feature.gallery.core.Image
-import plutoproject.feature.gallery.core.ImageDataEntry
-import plutoproject.feature.gallery.core.ImageType
-import plutoproject.feature.gallery.core.ItemFrameFacing
-import plutoproject.feature.gallery.core.StaticImageData
-import plutoproject.feature.gallery.core.TilePool
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
