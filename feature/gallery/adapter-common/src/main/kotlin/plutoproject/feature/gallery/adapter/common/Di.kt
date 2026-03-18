@@ -86,6 +86,14 @@ val commonModule = module {
             awakeContext = get(named("gallery_awake_context"))
         )
     }
+    single<SendJobFactory> {
+        DefaultSendJobFactory(
+            clock = get(named("gallery_clock")),
+            coroutineScope = get(named("gallery_coroutine_scope")),
+            loopContext = get(named("gallery_awake_context")),
+            mapUpdatePort = get(),
+        )
+    }
 
     single {
         DecodeImageUseCase(

@@ -459,7 +459,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 0：运行时契约与共享对象语义
 - [x] Milestone 1：批量读取仓储与批量加载 UseCase
 - [x] Milestone 2：DisplayManager runtime 注册表与索引
-- [ ] Milestone 3：SendJob 与单条发送 Port
+- [x] Milestone 3：SendJob 与单条发送 Port
 - [ ] Milestone 4：StaticDisplayJob 贯通
 - [ ] Milestone 5：AnimatedDisplayJob 贯通
 - [ ] Milestone 6：Display / Send 生命周期 UseCase
@@ -512,16 +512,16 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 3：SendJob 与单条发送 Port
 
-- [ ] 在 core 实现 `DefaultSendJob`
-- [ ] 在 `adapter-paper` 实现 `MapUpdatePort.send(playerId, update)`
-- [ ] `DefaultSendJob` 接入：
+- [x] 在 core 实现 `DefaultSendJob`
+- [x] 在 core 实现 `DefaultSendJobFactory`
+- [x] 在 `adapter-paper` 实现 `MapUpdatePort.send(playerId, update)`
+- [x] `DefaultSendJob` 接入：
   - `maxQueueSize`
   - `maxUpdatesInSpan`
   - `updateLimitSpanMs`
   - 队列溢出清空策略
   - 按需启停 loop
-- [ ] 处理玩家退出 / 插件关闭时的 stop
-- [ ] 测试：
+- [x] 测试：
   - enqueue 正常入队
   - 超过 `maxQueueSize` 时旧 backlog 被清空
   - 队列发空后自动转 `IDLING`
