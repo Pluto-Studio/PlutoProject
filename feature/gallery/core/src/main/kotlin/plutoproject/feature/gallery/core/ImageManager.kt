@@ -16,8 +16,26 @@ class ImageManager {
         return image
     }
 
+    fun getLoadedImages(ids: Collection<UUID>): Map<UUID, Image> {
+        if (ids.isEmpty()) {
+            return emptyMap()
+        }
+
+        return ids.mapNotNull { id ->
+            loadedImages[id]?.let { id to it }
+        }.toMap()
+    }
+
+    fun loadImages(images: Collection<Image>) {
+        images.forEach(::loadImage)
+    }
+
     fun unloadImage(id: UUID): Image? {
         return loadedImages.remove(id)
+    }
+
+    fun unloadImages(ids: Collection<UUID>): List<Image> {
+        return ids.mapNotNull(::unloadImage)
     }
 
     suspend fun getImage(id: UUID, loader: suspend (UUID) -> Image?): Image? {
@@ -40,8 +58,26 @@ class ImageManager {
         return entry
     }
 
+    fun getLoadedImageDataEntries(belongsToList: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
+        if (belongsToList.isEmpty()) {
+            return emptyMap()
+        }
+
+        return belongsToList.mapNotNull { belongsTo ->
+            loadedImageDataEntries[belongsTo]?.let { belongsTo to it }
+        }.toMap()
+    }
+
+    fun loadImageDataEntries(entries: Collection<ImageDataEntry<*>>) {
+        entries.forEach(::loadImageDataEntry)
+    }
+
     fun unloadImageDataEntry(belongsTo: UUID): ImageDataEntry<*>? {
         return loadedImageDataEntries.remove(belongsTo)
+    }
+
+    fun unloadImageDataEntries(belongsToList: Collection<UUID>): List<ImageDataEntry<*>> {
+        return belongsToList.mapNotNull(::unloadImageDataEntry)
     }
 
     suspend fun getImageDataEntry(

@@ -1,9 +1,11 @@
 package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.client.model.Filters.eq
+import com.mongodb.client.model.Filters.`in`
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import plutoproject.feature.gallery.core.ImageDataEntry
 import plutoproject.feature.gallery.core.ImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
@@ -18,6 +20,17 @@ class MongoImageDataEntryRepository(
         return collection.find(eq(ImageDataEntryDocument::belongsTo.name, belongsTo))
             .firstOrNull()
             ?.toDomain()
+    }
+
+    override suspend fun findByBelongsToIn(belongsToList: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
+        if (belongsToList.isEmpty()) {
+            return emptyMap()
+        }
+
+        return collection.find(`in`(ImageDataEntryDocument::belongsTo.name, belongsToList))
+            .toList()
+            .map { it.toDomain() }
+            .associateBy(ImageDataEntry<*>::belongsTo)
     }
 
     override suspend fun save(entry: ImageDataEntry<*>) {

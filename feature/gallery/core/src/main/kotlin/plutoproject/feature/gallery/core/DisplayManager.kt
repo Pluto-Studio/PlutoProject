@@ -24,6 +24,16 @@ class DisplayManager {
         return loadedDisplayInstances[id]
     }
 
+    fun getLoadedDisplayInstances(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
+        if (ids.isEmpty()) {
+            return emptyMap()
+        }
+
+        return ids.mapNotNull { id ->
+            loadedDisplayInstances[id]?.let { id to it }
+        }.toMap()
+    }
+
     fun getLoadedDisplayInstancesByBelongsTo(belongsTo: UUID): List<DisplayInstance> {
         return loadedDisplayIdsByBelongsTo[belongsTo]
             .orEmpty()
@@ -45,11 +55,19 @@ class DisplayManager {
         return displayInstance
     }
 
+    fun loadDisplayInstances(displayInstances: Collection<DisplayInstance>) {
+        displayInstances.forEach(::loadDisplayInstance)
+    }
+
     fun unloadDisplayInstance(id: UUID): DisplayInstance? {
         val removed = loadedDisplayInstances.remove(id) ?: return null
         unloadIndexes(removed)
         cleanupOperationLockIfUnused(id, operationLocks[id])
         return removed
+    }
+
+    fun unloadDisplayInstances(ids: Collection<UUID>): List<DisplayInstance> {
+        return ids.mapNotNull(::unloadDisplayInstance)
     }
 
     suspend fun getDisplayInstance(

@@ -111,11 +111,15 @@ val commonModule = module {
     singleOf(::CreateDisplayInstanceUseCase)
     singleOf(::DeleteDisplayInstanceUseCase)
     singleOf(::GetDisplayInstanceUseCase)
+    singleOf(::GetDisplayInstancesByIdsUseCase)
     singleOf(::LookupDisplayInstanceByBelongsUseCase)
     singleOf(::LookupDisplayInstanceByChunkUseCase)
 
     singleOf(::CreateImageDataEntryUseCase)
     singleOf(::GetImageDataEntryUseCase)
+    singleOf(::GetImageDataEntriesByBelongsToUseCase)
     singleOf(::DeleteImageDataEntryUseCase)
     singleOf(::ReplaceImageDataEntryUseCase)
+
+    singleOf(::GetImagesByIdsUseCase)
 }

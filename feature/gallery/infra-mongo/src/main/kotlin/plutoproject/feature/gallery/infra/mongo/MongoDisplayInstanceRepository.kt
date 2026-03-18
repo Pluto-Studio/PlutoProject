@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.eq
+import com.mongodb.client.model.Filters.`in`
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
@@ -20,6 +21,17 @@ class MongoDisplayInstanceRepository(
         return collection.find(eq(DisplayInstanceDocument::id.name, id))
             .firstOrNull()
             ?.toDomain()
+    }
+
+    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
+        if (ids.isEmpty()) {
+            return emptyMap()
+        }
+
+        return collection.find(`in`(DisplayInstanceDocument::id.name, ids))
+            .toList()
+            .map { it.toDomain() }
+            .associateBy(DisplayInstance::id)
     }
 
     override suspend fun findByBelongsTo(belongsTo: UUID): List<DisplayInstance> {

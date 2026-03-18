@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.core
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -40,5 +41,18 @@ class DisplayManagerTest {
 
         val byChunk = manager.lookupDisplayInstancesByChunk(display.chunkX, display.chunkZ) { _, _ -> listOf(display) }
         assertEquals(1, byChunk.size)
+    }
+
+    @Test
+    fun `should support batch display instance cache helpers`() {
+        val manager = DisplayManager()
+        val first = sampleDisplayInstance(id = dummyUuid(4006), belongsTo = dummyUuid(4007), chunkX = 1, chunkZ = 2)
+        val second = sampleDisplayInstance(id = dummyUuid(4008), belongsTo = dummyUuid(4007), chunkX = 1, chunkZ = 2)
+
+        manager.loadDisplayInstances(listOf(first, second))
+
+        assertEquals(setOf(first.id, second.id), manager.getLoadedDisplayInstances(listOf(first.id, second.id, dummyUuid(4009))).keys)
+        assertEquals(2, manager.unloadDisplayInstances(listOf(first.id, second.id)).size)
+        assertTrue(manager.getLoadedDisplayInstances(listOf(first.id, second.id)).isEmpty())
     }
 }

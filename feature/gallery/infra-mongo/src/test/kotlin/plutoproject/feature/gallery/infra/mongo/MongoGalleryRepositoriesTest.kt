@@ -80,6 +80,9 @@ class MongoGalleryRepositoriesTest {
         val owned = repo.findByOwner(owner)
         assertEquals(2, owned.size)
 
+        val byIds = repo.findByIds(listOf(image.id, image2.id, UUID.fromString("00000000-0000-0000-0000-000000000299")))
+        assertEquals(setOf(image.id, image2.id), byIds.keys)
+
         repo.deleteById(image.id)
         assertNull(repo.findById(image.id))
         assertNotNull(repo.findById(image2.id))
@@ -143,6 +146,15 @@ class MongoGalleryRepositoriesTest {
         assertArrayEquals(byteArrayOf(1, 2, 3), loadedAnimatedData.tilePool.blob)
         assertArrayEquals(shortArrayOf(0, 1, 1, 0), loadedAnimatedData.tileIndexes)
 
+        val byBelongsToIn = repo.findByBelongsToIn(
+            listOf(
+                staticBelongsTo,
+                animatedBelongsTo,
+                UUID.fromString("00000000-0000-0000-0000-000000000399"),
+            )
+        )
+        assertEquals(setOf(staticBelongsTo, animatedBelongsTo), byBelongsToIn.keys)
+
         repo.deleteByBelongsTo(animatedBelongsTo)
         assertNull(repo.findByBelongsTo(animatedBelongsTo))
         assertNotNull(repo.findByBelongsTo(staticBelongsTo))
@@ -205,6 +217,9 @@ class MongoGalleryRepositoriesTest {
 
         val byChunk = repo.findByChunk(12, 34)
         assertEquals(2, byChunk.size)
+
+        val byIds = repo.findByIds(listOf(first.id, second.id, UUID.fromString("00000000-0000-0000-0000-000000000499")))
+        assertEquals(setOf(first.id, second.id), byIds.keys)
 
         repo.deleteById(first.id)
         assertNull(repo.findById(first.id))

@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.core
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -56,5 +57,25 @@ class ImageManagerTest {
         val loadedEntry = manager.getImageDataEntry(image.id) { entry }
         assertEquals(image.id, loadedEntry?.belongsTo)
         assertEquals(image.id, manager.getLoadedImageDataEntry(image.id)?.belongsTo)
+    }
+
+    @Test
+    fun `should support batch image and image data entry cache helpers`() {
+        val manager = ImageManager()
+        val firstImage = sampleImage(id = dummyUuid(12))
+        val secondImage = sampleImage(id = dummyUuid(13))
+        val firstEntry = sampleStaticImageDataEntry(firstImage.id)
+        val secondEntry = sampleStaticImageDataEntry(secondImage.id)
+
+        manager.loadImages(listOf(firstImage, secondImage))
+        manager.loadImageDataEntries(listOf(firstEntry, secondEntry))
+
+        assertEquals(setOf(firstImage.id, secondImage.id), manager.getLoadedImages(listOf(firstImage.id, secondImage.id, dummyUuid(14))).keys)
+        assertEquals(setOf(firstImage.id, secondImage.id), manager.getLoadedImageDataEntries(listOf(firstImage.id, secondImage.id, dummyUuid(15))).keys)
+
+        assertEquals(2, manager.unloadImages(listOf(firstImage.id, secondImage.id)).size)
+        assertEquals(2, manager.unloadImageDataEntries(listOf(firstImage.id, secondImage.id)).size)
+        assertTrue(manager.getLoadedImages(listOf(firstImage.id, secondImage.id)).isEmpty())
+        assertTrue(manager.getLoadedImageDataEntries(listOf(firstImage.id, secondImage.id)).isEmpty())
     }
 }

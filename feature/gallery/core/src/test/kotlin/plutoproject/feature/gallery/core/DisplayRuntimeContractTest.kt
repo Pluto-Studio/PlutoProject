@@ -80,17 +80,3 @@ class DisplayRuntimeContractTest {
         }
     }
 }
-
-private fun sampleStaticImageDataEntry(belongsTo: UUID): ImageDataEntry<*> {
-    return ImageDataEntry(
-        belongsTo = belongsTo,
-        type = ImageType.STATIC,
-        data = StaticImageData(
-            tilePool = TilePool(
-                offsets = intArrayOf(0, 0),
-                blob = ByteArray(0),
-            ),
-            tileIndexes = shortArrayOf(0),
-        ),
-    )
-}

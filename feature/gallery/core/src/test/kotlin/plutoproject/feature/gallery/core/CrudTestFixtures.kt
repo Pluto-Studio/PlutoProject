@@ -46,11 +46,29 @@ internal fun sampleDisplayInstance(
     )
 }
 
+internal fun sampleStaticImageDataEntry(belongsTo: UUID = dummyUuid(907)): ImageDataEntry<*> {
+    return ImageDataEntry(
+        belongsTo = belongsTo,
+        type = ImageType.STATIC,
+        data = StaticImageData(
+            tilePool = TilePool(
+                offsets = intArrayOf(0, 0),
+                blob = ByteArray(0),
+            ),
+            tileIndexes = shortArrayOf(0),
+        ),
+    )
+}
+
 internal class InMemoryImageRepository(
     private val storage: MutableMap<UUID, Image> = mutableMapOf(),
 ) : ImageRepository {
     override suspend fun findById(id: UUID): Image? {
         return storage[id]
+    }
+
+    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, Image> {
+        return ids.mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
     }
 
     override suspend fun findByOwner(owner: UUID): List<Image> {
@@ -73,6 +91,10 @@ internal class InMemoryImageDataEntryRepository(
         return storage[belongsTo]
     }
 
+    override suspend fun findByBelongsToIn(belongsToList: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
+        return belongsToList.mapNotNull { belongsTo -> storage[belongsTo]?.let { belongsTo to it } }.toMap()
+    }
+
     override suspend fun save(entry: ImageDataEntry<*>) {
         storage[entry.belongsTo] = entry
     }
@@ -87,6 +109,10 @@ internal open class InMemoryDisplayInstanceRepository(
 ) : DisplayInstanceRepository {
     override suspend fun findById(id: UUID): DisplayInstance? {
         return storage[id]
+    }
+
+    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
+        return ids.mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
     }
 
     override suspend fun findByBelongsTo(belongsTo: UUID): List<DisplayInstance> {

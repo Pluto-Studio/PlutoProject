@@ -456,8 +456,8 @@ class DefaultSendJob(...) : SendJob
 
 ### TODO（当前跟踪）
 
-- [ ] Milestone 0：运行时契约与共享对象语义
-- [ ] Milestone 1：批量读取仓储与批量加载 UseCase
+- [x] Milestone 0：运行时契约与共享对象语义
+- [x] Milestone 1：批量读取仓储与批量加载 UseCase
 - [ ] Milestone 2：DisplayManager runtime 注册表与索引
 - [ ] Milestone 3：SendJob 与单条发送 Port
 - [ ] Milestone 4：StaticDisplayJob 贯通
@@ -468,29 +468,29 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 0：运行时契约与共享对象语义
 
-- [ ] 扩展 `DisplayJob` 目标契约：`belongsTo`、`isStopped`、`attach`、`detach`、`isEmpty`、`stop`
-- [ ] 定义 `DisplayJobFactory`
-- [ ] 定义 `MapUpdate`、`MapUpdatePort`、`SendJob`、`SendJobFactory`
-- [ ] 在 KDoc 明确：
+- [x] 扩展 `DisplayJob` 目标契约：`belongsTo`、`isStopped`、`attach`、`detach`、`isEmpty`、`stop`
+- [x] 定义 `DisplayJobFactory`
+- [x] 定义 `MapUpdate`、`MapUpdatePort`、`SendJob`、`SendJobFactory`
+- [x] 在 KDoc 明确：
   - `DisplayJob` 持有共享对象引用，不做 clone / snapshot
   - `wake()` 每次直接读取 `imageDataEntry.data`
   - CRUD 不自动编排 display lifecycle
   - empty job 不自动 stop
   - stopped `DisplayJob` 不可复活
-- [ ] 单元测试：`attach/detach/stop` 的一致性校验、重复 stop 幂等、stopped 后 attach 抛异常
+- [x] 单元测试：`attach/detach/stop` 的一致性校验、重复 stop 幂等、stopped 后 attach 抛异常
 
 ### Milestone 1：批量读取仓储与批量加载 UseCase
 
-- [ ] 为 `DisplayInstanceRepository` 增加 `findByIds`
-- [ ] 为 `ImageRepository` 增加 `findByIds`
-- [ ] 为 `ImageDataEntryRepository` 增加 `findByBelongsToIn`
-- [ ] 补 Mongo 实现与对应测试
-- [ ] 为 `ImageManager` / `DisplayManager` 增加批量 cache helper
-- [ ] 实现：
+- [x] 为 `DisplayInstanceRepository` 增加 `findByIds`
+- [x] 为 `ImageRepository` 增加 `findByIds`
+- [x] 为 `ImageDataEntryRepository` 增加 `findByBelongsToIn`
+- [x] 补 Mongo 实现与对应测试
+- [x] 为 `ImageManager` / `DisplayManager` 增加批量 cache helper
+- [x] 实现：
   - `GetDisplayInstancesByIdsUseCase`
   - `GetImagesByIdsUseCase`
   - `GetImageDataEntriesByBelongsToUseCase`
-- [ ] 测试：
+- [x] 测试：
   - loaded + missing 混合场景
   - 结果回填 cache
   - 稀疏 map 返回正确

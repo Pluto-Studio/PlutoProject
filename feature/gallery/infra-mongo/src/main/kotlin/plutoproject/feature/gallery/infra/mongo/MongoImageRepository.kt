@@ -1,6 +1,7 @@
 package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.client.model.Filters.eq
+import com.mongodb.client.model.Filters.`in`
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
@@ -19,6 +20,17 @@ class MongoImageRepository(
         return collection.find(eq(ImageDocument::id.name, id))
             .firstOrNull()
             ?.toDomain()
+    }
+
+    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, Image> {
+        if (ids.isEmpty()) {
+            return emptyMap()
+        }
+
+        return collection.find(`in`(ImageDocument::id.name, ids))
+            .toList()
+            .map { it.toDomain() }
+            .associateBy(Image::id)
     }
 
     override suspend fun findByOwner(owner: UUID): List<Image> {
