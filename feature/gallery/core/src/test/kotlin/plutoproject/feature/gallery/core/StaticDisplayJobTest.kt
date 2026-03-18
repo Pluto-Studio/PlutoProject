@@ -204,6 +204,86 @@ class StaticDisplayJobTest {
         }
     }
 
+    @Test
+    fun `wake should merge visible tiles from multiple instances of same image`() {
+        val belongsTo = dummyUuid(6131)
+        val image = Image(
+            id = belongsTo,
+            type = ImageType.STATIC,
+            owner = dummyUuid(6130),
+            ownerName = "Owner_6130",
+            name = "static-job-test-4",
+            mapWidthBlocks = 2,
+            mapHeightBlocks = 1,
+            tileMapIds = intArrayOf(131, 132),
+        )
+        val entry = staticImageDataEntry(
+            belongsTo = belongsTo,
+            tileColors = listOf(
+                ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 },
+                ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 },
+            ),
+        )
+        val firstDisplayInstance = DisplayInstance(
+            id = dummyUuid(6132),
+            belongsTo = belongsTo,
+            world = "world",
+            chunkX = 0,
+            chunkZ = 0,
+            facing = ItemFrameFacing.SOUTH,
+            widthBlocks = 2,
+            heightBlocks = 1,
+            originX = 0.0,
+            originY = 0.0,
+            originZ = 0.0,
+            itemFrameIds = listOf(dummyUuid(6134), dummyUuid(6135)),
+        )
+        val secondDisplayInstance = DisplayInstance(
+            id = dummyUuid(6133),
+            belongsTo = belongsTo,
+            world = "world",
+            chunkX = 0,
+            chunkZ = 0,
+            facing = ItemFrameFacing.SOUTH,
+            widthBlocks = 2,
+            heightBlocks = 1,
+            originX = 0.0,
+            originY = 0.0,
+            originZ = 0.0,
+            itemFrameIds = listOf(dummyUuid(6136), dummyUuid(6137)),
+        )
+        val displayManager = DisplayManager()
+        val sendJob = RecordingSendJob(playerId = dummyUuid(6138))
+        displayManager.registerSendJob(sendJob)
+
+        val job = StaticDisplayJob(
+            belongsTo = belongsTo,
+            displayScheduler = RecordingDisplayScheduler(),
+            viewPort = FakeViewPort(
+                mapOf(
+                    "world" to listOf(
+                        PlayerView(sendJob.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
+                        PlayerView(sendJob.playerId, Vec3(0.5, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
+                    )
+                )
+            ),
+            displayManager = displayManager,
+            clock = fixedClock(4_000L),
+            visibleDistance = 5.0,
+            horizontalFovRadian = 0.0,
+            verticalFovRadian = 0.0,
+            updateIntervalMs = 200L,
+        )
+
+        job.attach(firstDisplayInstance, image, entry)
+        job.attach(secondDisplayInstance, image, entry)
+        job.wake()
+
+        assertEquals(listOf(131, 132), sendJob.enqueuedUpdates.map(MapUpdate::mapId))
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 }, sendJob.enqueuedUpdates[0].mapColors)
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 }, sendJob.enqueuedUpdates[1].mapColors)
+    }
+
     private fun fixedClock(epochMillis: Long): Clock {
         return Clock.fixed(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC)
     }

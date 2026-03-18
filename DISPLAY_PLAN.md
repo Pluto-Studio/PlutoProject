@@ -464,7 +464,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 5：AnimatedDisplayJob 贯通
 - [x] Milestone 6：Display / Send 生命周期 UseCase
 - [x] Milestone 7：Adapter-Paper 生命周期接线
-- [ ] Milestone 8：测试、构建与手动验收
+- [x] Milestone 8：测试、构建与手动验收
 
 ### Milestone 0：运行时契约与共享对象语义
 
@@ -543,7 +543,7 @@ class DefaultSendJob(...) : SendJob
   - 不可视不发
   - 首次可视会发
   - 已收到 mapId 不重复发
-- [ ] 后续补充：多实例同图汇总正确
+- [x] 后续补充：多实例同图汇总正确
 
 ### Milestone 5：AnimatedDisplayJob 贯通
 
@@ -611,16 +611,16 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 8：测试、构建与手动验收
 
-- [ ] 补齐 core 单元测试：
+- [x] 补齐 core 单元测试：
   - batch repo / usecase
   - manager runtime registry
   - send job
   - static / animated display job
   - lifecycle usecases
-- [ ] 补 adapter 集成测试或最小可测替身
-- [ ] 执行 `./gradlew shadowJar`
-- [ ] 执行 `./gradlew test`
-- [ ] 手动验收：
+- [ ] 补 adapter 集成测试或最小可测替身（已延期，后续通过 Debug Command 辅助验证）
+- [x] 执行 `./gradlew shadowJar`
+- [x] 执行 `./gradlew test`
+- [x] 手动验收：
   - origin chunk load 时 display 正常开始更新
   - origin chunk unload 时 display 停止更新
   - 同图多实例只跑一个 `DisplayJob`
