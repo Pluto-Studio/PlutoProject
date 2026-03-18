@@ -3,18 +3,14 @@ package plutoproject.feature.gallery.core
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.util.UUID
+import java.util.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultDisplaySchedulerTest {
@@ -106,6 +102,7 @@ class DefaultDisplaySchedulerTest {
     }
 
     private class FakeDisplayJob : DisplayJob {
+        override var isStopped: Boolean = false
         override val managedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
 
         var wakeCount: Int = 0
@@ -115,6 +112,8 @@ class DefaultDisplaySchedulerTest {
             wakeCount += 1
         }
 
-        override fun cleanup() = Unit
+        override fun stop() {
+            isStopped = true
+        }
     }
 }
