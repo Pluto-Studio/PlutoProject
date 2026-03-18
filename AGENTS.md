@@ -64,6 +64,30 @@
   - `adapter-common` cross-platform; `adapter-paper` Paper entrypoints; `adapter-velocity` Velocity entrypoints.
   - Dual-platform features are often not "same logic twice" (proxy <-> backend comms); expect platform-specific responsibilities.
 
+## Coding Conventions
+
+- Message definitions:
+  - Do not hardcode player-facing text inside interaction logic such as events, commands, menus, or other text-sending flows.
+  - Create `Message.kt` at the current module package root.
+  - For compile-time static messages: use `UPPER_SNAKE_CASE`; assign the `Component` directly; no custom getter.
+  - For runtime dynamic messages without parameters: use `lowerCamelCase`; use a custom getter that builds and returns a new `Component` on each access.
+  - For runtime dynamic messages with parameters: do not prefer this first; prefer `<placeholder>` inside the `Component` and replace it at the usage site. If placeholders are not enough, use a function like `getPlayerGreetingMessage(name: String): Component`.
+  - Message functions must not be `suspend` and must not perform DB IO or other expensive work.
+  - Replacement values must also be defined in `Message.kt`; do not inline them at the replacement site.
+  - `Message.kt` values do not have to be only `Component`; `List<Component>`, `String`, `Int`, and similar text-oriented values are fine. Do not put non-text objects or heavy/resource-owning objects there.
+  - Non-player-facing log text is exempt; inline it where it is sent.
+  - For titles: define the source text in `Message.kt`, then build `Title` at the usage site. Do not store `Title` directly in `Message.kt`.
+  - For sounds: build them at the usage site. 
+  - Only extract titles or sounds into a separate file when shared across multiple places; do not create `Sound.kt`/`Message.kt` entries for one-off usage.
+  - Existing legacy code may not follow this. Do not copy those patterns; follow this section only.
+- Koin modules:
+  - Cross-platform DI: define `Di.kt` at the `adapter-common` package root and declare `val commonModule = module {}`.
+  - Platform-specific DI (for example platform logger): define `val module = module {}` inside the feature entry class under `adapter-paper` or `adapter-velocity`.
+- Indentation:
+  - Keep nesting depth within 4-5 levels. If it goes deeper, extract nested blocks into named functions.
+  - Prefer expression-body form like `fun foo() = bar { ... }` when it removes one indentation level and the lambda is the end of the expression.
+  - If the expression continues with chained calls after the lambda, keep the block-body form with `return` or direct statement; do not use multiline `=` style in that case.
+
 ## Useful Commands
 
 - Build & package: `./gradlew shadowJar`
