@@ -86,6 +86,14 @@ val commonModule = module {
             awakeContext = get(named("gallery_awake_context"))
         )
     }
+    single<DisplayJobFactory> {
+        DefaultDisplayJobFactory(
+            displayScheduler = get(),
+            viewPort = get(),
+            displayManager = get(),
+            clock = get(named("gallery_clock")),
+        )
+    }
     single<SendJobFactory> {
         DefaultSendJobFactory(
             clock = get(named("gallery_clock")),
@@ -130,4 +138,11 @@ val commonModule = module {
     singleOf(::ReplaceImageDataEntryUseCase)
 
     singleOf(::GetImagesByIdsUseCase)
+
+    singleOf(::StartDisplayJobUseCase)
+    singleOf(::StopDisplayJobUseCase)
+    singleOf(::AttachDisplayInstanceToJobUseCase)
+    singleOf(::DetachDisplayInstanceFromJobUseCase)
+    singleOf(::StartSendJobUseCase)
+    singleOf(::StopSendJobUseCase)
 }

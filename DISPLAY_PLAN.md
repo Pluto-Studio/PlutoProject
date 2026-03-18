@@ -462,7 +462,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 3：SendJob 与单条发送 Port
 - [x] Milestone 4：StaticDisplayJob 贯通
 - [x] Milestone 5：AnimatedDisplayJob 贯通
-- [ ] Milestone 6：Display / Send 生命周期 UseCase
+- [x] Milestone 6：Display / Send 生命周期 UseCase
 - [ ] Milestone 7：Adapter-Paper 生命周期接线
 - [ ] Milestone 8：测试、构建与手动验收
 
@@ -567,18 +567,18 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 6：Display / Send 生命周期 UseCase
 
-- [ ] 实现：
+- [x] 实现：
   - `StartDisplayJobUseCase`
   - `StopDisplayJobUseCase`
   - `AttachDisplayInstanceToJobUseCase`
   - `DetachDisplayInstanceFromJobUseCase`
   - `StartSendJobUseCase`
   - `StopSendJobUseCase`
-- [ ] 明确 UseCase 分工：
+- [x] 明确 UseCase 分工：
   - display runtime UseCase 只做 runtime 操作
   - send runtime UseCase 只做 send job 生命周期
   - 两者都不做 DB IO
-- [ ] 测试：
+- [x] 测试：
   - start display 时创建 job、attach 首实例、首次 schedule
   - attach 已启动 job 成功
   - detach 后 job 仍保留

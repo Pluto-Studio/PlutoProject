@@ -1,0 +1,189 @@
+package plutoproject.feature.gallery.core.usecase
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import plutoproject.feature.gallery.core.DisplayInstance
+import plutoproject.feature.gallery.core.DisplayJob
+import plutoproject.feature.gallery.core.DisplayJobFactory
+import plutoproject.feature.gallery.core.DisplayManager
+import plutoproject.feature.gallery.core.DisplayScheduler
+import plutoproject.feature.gallery.core.Image
+import plutoproject.feature.gallery.core.ImageDataEntry
+import plutoproject.feature.gallery.core.ImageType
+import plutoproject.feature.gallery.core.SchedulerState
+import plutoproject.feature.gallery.core.dummyUuid
+import plutoproject.feature.gallery.core.sampleDisplayInstance
+import plutoproject.feature.gallery.core.sampleImage
+import plutoproject.feature.gallery.core.sampleStaticImageDataEntry
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.UUID
+
+class DisplayRuntimeLifecycleUseCaseTest {
+    @Test
+    fun `start display job should create attach bind and schedule first awake`() {
+        val manager = DisplayManager()
+        val scheduler = RecordingDisplayScheduler()
+        val job = FakeDisplayJob(dummyUuid(7001))
+        val factory = RecordingDisplayJobFactory(job)
+        val useCase = StartDisplayJobUseCase(fixedClock(1_000L), scheduler, manager, factory)
+        val displayInstance = sampleDisplayInstance(id = dummyUuid(7002), belongsTo = job.belongsTo)
+        val image = sampleImage(id = job.belongsTo)
+        val entry = sampleStaticImageDataEntry(job.belongsTo)
+
+        val result = useCase.execute(displayInstance, image, entry)
+
+        assertEquals(StartDisplayJobUseCase.Result.Ok(job), result)
+        assertSame(job, manager.getLoadedDisplayJob(job.belongsTo))
+        assertEquals(job.belongsTo, manager.getJobBelongsToByDisplayInstanceId(displayInstance.id))
+        assertSame(displayInstance, job.attachedInstances.single())
+        assertSame(job, scheduler.lastScheduledJob)
+        assertEquals(Instant.ofEpochMilli(1_000L), scheduler.lastAwakeAt)
+        assertSame(image, factory.lastImage)
+        assertSame(entry, factory.lastImageDataEntry)
+    }
+
+    @Test
+    fun `start display job should return already started when job already exists`() {
+        val manager = DisplayManager()
+        val existed = FakeDisplayJob(dummyUuid(7011))
+        manager.registerDisplayJob(existed)
+        val useCase = StartDisplayJobUseCase(fixedClock(0L), RecordingDisplayScheduler(), manager, RecordingDisplayJobFactory(FakeDisplayJob(dummyUuid(7012))))
+
+        val result = useCase.execute(
+            sampleDisplayInstance(id = dummyUuid(7013), belongsTo = existed.belongsTo),
+            sampleImage(id = existed.belongsTo),
+            sampleStaticImageDataEntry(existed.belongsTo),
+        )
+
+        assertEquals(StartDisplayJobUseCase.Result.AlreadyStarted(existed), result)
+    }
+
+    @Test
+    fun `attach and detach display instance should update job binding`() {
+        val manager = DisplayManager()
+        val job = FakeDisplayJob(dummyUuid(7021))
+        manager.registerDisplayJob(job)
+        val attach = AttachDisplayInstanceToJobUseCase(manager)
+        val detach = DetachDisplayInstanceFromJobUseCase(manager)
+        val displayInstance = sampleDisplayInstance(id = dummyUuid(7022), belongsTo = job.belongsTo)
+
+        val attachResult = attach.execute(displayInstance, sampleImage(id = job.belongsTo), sampleStaticImageDataEntry(job.belongsTo))
+        assertEquals(AttachDisplayInstanceToJobUseCase.Result.Ok(job), attachResult)
+        assertEquals(job.belongsTo, manager.getJobBelongsToByDisplayInstanceId(displayInstance.id))
+
+        val detachResult = detach.execute(displayInstance.id)
+        assertEquals(DetachDisplayInstanceFromJobUseCase.Result.Ok(job, displayInstance), detachResult)
+        assertNull(manager.getJobBelongsToByDisplayInstanceId(displayInstance.id))
+    }
+
+    @Test
+    fun `stop display job should unschedule unbind stop and remove`() {
+        val manager = DisplayManager()
+        val scheduler = RecordingDisplayScheduler()
+        val job = FakeDisplayJob(dummyUuid(7031))
+        val first = sampleDisplayInstance(id = dummyUuid(7032), belongsTo = job.belongsTo)
+        val second = sampleDisplayInstance(id = dummyUuid(7033), belongsTo = job.belongsTo)
+        job.attach(first, sampleImage(id = job.belongsTo), sampleStaticImageDataEntry(job.belongsTo))
+        job.attach(second, sampleImage(id = job.belongsTo), sampleStaticImageDataEntry(job.belongsTo))
+        manager.registerDisplayJob(job)
+        manager.bindDisplayInstanceToJob(first.id, job.belongsTo)
+        manager.bindDisplayInstanceToJob(second.id, job.belongsTo)
+
+        val result = StopDisplayJobUseCase(scheduler, manager).execute(job.belongsTo)
+
+        assertEquals(StopDisplayJobUseCase.Result.Ok(job), result)
+        assertSame(job, scheduler.lastUnscheduledJob)
+        assertTrue(job.stopCalled)
+        assertNull(manager.getLoadedDisplayJob(job.belongsTo))
+        assertNull(manager.getJobBelongsToByDisplayInstanceId(first.id))
+        assertNull(manager.getJobBelongsToByDisplayInstanceId(second.id))
+    }
+
+    @Test
+    fun `attach and detach should return not started when runtime job is absent`() {
+        val manager = DisplayManager()
+        val displayInstance = sampleDisplayInstance(id = dummyUuid(7041), belongsTo = dummyUuid(7042))
+
+        assertEquals(
+            AttachDisplayInstanceToJobUseCase.Result.JobNotStarted,
+            AttachDisplayInstanceToJobUseCase(manager).execute(displayInstance, sampleImage(id = displayInstance.belongsTo), sampleStaticImageDataEntry(displayInstance.belongsTo))
+        )
+        assertEquals(
+            DetachDisplayInstanceFromJobUseCase.Result.JobNotStarted,
+            DetachDisplayInstanceFromJobUseCase(manager).execute(displayInstance.id)
+        )
+        assertEquals(
+            StopDisplayJobUseCase.Result.NotStarted,
+            StopDisplayJobUseCase(RecordingDisplayScheduler(), manager).execute(displayInstance.belongsTo)
+        )
+    }
+
+    private fun fixedClock(epochMillis: Long): Clock {
+        return Clock.fixed(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC)
+    }
+
+    private class RecordingDisplayScheduler : DisplayScheduler {
+        override val state: SchedulerState = SchedulerState.RUNNING
+        var lastScheduledJob: DisplayJob? = null
+        var lastAwakeAt: Instant? = null
+        var lastUnscheduledJob: DisplayJob? = null
+
+        override fun scheduleAwakeAt(job: DisplayJob, awakeAt: Instant) {
+            lastScheduledJob = job
+            lastAwakeAt = awakeAt
+        }
+
+        override fun unschedule(job: DisplayJob) {
+            lastUnscheduledJob = job
+        }
+
+        override fun stop() = Unit
+    }
+
+    private class RecordingDisplayJobFactory(
+        private val job: DisplayJob,
+    ) : DisplayJobFactory {
+        var lastImage: Image? = null
+        var lastImageDataEntry: ImageDataEntry<*>? = null
+
+        override fun create(image: Image, imageDataEntry: ImageDataEntry<*>): DisplayJob {
+            lastImage = image
+            lastImageDataEntry = imageDataEntry
+            return job
+        }
+    }
+
+    private class FakeDisplayJob(
+        override val belongsTo: UUID,
+    ) : DisplayJob {
+        override var isStopped: Boolean = false
+        override val managedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
+        val attachedInstances = mutableListOf<DisplayInstance>()
+        var stopCalled: Boolean = false
+
+        override fun attach(displayInstance: DisplayInstance, image: Image, imageDataEntry: ImageDataEntry<*>) {
+            require(image.id == belongsTo)
+            require(imageDataEntry.belongsTo == belongsTo)
+            managedDisplayInstances[displayInstance.id] = displayInstance
+            attachedInstances += displayInstance
+        }
+
+        override fun detach(displayInstanceId: UUID): DisplayInstance? = managedDisplayInstances.remove(displayInstanceId)
+
+        override fun isEmpty(): Boolean = managedDisplayInstances.isEmpty()
+
+        override fun wake() = Unit
+
+        override fun stop() {
+            isStopped = true
+            stopCalled = true
+            managedDisplayInstances.clear()
+        }
+    }
+}
