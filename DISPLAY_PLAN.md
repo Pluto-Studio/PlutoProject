@@ -463,7 +463,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 4：StaticDisplayJob 贯通
 - [x] Milestone 5：AnimatedDisplayJob 贯通
 - [x] Milestone 6：Display / Send 生命周期 UseCase
-- [ ] Milestone 7：Adapter-Paper 生命周期接线
+- [x] Milestone 7：Adapter-Paper 生命周期接线
 - [ ] Milestone 8：测试、构建与手动验收
 
 ### Milestone 0：运行时契约与共享对象语义
@@ -587,23 +587,23 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 7：Adapter-Paper 生命周期接线
 
-- [ ] 实现 chunk PDC 索引读取/写入工具
-- [ ] `ChunkLoad` 编排：
+- [x] 实现 chunk PDC 索引读取/写入工具
+- [x] `ChunkLoad` 编排：
   - 从 PDC 读 `displayInstanceIds`
   - 批量加载 `DisplayInstance`
   - 批量加载 `Image`
   - 批量加载 `ImageDataEntry`
   - 按 `belongsTo` 分组
   - job 不存在则 start；存在则 attach
-- [ ] `ChunkUnload` 编排：
+- [x] `ChunkUnload` 编排：
   - 从 PDC 读 `displayInstanceIds`
   - 找受影响 job
   - 预判 detach 后是否 empty
   - empty 则 stop；否则 detach
   - 当前阶段同步 unload 对应 `DisplayInstance` / `Image` / `ImageDataEntry`
-- [ ] `PlayerJoin`：start `SendJob`
-- [ ] `PlayerQuit`：stop `SendJob`
-- [ ] `PluginDisable`：
+- [x] `PlayerJoin`：start `SendJob`
+- [x] `PlayerQuit`：stop `SendJob`
+- [x] `PluginDisable`：
   - stop 所有 `SendJob`
   - stop 所有 `DisplayJob`
   - stop `DisplayScheduler`
