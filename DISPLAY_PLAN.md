@@ -416,7 +416,7 @@ class DefaultSendJob(...) : SendJob
 
 - `managedDisplayInstances`
 - `displayGeometryByInstanceId`
-- `playerToReceivedMapIds`
+- `receivedMapIdsByPlayer`
 - `image`
 - `imageDataEntry`
 
@@ -461,7 +461,7 @@ class DefaultSendJob(...) : SendJob
 - [x] Milestone 2：DisplayManager runtime 注册表与索引
 - [x] Milestone 3：SendJob 与单条发送 Port
 - [x] Milestone 4：StaticDisplayJob 贯通
-- [ ] Milestone 5：AnimatedDisplayJob 贯通
+- [x] Milestone 5：AnimatedDisplayJob 贯通
 - [ ] Milestone 6：Display / Send 生命周期 UseCase
 - [ ] Milestone 7：Adapter-Paper 生命周期接线
 - [ ] Milestone 8：测试、构建与手动验收
@@ -534,7 +534,7 @@ class DefaultSendJob(...) : SendJob
   - 读取 world 玩家视图
   - 对每个 managed instance 算可视 `TileRect`
   - 汇总每玩家可见 tile
-  - 用 `playerToReceivedMapIds` 过滤已发送内容
+  - 用 `receivedMapIdsByPlayer` 过滤已发送内容
   - `decodeTile(...)`
   - 生成 `MapUpdate`
   - 获取玩家 `SendJob` 并 `enqueue`
@@ -547,8 +547,8 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 5：AnimatedDisplayJob 贯通
 
-- [ ] 实现 `AnimatedDisplayJob`
-- [ ] 流程：
+- [x] 实现 `AnimatedDisplayJob`
+- [x] 流程：
   - 计算动画当前帧
   - 与 `lastSentPoolIndexes` diff
   - 对每玩家按可视 rect 过滤
@@ -557,10 +557,10 @@ class DefaultSendJob(...) : SendJob
   - 获取玩家 `SendJob` 并 `enqueue`
   - 更新动画状态
   - 按 `maxFramePerSecond` 预算 schedule 下一次 awake
-- [ ] 约束：
+- [x] 约束：
   - `maxFramePerSecond == -1` 表示不限制
   - `0` 或其他非法负数在构造时拒绝
-- [ ] 测试：
+- [x] 测试：
   - 帧推进正确
   - diff 增量发送正确
   - budget / 超时 / `-1` 语义正确
@@ -682,7 +682,7 @@ DisplayInstance 所属的区块取决于地图画的第一个 Tile（也就是 0
 11. 根据 DisplayJob 构造时传入的 `maxFramePerSecond`，向 DisplayScheduler 计划下一次应该被唤醒的时间。
 
 额外说明：
-1. 静态图像的更新流程和动图基本一致。不一样的点在于没有获取当前帧内容并计算要更新的 Tile 的步骤，多了一个 `playerToReceivedMapIds` 字段，记录每个玩家已经收到过的 Map ID。因为 Minecraft 客户端会缓存 Map ID 对应的内容，静态图不需要更新内容，所以如果一个玩家发过了一个 Map ID 的内容，就不会再发。其他帧速控制和可视检查的逻辑都一致，静态图的场景下更新循环的意义更多在于实现「不可视不发，可视了就发」，而不是帧更新。
+1. 静态图像的更新流程和动图基本一致。不一样的点在于没有获取当前帧内容并计算要更新的 Tile 的步骤，多了一个 `receivedMapIdsByPlayer` 字段，记录每个玩家已经收到过的 Map ID。因为 Minecraft 客户端会缓存 Map ID 对应的内容，静态图不需要更新内容，所以如果一个玩家发过了一个 Map ID 的内容，就不会再发。其他帧速控制和可视检查的逻辑都一致，静态图的场景下更新循环的意义更多在于实现「不可视不发，可视了就发」，而不是帧更新。
 2. 动图更新的第 10 步实际的算法是：用 1000ms / `maxFramePerSecond`，获取一帧的 budget ms（比如 60 FPS，budget 是 ~16.67ms）。然后用本次更新结束时间减去开始时间，获取更新用时，再用 budget ms 减去更新用时算出要等待的时间（如果为负数意味着这一帧超时了，用 `maxFramePerSeconds` 为 -1 时候相同的处理方式），然后用当前时间 + 等待时间算出最终的预期唤醒时间。此外，`maxFramePerSecond` 为 -1 时意味着不限制 FPS，此时计划唤醒时间时会直接传入当前时间。因为 DisplayScheduler 实际的检查方式是 Awake 时间 <= 当前时间，所以意味着每个 DisplayScheduler 的运行周期这个 DisplayJob 都会被唤醒。`maxFramePerSecond` 不可以为 0 或者除了 -1 的负数，会在 DisplayJob 构造时检查并抛出异常
 3. 由于 AnimatedDisplayJob 的设计（全局动图进度而不是玩家动图进度），动图对于所有玩家的播放进度都是一样的。且只要 DisplayJob 加载，即使没人在看动图的时间也在走。暂时觉得这两个点不算问题，且不希望引入额外的复杂度，所以保持这种行为。
 
