@@ -458,7 +458,7 @@ class DefaultSendJob(...) : SendJob
 
 - [x] Milestone 0：运行时契约与共享对象语义
 - [x] Milestone 1：批量读取仓储与批量加载 UseCase
-- [ ] Milestone 2：DisplayManager runtime 注册表与索引
+- [x] Milestone 2：DisplayManager runtime 注册表与索引
 - [ ] Milestone 3：SendJob 与单条发送 Port
 - [ ] Milestone 4：StaticDisplayJob 贯通
 - [ ] Milestone 5：AnimatedDisplayJob 贯通
@@ -498,13 +498,13 @@ class DefaultSendJob(...) : SendJob
 
 ### Milestone 2：DisplayManager runtime 注册表与索引
 
-- [ ] 为 `DisplayManager` 增加：
+- [x] 为 `DisplayManager` 增加：
   - `loadedJobsByBelongsTo`
   - `displayInstanceId -> belongsTo` job 索引
   - `loadedSendJobsByPlayerId`
-- [ ] 实现 `register/remove/bind/unbind/query` 方法
-- [ ] 保留现有 `DisplayInstance` 缓存索引逻辑不变
-- [ ] 测试：
+- [x] 实现 `register/remove/bind/unbind/query` 方法
+- [x] 保留现有 `DisplayInstance` 缓存索引逻辑不变
+- [x] 测试：
   - register / remove `DisplayJob`
   - register / remove `SendJob`
   - bind / unbind displayInstance 与 job

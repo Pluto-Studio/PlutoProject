@@ -2,10 +2,12 @@ package plutoproject.feature.gallery.core
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class DisplayManagerTest {
     @Test
@@ -54,5 +56,82 @@ class DisplayManagerTest {
         assertEquals(setOf(first.id, second.id), manager.getLoadedDisplayInstances(listOf(first.id, second.id, dummyUuid(4009))).keys)
         assertEquals(2, manager.unloadDisplayInstances(listOf(first.id, second.id)).size)
         assertTrue(manager.getLoadedDisplayInstances(listOf(first.id, second.id)).isEmpty())
+    }
+
+    @Test
+    fun `should manage display job registry and display instance job bindings`() {
+        val manager = DisplayManager()
+        val belongsTo = dummyUuid(4010)
+        val job = FakeDisplayJob(belongsTo = belongsTo)
+        val firstDisplayId = dummyUuid(4011)
+        val secondDisplayId = dummyUuid(4012)
+
+        assertSame(job, manager.registerDisplayJob(job))
+        assertSame(job, manager.getLoadedDisplayJob(belongsTo))
+        assertEquals(listOf(job), manager.getLoadedDisplayJobs())
+
+        manager.bindDisplayInstanceToJob(firstDisplayId, belongsTo)
+        manager.bindDisplayInstanceToJob(secondDisplayId, belongsTo)
+
+        assertEquals(belongsTo, manager.getJobBelongsToByDisplayInstanceId(firstDisplayId))
+        assertEquals(belongsTo, manager.getJobBelongsToByDisplayInstanceId(secondDisplayId))
+
+        assertEquals(belongsTo, manager.unbindDisplayInstanceFromJob(firstDisplayId))
+        assertNull(manager.getJobBelongsToByDisplayInstanceId(firstDisplayId))
+        assertEquals(belongsTo, manager.getJobBelongsToByDisplayInstanceId(secondDisplayId))
+
+        assertSame(job, manager.removeDisplayJob(belongsTo))
+        assertNull(manager.getLoadedDisplayJob(belongsTo))
+        assertTrue(manager.getLoadedDisplayJobs().isEmpty())
+    }
+
+    @Test
+    fun `should manage send job registry independently from display caches`() {
+        val manager = DisplayManager()
+        val sendJob = FakeSendJob(playerId = dummyUuid(4020))
+        val display = sampleDisplayInstance(id = dummyUuid(4021), belongsTo = dummyUuid(4022), chunkX = 7, chunkZ = 8)
+
+        manager.loadDisplayInstance(display)
+        assertSame(sendJob, manager.registerSendJob(sendJob))
+
+        assertSame(sendJob, manager.getLoadedSendJob(sendJob.playerId))
+        assertEquals(listOf(sendJob), manager.getLoadedSendJobs())
+        assertNotNull(manager.getLoadedDisplayInstance(display.id))
+
+        assertSame(sendJob, manager.removeSendJob(sendJob.playerId))
+        assertNull(manager.getLoadedSendJob(sendJob.playerId))
+        assertTrue(manager.getLoadedSendJobs().isEmpty())
+        assertNotNull(manager.getLoadedDisplayInstance(display.id))
+    }
+
+    private class FakeDisplayJob(
+        override val belongsTo: UUID,
+    ) : DisplayJob {
+        override val isStopped: Boolean = false
+        override val managedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
+
+        override fun attach(
+            displayInstance: DisplayInstance,
+            image: Image,
+            imageDataEntry: ImageDataEntry<*>,
+        ) = Unit
+
+        override fun detach(displayInstanceId: UUID): DisplayInstance? = null
+
+        override fun isEmpty(): Boolean = true
+
+        override fun wake() = Unit
+
+        override fun stop() = Unit
+    }
+
+    private class FakeSendJob(
+        override val playerId: UUID,
+    ) : SendJob {
+        override val state: SendJobState = SendJobState.IDLING
+
+        override fun enqueue(update: MapUpdate) = Unit
+
+        override fun stop() = Unit
     }
 }

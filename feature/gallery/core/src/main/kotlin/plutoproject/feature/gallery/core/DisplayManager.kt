@@ -9,6 +9,9 @@ class DisplayManager {
     private val loadedDisplayInstances = ConcurrentHashMap<UUID, DisplayInstance>()
     private val loadedDisplayIdsByBelongsTo = ConcurrentHashMap<UUID, MutableSet<UUID>>()
     private val loadedDisplayIdsByChunk = ConcurrentHashMap<ChunkKey, MutableSet<UUID>>()
+    private val loadedDisplayJobsByBelongsTo = ConcurrentHashMap<UUID, DisplayJob>()
+    private val jobBelongsToByDisplayInstanceId = ConcurrentHashMap<UUID, UUID>()
+    private val loadedSendJobsByPlayerId = ConcurrentHashMap<UUID, SendJob>()
     private val operationLocks = ConcurrentHashMap<UUID, Mutex>()
 
     suspend fun <T> withDisplayInstanceOperationLock(id: UUID, action: suspend () -> T): T {
@@ -68,6 +71,52 @@ class DisplayManager {
 
     fun unloadDisplayInstances(ids: Collection<UUID>): List<DisplayInstance> {
         return ids.mapNotNull(::unloadDisplayInstance)
+    }
+
+    fun getLoadedDisplayJob(belongsTo: UUID): DisplayJob? {
+        return loadedDisplayJobsByBelongsTo[belongsTo]
+    }
+
+    fun getLoadedDisplayJobs(): List<DisplayJob> {
+        return loadedDisplayJobsByBelongsTo.values.toList()
+    }
+
+    fun registerDisplayJob(job: DisplayJob): DisplayJob {
+        loadedDisplayJobsByBelongsTo[job.belongsTo] = job
+        return job
+    }
+
+    fun removeDisplayJob(belongsTo: UUID): DisplayJob? {
+        return loadedDisplayJobsByBelongsTo.remove(belongsTo)
+    }
+
+    fun bindDisplayInstanceToJob(displayInstanceId: UUID, belongsTo: UUID) {
+        jobBelongsToByDisplayInstanceId[displayInstanceId] = belongsTo
+    }
+
+    fun unbindDisplayInstanceFromJob(displayInstanceId: UUID): UUID? {
+        return jobBelongsToByDisplayInstanceId.remove(displayInstanceId)
+    }
+
+    fun getJobBelongsToByDisplayInstanceId(displayInstanceId: UUID): UUID? {
+        return jobBelongsToByDisplayInstanceId[displayInstanceId]
+    }
+
+    fun getLoadedSendJob(playerId: UUID): SendJob? {
+        return loadedSendJobsByPlayerId[playerId]
+    }
+
+    fun getLoadedSendJobs(): List<SendJob> {
+        return loadedSendJobsByPlayerId.values.toList()
+    }
+
+    fun registerSendJob(job: SendJob): SendJob {
+        loadedSendJobsByPlayerId[job.playerId] = job
+        return job
+    }
+
+    fun removeSendJob(playerId: UUID): SendJob? {
+        return loadedSendJobsByPlayerId.remove(playerId)
     }
 
     suspend fun getDisplayInstance(
