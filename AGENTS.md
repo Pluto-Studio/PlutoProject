@@ -97,6 +97,5 @@
 ## Dependency Rules
 
 - Do not upgrade Gradle/Kotlin/other dependency versions unless explicitly instructed.
-- Avoid unnecessary dependencies for simple logic: first check for an existing implementation; otherwise implement it.
-  - Examples: base64/hashing/Fibonacci -> implement; packets/advanced particles -> external libs may be appropriate.
-- If a new dependency is necessary: ask the user to confirm; keep scope minimal (only modules that need it) and be clear about the usage scenario.
+- Prefer not to add dependencies.
+- If a new dependency is necessary: ask the user to confirm; keep scope minimal (only modules that need it); explain the usage scenario and the complexity / delivery cost of implementing it in-house instead.
