@@ -129,8 +129,8 @@
   - `DecodeImageUseCase.kt`
   - `DecodeModels.kt`（request/result/status/constraints/DecodedImage）
   - `ImageFormatSniffer.kt`
-  - `decoder/StaticImageDecoder.kt`
-  - `decoder/GifDecoder.kt`
+  - `decoder/DefaultStaticImageDecoder.kt`
+  - `decoder/DefaultGifDecoder.kt`
 - `feature/gallery/core/src/test/kotlin/plutoproject/feature/gallery/core/decode/`
   - `ImageFormatSnifferTest.kt`
   - `StaticImageDecoderTest.kt`
