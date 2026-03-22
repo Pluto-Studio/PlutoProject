@@ -2,7 +2,7 @@ package plutoproject.feature.gallery.core.util
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-class ResourceEntry<T>(private val value: T) {
+class CacheEntry<T>(private val value: T) {
     private val lock = Any()
     private var _isDisposed = false
     private var _refCount = 0
@@ -52,7 +52,7 @@ class ResourceEntry<T>(private val value: T) {
         value
     }
 
-    class Handle<T>(private val entry: ResourceEntry<T>) : AutoCloseable {
+    class Handle<T>(private val entry: CacheEntry<T>) : AutoCloseable {
         private val isClosed = AtomicBoolean(false)
 
         val value: T

@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ResourceEntryTest {
+class CacheEntryTest {
     @Test
     fun `should track ref count while handles are open`() {
-        val entry = ResourceEntry("value")
+        val entry = CacheEntry("value")
 
         val first = entry.acquire()
         val second = entry.acquire()
@@ -25,7 +25,7 @@ class ResourceEntryTest {
 
     @Test
     fun `should reject acquire and value access after dispose`() {
-        val entry = ResourceEntry("value")
+        val entry = CacheEntry("value")
         val handle = entry.acquire()
 
         entry.dispose()
@@ -37,7 +37,7 @@ class ResourceEntryTest {
 
     @Test
     fun `should close existing handles during dispose`() {
-        val entry = ResourceEntry("value")
+        val entry = CacheEntry("value")
         val first = entry.acquire()
         val second = entry.acquire()
 
@@ -54,6 +54,6 @@ class ResourceEntryTest {
         assertFalse(firstValueAccessible(second))
     }
 
-    private fun firstValueAccessible(handle: ResourceEntry.Handle<String>): Boolean =
+    private fun firstValueAccessible(handle: CacheEntry.Handle<String>): Boolean =
         runCatching { handle.value }.isSuccess
 }
