@@ -56,12 +56,12 @@ class ResourceEntry<T>(private val value: T) {
         private val isClosed = AtomicBoolean(false)
 
         val value: T
-            get() {
+            get() = synchronized(entry.lock) {
                 check(!isClosed.get()) { "Handle already closed" }
                 return entry.getValue()
             }
 
-        override fun close() {
+        override fun close() = synchronized(entry.lock) {
             if (isClosed.compareAndSet(false, true)) {
                 entry.release(this)
             }

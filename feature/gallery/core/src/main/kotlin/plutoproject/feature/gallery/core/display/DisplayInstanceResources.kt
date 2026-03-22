@@ -53,7 +53,9 @@ class DisplayInstanceResources : ResourceHolder<UUID, DisplayInstance> {
         if (values.isEmpty()) {
             return
         }
-        values.forEach(::put)
+        synchronized(lock) {
+            values.forEach(::put)
+        }
     }
 
     override fun acquire(key: UUID): ResourceEntry.Handle<DisplayInstance>? {
