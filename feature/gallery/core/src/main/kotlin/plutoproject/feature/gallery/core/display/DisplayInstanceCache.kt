@@ -1,16 +1,23 @@
 package plutoproject.feature.gallery.core.display
 
-import plutoproject.feature.gallery.core.util.ChunkKey
+import kotlinx.coroutines.CoroutineScope
 import plutoproject.feature.gallery.core.util.CacheEntry
+import plutoproject.feature.gallery.core.util.ChunkKey
 import plutoproject.feature.gallery.core.util.ResourceCache
-import java.util.UUID
+import java.time.Clock
+import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 data class DisplayInstanceIndex(
     val belongsTo: UUID,
     val chunkKey: ChunkKey
 )
 
-class DisplayInstanceCache : ResourceCache<UUID, DisplayInstance, DisplayInstanceIndex>() {
+class DisplayInstanceCache(
+    coroutineScope: CoroutineScope,
+    coroutineContext: CoroutineContext,
+    clock: Clock
+) : ResourceCache<UUID, DisplayInstance, DisplayInstanceIndex>(coroutineScope, coroutineContext, clock) {
     private val idsByBelongsTo = mutableMapOf<UUID, MutableSet<UUID>>()
     private val idsByChunk = mutableMapOf<ChunkKey, MutableSet<UUID>>()
 

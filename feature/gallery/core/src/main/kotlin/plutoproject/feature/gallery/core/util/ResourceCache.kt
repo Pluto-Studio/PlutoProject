@@ -1,10 +1,31 @@
 package plutoproject.feature.gallery.core.util
 
-abstract class ResourceCache<K, V, I> {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.time.delay
+import java.time.Clock
+import java.time.Duration
+import java.util.*
+import kotlin.coroutines.CoroutineContext
+
+private object ExpiringComparator : Comparator<CacheEntry<*>> {
+    override fun compare(o1: CacheEntry<*>, o2: CacheEntry<*>): Int {
+        val t1 = requireNotNull(o1.expireAt) { "Cache entry missing expireAt" }
+        val t2 = requireNotNull(o2.expireAt) { "Cache entry missing expireAt" }
+        return t1.compareTo(t2)
+    }
+}
+
+abstract class ResourceCache<K, V, I>(
+    private val coroutineScope: CoroutineScope,
+    private val coroutineContext: CoroutineContext,
+    private val clock: Clock,
+) {
     private val lock = Any()
     private var isDisposed = false
     private val entriesByKey = mutableMapOf<K, CacheEntry<V>>()
     private val indexesByKey = mutableMapOf<K, I>()
+    private val cleanupQueue = PriorityQueue<CacheEntry<V>>(ExpiringComparator)
+    private var cleanerJob: Job? = null
 
     val entries: Map<K, CacheEntry<V>>
         get() = synchronized(lock) { entriesByKey.toMap() }
@@ -19,6 +40,65 @@ abstract class ResourceCache<K, V, I> {
 
     protected open fun onCacheDisposed() = Unit
 
+    private fun ensureCleanerRunning() {
+        if (cleanerJob?.isActive == true) {
+            return
+        }
+
+        cleanerJob = coroutineScope.launch(coroutineContext) {
+            runCleaner()
+        }.also { job ->
+            job.invokeOnCompletion {
+                handleCleanerCompletion(it)
+            }
+        }
+    }
+
+    private fun handleCleanerCompletion(cause: Throwable?) {
+        if (cause == null || cause is InternalCleanerCancellation || !coroutineScope.isActive) {
+            cleanerJob = null
+            return
+        }
+
+        // TODO: 异常退出警告日志
+        ensureCleanerRunning()
+    }
+
+    private suspend fun runCleaner() {
+        while (true) {
+            val pendingEntry = synchronized(lock) { cleanupQueue.poll() } ?: return
+            val startTime = clock.instant()
+            val expireAt = pendingEntry.expireAt ?: continue
+
+            if (startTime < expireAt) {
+                val sleepDuration = Duration.between(startTime, expireAt)
+                delay(sleepDuration)
+            }
+
+            val key = pendingEntry.withLock { entry ->
+                if (entry.expireAt != expireAt) {
+                    return@withLock null
+                }
+
+                if (entry.refCount >= 1) {
+                    pendingEntry.expireAt = null
+                    return@withLock null
+                }
+
+                entry.acquire().use { handle ->
+                    keyOf(handle.value)
+                }
+            } ?: continue
+
+            synchronized(lock) {
+                if (isDisposed || cleanerJob?.isActive != true) {
+                    return
+                }
+                remove(key)
+            }
+        }
+    }
+
     fun put(key: K, value: V) {
         check(key == keyOf(value)) { "Index and resource key mismatch" }
         synchronized(lock) {
@@ -27,9 +107,21 @@ abstract class ResourceCache<K, V, I> {
                 return
             }
             val index = buildIndex(value)
-            entriesByKey[key] = CacheEntry(value)
+            val entry = CacheEntry(value, clock, ::scheduleClean)
+            entriesByKey[key] = entry
             indexesByKey[key] = index
+            scheduleClean(entry)
             onEntryAdded(key, index)
+        }
+    }
+
+    private fun scheduleClean(entry: CacheEntry<V>) {
+        synchronized(lock) {
+            checkNotDisposed()
+            checkNotNull(entry.expireAt) { "Cache entry missing expireAt" }
+            check(!cleanupQueue.contains(entry)) { "Cleanup already scheduled for this entry" }
+            cleanupQueue.add(entry)
+            ensureCleanerRunning()
         }
     }
 
@@ -39,16 +131,7 @@ abstract class ResourceCache<K, V, I> {
         }
         synchronized(lock) {
             checkNotDisposed()
-            values.forEach { (key, value) ->
-                if (entriesByKey.containsKey(key)) {
-                    return@forEach
-                }
-                check(key == keyOf(value)) { "Index and resource key mismatch" }
-                val index = buildIndex(value)
-                entriesByKey[key] = CacheEntry(value)
-                indexesByKey[key] = index
-                onEntryAdded(key, index)
-            }
+            values.forEach(::put)
         }
     }
 
@@ -101,17 +184,18 @@ abstract class ResourceCache<K, V, I> {
         put(key, value)
     }
 
-    fun dispose() {
-        val entriesToDispose = synchronized(lock) {
-            if (isDisposed) {
-                return@synchronized null
-            }
-            isDisposed = true
-            onCacheDisposed()
-            indexesByKey.clear()
-            entriesByKey.values.toList().also { entriesByKey.clear() }
+    fun dispose() = synchronized(lock) {
+        if (isDisposed) {
+            return@synchronized
         }
-        entriesToDispose?.forEach(CacheEntry<V>::dispose)
+
+        isDisposed = true
+        cleanerJob?.cancel(InternalCleanerCancellation())
+        cleanupQueue.clear()
+        onCacheDisposed()
+        entriesByKey.values.forEach(CacheEntry<V>::dispose)
+        indexesByKey.clear()
+        entriesByKey.clear()
     }
 
     protected fun <R> withLock(block: ResourceCache<K, V, I>.() -> R): R = synchronized(lock) {
@@ -129,6 +213,8 @@ abstract class ResourceCache<K, V, I> {
     }
 
     private fun checkNotDisposed() {
-        check(!isDisposed) { "Resources already disposed" }
+        check(!isDisposed) { "Resource cache already disposed" }
     }
+
+    private class InternalCleanerCancellation() : CancellationException()
 }

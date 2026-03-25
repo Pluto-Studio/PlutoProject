@@ -5,11 +5,14 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 class CacheEntryTest {
     @Test
     fun `should track ref count while handles are open`() {
-        val entry = CacheEntry("value")
+        val entry = createEntry()
 
         val first = entry.acquire()
         val second = entry.acquire()
@@ -25,7 +28,7 @@ class CacheEntryTest {
 
     @Test
     fun `should reject acquire and value access after dispose`() {
-        val entry = CacheEntry("value")
+        val entry = createEntry()
         val handle = entry.acquire()
 
         entry.dispose()
@@ -37,7 +40,7 @@ class CacheEntryTest {
 
     @Test
     fun `should close existing handles during dispose`() {
-        val entry = CacheEntry("value")
+        val entry = createEntry()
         val first = entry.acquire()
         val second = entry.acquire()
 
@@ -56,4 +59,10 @@ class CacheEntryTest {
 
     private fun firstValueAccessible(handle: CacheEntry.Handle<String>): Boolean =
         runCatching { handle.value }.isSuccess
+
+    private fun createEntry(value: String = "value"): CacheEntry<String> = CacheEntry(
+        value = value,
+        clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+        scheduleCleanCallback = {}
+    )
 }
