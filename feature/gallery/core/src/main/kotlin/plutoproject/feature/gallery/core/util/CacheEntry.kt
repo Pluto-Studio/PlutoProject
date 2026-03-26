@@ -20,10 +20,7 @@ class CacheEntry<T>(
         get() = synchronized(lock) { _isDisposed }
 
     val refCount: Int
-        get() = synchronized(lock) {
-            check(!_isDisposed) { "Entry already disposed" }
-            _refCount
-        }
+        get() = synchronized(lock) { _refCount }
 
     var expireAt: Instant?
         get() = synchronized(lock) { _expireAt }

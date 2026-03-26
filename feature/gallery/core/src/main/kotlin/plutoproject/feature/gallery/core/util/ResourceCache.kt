@@ -24,12 +24,14 @@ abstract class ResourceCache<K, V, I>(
     private val logger: Logger,
 ) {
     private val lock = Any()
-    private var isDisposed = false
+    private var _isDisposed = false
     private val entriesByKey = mutableMapOf<K, CacheEntry<V>>()
     private val indexesByKey = mutableMapOf<K, I>()
     private val cleanupQueue = PriorityQueue<CacheEntry<V>>(ExpiringComparator)
     private var cleanerJob: Job? = null
 
+    val isDisposed: Boolean
+        get() = synchronized(lock) { _isDisposed }
     val entries: Map<K, CacheEntry<V>>
         get() = synchronized(lock) { entriesByKey.toMap() }
 
@@ -94,7 +96,7 @@ abstract class ResourceCache<K, V, I>(
             } ?: continue
 
             synchronized(lock) {
-                if (isDisposed || cleanerJob?.isActive != true) {
+                if (_isDisposed || cleanerJob?.isActive != true) {
                     return
                 }
                 remove(key)
@@ -188,11 +190,11 @@ abstract class ResourceCache<K, V, I>(
     }
 
     fun dispose() = synchronized(lock) {
-        if (isDisposed) {
+        if (_isDisposed) {
             return@synchronized
         }
 
-        isDisposed = true
+        _isDisposed = true
         cleanerJob?.cancel(InternalCleanerCancellation())
         cleanupQueue.clear()
         onCacheDisposed()
@@ -216,7 +218,7 @@ abstract class ResourceCache<K, V, I>(
     }
 
     private fun checkNotDisposed() {
-        check(!isDisposed) { "Resource cache already disposed" }
+        check(!_isDisposed) { "Resource cache already disposed" }
     }
 
     private class InternalCleanerCancellation() : CancellationException()
