@@ -6,6 +6,7 @@ import plutoproject.feature.gallery.core.util.ChunkKey
 import plutoproject.feature.gallery.core.util.ResourceCache
 import java.time.Clock
 import java.util.*
+import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
 data class DisplayInstanceIndex(
@@ -16,8 +17,8 @@ data class DisplayInstanceIndex(
 class DisplayInstanceCache(
     coroutineScope: CoroutineScope,
     coroutineContext: CoroutineContext,
-    clock: Clock
-) : ResourceCache<UUID, DisplayInstance, DisplayInstanceIndex>(coroutineScope, coroutineContext, clock) {
+    clock: Clock, logger: Logger
+) : ResourceCache<UUID, DisplayInstance, DisplayInstanceIndex>(coroutineScope, coroutineContext, clock, logger) {
     private val idsByBelongsTo = mutableMapOf<UUID, MutableSet<UUID>>()
     private val idsByChunk = mutableMapOf<ChunkKey, MutableSet<UUID>>()
 

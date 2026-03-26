@@ -5,6 +5,8 @@ import kotlinx.coroutines.time.delay
 import java.time.Clock
 import java.time.Duration
 import java.util.*
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
 private object ExpiringComparator : Comparator<CacheEntry<*>> {
@@ -19,6 +21,7 @@ abstract class ResourceCache<K, V, I>(
     private val coroutineScope: CoroutineScope,
     private val coroutineContext: CoroutineContext,
     private val clock: Clock,
+    private val logger: Logger,
 ) {
     private val lock = Any()
     private var isDisposed = false
@@ -60,7 +63,7 @@ abstract class ResourceCache<K, V, I>(
             return
         }
 
-        // TODO: 异常退出警告日志
+        logger.log(Level.WARNING, "An internal error occurred while running cleaner job for ${this::class.simpleName}", cause)
         ensureCleanerRunning()
     }
 

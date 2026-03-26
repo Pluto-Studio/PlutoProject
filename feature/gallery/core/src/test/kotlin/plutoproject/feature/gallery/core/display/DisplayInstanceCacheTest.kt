@@ -26,6 +26,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
+import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -142,7 +143,8 @@ class DisplayInstanceCacheTest : ResourceCacheTest<UUID, DisplayInstance>() {
     private fun createDisplayInstanceCache(): DisplayInstanceCache = DisplayInstanceCache(
         coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
         coroutineContext = Dispatchers.Unconfined,
-        clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)
+        clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+        logger = Logger.getLogger(DisplayInstanceCacheTest::class.java.name),
     )
 
     private fun createDisplayInstanceCache(
@@ -153,6 +155,7 @@ class DisplayInstanceCacheTest : ResourceCacheTest<UUID, DisplayInstance>() {
         coroutineScope = scope,
         coroutineContext = dispatcher,
         clock = clock,
+        logger = Logger.getLogger(DisplayInstanceCacheTest::class.java.name),
     )
 
     private fun schedulerClock(scope: TestScope): Clock {
