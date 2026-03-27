@@ -1,5 +1,6 @@
 package plutoproject.framework.common.api.feature
 
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.nio.file.Path
 import java.util.logging.Logger
@@ -11,6 +12,7 @@ interface Feature {
     val logger: Logger
     val dataFolder: File
     val resourcePrefixInJar: String
+    val coroutineScope: CoroutineScope
 
     fun onLoad() {}
 

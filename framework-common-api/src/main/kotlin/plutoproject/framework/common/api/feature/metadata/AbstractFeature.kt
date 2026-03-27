@@ -1,7 +1,11 @@
 package plutoproject.framework.common.api.feature.metadata
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
 import plutoproject.framework.common.api.feature.Feature
 import plutoproject.framework.common.api.feature.State
+import plutoproject.framework.common.util.coroutine.PluginScope
+import plutoproject.framework.common.util.coroutine.createSupervisorChild
 import plutoproject.framework.common.util.jvm.extractFileFromJar
 import java.io.File
 import java.nio.file.Path
@@ -14,6 +18,7 @@ abstract class AbstractFeature : Feature {
         private set
     final override lateinit var logger: Logger private set
     final override lateinit var dataFolder: File private set
+    final override lateinit var coroutineScope: CoroutineScope
 
     fun init(
         id: String,
@@ -28,6 +33,13 @@ abstract class AbstractFeature : Feature {
 
     fun updateState(newState: State) {
         state = newState
+    }
+
+    fun ensureCoroutineScopeActive() {
+        if (::coroutineScope.isInitialized && coroutineScope.isActive) {
+            return
+        }
+        coroutineScope = PluginScope.createSupervisorChild()
     }
 
     override fun saveConfig(resourcePrefix: String?): File {

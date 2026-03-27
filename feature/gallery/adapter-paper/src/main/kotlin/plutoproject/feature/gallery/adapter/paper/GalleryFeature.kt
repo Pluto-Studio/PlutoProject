@@ -36,9 +36,9 @@ class GalleryFeature : PaperFeature(), KoinComponent {
         singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
         single { PaperChunkDisplayIndexStorage(plugin) }
         singleOf(::GalleryRuntimeCoordinator)
-        single<CoroutineScope>(named("gallery_coroutine_scope")) { PluginScope }
-        single<CoroutineContext>(named("gallery_scheduler_context")) { PluginScope.coroutineContext }
-        single<CoroutineContext>(named("gallery_awake_context")) { PluginScope.coroutineContext }
+        single<CoroutineScope>(named("gallery_coroutine_scope")) { coroutineScope }
+        single<CoroutineContext>(named("gallery_scheduler_context")) { coroutineScope.coroutineContext }
+        single<CoroutineContext>(named("gallery_awake_context")) { coroutineScope.coroutineContext }
     }
 
     override fun onEnable() {
