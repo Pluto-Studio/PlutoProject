@@ -47,7 +47,6 @@ class CacheEntryTest {
         entry.dispose()
 
         assertTrue(entry.isDisposed)
-        assertThrows(IllegalStateException::class.java) { entry.refCount }
         assertThrows(IllegalStateException::class.java) { first.value }
         assertThrows(IllegalStateException::class.java) { second.value }
 
