@@ -4,15 +4,16 @@ import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.Koin
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.commonModule
 import plutoproject.feature.gallery.adapter.paper.commands.GalleryDebugRenderCommand
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
+import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.plugin
@@ -30,14 +31,14 @@ class GalleryFeature : PaperFeature() {
     private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
 
     private val module = module {
-        single<Logger>(named("gallery_logger")) { this@GalleryFeature.logger }
+        single<GalleryConfig> { loadConfig(saveConfig(resourcePrefix = "feature/common/gallery")) }
+        single<Logger> { this@GalleryFeature.logger }
+        single<PaperChunkDisplayIndexStorage> { PaperChunkDisplayIndexStorage(plugin) }
+        single<CoroutineScope>() { coroutineScope }
+        single<CoroutineContext>() { coroutineScope.coroutineContext }
         singleOf(::PaperViewPort) bind ViewPort::class
         singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
-        single { PaperChunkDisplayIndexStorage(plugin) }
         singleOf(::GalleryRuntimeCoordinator)
-        single<CoroutineScope>(named("gallery_coroutine_scope")) { coroutineScope }
-        single<CoroutineContext>(named("gallery_scheduler_context")) { coroutineScope.coroutineContext }
-        single<CoroutineContext>(named("gallery_awake_context")) { coroutineScope.coroutineContext }
     }
 
     override fun onEnable() {

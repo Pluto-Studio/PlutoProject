@@ -1,24 +1,23 @@
 package plutoproject.feature.gallery.core.display.job
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import kotlin.collections.ArrayDeque
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+import java.time.Duration as JavaDuration
 
 class DefaultSendJob(
     override val playerId: UUID,
     private val maxQueueSize: Int,
     private val maxUpdatesInSpan: Int,
-    private val updateLimitSpanMs: Long,
+    private val updateLimitSpan: Duration,
     private val clock: Clock,
     private val coroutineScope: CoroutineScope,
     private val loopContext: CoroutineContext,
@@ -35,7 +34,7 @@ class DefaultSendJob(
     init {
         require(maxQueueSize > 0) { "maxQueueSize must be greater than 0" }
         require(maxUpdatesInSpan > 0) { "maxUpdatesInSpan must be greater than 0" }
-        require(updateLimitSpanMs > 0) { "updateLimitSpanMs must be greater than 0" }
+        require(updateLimitSpan > Duration.ZERO) { "updateLimitSpan must be greater than 0" }
     }
 
     override fun enqueue(update: MapUpdate) {
@@ -104,11 +103,12 @@ class DefaultSendJob(
                 continue
             }
 
-            val elapsedMillis = Duration.between(spanStartedAt, Instant.now(clock)).toMillis()
+            val elapsed = JavaDuration.between(spanStartedAt, Instant.now(clock)).toNanos()
                 .coerceAtLeast(0)
-            val delayMillis = (updateLimitSpanMs - elapsedMillis).coerceAtLeast(0)
-            if (delayMillis > 0) {
-                delay(delayMillis)
+                .toDuration(DurationUnit.NANOSECONDS)
+            val remainingDelay = (updateLimitSpan - elapsed).coerceAtLeast(Duration.ZERO)
+            if (remainingDelay > Duration.ZERO) {
+                delay(remainingDelay)
             }
         }
     }

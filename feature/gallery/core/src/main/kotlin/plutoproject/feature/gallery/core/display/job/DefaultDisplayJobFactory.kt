@@ -13,7 +13,7 @@ class DefaultDisplayJobFactory(
     private val viewPort: ViewPort,
     private val displayManager: DisplayManager,
     private val clock: Clock,
-    private val animatedMaxFramePerSecond: Int = DEFAULT_ANIMATED_MAX_FRAME_PER_SECOND,
+    private val animatedMaxFramesPerSecond: Int,
 ) : DisplayJobFactory {
     override fun create(
         image: Image,
@@ -41,12 +41,8 @@ class DefaultDisplayJobFactory(
                 viewPort = viewPort,
                 displayManager = displayManager,
                 clock = clock,
-                maxFramePerSecond = animatedMaxFramePerSecond,
+                maxFramesPerSecond = animatedMaxFramesPerSecond,
             )
         }
-    }
-
-    companion object {
-        const val DEFAULT_ANIMATED_MAX_FRAME_PER_SECOND: Int = 20
     }
 }

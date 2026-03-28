@@ -24,7 +24,7 @@ class AnimatedDisplayJob(
     private val viewPort: ViewPort,
     private val displayManager: DisplayManager,
     private val clock: Clock,
-    private val maxFramePerSecond: Int,
+    private val maxFramesPerSecond: Int,
     private val visibleDistance: Double = DEFAULT_VISIBLE_DISTANCE,
     private val horizontalFovRadian: Double = DEFAULT_HORIZONTAL_FOV_RADIAN,
     private val verticalFovRadian: Double = DEFAULT_VERTICAL_FOV_RADIAN,
@@ -45,8 +45,8 @@ class AnimatedDisplayJob(
 
     init {
         require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
-        require(maxFramePerSecond == -1 || maxFramePerSecond > 0) {
-            "maxFramePerSecond must be -1 or greater than 0"
+        require(maxFramesPerSecond == -1 || maxFramesPerSecond > 0) {
+            "maxFramesPerSecond must be -1 or greater than 0"
         }
     }
 
@@ -210,13 +210,13 @@ class AnimatedDisplayJob(
     }
 
     private fun nextAwakeAt(wakeStartedAt: Instant): Instant {
-        if (maxFramePerSecond == -1) {
+        if (maxFramesPerSecond == -1) {
             return clock.instant()
         }
 
         val wakeFinishedAt = clock.instant()
         val elapsedMillis = Duration.between(wakeStartedAt, wakeFinishedAt).toMillis().coerceAtLeast(0)
-        val budgetMillis = 1000.0 / maxFramePerSecond.toDouble()
+        val budgetMillis = 1000.0 / maxFramesPerSecond.toDouble()
         val waitMillis = (budgetMillis - elapsedMillis.toDouble()).coerceAtLeast(0.0)
         return wakeFinishedAt.plusMillis(waitMillis.roundToLong())
     }

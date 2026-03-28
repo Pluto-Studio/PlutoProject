@@ -18,6 +18,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DefaultSendJobTest {
@@ -77,7 +79,7 @@ class DefaultSendJobTest {
             scope = this,
             loopContext = dispatcher,
             maxUpdatesInSpan = 2,
-            updateLimitSpanMs = 50,
+            updateLimitSpan = 50.milliseconds,
             mapUpdatePort = RecordingMapUpdatePort(onSend = { _, _ ->
                 sendTimes += testScheduler.currentTime
             })
@@ -129,14 +131,14 @@ class DefaultSendJobTest {
         loopContext: CoroutineContext = StandardTestDispatcher(scope.testScheduler),
         maxQueueSize: Int = 8,
         maxUpdatesInSpan: Int = 2,
-        updateLimitSpanMs: Long = 50,
+        updateLimitSpan: Duration = 50.milliseconds,
         mapUpdatePort: MapUpdatePort = RecordingMapUpdatePort(),
     ): DefaultSendJob {
         return DefaultSendJob(
             playerId = dummyUuid(6001),
             maxQueueSize = maxQueueSize,
             maxUpdatesInSpan = maxUpdatesInSpan,
-            updateLimitSpanMs = updateLimitSpanMs,
+            updateLimitSpan = updateLimitSpan,
             clock = schedulerClock(scope),
             coroutineScope = scope,
             loopContext = loopContext,

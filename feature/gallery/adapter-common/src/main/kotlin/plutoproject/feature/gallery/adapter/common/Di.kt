@@ -2,58 +2,35 @@ package plutoproject.feature.gallery.adapter.common
 
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.named
+import org.koin.core.qualifier.Qualifier
+import org.koin.core.qualifier.QualifierValue
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.SystemInformationRepository
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
 import plutoproject.feature.gallery.core.decode.decoder.defaultGifDecoder
 import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
-import plutoproject.feature.gallery.core.display.job.DefaultDisplayJobFactory
 import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
-import plutoproject.feature.gallery.core.display.job.DefaultSendJobFactory
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
-import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.job.DefaultDisplayJobFactory
+import plutoproject.feature.gallery.core.display.job.DefaultSendJobFactory
+import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
-import plutoproject.feature.gallery.core.display.usecase.AttachDisplayInstanceToJobUseCase
-import plutoproject.feature.gallery.core.display.usecase.CreateDisplayInstanceUseCase
-import plutoproject.feature.gallery.core.display.usecase.DeleteDisplayInstanceUseCase
-import plutoproject.feature.gallery.core.display.usecase.DetachDisplayInstanceFromJobUseCase
-import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstanceUseCase
-import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstancesByIdsUseCase
-import plutoproject.feature.gallery.core.display.usecase.LookupDisplayInstanceByBelongsUseCase
-import plutoproject.feature.gallery.core.display.usecase.LookupDisplayInstanceByChunkUseCase
-import plutoproject.feature.gallery.core.display.usecase.StartDisplayJobUseCase
-import plutoproject.feature.gallery.core.display.usecase.StartSendJobUseCase
-import plutoproject.feature.gallery.core.display.usecase.StopDisplayJobUseCase
-import plutoproject.feature.gallery.core.display.usecase.StopSendJobUseCase
+import plutoproject.feature.gallery.core.display.usecase.*
 import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageRepository
-import plutoproject.feature.gallery.core.image.usecase.ChangeImageOwnerNameUseCase
-import plutoproject.feature.gallery.core.image.usecase.CreateImageDataEntryUseCase
-import plutoproject.feature.gallery.core.image.usecase.CreateImageUseCase
-import plutoproject.feature.gallery.core.image.usecase.DecodeImageUseCase
-import plutoproject.feature.gallery.core.image.usecase.DeleteImageDataEntryUseCase
-import plutoproject.feature.gallery.core.image.usecase.DeleteImageUseCase
-import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntriesByBelongsToUseCase
-import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntryUseCase
-import plutoproject.feature.gallery.core.image.usecase.GetImageUseCase
-import plutoproject.feature.gallery.core.image.usecase.GetImagesByIdsUseCase
-import plutoproject.feature.gallery.core.image.usecase.LookupImageByOwnerUseCase
-import plutoproject.feature.gallery.core.image.usecase.RenameImageUseCase
-import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
-import plutoproject.feature.gallery.core.render.usecase.RenderStaticImageUseCase
-import plutoproject.feature.gallery.core.image.usecase.ReplaceImageDataEntryUseCase
-import plutoproject.feature.gallery.core.render.AnimatedImageRenderer
-import plutoproject.feature.gallery.core.render.DefaultAnimatedImageRenderer
-import plutoproject.feature.gallery.core.render.DefaultStaticImageRenderer
-import plutoproject.feature.gallery.core.render.StaticImageRenderer
-import plutoproject.feature.gallery.core.render.defaultFrameSampler
+import plutoproject.feature.gallery.core.image.usecase.*
+import plutoproject.feature.gallery.core.render.*
+import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
+import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
 import plutoproject.feature.gallery.core.render.mapcolor.defaultAlphaCompositor
 import plutoproject.feature.gallery.core.render.mapcolor.defaultMapColorQuantizer
+import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
+import plutoproject.feature.gallery.core.render.usecase.RenderStaticImageUseCase
 import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
@@ -77,8 +54,16 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
     return MongoConnection.getCollection("$GALLERY_PREFIX${serverName}_$name")
 }
 
+internal object StaticDecoderQualifier : Qualifier {
+    override val value: QualifierValue = "gallery.static_decoder"
+}
+
+internal object GifDecoderQualifier : Qualifier {
+    override val value: QualifierValue = "gallery.gif_decoder"
+}
+
 val commonModule = module {
-    single<Clock>(named("gallery_clock")) { Clock.systemUTC() }
+    single<Clock> { Clock.systemUTC() }
     single<ImageRepository> {
         MongoImageRepository(getCollection<ImageDocument>(IMAGE_COLLECTION))
     }
@@ -94,64 +79,48 @@ val commonModule = module {
         )
     }
 
-    single<ImageDecoder>(named("gallery_static_decoder")) { defaultStaticImageDecoder(logger = get(named("gallery_logger"))) }
-    single<ImageDecoder>(named("gallery_gif_decoder")) { defaultGifDecoder(logger = get(named("gallery_logger"))) }
+    single<ImageDecoder>(StaticDecoderQualifier) { defaultStaticImageDecoder(get()) }
+    single<ImageDecoder>(GifDecoderQualifier) { defaultGifDecoder(get()) }
 
-    single { defaultFrameSampler() }
-    single { defaultAlphaCompositor() }
-    single { defaultMapColorQuantizer() }
+    single<FrameSampler> { defaultFrameSampler() }
+    single<AlphaCompositor> { defaultAlphaCompositor() }
+    single<MapColorQuantizer> { defaultMapColorQuantizer() }
 
-    single<StaticImageRenderer> {
-        DefaultStaticImageRenderer(
-            alphaCompositor = get(),
-            mapColorQuantizer = get(),
-            logger = get(named("gallery_logger")),
-        )
-    }
-    single<AnimatedImageRenderer> {
-        DefaultAnimatedImageRenderer(
-            frameSampler = get(),
-            alphaCompositor = get(),
-            mapColorQuantizer = get(),
-            logger = get(named("gallery_logger")),
-        )
-    }
+    singleOf(::DefaultStaticImageRenderer) bind StaticImageRenderer::class
+    singleOf(::DefaultAnimatedImageRenderer) bind AnimatedImageRenderer::class
 
     singleOf(::ImageManager)
     singleOf(::DisplayManager)
+    singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
 
-    single<DisplayScheduler> {
-        DefaultDisplayScheduler(
-            clock = get(named("gallery_clock")),
-            coroutineScope = get(named("gallery_coroutine_scope")),
-            schedulerContext = get(named("gallery_scheduler_context")),
-            awakeContext = get(named("gallery_awake_context"))
-        )
-    }
     single<DisplayJobFactory> {
         DefaultDisplayJobFactory(
             displayScheduler = get(),
             viewPort = get(),
             displayManager = get(),
-            clock = get(named("gallery_clock")),
+            clock = get(),
+            animatedMaxFramesPerSecond = get<GalleryConfig>().display.maxFramesPerSecond,
         )
     }
     single<SendJobFactory> {
         DefaultSendJobFactory(
-            clock = get(named("gallery_clock")),
-            coroutineScope = get(named("gallery_coroutine_scope")),
-            loopContext = get(named("gallery_awake_context")),
+            clock = get(),
+            coroutineScope = get(),
+            loopContext = get(),
             mapUpdatePort = get(),
+            maxQueueSize = get<GalleryConfig>().send.maxQueueSize,
+            maxUpdatesInSpan = get<GalleryConfig>().send.maxUpdatesInSpan,
+            updateLimitSpan = get<GalleryConfig>().send.updateLimitSpan,
         )
     }
 
-    single {
+    single<DecodeImageUseCase> {
         DecodeImageUseCase(
-            pngDecoder = get(named("gallery_static_decoder")),
-            jpgDecoder = get(named("gallery_static_decoder")),
-            webpDecoder = get(named("gallery_static_decoder")),
-            gifDecoder = get(named("gallery_gif_decoder")),
-            logger = get(named("gallery_logger")),
+            pngDecoder = get(StaticDecoderQualifier),
+            jpgDecoder = get(StaticDecoderQualifier),
+            webpDecoder = get(StaticDecoderQualifier),
+            gifDecoder = get(GifDecoderQualifier),
+            logger = get(),
         )
     }
 
