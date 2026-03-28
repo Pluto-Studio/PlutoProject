@@ -31,7 +31,7 @@ class GalleryFeature : PaperFeature() {
     private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
 
     private val module = module {
-        single<GalleryConfig> { loadConfig(saveConfig(resourcePrefix = "feature/common/gallery")) }
+        single<GalleryConfig>(createdAtStart = true) { loadConfig(saveConfig("feature/common/gallery")) }
         single<Logger> { this@GalleryFeature.logger }
         single<PaperChunkDisplayIndexStorage> { PaperChunkDisplayIndexStorage(plugin) }
         single<CoroutineScope>() { coroutineScope }
