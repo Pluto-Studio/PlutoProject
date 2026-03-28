@@ -3,15 +3,14 @@ package plutoproject.feature.paper.api.exchangeshop
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
-import org.bukkit.entity.Player
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.util.*
 
 /**
  * 兑换商店主接口。
  */
 interface ExchangeShop {
-    companion object : ExchangeShop by Koin.get()
+    companion object : ExchangeShop by globalKoin.get()
 
     /**
      * 商店中已添加的类别。

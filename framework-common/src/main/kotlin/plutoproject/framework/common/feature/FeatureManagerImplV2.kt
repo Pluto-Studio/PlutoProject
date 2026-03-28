@@ -582,7 +582,8 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
 
         return try {
             instance.onDisable()
-            instance.coroutineScope.cancel(FeatureCancellationException(instance.id))
+            instance.cancelCoroutineScope()
+            instance.closeKoinApplication()
             instance.updateState(State.DISABLED)
             cacheResult(Action.DISABLE, id, successResult(Action.DISABLE, id))
         } catch (t: Throwable) {

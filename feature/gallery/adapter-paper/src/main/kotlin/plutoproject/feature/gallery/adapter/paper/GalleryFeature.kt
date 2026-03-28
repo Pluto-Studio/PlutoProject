@@ -2,8 +2,7 @@ package plutoproject.feature.gallery.adapter.paper
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import kotlinx.coroutines.CoroutineScope
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.core.Koin
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -14,8 +13,6 @@ import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.coroutine.PluginScope
-import plutoproject.framework.common.util.inject.configureKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.plugin
@@ -23,12 +20,14 @@ import plutoproject.framework.paper.util.server
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
+internal lateinit var featureKoin: Koin
+
 @Feature(
     id = "gallery",
     platform = Platform.PAPER
 )
-class GalleryFeature : PaperFeature(), KoinComponent {
-    private val coordinator by inject<GalleryRuntimeCoordinator>()
+class GalleryFeature : PaperFeature() {
+    private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
 
     private val module = module {
         single<Logger>(named("gallery_logger")) { this@GalleryFeature.logger }
@@ -42,7 +41,9 @@ class GalleryFeature : PaperFeature(), KoinComponent {
     }
 
     override fun onEnable() {
-        configureKoin {
+        featureKoin = koin
+
+        koin {
             modules(commonModule, module)
         }
 

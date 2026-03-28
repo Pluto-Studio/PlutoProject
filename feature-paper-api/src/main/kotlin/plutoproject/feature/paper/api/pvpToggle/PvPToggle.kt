@@ -1,13 +1,13 @@
 package plutoproject.feature.paper.api.pvpToggle
 
 import org.bukkit.entity.Player
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 /**
  * PvP 开关 API。
  */
 interface PvPToggle {
-    companion object : PvPToggle by Koin.get()
+    companion object : PvPToggle by globalKoin.get()
 
     /**
      * 检查指定的玩家是否开启 PvP。

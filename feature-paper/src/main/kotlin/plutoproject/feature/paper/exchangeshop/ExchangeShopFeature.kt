@@ -24,7 +24,7 @@ import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.common.util.serverName
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
@@ -56,7 +56,7 @@ class ExchangeShopFeature : PaperFeature(), KoinComponent {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         featureLogger = logger

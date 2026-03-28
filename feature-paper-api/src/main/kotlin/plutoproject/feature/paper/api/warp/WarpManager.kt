@@ -5,12 +5,12 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
 import org.bukkit.World
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.util.*
 
 @Suppress("UNUSED")
 interface WarpManager {
-    companion object : WarpManager by Koin.get()
+    companion object : WarpManager by globalKoin.get()
 
     val blacklistedWorlds: Collection<World>
     val nameLengthLimit: Int

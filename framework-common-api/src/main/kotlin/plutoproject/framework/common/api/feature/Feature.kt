@@ -1,6 +1,8 @@
 package plutoproject.framework.common.api.feature
 
 import kotlinx.coroutines.CoroutineScope
+import org.koin.core.Koin
+import org.koin.dsl.KoinAppDeclaration
 import java.io.File
 import java.nio.file.Path
 import java.util.logging.Logger
@@ -13,6 +15,7 @@ interface Feature {
     val dataFolder: File
     val resourcePrefixInJar: String
     val coroutineScope: CoroutineScope
+    val koin: Koin
 
     fun onLoad() {}
 
@@ -29,4 +32,6 @@ interface Feature {
         output: Path? = null,
         resourcePrefix: String? = null,
     ): File
+
+    fun koin(declaration: KoinAppDeclaration)
 }

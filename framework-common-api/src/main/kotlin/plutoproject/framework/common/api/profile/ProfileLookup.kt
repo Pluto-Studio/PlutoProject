@@ -1,10 +1,10 @@
 package plutoproject.framework.common.api.profile
 
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.util.*
 
 interface ProfileLookup {
-    companion object : ProfileLookup by Koin.get()
+    companion object : ProfileLookup by globalKoin.get()
 
     suspend fun lookupByUuid(uuid: UUID, requestApi: Boolean = true): Profile?
 

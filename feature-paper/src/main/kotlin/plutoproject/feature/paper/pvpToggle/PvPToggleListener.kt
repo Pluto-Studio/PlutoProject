@@ -9,10 +9,10 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import plutoproject.feature.paper.api.pvpToggle.PvPToggle
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 object PvPToggleListener : Listener {
-    private val internalPvPToggle: InternalPvPToggle by Koin.inject()
+    private val internalPvPToggle: InternalPvPToggle by globalKoin.inject()
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     fun EntityDamageByEntityEvent.e() {

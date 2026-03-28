@@ -4,7 +4,7 @@ import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import plutoproject.framework.common.connection.initializeExternalConnections
 import plutoproject.framework.common.connection.shutdownExternalConnections
 import plutoproject.framework.common.databasepersist.InternalDatabasePersist
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.interactive.GuiManager
 import plutoproject.framework.paper.interactive.GuiListener
 import plutoproject.framework.paper.interactive.commands.InteractiveCommand
@@ -36,7 +36,7 @@ private fun registerCommands() {
 }
 
 fun disableFrameworkModules() {
-    Koin.get<InternalDatabasePersist>().close()
+    globalKoin.get<InternalDatabasePersist>().close()
     GuiManager.disposeAll()
     shutdownExternalConnections()
 }

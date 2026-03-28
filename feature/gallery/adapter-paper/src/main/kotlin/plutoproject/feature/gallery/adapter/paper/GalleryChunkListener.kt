@@ -4,12 +4,10 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 @Suppress("UNUSED")
-object GalleryChunkListener : Listener, KoinComponent {
-    private val coordinator by inject<GalleryRuntimeCoordinator>()
+object GalleryChunkListener : Listener {
+    private val coordinator by featureKoin.inject<GalleryRuntimeCoordinator>()
 
     @EventHandler
     suspend fun ChunkLoadEvent.onLoad() {

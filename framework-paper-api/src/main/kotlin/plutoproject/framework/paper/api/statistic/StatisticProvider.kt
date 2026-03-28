@@ -1,9 +1,9 @@
 package plutoproject.framework.paper.api.statistic
 
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 interface StatisticProvider {
-    companion object : StatisticProvider by Koin.get()
+    companion object : StatisticProvider by globalKoin.get()
 
     val type: StatisticProviderType
 

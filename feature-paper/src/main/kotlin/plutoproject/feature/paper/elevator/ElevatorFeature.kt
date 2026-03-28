@@ -7,7 +7,7 @@ import plutoproject.feature.paper.elevator.builders.IronElevatorBuilder
 import plutoproject.feature.paper.elevator.listeners.ElevatorListener
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
@@ -23,7 +23,7 @@ class ElevatorFeature : PaperFeature() {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         server.pluginManager.registerSuspendingEvents(ElevatorListener, plugin)

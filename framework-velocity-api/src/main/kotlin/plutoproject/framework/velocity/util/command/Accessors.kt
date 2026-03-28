@@ -1,6 +1,6 @@
 package plutoproject.framework.velocity.util.command
 
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
-val CommandManager by Koin.inject<PlatformCommandManager>()
-val AnnotationParser by Koin.inject<PlatformAnnotationParser>()
+val CommandManager by globalKoin.inject<PlatformCommandManager>()
+val AnnotationParser by globalKoin.inject<PlatformAnnotationParser>()

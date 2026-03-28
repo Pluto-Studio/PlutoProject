@@ -1,8 +1,14 @@
 package plutoproject.framework.common.api.feature.metadata
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import org.koin.core.Koin
+import org.koin.core.KoinApplication
+import org.koin.dsl.KoinAppDeclaration
+import org.koin.dsl.koinApplication
 import plutoproject.framework.common.api.feature.Feature
+import plutoproject.framework.common.api.feature.FeatureCancellationException
 import plutoproject.framework.common.api.feature.State
 import plutoproject.framework.common.util.coroutine.PluginScope
 import plutoproject.framework.common.util.coroutine.createSupervisorChild
@@ -18,7 +24,9 @@ abstract class AbstractFeature : Feature {
         private set
     final override lateinit var logger: Logger private set
     final override lateinit var dataFolder: File private set
-    final override lateinit var coroutineScope: CoroutineScope
+    final override lateinit var coroutineScope: CoroutineScope private set
+    final override val koin: Koin get() = koinApplication.koin
+    private lateinit var koinApplication: KoinApplication
 
     fun init(
         id: String,
@@ -29,6 +37,7 @@ abstract class AbstractFeature : Feature {
         this.logger = logger
         this.dataFolder = dataFolder
         this.state = State.INITIALIZED
+        this.koinApplication = koinApplication()
     }
 
     fun updateState(newState: State) {
@@ -42,6 +51,16 @@ abstract class AbstractFeature : Feature {
         coroutineScope = PluginScope.createSupervisorChild()
     }
 
+    fun cancelCoroutineScope() {
+        coroutineScope.cancel(FeatureCancellationException(id))
+    }
+
+    // Koin 内部没有是否已关闭的标志，只是清空集合。
+    // 所以其实关闭之后还是可以接着用的，不用像 CoroutineScope 那样在重新 enable 的时候重建。
+    fun closeKoinApplication() {
+        koinApplication.close()
+    }
+
     override fun saveConfig(resourcePrefix: String?): File {
         return saveResource("config.conf", resourcePrefix = resourcePrefix)
     }
@@ -53,5 +72,10 @@ abstract class AbstractFeature : Feature {
             return outputFile
         }
         return extractFileFromJar("${resourcePrefix ?: resourcePrefixInJar}/$path", outputPath)
+    }
+
+    override fun koin(declaration: KoinAppDeclaration) {
+        koinApplication.apply(declaration)
+        koinApplication.createEagerInstances()
     }
 }

@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component
 import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND
 import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND_ENGLISH
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 val PLAYER_NOT_WHITELISTED = component {
     text("你的账号未获得白名单") with mochaMaroon
@@ -174,7 +174,7 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
 
 val PLAYER_VISITOR_WELCOME
     get() = component {
-        val config = Koin.get<WhitelistConfig>()
+        val config = globalKoin.get<WhitelistConfig>()
         newline()
         text("你好呀！欢迎来到 ") with mochaGreen
         raw(GENERIC_TEXT_SERVER_BRAND)
@@ -211,7 +211,7 @@ val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
 
 val PLAYER_VISITOR_WELCOME_ENGLISH
     get() = component {
-        val config = Koin.get<WhitelistConfig>()
+        val config = globalKoin.get<WhitelistConfig>()
         newline()
         text("Welcome to the ") with mochaGreen
         raw(GENERIC_TEXT_SERVER_BRAND_ENGLISH)

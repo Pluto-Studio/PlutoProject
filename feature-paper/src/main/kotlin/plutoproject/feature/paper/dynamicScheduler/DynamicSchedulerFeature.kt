@@ -16,7 +16,7 @@ import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.api.statistic.StatisticProvider
 import plutoproject.framework.paper.util.command.AnnotationParser
@@ -44,7 +44,7 @@ class DynamicSchedulerFeature : PaperFeature(), KoinComponent {
 
     override fun onEnable() {
         featureLogger = logger
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         logger.info("Using statistic provider: ${StatisticProvider.type}")

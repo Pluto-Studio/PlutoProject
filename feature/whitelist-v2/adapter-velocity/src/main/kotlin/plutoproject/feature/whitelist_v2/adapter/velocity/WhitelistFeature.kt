@@ -16,7 +16,7 @@ import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
 import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.plugin
@@ -40,7 +40,7 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
 
     override fun onEnable() {
         // 先只依赖注入 Config，用于下面的 LuckPerms API 检测
-        configureKoin {
+        globalKoin {
             modules(configModule)
         }
 
@@ -50,7 +50,7 @@ class WhitelistFeature : VelocityFeature(), KoinComponent {
             return
         }
 
-        configureKoin {
+        globalKoin {
             modules(commonModule)
         }
 

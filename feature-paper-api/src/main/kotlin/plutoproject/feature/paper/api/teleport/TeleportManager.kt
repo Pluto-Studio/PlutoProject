@@ -4,7 +4,7 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.util.world.chunk.ChunkLocation
 import java.util.*
 
@@ -16,7 +16,7 @@ typealias LocationChecker = suspend (Location, TeleportOptions) -> Boolean
 
 @Suppress("UNUSED")
 interface TeleportManager {
-    companion object : TeleportManager by Koin.get()
+    companion object : TeleportManager by globalKoin.get()
 
     val teleportRequests: Collection<TeleportRequest>
     val queue: Queue<TeleportTask>

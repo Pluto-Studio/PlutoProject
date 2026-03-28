@@ -1,14 +1,14 @@
 package plutoproject.feature.paper.api.daily
 
 import org.bukkit.OfflinePlayer
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
 interface Daily {
-    companion object : Daily by Koin.get()
+    companion object : Daily by globalKoin.get()
 
     suspend fun checkIn(user: UUID): DailyHistory
 

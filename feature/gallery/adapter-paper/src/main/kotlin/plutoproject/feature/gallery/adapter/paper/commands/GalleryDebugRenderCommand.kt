@@ -10,27 +10,20 @@ import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapCanvas
 import org.bukkit.map.MapRenderer
 import org.bukkit.map.MapView
+import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import org.incendo.cloud.annotation.specifier.Quoted
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import plutoproject.feature.gallery.core.image.AnimatedImageData
-import plutoproject.feature.gallery.core.image.StaticImageData
-import plutoproject.feature.gallery.core.image.TilePool
+import plutoproject.feature.gallery.adapter.paper.featureKoin
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
-import plutoproject.feature.gallery.core.render.DitherAlgorithm
-import plutoproject.feature.gallery.core.render.RepositionMode
-import plutoproject.feature.gallery.core.render.RenderAnimatedImageRequest
-import plutoproject.feature.gallery.core.render.RenderProfile
-import plutoproject.feature.gallery.core.render.RenderResult
-import plutoproject.feature.gallery.core.render.ScaleAlgorithm
-import plutoproject.feature.gallery.core.render.RenderStaticImageRequest
-import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.TilePool
 import plutoproject.feature.gallery.core.image.usecase.DecodeImageUseCase
+import plutoproject.feature.gallery.core.render.*
+import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
 import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
 import plutoproject.feature.gallery.core.render.usecase.RenderStaticImageUseCase
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -41,12 +34,12 @@ import java.net.HttpURLConnection
 import java.net.URI
 
 @Suppress("UNUSED")
-object GalleryDebugRenderCommand : KoinComponent {
+object GalleryDebugRenderCommand {
     private const val PERMISSION = "plutoproject.gallery.command.debug.render"
     private const val MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
-    private val decodeImageUseCase by inject<DecodeImageUseCase>()
-    private val renderStaticImageUseCase by inject<RenderStaticImageUseCase>()
-    private val renderAnimatedImageUseCase by inject<RenderAnimatedImageUseCase>()
+    private val decodeImageUseCase by featureKoin.inject<DecodeImageUseCase>()
+    private val renderStaticImageUseCase by featureKoin.inject<RenderStaticImageUseCase>()
+    private val renderAnimatedImageUseCase by featureKoin.inject<RenderAnimatedImageUseCase>()
 
     @Command("gallery debug render <url> <blocksX> <blocksY> [dither] [bgRgbHex] [scale] [reposition]")
     @Permission(PERMISSION)
@@ -84,8 +77,8 @@ object GalleryDebugRenderCommand : KoinComponent {
         } catch (e: Exception) {
             sendMessage(
                 "[Gallery] Download failed: ${e.message}, " +
-                    "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
-                    "download=${formatNanosMillis(downloadNanos)}"
+                        "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
+                        "download=${formatNanosMillis(downloadNanos)}"
             )
             return@ensurePlayer
         }
@@ -104,9 +97,9 @@ object GalleryDebugRenderCommand : KoinComponent {
         if (decodeResult is DecodeResult.Failure) {
             sendMessage(
                 "[Gallery] Decode failed: ${decodeResult.status}, " +
-                    "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
-                    "download=${formatNanosMillis(downloadNanos)}, " +
-                    "decode=${formatNanosMillis(decodeNanos)}"
+                        "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
+                        "download=${formatNanosMillis(downloadNanos)}, " +
+                        "decode=${formatNanosMillis(decodeNanos)}"
             )
             return@ensurePlayer
         }
@@ -115,9 +108,9 @@ object GalleryDebugRenderCommand : KoinComponent {
             ?: run {
                 sendMessage(
                     "[Gallery] Decode failed: empty data, " +
-                        "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
-                        "download=${formatNanosMillis(downloadNanos)}, " +
-                        "decode=${formatNanosMillis(decodeNanos)}"
+                            "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
+                            "download=${formatNanosMillis(downloadNanos)}, " +
+                            "decode=${formatNanosMillis(decodeNanos)}"
                 )
                 return@ensurePlayer
             }
@@ -135,10 +128,10 @@ object GalleryDebugRenderCommand : KoinComponent {
         if (rendered is RenderResult.Failure) {
             sendMessage(
                 "[Gallery] Render failed: ${rendered.status}, " +
-                    "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
-                    "download=${formatNanosMillis(downloadNanos)}, " +
-                    "decode=${formatNanosMillis(decodeNanos)}, " +
-                    "render=${formatNanosMillis(renderNanos)}"
+                        "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
+                        "download=${formatNanosMillis(downloadNanos)}, " +
+                        "decode=${formatNanosMillis(decodeNanos)}, " +
+                        "render=${formatNanosMillis(renderNanos)}"
             )
             return@ensurePlayer
         }
@@ -147,10 +140,10 @@ object GalleryDebugRenderCommand : KoinComponent {
             ?: run {
                 sendMessage(
                     "[Gallery] Render failed: empty image data, " +
-                        "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
-                        "download=${formatNanosMillis(downloadNanos)}, " +
-                        "decode=${formatNanosMillis(decodeNanos)}, " +
-                        "render=${formatNanosMillis(renderNanos)}"
+                            "total=${formatNanosMillis(System.nanoTime() - totalStart)}, " +
+                            "download=${formatNanosMillis(downloadNanos)}, " +
+                            "decode=${formatNanosMillis(decodeNanos)}, " +
+                            "render=${formatNanosMillis(renderNanos)}"
                 )
                 return@ensurePlayer
             }
@@ -174,11 +167,19 @@ object GalleryDebugRenderCommand : KoinComponent {
 
         sendMessage(
             "[Gallery] Done. decode=${decodeResult.status}, render=${rendered.status}, " +
-                "tiles=${blocksX}x${blocksY}, dither=${profile.ditherAlgorithm}, bg=#${profile.alphaBackgroundColorRgb.toString(16).padStart(6, '0')}, " +
-                "scale=${profile.scaleAlgorithm}, reposition=${profile.repositionMode}, " +
-                "added=${giveResult.addedItems}, dropped=${giveResult.droppedItems}, " +
-                "total=${formatNanosMillis(totalNanos)}, download=${formatNanosMillis(downloadNanos)}, " +
-                "decode=${formatNanosMillis(decodeNanos)}, render=${formatNanosMillis(renderNanos)}, give=${formatNanosMillis(giveNanos)}"
+                    "tiles=${blocksX}x${blocksY}, dither=${profile.ditherAlgorithm}, bg=#${
+                        profile.alphaBackgroundColorRgb.toString(
+                            16
+                        ).padStart(6, '0')
+                    }, " +
+                    "scale=${profile.scaleAlgorithm}, reposition=${profile.repositionMode}, " +
+                    "added=${giveResult.addedItems}, dropped=${giveResult.droppedItems}, " +
+                    "total=${formatNanosMillis(totalNanos)}, download=${formatNanosMillis(downloadNanos)}, " +
+                    "decode=${formatNanosMillis(decodeNanos)}, render=${formatNanosMillis(renderNanos)}, give=${
+                        formatNanosMillis(
+                            giveNanos
+                        )
+                    }"
         )
     }
 

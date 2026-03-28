@@ -1,13 +1,13 @@
 package plutoproject.framework.common.api.connection
 
 import com.maxmind.geoip2.DatabaseReader
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 /**
  * GeoIP 数据库外部连接。
  */
 interface GeoIpConnection {
-    companion object : GeoIpConnection by Koin.get()
+    companion object : GeoIpConnection by globalKoin.get()
 
     /**
      * 此数据库文件的 [DatabaseReader] 实例。

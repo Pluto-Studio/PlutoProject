@@ -3,12 +3,12 @@ package plutoproject.framework.common.connection
 import plutoproject.framework.common.api.connection.CharonFlowConnection
 import plutoproject.framework.common.api.connection.GeoIpConnection
 import plutoproject.framework.common.api.connection.MongoConnection
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
-private val config by Koin.inject<ExternalConnectionConfig>()
-private val mongoConnection by lazy { Koin.get<MongoConnection>() as ExternalConnection }
-private val geoIpConnection by lazy { Koin.get<GeoIpConnection>() as ExternalConnection }
-private val charonFlowConnection by lazy { Koin.get<CharonFlowConnection>() as ExternalConnection }
+private val config by globalKoin.inject<ExternalConnectionConfig>()
+private val mongoConnection by lazy { globalKoin.get<MongoConnection>() as ExternalConnection }
+private val geoIpConnection by lazy { globalKoin.get<GeoIpConnection>() as ExternalConnection }
+private val charonFlowConnection by lazy { globalKoin.get<CharonFlowConnection>() as ExternalConnection }
 
 fun initializeExternalConnections() {
     if (config.mongo.enabled) mongoConnection
