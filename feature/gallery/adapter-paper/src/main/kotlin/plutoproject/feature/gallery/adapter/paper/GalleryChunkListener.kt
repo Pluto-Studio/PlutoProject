@@ -7,7 +7,7 @@ import org.bukkit.event.world.ChunkUnloadEvent
 
 @Suppress("UNUSED")
 object GalleryChunkListener : Listener {
-    private val coordinator by featureKoin.inject<GalleryRuntimeCoordinator>()
+    private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
 
     @EventHandler
     suspend fun ChunkLoadEvent.onLoad() {

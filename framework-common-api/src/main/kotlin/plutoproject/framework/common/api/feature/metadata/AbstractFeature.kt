@@ -25,8 +25,8 @@ abstract class AbstractFeature : Feature {
     final override lateinit var logger: Logger private set
     final override lateinit var dataFolder: File private set
     final override lateinit var coroutineScope: CoroutineScope private set
-    final override val koin: Koin get() = koinApplication.koin
-    private lateinit var koinApplication: KoinApplication
+    final override val featureKoin: Koin get() = koinApplication.koin
+    private val koinApplication: KoinApplication = koinApplication()
 
     fun init(
         id: String,
@@ -37,7 +37,6 @@ abstract class AbstractFeature : Feature {
         this.logger = logger
         this.dataFolder = dataFolder
         this.state = State.INITIALIZED
-        this.koinApplication = koinApplication()
     }
 
     fun updateState(newState: State) {
@@ -74,7 +73,7 @@ abstract class AbstractFeature : Feature {
         return extractFileFromJar("${resourcePrefix ?: resourcePrefixInJar}/$path", outputPath)
     }
 
-    override fun koin(declaration: KoinAppDeclaration) {
+    override fun featureKoin(declaration: KoinAppDeclaration) {
         koinApplication.apply(declaration)
         koinApplication.createEagerInstances()
     }

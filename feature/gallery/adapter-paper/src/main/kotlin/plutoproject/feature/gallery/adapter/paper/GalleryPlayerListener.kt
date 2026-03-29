@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 @Suppress("UNUSED")
 object GalleryPlayerListener : Listener {
-    private val coordinator by featureKoin.inject<GalleryRuntimeCoordinator>()
+    private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {

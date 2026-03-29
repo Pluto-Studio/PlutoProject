@@ -14,7 +14,7 @@ import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.feature.gallery.adapter.paper.featureKoin
+import plutoproject.feature.gallery.adapter.paper.koin
 import plutoproject.feature.gallery.core.decode.DecodeImageRequest
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.DecodedImage
@@ -37,9 +37,9 @@ import java.net.URI
 object GalleryDebugRenderCommand {
     private const val PERMISSION = "plutoproject.gallery.command.debug.render"
     private const val MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
-    private val decodeImageUseCase by featureKoin.inject<DecodeImageUseCase>()
-    private val renderStaticImageUseCase by featureKoin.inject<RenderStaticImageUseCase>()
-    private val renderAnimatedImageUseCase by featureKoin.inject<RenderAnimatedImageUseCase>()
+    private val decodeImageUseCase by koin.inject<DecodeImageUseCase>()
+    private val renderStaticImageUseCase by koin.inject<RenderStaticImageUseCase>()
+    private val renderAnimatedImageUseCase by koin.inject<RenderAnimatedImageUseCase>()
 
     @Command("gallery debug render <url> <blocksX> <blocksY> [dither] [bgRgbHex] [scale] [reposition]")
     @Permission(PERMISSION)

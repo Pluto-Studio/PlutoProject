@@ -21,14 +21,14 @@ import plutoproject.framework.paper.util.server
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-internal lateinit var featureKoin: Koin
+internal lateinit var koin: Koin
 
 @Feature(
     id = "gallery",
     platform = Platform.PAPER
 )
 class GalleryFeature : PaperFeature() {
-    private val coordinator by koin.inject<GalleryRuntimeCoordinator>()
+    private val coordinator by featureKoin.inject<GalleryRuntimeCoordinator>()
 
     private val module = module {
         single<GalleryConfig>(createdAtStart = true) { loadConfig(saveConfig("feature/common/gallery")) }
@@ -42,9 +42,9 @@ class GalleryFeature : PaperFeature() {
     }
 
     override fun onEnable() {
-        featureKoin = koin
+        koin = featureKoin
 
-        koin {
+        featureKoin {
             modules(commonModule, module)
         }
 

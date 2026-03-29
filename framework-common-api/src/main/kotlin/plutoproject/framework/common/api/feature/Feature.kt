@@ -15,7 +15,7 @@ interface Feature {
     val dataFolder: File
     val resourcePrefixInJar: String
     val coroutineScope: CoroutineScope
-    val koin: Koin
+    val featureKoin: Koin
 
     fun onLoad() {}
 
@@ -33,5 +33,5 @@ interface Feature {
         resourcePrefix: String? = null,
     ): File
 
-    fun koin(declaration: KoinAppDeclaration)
+    fun featureKoin(declaration: KoinAppDeclaration)
 }
