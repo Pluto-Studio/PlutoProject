@@ -299,17 +299,22 @@ class PlayerStackImpl(carrier: Player, override val options: StackOptions) : Pla
         check(isValid) { "PlayerStack instance already destroyed." }
 
         isInDestroy = true
-        if (callDestroyEvent(cause).isCancelled && cause.isCancellable) return false
+        try {
+            if (callDestroyEvent(cause).isCancelled && cause.isCancellable) return false
 
-        while (internalPlayers.size > 0) {
-            removePlayerOnTop(cause = PlayerStackQuitCause.STACK_DESTROY)
+            while (internalPlayers.isNotEmpty()) {
+                if (!removePlayerOnTop(cause = PlayerStackQuitCause.STACK_DESTROY)) {
+                    return false
+                }
+            }
+
+            isValid = false
+            internalSit.removeStack(this)
+            internalPlayers.clear()
+
+            return true
+        } finally {
+            isInDestroy = false
         }
-
-        isValid = false
-        isInDestroy = false
-        internalSit.removeStack(this)
-        internalPlayers.clear()
-
-        return true
     }
 }
