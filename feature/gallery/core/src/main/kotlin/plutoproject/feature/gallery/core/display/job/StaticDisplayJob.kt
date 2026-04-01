@@ -1,18 +1,14 @@
 package plutoproject.feature.gallery.core.display.job
 
+import plutoproject.feature.gallery.core.display.*
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.display.MapUpdate
-import plutoproject.feature.gallery.core.display.TileRect
-import plutoproject.feature.gallery.core.display.ViewPort
-import plutoproject.feature.gallery.core.display.DisplayGeometry
-import plutoproject.feature.gallery.core.display.DisplayInstance
-import plutoproject.feature.gallery.core.display.DisplayManager
-import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
 import java.time.Clock
-import java.util.UUID
+import java.util.*
+import kotlin.time.Duration
+import kotlin.time.toJavaDuration
 
 class StaticDisplayJob(
     override val belongsTo: UUID,
@@ -20,10 +16,8 @@ class StaticDisplayJob(
     private val viewPort: ViewPort,
     private val displayManager: DisplayManager,
     private val clock: Clock,
-    private val visibleDistance: Double = DEFAULT_VISIBLE_DISTANCE,
-    private val horizontalFovRadian: Double = DEFAULT_HORIZONTAL_FOV_RADIAN,
-    private val verticalFovRadian: Double = DEFAULT_VERTICAL_FOV_RADIAN,
-    private val updateIntervalMs: Long = DEFAULT_UPDATE_INTERVAL_MS,
+    private val visibleDistance: Double,
+    private val updateInterval: Duration,
 ) : DisplayJob {
     override var isStopped: Boolean = false
         private set
@@ -40,7 +34,7 @@ class StaticDisplayJob(
 
     init {
         require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
-        require(updateIntervalMs > 0L) { "updateIntervalMs must be greater than 0" }
+        require(updateInterval.isPositive()) { "updateInterval must be greater than 0" }
     }
 
     override fun attach(
@@ -97,8 +91,6 @@ class StaticDisplayJob(
                     val visibleRectByPlayer = geometry.computeVisibleTiles(
                         playerViews = playerViews,
                         visibleDistance = visibleDistance,
-                        horizontalFovRadian = horizontalFovRadian,
-                        verticalFovRadian = verticalFovRadian,
                     )
 
                     visibleRectByPlayer.forEach { (playerView, rect) ->
@@ -131,7 +123,7 @@ class StaticDisplayJob(
         }
 
         if (!isStopped && _managedDisplayInstances.isNotEmpty()) {
-            displayScheduler.scheduleAwakeAt(this, clock.instant().plusMillis(updateIntervalMs))
+            displayScheduler.scheduleAwakeAt(this, clock.instant().plus(updateInterval.toJavaDuration()))
         }
     }
 
@@ -176,12 +168,5 @@ class StaticDisplayJob(
                 output += y * mapWidthBlocks + x
             }
         }
-    }
-
-    companion object {
-        const val DEFAULT_VISIBLE_DISTANCE: Double = 64.0
-        const val DEFAULT_HORIZONTAL_FOV_RADIAN: Double = Math.PI / 2.0
-        const val DEFAULT_VERTICAL_FOV_RADIAN: Double = Math.PI / 2.0
-        const val DEFAULT_UPDATE_INTERVAL_MS: Long = 50L
     }
 }

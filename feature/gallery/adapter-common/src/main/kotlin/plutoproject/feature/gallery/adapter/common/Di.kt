@@ -6,6 +6,7 @@ import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.QualifierValue
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.SystemInformationRepository
 import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
@@ -94,12 +95,15 @@ val commonModule = module {
     singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
 
     single<DisplayJobFactory> {
+        val config = get<GalleryConfig>()
         DefaultDisplayJobFactory(
             displayScheduler = get(),
             viewPort = get(),
             displayManager = get(),
             clock = get(),
-            animatedMaxFramesPerSecond = get<GalleryConfig>().display.maxFramesPerSecond,
+            animatedMaxFramesPerSecond = config.display.animated.maxFramesPerSecond,
+            visibleDistance = config.display.visibleDistance,
+            staticUpdateInterval = config.display.static.updateInterval,
         )
     }
     single<SendJobFactory> {
@@ -128,7 +132,16 @@ val commonModule = module {
     singleOf(::RenderAnimatedImageUseCase)
 
     singleOf(::CreateImageUseCase)
-    singleOf(::AllocateMapIdUseCase)
+    single<AllocateMapIdUseCase> {
+        val allocationRange = get<GalleryConfig>().mapIdRange
+        AllocateMapIdUseCase(
+            mapIdRange = MapIdRange(
+                start = allocationRange.start,
+                end = allocationRange.end,
+            ),
+            systemInformationRepository = get(),
+        )
+    }
     singleOf(::GetImageUseCase)
     singleOf(::DeleteImageUseCase)
     singleOf(::RenameImageUseCase)

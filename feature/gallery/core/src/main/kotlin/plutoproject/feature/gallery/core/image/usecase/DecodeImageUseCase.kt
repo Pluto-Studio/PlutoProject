@@ -77,12 +77,8 @@ class DecodeImageUseCase(
                 height = image.source.height,
                 maxPixels = constraints.maxPixels,
             )
-            val totalFramePixels = image.source.width.toLong() *
-                    image.source.height.toLong() *
-                    image.source.frameCount.toLong()
+
             if (exceedsPixelLimit) {
-                DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
-            } else if (totalFramePixels > constraints.maxTotalFramePixels) {
                 DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
             } else {
                 DecodeResult.Success(data = image)

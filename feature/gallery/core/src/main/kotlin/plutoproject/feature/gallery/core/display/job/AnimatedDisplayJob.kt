@@ -25,9 +25,7 @@ class AnimatedDisplayJob(
     private val displayManager: DisplayManager,
     private val clock: Clock,
     private val maxFramesPerSecond: Int,
-    private val visibleDistance: Double = DEFAULT_VISIBLE_DISTANCE,
-    private val horizontalFovRadian: Double = DEFAULT_HORIZONTAL_FOV_RADIAN,
-    private val verticalFovRadian: Double = DEFAULT_VERTICAL_FOV_RADIAN,
+    private val visibleDistance: Double,
 ) : DisplayJob {
     override var isStopped: Boolean = false
         private set
@@ -162,8 +160,6 @@ class AnimatedDisplayJob(
                     geometry.computeVisibleTiles(
                         playerViews = playerViews,
                         visibleDistance = visibleDistance,
-                        horizontalFovRadian = horizontalFovRadian,
-                        verticalFovRadian = verticalFovRadian,
                     ).forEach { (playerView, rect) ->
                         val visibleTileIds = visibleTileIdsByPlayer.computeIfAbsent(playerView.id) {
                             LinkedHashSet()
@@ -249,11 +245,5 @@ class AnimatedDisplayJob(
                 output += y * mapWidthBlocks + x
             }
         }
-    }
-
-    companion object {
-        const val DEFAULT_VISIBLE_DISTANCE: Double = 64.0
-        const val DEFAULT_HORIZONTAL_FOV_RADIAN: Double = Math.PI / 2.0
-        const val DEFAULT_VERTICAL_FOV_RADIAN: Double = Math.PI / 2.0
     }
 }

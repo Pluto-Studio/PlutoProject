@@ -18,8 +18,6 @@ class DisplayGeometryTest {
         val rect = geometry.computeVisibleTiles(
             playerViews = listOf(playerView(eye = Vec3(0.0, 0.0, 1.0))),
             visibleDistance = 1.1,
-            horizontalFovRadian = Math.PI / 2.0,
-            verticalFovRadian = Math.PI / 2.0,
         ).values.singleOrNull()
 
         assertNotNull(rect)
@@ -27,17 +25,15 @@ class DisplayGeometryTest {
     }
 
     @Test
-    fun `should map hit point by tile centers instead of previous tile`() {
+    fun `should conservatively expand visible rect under default field of view`() {
         val geometry = sampleGeometry(widthBlocks = 3, heightBlocks = 3)
 
         val rect = geometry.computeVisibleTiles(
             playerViews = listOf(playerView(eye = Vec3(0.75, -1.25, 1.0))),
             visibleDistance = 2.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         ).values.singleOrNull()
 
-        assertEquals(TileRect(minX = 1, maxX = 1, minY = 1, maxY = 1), rect)
+        assertEquals(TileRect(minX = 0, maxX = 2, minY = 0, maxY = 2), rect)
     }
 
     @Test
@@ -47,8 +43,6 @@ class DisplayGeometryTest {
         val rect = geometry.computeVisibleTiles(
             playerViews = listOf(playerView(eye = Vec3(0.5, -0.5, 1.0))),
             visibleDistance = 2.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         ).values.singleOrNull()
 
         assertEquals(TileRect(minX = 0, maxX = 1, minY = 0, maxY = 1), rect)

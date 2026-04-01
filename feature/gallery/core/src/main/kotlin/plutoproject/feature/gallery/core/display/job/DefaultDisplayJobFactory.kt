@@ -7,6 +7,7 @@ import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import java.time.Clock
+import kotlin.time.Duration
 
 class DefaultDisplayJobFactory(
     private val displayScheduler: DisplayScheduler,
@@ -14,6 +15,8 @@ class DefaultDisplayJobFactory(
     private val displayManager: DisplayManager,
     private val clock: Clock,
     private val animatedMaxFramesPerSecond: Int,
+    private val visibleDistance: Double,
+    private val staticUpdateInterval: Duration,
 ) : DisplayJobFactory {
     override fun create(
         image: Image,
@@ -33,6 +36,8 @@ class DefaultDisplayJobFactory(
                 viewPort = viewPort,
                 displayManager = displayManager,
                 clock = clock,
+                visibleDistance = visibleDistance,
+                updateInterval = staticUpdateInterval,
             )
 
             ImageType.ANIMATED -> AnimatedDisplayJob(
@@ -42,6 +47,7 @@ class DefaultDisplayJobFactory(
                 displayManager = displayManager,
                 clock = clock,
                 maxFramesPerSecond = animatedMaxFramesPerSecond,
+                visibleDistance = visibleDistance,
             )
         }
     }

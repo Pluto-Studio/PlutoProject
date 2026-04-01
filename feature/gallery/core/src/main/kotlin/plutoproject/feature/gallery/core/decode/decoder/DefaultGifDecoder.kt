@@ -88,13 +88,7 @@ private class DefaultGifDecoder(
                     return@withContext DecodeResult.Failure(DecodeStatus.TOO_MANY_FRAMES)
                 }
 
-                val totalFramePixels = framePixels * frameCount.toLong()
-                if (totalFramePixels > constraints.maxTotalFramePixels) {
-                    return@withContext DecodeResult.Failure(DecodeStatus.IMAGE_TOO_LARGE)
-                }
-
                 val frameTimeline = scanFrameTimeline(reader, frameCount)
-
                 DecodeResult.Success(
                     DecodedImage.Animated(
                         source = DefaultDecodedAnimatedImageSource(

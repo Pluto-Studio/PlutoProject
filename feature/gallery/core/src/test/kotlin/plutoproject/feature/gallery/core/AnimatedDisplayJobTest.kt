@@ -55,8 +55,6 @@ class AnimatedDisplayJobTest {
             clock = MutableClock(0L),
             maxFramesPerSecond = 20,
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         )
 
         job.attach(singleTileDisplayInstance(belongsTo), image, entry)
@@ -108,8 +106,6 @@ class AnimatedDisplayJobTest {
             clock = clock,
             maxFramesPerSecond = 20,
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         )
 
         job.attach(
@@ -165,8 +161,6 @@ class AnimatedDisplayJobTest {
             clock = clock,
             maxFramesPerSecond = -1,
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         )
         val displayInstance = singleTileDisplayInstance(belongsTo)
 
@@ -204,8 +198,6 @@ class AnimatedDisplayJobTest {
             clock = clock,
             maxFramesPerSecond = 20,
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
         )
 
         job.attach(singleTileDisplayInstance(belongsTo), image, entry)

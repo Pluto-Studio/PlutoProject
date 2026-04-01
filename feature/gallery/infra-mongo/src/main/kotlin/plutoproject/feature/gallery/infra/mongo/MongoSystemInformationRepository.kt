@@ -9,15 +9,15 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates.inc
 import com.mongodb.client.model.Updates.setOnInsert
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import plutoproject.feature.gallery.core.AllocationRange
+import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.SystemInformationRepository
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 
 class MongoSystemInformationRepository(
     private val mapIdCollection: MongoCollection<MapIdSystemInformationDocument>,
 ) : SystemInformationRepository {
-    override suspend fun allocateMapIds(count: Int, allocationRange: AllocationRange): Int? {
-        val maxLastBeforeAllocate = allocationRange.end - count
+    override suspend fun allocateMapIds(count: Int, mapIdRange: MapIdRange): Int? {
+        val maxLastBeforeAllocate = mapIdRange.end - count
         var initialized = false
 
         while (true) {
@@ -38,7 +38,7 @@ class MongoSystemInformationRepository(
 
             mapIdCollection.updateOne(
                 eq(MapIdSystemInformationDocument::_id.name, MAP_ID_DOCUMENT_ID),
-                setOnInsert(MapIdSystemInformationDocument::lastAllocatedId.name, allocationRange.start - 1),
+                setOnInsert(MapIdSystemInformationDocument::lastAllocatedId.name, mapIdRange.start - 1),
                 UpdateOptions().upsert(true),
             )
             initialized = true

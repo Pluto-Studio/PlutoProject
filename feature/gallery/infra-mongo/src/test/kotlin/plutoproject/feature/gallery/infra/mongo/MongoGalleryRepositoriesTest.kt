@@ -18,7 +18,7 @@ import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import plutoproject.feature.gallery.core.image.AnimatedImageData
-import plutoproject.feature.gallery.core.AllocationRange
+import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
@@ -233,11 +233,11 @@ class MongoGalleryRepositoriesTest {
         val client = newClient()
         val collection = client.getDatabase("test").getCollection<MapIdSystemInformationDocument>("gallery_system_information")
         val repo = MongoSystemInformationRepository(collection)
-        val range = AllocationRange(start = 100, end = 110)
+        val range = MapIdRange(start = 100, end = 110)
 
-        val first = repo.allocateMapIds(count = 5, allocationRange = range)
-        val second = repo.allocateMapIds(count = 3, allocationRange = range)
-        val overflow = repo.allocateMapIds(count = 4, allocationRange = range)
+        val first = repo.allocateMapIds(count = 5, mapIdRange = range)
+        val second = repo.allocateMapIds(count = 3, mapIdRange = range)
+        val overflow = repo.allocateMapIds(count = 4, mapIdRange = range)
 
         assertEquals(104, first)
         assertEquals(107, second)
@@ -251,12 +251,12 @@ class MongoGalleryRepositoriesTest {
         val client = newClient()
         val collection = client.getDatabase("test").getCollection<MapIdSystemInformationDocument>("gallery_system_information_concurrent")
         val repo = MongoSystemInformationRepository(collection)
-        val range = AllocationRange(start = 1_000, end = 2_000)
+        val range = MapIdRange(start = 1_000, end = 2_000)
 
         val results = (1..50)
             .map {
                 async {
-                    repo.allocateMapIds(count = 1, allocationRange = range)
+                    repo.allocateMapIds(count = 1, mapIdRange = range)
                 }
             }
             .awaitAll()

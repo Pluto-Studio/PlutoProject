@@ -49,20 +49,18 @@ sealed interface DecodedImage {
 data class DecodeImageRequest(
     val bytes: ByteArray,
     val fileNameHint: String? = null,
-    val constraints: DecodeConstraints = DecodeConstraints(),
+    val constraints: DecodeConstraints,
 )
 
 data class DecodeConstraints(
-    val maxBytes: Int = 25 * 1024 * 1024,
-    val maxPixels: Int = 16_777_216,
-    val maxFrames: Int = 500,
-    val maxTotalFramePixels: Long = 33_554_432L,
+    val maxBytes: Int,
+    val maxPixels: Int,
+    val maxFrames: Int,
 ) {
     init {
         require(maxBytes > 0) { "maxBytes must be > 0" }
         require(maxPixels > 0) { "maxPixels must be > 0" }
         require(maxFrames > 0) { "maxFrames must be > 0" }
-        require(maxTotalFramePixels > 0L) { "maxTotalFramePixels must be > 0" }
     }
 }
 

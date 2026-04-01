@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.AllocationRange
+import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.InMemorySystemInformationRepository
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 
@@ -14,7 +14,7 @@ class AllocateMapIdUseCaseTest {
     fun `allocate should return contiguous ids from start when no history exists`() = runTest {
         val repo = InMemorySystemInformationRepository()
         val useCase = AllocateMapIdUseCase(
-            allocationRange = AllocationRange(start = 100, end = 200),
+            mapIdRange = MapIdRange(start = 100, end = 200),
             systemInformationRepository = repo,
         )
 
@@ -28,7 +28,7 @@ class AllocateMapIdUseCaseTest {
     fun `allocate should continue from last allocated id`() = runTest {
         val repo = InMemorySystemInformationRepository(initialLastAllocatedId = 100)
         val useCase = AllocateMapIdUseCase(
-            allocationRange = AllocationRange(start = 1, end = 200),
+            mapIdRange = MapIdRange(start = 1, end = 200),
             systemInformationRepository = repo,
         )
 
@@ -42,7 +42,7 @@ class AllocateMapIdUseCaseTest {
     fun `allocate should throw IllegalStateException when range overflows`() = runTest {
         val repo = InMemorySystemInformationRepository(initialLastAllocatedId = 105)
         val useCase = AllocateMapIdUseCase(
-            allocationRange = AllocationRange(start = 100, end = 109),
+            mapIdRange = MapIdRange(start = 100, end = 109),
             systemInformationRepository = repo,
         )
 

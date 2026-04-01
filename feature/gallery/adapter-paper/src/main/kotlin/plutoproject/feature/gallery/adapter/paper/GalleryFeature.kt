@@ -8,7 +8,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.commonModule
-import plutoproject.feature.gallery.adapter.paper.commands.GalleryDebugRenderCommand
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
@@ -48,7 +47,6 @@ class GalleryFeature : PaperFeature() {
             modules(commonModule, module)
         }
 
-        AnnotationParser.parse(GalleryDebugRenderCommand)
         server.pluginManager.registerSuspendingEvents(GalleryChunkListener, plugin)
         server.pluginManager.registerEvents(GalleryPlayerListener, plugin)
     }

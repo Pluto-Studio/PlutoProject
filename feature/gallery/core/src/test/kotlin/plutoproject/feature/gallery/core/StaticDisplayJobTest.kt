@@ -28,6 +28,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 class StaticDisplayJobTest {
     @Test
@@ -83,9 +84,7 @@ class StaticDisplayJobTest {
             displayManager = displayManager,
             clock = fixedClock(1_000L),
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
-            updateIntervalMs = 200L,
+            updateInterval = 200.milliseconds,
         )
 
         job.attach(displayInstance, image, entry)
@@ -146,9 +145,7 @@ class StaticDisplayJobTest {
             displayManager = displayManager,
             clock = fixedClock(2_000L),
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
-            updateIntervalMs = 200L,
+            updateInterval = 200.milliseconds,
         )
 
         job.attach(displayInstance, image, entry)
@@ -206,9 +203,7 @@ class StaticDisplayJobTest {
             displayManager = displayManager,
             clock = fixedClock(3_000L),
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
-            updateIntervalMs = 200L,
+            updateInterval = 200.milliseconds,
         )
 
         job.attach(displayInstance, image, entry)
@@ -288,9 +283,7 @@ class StaticDisplayJobTest {
             displayManager = displayManager,
             clock = fixedClock(4_000L),
             visibleDistance = 5.0,
-            horizontalFovRadian = 0.0,
-            verticalFovRadian = 0.0,
-            updateIntervalMs = 200L,
+            updateInterval = 200.milliseconds,
         )
 
         job.attach(firstDisplayInstance, image, entry)

@@ -148,10 +148,10 @@ internal class InMemorySystemInformationRepository(
     var lastAllocatedId: Int? = initialLastAllocatedId
         private set
 
-    override suspend fun allocateMapIds(count: Int, allocationRange: AllocationRange): Int? {
-        val current = lastAllocatedId ?: (allocationRange.start - 1)
+    override suspend fun allocateMapIds(count: Int, mapIdRange: MapIdRange): Int? {
+        val current = lastAllocatedId ?: (mapIdRange.start - 1)
         val next = current + count
-        if (next > allocationRange.end) {
+        if (next > mapIdRange.end) {
             return null
         }
         lastAllocatedId = next

@@ -1,5 +1,7 @@
 package plutoproject.feature.gallery.core.display
 
+import plutoproject.feature.gallery.core.HORIZONTAL_FOV_RADIAN
+import plutoproject.feature.gallery.core.VERTICAL_FOV_RADIAN
 import kotlin.math.*
 
 data class DisplayGeometry(
@@ -38,21 +40,11 @@ data class DisplayGeometry(
      */
     val heightBlocks: Int,
 ) {
-    fun computeVisibleTiles(
-        playerViews: List<PlayerView>,
-        visibleDistance: Double,
-        horizontalFovRadian: Double,
-        verticalFovRadian: Double
-    ): Map<PlayerView, TileRect> {
+    fun computeVisibleTiles(playerViews: List<PlayerView>, visibleDistance: Double): Map<PlayerView, TileRect> {
         val result = HashMap<PlayerView, TileRect>(playerViews.size)
 
         for (view in playerViews) {
-            val rect = computeVisibleTilesForView(
-                view = view,
-                visibleDistance = visibleDistance,
-                horizontalFovRadian = horizontalFovRadian,
-                verticalFovRadian = verticalFovRadian
-            )
+            val rect = computeVisibleTilesForView(view = view, visibleDistance = visibleDistance)
             if (rect != null) {
                 result[view] = rect
             }
@@ -61,12 +53,7 @@ data class DisplayGeometry(
         return result
     }
 
-    private fun computeVisibleTilesForView(
-        view: PlayerView,
-        visibleDistance: Double,
-        horizontalFovRadian: Double,
-        verticalFovRadian: Double
-    ): TileRect? {
+    private fun computeVisibleTilesForView(view: PlayerView, visibleDistance: Double): TileRect? {
         val eye = view.eye
         val forward = view.viewDirection.normalizedOrNull() ?: return null
 
@@ -101,8 +88,8 @@ data class DisplayGeometry(
         val right = cameraBasis.right
         val up = cameraBasis.up
 
-        val tanHalfHFov = tan(horizontalFovRadian / 2.0)
-        val tanHalfVFov = tan(verticalFovRadian / 2.0)
+        val tanHalfHFov = tan(HORIZONTAL_FOV_RADIAN / 2.0)
+        val tanHalfVFov = tan(VERTICAL_FOV_RADIAN / 2.0)
 
         // 屏幕四角对应的四条边界射线方向
         // 不要求单位长度，因为平面求交中的 t 参数会自动吸收长度比例

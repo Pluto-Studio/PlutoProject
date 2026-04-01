@@ -1,6 +1,6 @@
 package plutoproject.feature.gallery.core
 
-data class AllocationRange(
+data class MapIdRange(
     val start: Int,
     val end: Int,
 ) {
