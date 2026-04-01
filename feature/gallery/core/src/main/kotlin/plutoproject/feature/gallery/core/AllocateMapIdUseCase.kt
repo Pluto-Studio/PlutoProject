@@ -6,8 +6,8 @@ class AllocateMapIdUseCase(
 ) {
     @Suppress("UNUSED")
     sealed class Result {
-        class IdRangeOverflow(range: MapIdRange) : Result()
-        class Success(ids: IntArray) : Result()
+        class IdRangeOverflow(val range: MapIdRange) : Result()
+        class Success(val ids: IntArray) : Result()
     }
 
     suspend fun execute(count: Int): Result {

@@ -1,47 +1,46 @@
 package plutoproject.feature.gallery.core.render.tile.codec
 
-internal class BitWriter(initialCapacityBytes: Int = 256) {
-    private var buffer = ByteArray(initialCapacityBytes)
-    private var writtenBits = 0
+internal class BitWriter(initialCapacityBytes: Int) {
+    private var bytes = ByteArray(initialCapacityBytes.coerceAtLeast(1))
+    private var bitSize = 0
 
     fun writeBits(value: Int, bitCount: Int) {
-        require(bitCount in 0..31) { "bitCount must be in [0, 31], actual=$bitCount" }
+        require(bitCount >= 0) { "bitCount must be >= 0" }
         if (bitCount == 0) {
             return
         }
 
-        require((value ushr bitCount) == 0) {
-            "value has non-zero bits outside bitCount: value=$value, bitCount=$bitCount"
-        }
+        var remainingBits = bitCount
+        while (remainingBits > 0) {
+            ensureCapacity(bitSize + 1)
 
-        ensureCapacity(bitCount)
-        for (shift in bitCount - 1 downTo 0) {
-            val bit = (value ushr shift) and 1
+            val bitIndexFromMsb = remainingBits - 1
+            val bit = (value ushr bitIndexFromMsb) and 1
+            val byteIndex = bitSize ushr 3
+            val bitIndexInByte = 7 - (bitSize and 7)
             if (bit == 1) {
-                val byteIndex = writtenBits ushr 3
-                val bitIndex = 7 - (writtenBits and 7)
-                buffer[byteIndex] = (buffer[byteIndex].toInt() or (1 shl bitIndex)).toByte()
+                bytes[byteIndex] = (bytes[byteIndex].toInt() or (1 shl bitIndexInByte)).toByte()
             }
-            writtenBits++
+            bitSize++
+            remainingBits--
         }
     }
 
     fun toByteArray(): ByteArray {
-        val bytes = (writtenBits + 7) ushr 3
-        return buffer.copyOf(bytes)
+        val byteSize = (bitSize + 7) ushr 3
+        return bytes.copyOf(byteSize)
     }
 
-    private fun ensureCapacity(additionalBits: Int) {
-        val requiredBits = writtenBits + additionalBits
+    private fun ensureCapacity(requiredBits: Int) {
         val requiredBytes = (requiredBits + 7) ushr 3
-        if (requiredBytes <= buffer.size) {
+        if (requiredBytes <= bytes.size) {
             return
         }
 
-        var newSize = buffer.size
+        var newSize = bytes.size
         while (newSize < requiredBytes) {
             newSize = newSize shl 1
         }
-        buffer = buffer.copyOf(newSize)
+        bytes = bytes.copyOf(newSize)
     }
 }

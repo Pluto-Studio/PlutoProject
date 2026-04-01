@@ -1,14 +1,14 @@
 package plutoproject.feature.gallery.infra.mongo
-
 import org.bson.BsonBinary
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.image.StaticImageData
-import plutoproject.feature.gallery.core.image.TilePool
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.render.tile.TilePool
+import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
@@ -75,17 +75,20 @@ internal fun Image.toDocument(): ImageDocument {
     )
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
 internal fun ImageDataEntryDocument.toDomain(): ImageDataEntry<*> {
     return when (val domainType = type.toDomain()) {
         ImageType.STATIC -> ImageDataEntry(
             belongsTo = belongsTo,
             type = domainType,
             data = StaticImageData(
-                tilePool = TilePool(
-                    offsets = tilePoolOffsets,
-                    blob = tilePoolBlob.data,
+                tilePool = TilePool.fromSnapshot(
+                    TilePoolSnapshot(
+                        offsets = tilePoolOffsets,
+                        blob = tilePoolBlob.data,
+                    )
                 ),
-                tileIndexes = tileIndexes,
+                tileIndexes = tileIndexes.toUShortArray(),
             ),
         )
 
@@ -96,19 +99,22 @@ internal fun ImageDataEntryDocument.toDomain(): ImageDataEntry<*> {
                 frameCount = requireNotNull(frameCount) {
                     "frameCount is null for animated image data"
                 },
-                durationMillis = requireNotNull(durationMillis) {
-                    "durationMillis is null for animated image data"
+                duration = requireNotNull(duration) {
+                    "duration is null for animated image data"
                 },
-                tilePool = TilePool(
-                    offsets = tilePoolOffsets,
-                    blob = tilePoolBlob.data,
+                tilePool = TilePool.fromSnapshot(
+                    TilePoolSnapshot(
+                        offsets = tilePoolOffsets,
+                        blob = tilePoolBlob.data,
+                    )
                 ),
-                tileIndexes = tileIndexes,
+                tileIndexes = tileIndexes.toUShortArray(),
             ),
         )
     }
 }
 
+@OptIn(ExperimentalUnsignedTypes::class)
 internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
     return when (type) {
         ImageType.STATIC -> {
@@ -118,11 +124,11 @@ internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
             ImageDataEntryDocument(
                 belongsTo = belongsTo,
                 type = type.toDocument(),
-                tilePoolOffsets = staticData.tilePool.offsets,
-                tilePoolBlob = BsonBinary(staticData.tilePool.blob),
-                tileIndexes = staticData.tileIndexes,
+                tilePoolOffsets = staticData.tilePool.snapshot().offsets,
+                tilePoolBlob = BsonBinary(staticData.tilePool.snapshot().blob),
+                tileIndexes = staticData.tileIndexes.toShortArray(),
                 frameCount = null,
-                durationMillis = null,
+                duration = null,
             )
         }
 
@@ -133,11 +139,11 @@ internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
             ImageDataEntryDocument(
                 belongsTo = belongsTo,
                 type = type.toDocument(),
-                tilePoolOffsets = animatedData.tilePool.offsets,
-                tilePoolBlob = BsonBinary(animatedData.tilePool.blob),
-                tileIndexes = animatedData.tileIndexes,
+                tilePoolOffsets = animatedData.tilePool.snapshot().offsets,
+                tilePoolBlob = BsonBinary(animatedData.tilePool.snapshot().blob),
+                tileIndexes = animatedData.tileIndexes.toShortArray(),
                 frameCount = animatedData.frameCount,
-                durationMillis = animatedData.durationMillis,
+                duration = animatedData.duration,
             )
         }
     }

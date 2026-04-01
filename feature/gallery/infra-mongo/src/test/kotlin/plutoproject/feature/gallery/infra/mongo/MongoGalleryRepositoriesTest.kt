@@ -11,27 +11,31 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.image.StaticImageData
-import plutoproject.feature.gallery.core.image.TilePool
+import plutoproject.feature.gallery.core.render.tile.TilePool
+import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalUnsignedTypes::class)
 @Testcontainers(disabledWithoutDocker = true)
 class MongoGalleryRepositoriesTest {
     @Container
@@ -101,11 +105,13 @@ class MongoGalleryRepositoriesTest {
             belongsTo = staticBelongsTo,
             type = ImageType.STATIC,
             data = StaticImageData(
-                tilePool = TilePool(
-                    offsets = intArrayOf(0, 2),
-                    blob = byteArrayOf(7, 9),
+                tilePool = TilePool.fromSnapshot(
+                    TilePoolSnapshot(
+                        offsets = intArrayOf(0, 2),
+                        blob = byteArrayOf(7, 9),
+                    )
                 ),
-                tileIndexes = shortArrayOf(0, 1),
+                tileIndexes = ushortArrayOf(0u, 1u),
             ),
         )
         repo.save(staticEntry)
@@ -115,9 +121,12 @@ class MongoGalleryRepositoriesTest {
         loadedStatic!!
         assertEquals(ImageType.STATIC, loadedStatic.type)
         val loadedStaticData = loadedStatic.data as StaticImageData
-        assertArrayEquals(intArrayOf(0, 2), loadedStaticData.tilePool.offsets)
-        assertArrayEquals(byteArrayOf(7, 9), loadedStaticData.tilePool.blob)
-        assertArrayEquals(shortArrayOf(0, 1), loadedStaticData.tileIndexes)
+        assertTilePoolEquals(
+            expectedOffsets = intArrayOf(0, 2),
+            expectedBlob = byteArrayOf(7, 9),
+            tilePool = loadedStaticData.tilePool,
+        )
+        assertTrue(loadedStaticData.tileIndexes.contentEquals(ushortArrayOf(0u, 1u)))
 
         val animatedBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000312")
         val animatedEntry = ImageDataEntry(
@@ -125,12 +134,14 @@ class MongoGalleryRepositoriesTest {
             type = ImageType.ANIMATED,
             data = AnimatedImageData(
                 frameCount = 2,
-                durationMillis = 120,
-                tilePool = TilePool(
-                    offsets = intArrayOf(0, 1, 3),
-                    blob = byteArrayOf(1, 2, 3),
+                duration = 120.milliseconds,
+                tilePool = TilePool.fromSnapshot(
+                    TilePoolSnapshot(
+                        offsets = intArrayOf(0, 1, 3),
+                        blob = byteArrayOf(1, 2, 3),
+                    )
                 ),
-                tileIndexes = shortArrayOf(0, 1, 1, 0),
+                tileIndexes = ushortArrayOf(0u, 1u, 1u, 0u),
             ),
         )
         repo.save(animatedEntry)
@@ -141,10 +152,13 @@ class MongoGalleryRepositoriesTest {
         assertEquals(ImageType.ANIMATED, loadedAnimated.type)
         val loadedAnimatedData = loadedAnimated.data as AnimatedImageData
         assertEquals(2, loadedAnimatedData.frameCount)
-        assertEquals(120, loadedAnimatedData.durationMillis)
-        assertArrayEquals(intArrayOf(0, 1, 3), loadedAnimatedData.tilePool.offsets)
-        assertArrayEquals(byteArrayOf(1, 2, 3), loadedAnimatedData.tilePool.blob)
-        assertArrayEquals(shortArrayOf(0, 1, 1, 0), loadedAnimatedData.tileIndexes)
+        assertEquals(120.milliseconds, loadedAnimatedData.duration)
+        assertTilePoolEquals(
+            expectedOffsets = intArrayOf(0, 1, 3),
+            expectedBlob = byteArrayOf(1, 2, 3),
+            tilePool = loadedAnimatedData.tilePool,
+        )
+        assertTrue(loadedAnimatedData.tileIndexes.contentEquals(ushortArrayOf(0u, 1u, 1u, 0u)))
 
         val byBelongsToIn = repo.findByBelongsToIn(
             listOf(
@@ -273,5 +287,15 @@ class MongoGalleryRepositoriesTest {
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
         )
+    }
+
+    private fun assertTilePoolEquals(
+        expectedOffsets: IntArray,
+        expectedBlob: ByteArray,
+        tilePool: TilePool,
+    ) {
+        val snapshot = tilePool.snapshot()
+        assertArrayEquals(expectedOffsets, snapshot.offsets)
+        assertArrayEquals(expectedBlob, snapshot.blob)
     }
 }

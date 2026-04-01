@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.infra.mongo.model
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 import org.bson.BsonBinary
 import plutoproject.framework.common.util.data.serializers.bson.UuidAsBsonBinarySerializer
 import java.util.UUID
@@ -14,7 +15,7 @@ data class ImageDataEntryDocument(
     val tilePoolBlob: @Contextual BsonBinary, // ByteArray 序列化到数据库里之后是一个数字数组，单独换成 Bson 类型来获得更紧凑的存储。
     val tileIndexes: ShortArray,
     val frameCount: Int? = null,
-    val durationMillis: Int? = null,
+    val duration: Duration? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -23,7 +24,7 @@ data class ImageDataEntryDocument(
         other as ImageDataEntryDocument
 
         if (frameCount != other.frameCount) return false
-        if (durationMillis != other.durationMillis) return false
+        if (duration != other.duration) return false
         if (belongsTo != other.belongsTo) return false
         if (type != other.type) return false
         if (!tilePoolOffsets.contentEquals(other.tilePoolOffsets)) return false
@@ -35,7 +36,7 @@ data class ImageDataEntryDocument(
 
     override fun hashCode(): Int {
         var result = frameCount ?: 0
-        result = 31 * result + (durationMillis ?: 0)
+        result = 31 * result + (duration?.hashCode() ?: 0)
         result = 31 * result + belongsTo.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + tilePoolOffsets.contentHashCode()

@@ -1,7 +1,7 @@
 package plutoproject.feature.gallery.core.display.job
 
-import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.display.MapUpdate
@@ -11,13 +11,14 @@ import plutoproject.feature.gallery.core.display.DisplayGeometry
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
-import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.render.tile.codec.TileDecoder
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlin.math.roundToLong
 
+@OptIn(ExperimentalUnsignedTypes::class)
 class AnimatedDisplayJob(
     override val belongsTo: UUID,
     private val displayScheduler: DisplayScheduler,
@@ -85,7 +86,7 @@ class AnimatedDisplayJob(
         val wakeStartedAtMillis = wakeStartedAt.toEpochMilli()
         val image = image ?: return
         val animatedData = imageDataEntry?.asAnimatedData() ?: return
-        if (animatedData.frameCount <= 0 || animatedData.durationMillis <= 0) {
+        if (animatedData.frameCount <= 0 || !animatedData.duration.isPositive()) {
             return
         }
 
@@ -93,7 +94,7 @@ class AnimatedDisplayJob(
             animationStartedAtMillis = it
         }
         val elapsedMillis = (wakeStartedAtMillis - startedAtMillis).coerceAtLeast(0L)
-        val progressMillis = elapsedMillis % animatedData.durationMillis.toLong()
+        val progressMillis = elapsedMillis % animatedData.duration.inWholeMilliseconds
         val frameIndex = frameIndexAt(progressMillis, animatedData)
         val framePoolIndexes = framePoolIndexes(frameIndex, image.mapWidthBlocks * image.mapHeightBlocks, animatedData)
         val changedTileIds = collectChangedTileIds(framePoolIndexes)
@@ -112,7 +113,7 @@ class AnimatedDisplayJob(
 
                     val mapColors = decodedTilesByTileId.getOrPut(tileId) {
                         val tilePoolIndex = framePoolIndexes[tileId]
-                        decodeTile(animatedData.tilePool.extractTileData(tilePoolIndex))
+                        TileDecoder.decode(animatedData.tilePool.getTile(tilePoolIndex).toByteArray())
                     }
                     sendJob.enqueue(MapUpdate(mapId = image.tileMapIds[tileId], mapColors = mapColors))
                 }
@@ -177,7 +178,7 @@ class AnimatedDisplayJob(
             return 0
         }
 
-        val frameDuration = animatedData.durationMillis.toDouble() / animatedData.frameCount.toDouble()
+        val frameDuration = animatedData.duration.inWholeMilliseconds.toDouble() / animatedData.frameCount.toDouble()
         return (progressMillis / frameDuration)
             .toInt()
             .coerceIn(0, animatedData.frameCount - 1)

@@ -12,6 +12,7 @@ import plutoproject.feature.gallery.core.SystemInformationRepository
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 
 private const val MAP_ID_DOCUMENT_ID = "map_id"
+private const val MAP_ID_DOCUMENT_ID_FIELD = "_id"
 
 class MongoSystemInformationRepository(
     private val mapIdCollection: MongoCollection<MapIdSystemInformationDocument>,
@@ -23,7 +24,7 @@ class MongoSystemInformationRepository(
         while (true) {
             val updated = mapIdCollection.findOneAndUpdate(
                 and(
-                    eq(MapIdSystemInformationDocument::id.name, MAP_ID_DOCUMENT_ID),
+                    eq(MAP_ID_DOCUMENT_ID_FIELD, MAP_ID_DOCUMENT_ID),
                     lte(MapIdSystemInformationDocument::lastAllocatedId.name, maxLastBeforeAllocate),
                 ),
                 inc(MapIdSystemInformationDocument::lastAllocatedId.name, count),
@@ -37,7 +38,7 @@ class MongoSystemInformationRepository(
             }
 
             mapIdCollection.updateOne(
-                eq(MapIdSystemInformationDocument::id.name, MAP_ID_DOCUMENT_ID),
+                eq(MAP_ID_DOCUMENT_ID_FIELD, MAP_ID_DOCUMENT_ID),
                 setOnInsert(MapIdSystemInformationDocument::lastAllocatedId.name, mapIdRange.start - 1),
                 UpdateOptions().upsert(true),
             )

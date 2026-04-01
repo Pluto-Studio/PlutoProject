@@ -4,23 +4,18 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import java.util.Base64
-import java.util.logging.Logger
 
 class WebpDecoderTest {
-    private val decoder = defaultStaticImageDecoder(Logger.getLogger("WebpDecoderTest"))
-
     @Test
     fun `static image decoder should decode embedded webp sample`() = runTest {
-        val result = decoder.decode(
+        val result = StaticImageDecoder.decode(
             bytes = decodeBase64(WEBP_1X1_TRANSPARENT_BASE64),
-            constraints = DecodeConstraints(),
+            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
         )
 
         assertTrue(result is DecodeResult.Success)
-        assertEquals(DecodeStatus.SUCCEED, result.status)
-        val image = (result.data as DecodedImage.Static).image
+        val image = (result as DecodeResult.Success).data
         assertEquals(1, image.width)
         assertEquals(1, image.height)
         assertEquals(0, image.pixels[0] ushr 24)
@@ -28,17 +23,16 @@ class WebpDecoderTest {
 
     @Test
     fun `static image decoder should return invalid-image for malformed webp bytes`() = runTest {
-        val result = decoder.decode(
+        val result = StaticImageDecoder.decode(
             bytes = byteArrayOf(
                 'R'.code.toByte(), 'I'.code.toByte(), 'F'.code.toByte(), 'F'.code.toByte(),
                 0, 0, 0, 0,
                 'W'.code.toByte(), 'E'.code.toByte(), 'B'.code.toByte(), 'P'.code.toByte(),
             ),
-            constraints = DecodeConstraints(),
+            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
         )
 
-        assertTrue(result is DecodeResult.Failure)
-        assertEquals(DecodeStatus.INVALID_IMAGE, result.status)
+        assertEquals(DecodeResult.InvalidImage, result)
     }
 }
 

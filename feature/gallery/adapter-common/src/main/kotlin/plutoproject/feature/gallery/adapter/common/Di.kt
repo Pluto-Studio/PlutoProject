@@ -2,16 +2,11 @@ package plutoproject.feature.gallery.adapter.common
 
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.qualifier.Qualifier
-import org.koin.core.qualifier.QualifierValue
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
+import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.SystemInformationRepository
-import plutoproject.feature.gallery.core.decode.decoder.ImageDecoder
-import plutoproject.feature.gallery.core.decode.decoder.defaultGifDecoder
-import plutoproject.feature.gallery.core.decode.decoder.defaultStaticImageDecoder
 import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
 import plutoproject.feature.gallery.core.display.DisplayManager
@@ -25,13 +20,6 @@ import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageRepository
 import plutoproject.feature.gallery.core.image.usecase.*
-import plutoproject.feature.gallery.core.render.*
-import plutoproject.feature.gallery.core.render.mapcolor.AlphaCompositor
-import plutoproject.feature.gallery.core.render.mapcolor.MapColorQuantizer
-import plutoproject.feature.gallery.core.render.mapcolor.defaultAlphaCompositor
-import plutoproject.feature.gallery.core.render.mapcolor.defaultMapColorQuantizer
-import plutoproject.feature.gallery.core.render.usecase.RenderAnimatedImageUseCase
-import plutoproject.feature.gallery.core.render.usecase.RenderStaticImageUseCase
 import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
@@ -55,14 +43,6 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
     return MongoConnection.getCollection("$GALLERY_PREFIX${serverName}_$name")
 }
 
-internal object StaticDecoderQualifier : Qualifier {
-    override val value: QualifierValue = "gallery.static_decoder"
-}
-
-internal object GifDecoderQualifier : Qualifier {
-    override val value: QualifierValue = "gallery.gif_decoder"
-}
-
 val commonModule = module {
     single<Clock> { Clock.systemUTC() }
     single<ImageRepository> {
@@ -79,16 +59,6 @@ val commonModule = module {
             getCollection<MapIdSystemInformationDocument>(SYSTEM_INFORMATION_COLLECTION)
         )
     }
-
-    single<ImageDecoder>(StaticDecoderQualifier) { defaultStaticImageDecoder(get()) }
-    single<ImageDecoder>(GifDecoderQualifier) { defaultGifDecoder(get()) }
-
-    single<FrameSampler> { defaultFrameSampler() }
-    single<AlphaCompositor> { defaultAlphaCompositor() }
-    single<MapColorQuantizer> { defaultMapColorQuantizer() }
-
-    singleOf(::DefaultStaticImageRenderer) bind StaticImageRenderer::class
-    singleOf(::DefaultAnimatedImageRenderer) bind AnimatedImageRenderer::class
 
     singleOf(::ImageManager)
     singleOf(::DisplayManager)
@@ -117,19 +87,6 @@ val commonModule = module {
             updateLimitSpan = get<GalleryConfig>().send.updateLimitSpan,
         )
     }
-
-    single<DecodeImageUseCase> {
-        DecodeImageUseCase(
-            pngDecoder = get(StaticDecoderQualifier),
-            jpgDecoder = get(StaticDecoderQualifier),
-            webpDecoder = get(StaticDecoderQualifier),
-            gifDecoder = get(GifDecoderQualifier),
-            logger = get(),
-        )
-    }
-
-    singleOf(::RenderStaticImageUseCase)
-    singleOf(::RenderAnimatedImageUseCase)
 
     singleOf(::CreateImageUseCase)
     single<AllocateMapIdUseCase> {

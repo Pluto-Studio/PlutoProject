@@ -9,7 +9,8 @@ import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.core.image.ImageRepository
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.image.StaticImageData
-import plutoproject.feature.gallery.core.image.TilePool
+import plutoproject.feature.gallery.core.render.tile.TilePool
+import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import java.util.UUID
 
 internal fun dummyUuid(value: Long): UUID {
@@ -61,11 +62,13 @@ internal fun sampleStaticImageDataEntry(belongsTo: UUID = dummyUuid(907)): Image
         belongsTo = belongsTo,
         type = ImageType.STATIC,
         data = StaticImageData(
-            tilePool = TilePool(
-                offsets = intArrayOf(0, 0),
-                blob = ByteArray(0),
+            tilePool = TilePool.fromSnapshot(
+                TilePoolSnapshot(
+                    offsets = intArrayOf(0, 0),
+                    blob = ByteArray(0),
+                )
             ),
-            tileIndexes = shortArrayOf(0),
+            tileIndexes = ushortArrayOf(0u),
         ),
     )
 }

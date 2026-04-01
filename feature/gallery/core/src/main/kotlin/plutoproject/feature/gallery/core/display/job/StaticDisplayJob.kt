@@ -4,12 +4,13 @@ import plutoproject.feature.gallery.core.display.*
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.render.tile.codec.decodeTile
+import plutoproject.feature.gallery.core.render.tile.codec.TileDecoder
 import java.time.Clock
 import java.util.*
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
+@OptIn(ExperimentalUnsignedTypes::class)
 class StaticDisplayJob(
     override val belongsTo: UUID,
     private val displayScheduler: DisplayScheduler,
@@ -116,7 +117,7 @@ class StaticDisplayJob(
 
                 val mapColors = decodedTilesByTileId.getOrPut(tileId) {
                     val tilePoolIndex = staticData.tileIndexes[tileId].toInt() and 0xFFFF
-                    decodeTile(staticData.tilePool.extractTileData(tilePoolIndex))
+                    TileDecoder.decode(staticData.tilePool.getTile(tilePoolIndex).toByteArray())
                 }
                 sendJob.enqueue(MapUpdate(mapId = mapId, mapColors = mapColors))
             }

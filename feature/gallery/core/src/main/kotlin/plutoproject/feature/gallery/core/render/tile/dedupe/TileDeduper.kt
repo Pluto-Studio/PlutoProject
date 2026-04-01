@@ -1,80 +1,73 @@
 package plutoproject.feature.gallery.core.render.tile.dedupe
 
-import com.dynatrace.hash4j.hashing.Hashing
-import plutoproject.feature.gallery.core.image.TilePool
-import plutoproject.feature.gallery.core.render.tile.codec.TILE_PIXEL_COUNT
-import plutoproject.feature.gallery.core.render.tile.codec.encodeTile
+import plutoproject.feature.gallery.core.render.tile.MAX_TILE_POOL_UNIQUE_TILE_COUNT
+import plutoproject.feature.gallery.core.render.tile.MutableTilePool
+import plutoproject.feature.gallery.core.render.tile.TILE_PIXEL_COUNT
+import plutoproject.feature.gallery.core.render.tile.codec.TileEncoder
+import plutoproject.feature.gallery.core.render.tile.TilePixelsView
+import plutoproject.feature.gallery.core.render.tile.TilePool
 
-internal const val MAX_TILE_POOL_UNIQUE_TILE_COUNT = 65_536
-
-internal sealed interface TileDedupeResult {
-    data class Indexed(val tilePoolIndex: Int) : TileDedupeResult
-
-    data object UniqueTileOverflow : TileDedupeResult
-}
-
-internal fun interface TileMapColorHasher {
-    fun hash(tileMapColors: ByteArray): Long
-}
-
-internal object Xxh3TileMapColorHasher : TileMapColorHasher {
-    private val hasher = Hashing.xxh3_64()
-
-    override fun hash(tileMapColors: ByteArray): Long {
-        require(tileMapColors.size == TILE_PIXEL_COUNT) {
-            "tileMapColors size must be ${TILE_PIXEL_COUNT}, actual=${tileMapColors.size}"
-        }
-        return hasher.hashBytesToLong(tileMapColors, 0, tileMapColors.size)
-    }
-}
-
-/**
- * 基于 tile mapColor 内容去重，产出 TilePool index。
- */
 internal class TileDeduper(
-    private val tilePoolBuilder: TilePoolBuilder = TilePoolBuilder(),
+    private val tilePool: MutableTilePool = MutableTilePool(),
     private val tileMapColorHasher: TileMapColorHasher = Xxh3TileMapColorHasher,
-    private val maxUniqueTileCount: Int = MAX_TILE_POOL_UNIQUE_TILE_COUNT,
 ) {
-    private val bucketByHash = HashMap<Long, IntIndexBucket>()
-
-    init {
-        require(maxUniqueTileCount in 1..MAX_TILE_POOL_UNIQUE_TILE_COUNT) {
-            "maxUniqueTileCount must be in [1, $MAX_TILE_POOL_UNIQUE_TILE_COUNT], actual=$maxUniqueTileCount"
-        }
-    }
+    private val tileIndexesByHash = HashMap<Long, IntIndexBucket>()
+    private val tileScratchBuffer = ByteArray(TILE_PIXEL_COUNT)
 
     val uniqueTileCount: Int
-        get() = tilePoolBuilder.uniqueTileCount
+        get() = tilePool.size
 
-    fun dedupe(tileMapColors: ByteArray): TileDedupeResult {
-        require(tileMapColors.size == TILE_PIXEL_COUNT) {
-            "tileMapColors size must be ${TILE_PIXEL_COUNT}, actual=${tileMapColors.size}"
-        }
+    fun dedupe(tile: TilePixelsView): TileDedupeResult {
+        tile.copyTo(tileScratchBuffer)
 
-        val hash = tileMapColorHasher.hash(tileMapColors)
-        val tileData = encodeTile(tileMapColors)
+        val hash = tileMapColorHasher.hash(tileScratchBuffer)
+        val encodedTile = TileEncoder.encode(tileScratchBuffer)
 
-        val bucket = bucketByHash[hash]
+        val bucket = tileIndexesByHash[hash]
         val reusedIndex = bucket?.findFirst { candidateIndex ->
-            tilePoolBuilder.tileDataEquals(candidateIndex, tileData)
+            tilePool.encodedTileEquals(candidateIndex, encodedTile)
         }
         if (reusedIndex != null) {
-            return TileDedupeResult.Indexed(reusedIndex)
+            return TileDedupeResult.Success(reusedIndex)
         }
 
-        if (tilePoolBuilder.uniqueTileCount >= maxUniqueTileCount) {
-            return TileDedupeResult.UniqueTileOverflow
+        if (tilePool.size >= MAX_TILE_POOL_UNIQUE_TILE_COUNT) {
+            return TileDedupeResult.TilePoolOverflow
         }
 
-        val tilePoolIndex = tilePoolBuilder.appendTile(tileData)
+        val tilePoolIndex = tilePool.addTile(encodedTile)
         if (bucket == null) {
-            bucketByHash[hash] = IntIndexBucket().also { it.add(tilePoolIndex) }
+            tileIndexesByHash[hash] = IntIndexBucket().also { it.add(tilePoolIndex) }
         } else {
             bucket.add(tilePoolIndex)
         }
-        return TileDedupeResult.Indexed(tilePoolIndex)
+
+        return TileDedupeResult.Success(tilePoolIndex)
     }
 
-    fun buildTilePool(): TilePool = tilePoolBuilder.build()
+    fun buildTilePool(): TilePool = tilePool.freeze()
+}
+
+private class IntIndexBucket {
+    private var values = IntArray(4)
+    private var size = 0
+
+    fun add(value: Int) {
+        if (size == values.size) {
+            values = values.copyOf(values.size shl 1)
+        }
+        values[size++] = value
+    }
+
+    fun findFirst(predicate: (Int) -> Boolean): Int? {
+        var index = 0
+        while (index < size) {
+            val value = values[index]
+            if (predicate(value)) {
+                return value
+            }
+            index++
+        }
+        return null
+    }
 }
