@@ -49,7 +49,14 @@ class ImageFormatSnifferTest {
     }
 
     @Test
-    fun `should fallback to file extension when magic bytes are unknown`() {
+    fun `should fallback to jpg file extension when magic bytes are unknown`() {
+        val format = ImageFormatSniffer.sniff(byteArrayOf(1, 2, 3), fileNameHint = "poster.jpg")
+
+        assertEquals(DecodableImageFormat.JPEG, format)
+    }
+
+    @Test
+    fun `should fallback to jpeg file extension when magic bytes are unknown`() {
         val format = ImageFormatSniffer.sniff(byteArrayOf(1, 2, 3), fileNameHint = "poster.jpeg")
 
         assertEquals(DecodableImageFormat.JPEG, format)

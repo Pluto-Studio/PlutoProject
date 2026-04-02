@@ -3,12 +3,15 @@ package plutoproject.feature.gallery.core.decode.animated.gif
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import plutoproject.feature.gallery.core.decode.DecodableImageFormat
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageMetadata
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import java.io.ByteArrayInputStream
+import java.io.EOFException
 import javax.imageio.ImageIO
+import javax.imageio.IIOException
 import javax.imageio.stream.ImageInputStream
 
 object GifDecoder {
@@ -36,8 +39,9 @@ private suspend fun decodeImageInput(
     input: ImageInputStream,
     constraints: DecodeConstraints
 ): DecodeResult<AnimatedImageSource> {
-    val reader = ImageIO.getImageReadersByFormatName("gif").asSequence().firstOrNull()
-        ?: return DecodeResult.UnknownFailure()
+    val reader = withContext(Dispatchers.IO) {
+        DecodableImageFormat.GIF.readerSpi.createReaderInstance()
+    }
 
     try {
         reader.input = input
@@ -77,6 +81,10 @@ private suspend fun decodeImageInput(
                 frameStreamOpener = { openFrameStream(bytes, metadata) },
             )
         )
+    } catch (_: EOFException) {
+        return DecodeResult.InvalidImage
+    } catch (_: IIOException) {
+        return DecodeResult.InvalidImage
     } finally {
         reader.dispose()
     }
@@ -90,10 +98,13 @@ private suspend fun openFrameStream(
         ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
     } ?: error("Failed to create gif image input stream")
 
-    val reader = ImageIO.getImageReadersByFormatName("gif").asSequence().firstOrNull() ?: run {
+    val reader = runCatching {
+        withContext(Dispatchers.IO) {
+            DecodableImageFormat.GIF.readerSpi.createReaderInstance()
+        }
+    }.onFailure {
         imageInput.close()
-        error("Failed to create gif image reader")
-    }
+    }.getOrThrow()
 
     reader.input = imageInput
     return GifFrameStream(reader, imageInput, metadata)

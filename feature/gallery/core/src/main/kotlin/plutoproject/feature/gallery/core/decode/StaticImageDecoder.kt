@@ -5,11 +5,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import plutoproject.feature.gallery.core.render.PixelBuffer
 import java.io.ByteArrayInputStream
+import java.io.EOFException
 import javax.imageio.ImageIO
+import javax.imageio.IIOException
+import javax.imageio.spi.ImageReaderSpi
 import javax.imageio.stream.ImageInputStream
 
 object StaticImageDecoder {
-    suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<PixelBuffer> = try {
+    suspend fun decode(
+        bytes: ByteArray,
+        constraints: DecodeConstraints,
+        readerSpi: ImageReaderSpi
+    ): DecodeResult<PixelBuffer> = try {
         if (bytes.size > constraints.maxBytes) {
             return DecodeResult.ImageTooLarge
         }
@@ -19,7 +26,7 @@ object StaticImageDecoder {
         } ?: return DecodeResult.UnsupportedFormat
 
         imageInput.use { input ->
-            decodeImageInput(input, constraints)
+            decodeImageInput(input, constraints, readerSpi)
         }
     } catch (e: CancellationException) {
         throw e
@@ -30,10 +37,13 @@ object StaticImageDecoder {
 
 private suspend fun decodeImageInput(
     input: ImageInputStream,
-    constraints: DecodeConstraints
+    constraints: DecodeConstraints,
+    readerSpi: ImageReaderSpi
 ): DecodeResult<PixelBuffer> {
-    val reader = ImageIO.getImageReaders(input).asSequence().firstOrNull()
-        ?: return DecodeResult.InvalidImage
+    val reader = withContext(Dispatchers.IO) {
+        readerSpi.createReaderInstance()
+    }
+
     try {
         reader.input = input
 
@@ -56,6 +66,10 @@ private suspend fun decodeImageInput(
         val pixels = image.getRGB(0, 0, width, height, IntArray(pixelCount.toInt()), 0, width)
 
         return DecodeResult.Success(PixelBuffer(width, height, pixels))
+    } catch (_: EOFException) {
+        return DecodeResult.InvalidImage
+    } catch (_: IIOException) {
+        return DecodeResult.InvalidImage
     } finally {
         reader.dispose()
     }

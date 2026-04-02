@@ -93,6 +93,16 @@ class GifDecoderTest {
         assertEquals(DecodeResult.TooManyFrames, tooManyFrames)
         assertEquals(DecodeResult.ImageTooLarge, tooManyPixels)
     }
+
+    @Test
+    fun `gif decoder should return invalid-image for malformed bytes`() = runTest {
+        val result = GifDecoder.decode(
+            bytes = "GIF89a".encodeToByteArray(),
+            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+        )
+
+        assertEquals(DecodeResult.InvalidImage, result)
+    }
 }
 
 private const val GIF_PATCH_TIMELINE_BASE64 =
