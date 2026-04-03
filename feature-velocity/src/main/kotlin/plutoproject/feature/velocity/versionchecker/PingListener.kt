@@ -41,6 +41,10 @@ object PingListener : KoinComponent {
 
     @Subscribe(order = PostOrder.FIRST)
     suspend fun ServerConnectedEvent.e() {
+        if (!config.enableVersionWarning) {
+            return
+        }
+
         if (player.protocolVersion.protocol in config.supportedProtocolRange) {
             return
         }

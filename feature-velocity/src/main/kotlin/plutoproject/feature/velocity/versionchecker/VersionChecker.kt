@@ -1,6 +1,8 @@
 package plutoproject.feature.velocity.versionchecker
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.koin.dsl.module
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
@@ -16,7 +18,9 @@ import plutoproject.framework.velocity.util.server
     platform = Platform.VELOCITY,
 )
 @Suppress("UNUSED")
-class VersionChecker : VelocityFeature() {
+class VersionChecker : VelocityFeature(), KoinComponent {
+    private val config by inject<VersionCheckerConfig>()
+
     private val featureModule = module {
         single<VersionCheckerConfig> {
             loadConfig(saveConfig()) {
@@ -30,6 +34,8 @@ class VersionChecker : VelocityFeature() {
             modules(featureModule)
         }
         server.eventManager.registerSuspend(plugin, PingListener)
-        AnnotationParser.parse(IgnoreCommand)
+        if (config.enableVersionWarning) {
+            AnnotationParser.parse(IgnoreCommand)
+        }
     }
 }

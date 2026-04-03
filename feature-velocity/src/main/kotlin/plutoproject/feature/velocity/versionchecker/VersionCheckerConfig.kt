@@ -6,6 +6,7 @@ data class VersionCheckerConfig(
     val serverBrand: String = "PlutoProject",
     val supportedProtocolRange: IntRange = MINIMUM_SUPPORTED_VERSION..MAXIMUM_SUPPORTED_VERSION,
     val compatibleProtocolRange: IntRange = supportedProtocolRange,
+    val enableVersionWarning: Boolean = false,
 ) {
     init {
         check(supportedProtocolRange.all { it in compatibleProtocolRange }) {
