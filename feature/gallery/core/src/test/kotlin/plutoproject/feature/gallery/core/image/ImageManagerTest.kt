@@ -21,9 +21,9 @@ class ImageManagerTest {
         val entry = ImageDataEntry(
             belongsTo = image.id,
             type = ImageType.STATIC,
-            data = StaticImageData(
+            data = ImageData.Static(
                 tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = intArrayOf(0, 0), blob = byteArrayOf())),
-                tileIndexes = ushortArrayOf(0u),
+                tileIndexes = shortArrayOf(0),
             ),
         )
 
@@ -52,11 +52,11 @@ class ImageManagerTest {
         val entry = ImageDataEntry(
             belongsTo = image.id,
             type = ImageType.ANIMATED,
-            data = AnimatedImageData(
+            data = ImageData.Animated(
+                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = intArrayOf(0, 1), blob = byteArrayOf(1))),
+                tileIndexes = shortArrayOf(0, 0),
                 frameCount = 2,
                 duration = 100.milliseconds,
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = intArrayOf(0, 1), blob = byteArrayOf(1))),
-                tileIndexes = ushortArrayOf(0u, 0u),
             ),
         )
 

@@ -1,19 +1,18 @@
 package plutoproject.feature.gallery.core.render
 
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
-import plutoproject.feature.gallery.core.image.AnimatedImageData
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.render.framesample.FrameSamplingResult
 import plutoproject.feature.gallery.core.render.tile.dedupe.TileDedupeResult
 import plutoproject.feature.gallery.core.render.tile.dedupe.TileDeduper
 import plutoproject.feature.gallery.core.render.tile.split.SplitTileGrid
 import plutoproject.feature.gallery.core.util.checkpoint
 
-@OptIn(ExperimentalUnsignedTypes::class)
 object AnimatedImageRenderer {
     suspend fun render(
         source: AnimatedImageSource,
         settings: AnimatedImageRenderSettings
-    ): RenderResult<AnimatedImageData> {
+    ): RenderResult<ImageData.Animated> {
         val outputFrameTimeline = when (
             val samplingResult = settings.frameSampler.sample(
                 sourceFrameTimeline = source.metadata.sourceFrameTimeline,
@@ -36,7 +35,7 @@ object AnimatedImageRenderer {
         val tileDeduper = TileDeduper()
         val requiredSourceFrameIndexes =
             collectRequiredSourceFrameIndexes(outputFrameTimeline.sourceFrameIndexByOutputFrame)
-        val renderedFrameTileIndexes = HashMap<Int, UShortArray>(requiredSourceFrameIndexes.size)
+        val renderedFrameTileIndexes = HashMap<Int, ShortArray>(requiredSourceFrameIndexes.size)
         val stream = source.openFrameStream()
 
         try {
@@ -66,7 +65,7 @@ object AnimatedImageRenderer {
             "frame stream did not produce all required source frames"
         }
 
-        val allFrameTileIndexes = UShortArray(totalTileIndexCount.toInt())
+        val allFrameTileIndexes = ShortArray(totalTileIndexCount.toInt())
         var outputFrameIndex = 0
         while (outputFrameIndex < outputFrameTimeline.frameCount) {
             checkpoint()
@@ -84,27 +83,26 @@ object AnimatedImageRenderer {
         }
 
         return RenderResult.Success(
-            AnimatedImageData(
-                frameCount = outputFrameTimeline.frameCount,
-                duration = outputFrameTimeline.duration,
+            ImageData.Animated(
                 tilePool = tileDeduper.buildTilePool(),
                 tileIndexes = allFrameTileIndexes,
+                frameCount = outputFrameTimeline.frameCount,
+                duration = outputFrameTimeline.duration,
             )
         )
     }
 }
 
-@OptIn(ExperimentalUnsignedTypes::class)
 private suspend fun dedupeTileGrid(
     tileGrid: SplitTileGrid,
     tileDeduper: TileDeduper,
-): UShortArray? {
-    val tileIndexes = UShortArray(tileGrid.tileCount)
+): ShortArray? {
+    val tileIndexes = ShortArray(tileGrid.tileCount)
 
     for (tileIndex in 0 until tileGrid.tileCount) {
         checkpoint()
         when (val dedupeResult = tileDeduper.dedupe(tileGrid.getTile(tileIndex))) {
-            is TileDedupeResult.Success -> tileIndexes[tileIndex] = dedupeResult.index.toUShort()
+            is TileDedupeResult.Success -> tileIndexes[tileIndex] = dedupeResult.index.toShort()
             TileDedupeResult.TilePoolOverflow -> return null
         }
     }

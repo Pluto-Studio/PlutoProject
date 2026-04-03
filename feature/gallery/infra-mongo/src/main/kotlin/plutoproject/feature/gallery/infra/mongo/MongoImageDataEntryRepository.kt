@@ -16,33 +16,33 @@ class MongoImageDataEntryRepository(
 ) : ImageDataEntryRepository {
     private val upsert = ReplaceOptions().upsert(true)
 
-    override suspend fun findByBelongsTo(belongsTo: UUID): ImageDataEntry<*>? {
-        return collection.find(eq(ImageDataEntryDocument::belongsTo.name, belongsTo))
+    override suspend fun findByImageId(imageId: UUID): ImageDataEntry<*>? {
+        return collection.find(eq(ImageDataEntryDocument::imageId.name, imageId))
             .firstOrNull()
             ?.toDomain()
     }
 
-    override suspend fun findByBelongsToIn(belongsToList: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
-        if (belongsToList.isEmpty()) {
+    override suspend fun findByImageIds(imageIds: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
+        if (imageIds.isEmpty()) {
             return emptyMap()
         }
 
-        return collection.find(`in`(ImageDataEntryDocument::belongsTo.name, belongsToList))
+        return collection.find(`in`(ImageDataEntryDocument::imageId.name, imageIds))
             .toList()
             .map { it.toDomain() }
-            .associateBy(ImageDataEntry<*>::belongsTo)
+            .associateBy(ImageDataEntry<*>::imageId)
     }
 
     override suspend fun save(entry: ImageDataEntry<*>) {
         val document = entry.toDocument()
         collection.replaceOne(
-            eq(ImageDataEntryDocument::belongsTo.name, document.belongsTo),
+            eq(ImageDataEntryDocument::imageId.name, document.imageId),
             document,
             upsert,
         )
     }
 
-    override suspend fun deleteByBelongsTo(belongsTo: UUID) {
-        collection.deleteOne(eq(ImageDataEntryDocument::belongsTo.name, belongsTo))
+    override suspend fun deleteByImageId(belongsTo: UUID) {
+        collection.deleteOne(eq(ImageDataEntryDocument::imageId.name, belongsTo))
     }
 }

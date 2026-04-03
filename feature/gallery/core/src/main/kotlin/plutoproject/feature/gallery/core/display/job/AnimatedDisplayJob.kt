@@ -1,26 +1,21 @@
 package plutoproject.feature.gallery.core.display.job
 
+import plutoproject.feature.gallery.core.display.*
 import plutoproject.feature.gallery.core.image.Image
-import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.display.MapUpdate
-import plutoproject.feature.gallery.core.display.TileRect
-import plutoproject.feature.gallery.core.display.ViewPort
-import plutoproject.feature.gallery.core.display.DisplayGeometry
-import plutoproject.feature.gallery.core.display.DisplayInstance
-import plutoproject.feature.gallery.core.display.DisplayManager
-import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.render.tile.codec.TileDecoder
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import kotlin.math.roundToLong
 
-@OptIn(ExperimentalUnsignedTypes::class)
 class AnimatedDisplayJob(
     override val belongsTo: UUID,
+    private val image: Image,
+    private val imageDataEntry: ImageDataEntry.Animated,
     private val displayScheduler: DisplayScheduler,
     private val viewPort: ViewPort,
     private val displayManager: DisplayManager,
@@ -38,30 +33,20 @@ class AnimatedDisplayJob(
     private val displayGeometryByInstanceId = HashMap<UUID, DisplayGeometry>()
     private val decodedTilesByTileId = HashMap<Int, ByteArray>()
 
-    private var image: Image? = null
-    private var imageDataEntry: ImageDataEntry<*>? = null
     private var animationStartedAtMillis: Long? = null
     private var lastSentPoolIndexes: IntArray? = null
 
     init {
+        validateSharedObjects(image, imageDataEntry)
         require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
         require(maxFramesPerSecond == -1 || maxFramesPerSecond > 0) {
             "maxFramesPerSecond must be -1 or greater than 0"
         }
     }
 
-    override fun attach(
-        displayInstance: DisplayInstance,
-        image: Image,
-        imageDataEntry: ImageDataEntry<*>,
-    ) {
+    override fun attach(displayInstance: DisplayInstance) {
         check(!isStopped) { "DisplayJob is stopped" }
-        validateSharedObjects(displayInstance, image, imageDataEntry)
-
-        if (this.image == null) {
-            this.image = image
-            this.imageDataEntry = imageDataEntry
-        }
+        validateDisplayInstance(displayInstance)
 
         _managedDisplayInstances[displayInstance.id] = displayInstance
         displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
@@ -85,8 +70,7 @@ class AnimatedDisplayJob(
 
         val wakeStartedAt = clock.instant()
         val wakeStartedAtMillis = wakeStartedAt.toEpochMilli()
-        val image = image ?: return
-        val animatedData = imageDataEntry?.asAnimatedData() ?: return
+        val animatedData = imageDataEntry.data
         if (animatedData.frameCount <= 0 || !animatedData.duration.isPositive()) {
             return
         }
@@ -97,7 +81,7 @@ class AnimatedDisplayJob(
         val elapsedMillis = (wakeStartedAtMillis - startedAtMillis).coerceAtLeast(0L)
         val progressMillis = elapsedMillis % animatedData.duration.inWholeMilliseconds
         val frameIndex = frameIndexAt(progressMillis, animatedData)
-        val framePoolIndexes = framePoolIndexes(frameIndex, image.mapWidthBlocks * image.mapHeightBlocks, animatedData)
+        val framePoolIndexes = framePoolIndexes(frameIndex, image.widthBlocks * image.heightBlocks, animatedData)
         val changedTileIds = collectChangedTileIds(framePoolIndexes)
 
         if (changedTileIds.isNotEmpty()) {
@@ -137,8 +121,6 @@ class AnimatedDisplayJob(
         _managedDisplayInstances.clear()
         displayGeometryByInstanceId.clear()
         decodedTilesByTileId.clear()
-        image = null
-        imageDataEntry = null
         animationStartedAtMillis = null
         lastSentPoolIndexes = null
     }
@@ -167,7 +149,7 @@ class AnimatedDisplayJob(
                         val visibleTileIds = visibleTileIdsByPlayer.computeIfAbsent(playerView.id) {
                             LinkedHashSet()
                         }
-                        collectTileIds(rect, image.mapWidthBlocks, visibleTileIds)
+                        collectTileIds(rect, image.widthBlocks, visibleTileIds)
                     }
                 }
             }
@@ -175,7 +157,7 @@ class AnimatedDisplayJob(
         return visibleTileIdsByPlayer
     }
 
-    private fun frameIndexAt(progressMillis: Long, animatedData: AnimatedImageData): Int {
+    private fun frameIndexAt(progressMillis: Long, animatedData: ImageData.Animated): Int {
         if (animatedData.frameCount == 1) {
             return 0
         }
@@ -189,7 +171,7 @@ class AnimatedDisplayJob(
     private fun framePoolIndexes(
         frameIndex: Int,
         singleFrameTileCount: Int,
-        animatedData: AnimatedImageData,
+        animatedData: ImageData.Animated,
     ): IntArray {
         val base = frameIndex * singleFrameTileCount
         return IntArray(singleFrameTileCount) { tileId ->
@@ -220,22 +202,24 @@ class AnimatedDisplayJob(
         return wakeFinishedAt.plusMillis(waitMillis.roundToLong())
     }
 
-    private fun validateSharedObjects(
-        displayInstance: DisplayInstance,
-        image: Image,
-        imageDataEntry: ImageDataEntry<*>,
-    ) {
+    private fun validateDisplayInstance(displayInstance: DisplayInstance) {
         require(displayInstance.belongsTo == belongsTo) {
             "DisplayInstance belongsTo mismatch: expected=$belongsTo, actual=${displayInstance.belongsTo}"
         }
+    }
+
+    private fun validateSharedObjects(
+        image: Image,
+        imageDataEntry: ImageDataEntry.Animated,
+    ) {
         require(image.id == belongsTo) {
             "Image id mismatch: expected=$belongsTo, actual=${image.id}"
         }
         require(image.type == ImageType.ANIMATED) {
             "AnimatedDisplayJob requires animated image, actual=${image.type}"
         }
-        require(imageDataEntry.belongsTo == belongsTo) {
-            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.belongsTo}"
+        require(imageDataEntry.imageId == belongsTo) {
+            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.imageId}"
         }
         require(imageDataEntry.type == ImageType.ANIMATED) {
             "AnimatedDisplayJob requires animated image data, actual=${imageDataEntry.type}"

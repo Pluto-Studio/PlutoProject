@@ -2,51 +2,39 @@ package plutoproject.feature.gallery.core.image
 
 import java.util.*
 
-class ImageDataEntry<T : Any>(
-    val belongsTo: UUID,
-    val type: ImageType,
-    data: T
-) {
-    var data: T = data
-        private set
+sealed class ImageDataEntry<T : Any> {
+    abstract val imageId: UUID
+    abstract val type: ImageType
+    abstract var data: T
+        protected set
 
-    init {
-        checkImageData(data)
+    class Static(
+        override val imageId: UUID,
+        override var data: ImageData.Static
+    ) : ImageDataEntry<ImageData.Static>() {
+        override val type: ImageType = ImageType.STATIC
+    }
+
+    class Animated(
+        override val imageId: UUID,
+        override var data: ImageData.Animated
+    ) : ImageDataEntry<ImageData.Animated>() {
+        override val type: ImageType = ImageType.ANIMATED
     }
 
     internal fun replaceData(newData: T) {
-        checkImageData(newData)
         data = newData
     }
 
-    fun asStaticData(): StaticImageData {
-        require(type == ImageType.STATIC && data is StaticImageData) { "Image data type mismatch" }
-        return data as StaticImageData
-    }
+    fun isStatic(): Boolean = this is Static
 
-    fun asAnimatedData(): AnimatedImageData {
-        require(type == ImageType.ANIMATED && data is AnimatedImageData) { "Image data type mismatch" }
-        return data as AnimatedImageData
-    }
+    fun isAnimated(): Boolean = this is Animated
 
-    private fun checkImageData(data: T) = when (type) {
-        ImageType.STATIC -> require(data is StaticImageData) {
-            "Image data type mismatch: expected StaticImageData, got ${data::class.simpleName}"
-        }
+    fun asStaticOrNull(): Static? = this as? Static
 
-        ImageType.ANIMATED -> require(data is AnimatedImageData) {
-            "Image data type mismatch: expected AnimatedImageData, got ${data::class.simpleName}"
-        }
-    }
+    fun asAnimatedOrNull(): Animated? = this as? Animated
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as ImageDataEntry<*>
-        return belongsTo == other.belongsTo
-    }
+    fun asStatic(): Static = asStaticOrNull() ?: error("Type mismatch, expected static")
 
-    override fun hashCode(): Int {
-        return belongsTo.hashCode()
-    }
+    fun asAnimated(): Animated = asAnimatedOrNull() ?: error("Type mismatch, expected animated")
 }

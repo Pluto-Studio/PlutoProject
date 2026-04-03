@@ -9,6 +9,8 @@ interface ImageRepository {
 
     suspend fun findByOwner(owner: UUID): List<Image>
 
+    suspend fun count(): Int
+
     suspend fun save(image: Image)
 
     suspend fun deleteById(id: UUID)

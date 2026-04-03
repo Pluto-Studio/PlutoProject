@@ -5,17 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayManager
-import plutoproject.feature.gallery.core.image.ImageManager
-import plutoproject.feature.gallery.core.InMemoryDisplayInstanceRepository
-import plutoproject.feature.gallery.core.InMemoryImageDataEntryRepository
-import plutoproject.feature.gallery.core.InMemoryImageRepository
 import plutoproject.feature.gallery.core.display.usecase.GetDisplayInstancesByIdsUseCase
-import plutoproject.feature.gallery.core.dummyUuid
-import plutoproject.feature.gallery.core.image.usecase.GetImageDataEntriesByBelongsToUseCase
-import plutoproject.feature.gallery.core.image.usecase.GetImagesByIdsUseCase
-import plutoproject.feature.gallery.core.sampleDisplayInstance
-import plutoproject.feature.gallery.core.sampleImage
-import plutoproject.feature.gallery.core.sampleStaticImageDataEntry
 
 class BatchLoadUseCaseTest {
     @Test
@@ -44,7 +34,7 @@ class BatchLoadUseCaseTest {
 
         val result = GetImagesByIdsUseCase(repository, manager).execute(listOf(loaded.id, missing.id, dummyUuid(5103)))
 
-        val found = (result as GetImagesByIdsUseCase.Result.Ok).images
+        val found = (result as GetImagesByIdsUseCase.Result.Success).images
         assertEquals(setOf(loaded.id, missing.id), found.keys)
         assertSame(loaded, found[loaded.id])
         assertSame(missing, manager.getLoadedImage(missing.id))
@@ -55,14 +45,14 @@ class BatchLoadUseCaseTest {
         val manager = ImageManager()
         val loaded = sampleStaticImageDataEntry(dummyUuid(5201))
         val missing = sampleStaticImageDataEntry(dummyUuid(5202))
-        val repository = InMemoryImageDataEntryRepository(mutableMapOf(missing.belongsTo to missing))
+        val repository = InMemoryImageDataEntryRepository(mutableMapOf(missing.imageId to missing))
         manager.loadImageDataEntry(loaded)
 
-        val result = GetImageDataEntriesByBelongsToUseCase(repository, manager).execute(listOf(loaded.belongsTo, missing.belongsTo, dummyUuid(5203)))
+        val result = GetImageDataEntriesByBelongsToUseCase(repository, manager).execute(listOf(loaded.imageId, missing.imageId, dummyUuid(5203)))
 
-        val found = (result as GetImageDataEntriesByBelongsToUseCase.Result.Ok).entries
-        assertEquals(setOf(loaded.belongsTo, missing.belongsTo), found.keys)
-        assertSame(loaded, found[loaded.belongsTo])
-        assertSame(missing, manager.getLoadedImageDataEntry(missing.belongsTo))
+        val found = (result as GetImageDataEntriesByBelongsToUseCase.Result.Success).entries
+        assertEquals(setOf(loaded.imageId, missing.imageId), found.keys)
+        assertSame(loaded, found[loaded.imageId])
+        assertSame(missing, manager.getLoadedImageDataEntry(missing.imageId))
     }
 }

@@ -10,9 +10,10 @@ import java.util.*
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
-@OptIn(ExperimentalUnsignedTypes::class)
 class StaticDisplayJob(
     override val belongsTo: UUID,
+    private val image: Image,
+    private val imageDataEntry: ImageDataEntry.Static,
     private val displayScheduler: DisplayScheduler,
     private val viewPort: ViewPort,
     private val displayManager: DisplayManager,
@@ -32,26 +33,15 @@ class StaticDisplayJob(
     private val visibleTileIdsByPlayer = LinkedHashMap<UUID, LinkedHashSet<Int>>()
     private val decodedTilesByTileId = HashMap<Int, ByteArray>()
 
-    private var image: Image? = null
-    private var imageDataEntry: ImageDataEntry<*>? = null
-
     init {
+        validateSharedObjects(image, imageDataEntry)
         require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
         require(updateInterval.isPositive()) { "updateInterval must be greater than 0" }
     }
 
-    override fun attach(
-        displayInstance: DisplayInstance,
-        image: Image,
-        imageDataEntry: ImageDataEntry<*>,
-    ) {
+    override fun attach(displayInstance: DisplayInstance) {
         check(!isStopped) { "DisplayJob is stopped" }
-        validateSharedObjects(displayInstance, image, imageDataEntry)
-
-        if (this.image == null) {
-            this.image = image
-            this.imageDataEntry = imageDataEntry
-        }
+        validateDisplayInstance(displayInstance)
 
         _managedDisplayInstances[displayInstance.id] = displayInstance
         displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
@@ -73,8 +63,7 @@ class StaticDisplayJob(
             return
         }
 
-        val image = image ?: return
-        val staticData = imageDataEntry?.asStaticData() ?: return
+        val staticData = imageDataEntry.data
         val visibleTileIdsByPlayer = this.visibleTileIdsByPlayer.also { it.clear() }
 
         _managedDisplayInstances.values
@@ -100,7 +89,7 @@ class StaticDisplayJob(
                         val visibleTileIds = visibleTileIdsByPlayer.computeIfAbsent(playerView.id) {
                             LinkedHashSet()
                         }
-                        collectTileIds(rect, image.mapWidthBlocks, visibleTileIds)
+                        collectTileIds(rect, image.widthBlocks, visibleTileIds)
                     }
                 }
             }
@@ -141,26 +130,26 @@ class StaticDisplayJob(
         receivedMapIdsByPlayer.clear()
         visibleTileIdsByPlayer.clear()
         decodedTilesByTileId.clear()
-        image = null
-        imageDataEntry = null
     }
 
-    private fun validateSharedObjects(
-        displayInstance: DisplayInstance,
-        image: Image,
-        imageDataEntry: ImageDataEntry<*>,
-    ) {
+    private fun validateDisplayInstance(displayInstance: DisplayInstance) {
         require(displayInstance.belongsTo == belongsTo) {
             "DisplayInstance belongsTo mismatch: expected=$belongsTo, actual=${displayInstance.belongsTo}"
         }
+    }
+
+    private fun validateSharedObjects(
+        image: Image,
+        imageDataEntry: ImageDataEntry.Static,
+    ) {
         require(image.id == belongsTo) {
             "Image id mismatch: expected=$belongsTo, actual=${image.id}"
         }
         require(image.type == ImageType.STATIC) {
             "StaticDisplayJob requires static image, actual=${image.type}"
         }
-        require(imageDataEntry.belongsTo == belongsTo) {
-            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.belongsTo}"
+        require(imageDataEntry.imageId == belongsTo) {
+            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.imageId}"
         }
         require(imageDataEntry.type == ImageType.STATIC) {
             "StaticDisplayJob requires static image data, actual=${imageDataEntry.type}"

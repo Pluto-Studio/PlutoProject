@@ -34,7 +34,7 @@ class StartDisplayJobUseCase(
 
         val job = displayJobFactory.create(image, imageDataEntry)
         displayManager.registerDisplayJob(job)
-        job.attach(displayInstance, image, imageDataEntry)
+        job.attach(displayInstance)
         displayManager.bindDisplayInstanceToJob(displayInstance.id, displayInstance.belongsTo)
         displayScheduler.scheduleAwakeAt(job, clock.instant())
         return Result.Ok(job)
@@ -48,8 +48,8 @@ class StartDisplayJobUseCase(
         require(displayInstance.belongsTo == image.id) {
             "DisplayInstance belongsTo mismatch: display.belongsTo=${displayInstance.belongsTo}, image.id=${image.id}"
         }
-        require(image.id == imageDataEntry.belongsTo) {
-            "ImageDataEntry belongsTo mismatch: image.id=${image.id}, belongsTo=${imageDataEntry.belongsTo}"
+        require(image.id == imageDataEntry.imageId) {
+            "ImageDataEntry belongsTo mismatch: image.id=${image.id}, belongsTo=${imageDataEntry.imageId}"
         }
         require(image.type == imageDataEntry.type) {
             "Image and ImageDataEntry type mismatch: image.type=${image.type}, entry.type=${imageDataEntry.type}"

@@ -21,9 +21,9 @@ import plutoproject.feature.gallery.core.display.SchedulerState
 import plutoproject.feature.gallery.core.display.Vec3
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.image.StaticImageData
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.core.render.tile.codec.TileEncoder
@@ -43,8 +43,8 @@ class StaticDisplayJobTest {
             owner = dummyUuid(6100),
             ownerName = "Owner_6100",
             name = "static-job-test-1",
-            mapWidthBlocks = 1,
-            mapHeightBlocks = 1,
+            widthBlocks = 1,
+            heightBlocks = 1,
             tileMapIds = intArrayOf(77),
         )
         val entry = staticImageDataEntry(
@@ -110,8 +110,8 @@ class StaticDisplayJobTest {
             owner = dummyUuid(6110),
             ownerName = "Owner_6110",
             name = "static-job-test-2",
-            mapWidthBlocks = 1,
-            mapHeightBlocks = 1,
+            widthBlocks = 1,
+            heightBlocks = 1,
             tileMapIds = intArrayOf(88),
         )
         val entry = staticImageDataEntry(
@@ -170,8 +170,8 @@ class StaticDisplayJobTest {
             owner = dummyUuid(6120),
             ownerName = "Owner_6120",
             name = "static-job-test-3",
-            mapWidthBlocks = 1,
-            mapHeightBlocks = 1,
+            widthBlocks = 1,
+            heightBlocks = 1,
             tileMapIds = intArrayOf(99),
         )
         val entry = staticImageDataEntry(
@@ -233,8 +233,8 @@ class StaticDisplayJobTest {
             owner = dummyUuid(6130),
             ownerName = "Owner_6130",
             name = "static-job-test-4",
-            mapWidthBlocks = 2,
-            mapHeightBlocks = 1,
+            widthBlocks = 2,
+            heightBlocks = 1,
             tileMapIds = intArrayOf(131, 132),
         )
         val entry = staticImageDataEntry(
@@ -330,9 +330,9 @@ class StaticDisplayJobTest {
         return ImageDataEntry(
             belongsTo = belongsTo,
             type = ImageType.STATIC,
-            data = StaticImageData(
+            data = ImageData.Static(
                 tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
-                tileIndexes = UShortArray(tileColors.size) { it.toUShort() },
+                tileIndexes = ShortArray(tileColors.size) { it.toShort() },
             ),
         )
     }

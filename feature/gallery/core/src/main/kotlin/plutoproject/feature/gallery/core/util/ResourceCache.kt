@@ -65,7 +65,11 @@ abstract class ResourceCache<K, V, I>(
             return
         }
 
-        logger.log(Level.WARNING, "An internal error occurred while running cleaner job for ${this::class.simpleName}", cause)
+        logger.log(
+            Level.WARNING,
+            "An internal error occurred while running cleaner job for ${this::class.simpleName}",
+            cause
+        )
         ensureCleanerRunning()
     }
 
@@ -137,6 +141,12 @@ abstract class ResourceCache<K, V, I>(
         synchronized(lock) {
             checkNotDisposed()
             values.forEach(::put)
+        }
+    }
+
+    fun contains(key: K): Boolean {
+        synchronized(lock) {
+            return entriesByKey.containsKey(key)
         }
     }
 

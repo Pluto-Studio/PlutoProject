@@ -1,7 +1,6 @@
 package plutoproject.feature.gallery.core.image.usecase
 
-import plutoproject.feature.gallery.core.image.AnimatedImageData
-import plutoproject.feature.gallery.core.image.StaticImageData
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import kotlin.time.Duration.Companion.milliseconds
@@ -16,9 +15,9 @@ internal fun tilePool(uniqueTileCount: Int): TilePool = TilePool.fromSnapshot(
 internal fun staticImageData(
     tileIndexesSize: Int,
     uniqueTileCount: Int = 1,
-): StaticImageData = StaticImageData(
+): ImageData.Static = ImageData.Static(
     tilePool = tilePool(uniqueTileCount),
-    tileIndexes = UShortArray(tileIndexesSize),
+    tileIndexes = ShortArray(tileIndexesSize),
 )
 
 internal fun animatedImageData(
@@ -26,9 +25,9 @@ internal fun animatedImageData(
     durationMillis: Int,
     tileIndexesSize: Int,
     uniqueTileCount: Int = 1,
-): AnimatedImageData = AnimatedImageData(
+): ImageData.Animated = ImageData.Animated(
+    tilePool = tilePool(uniqueTileCount),
+    tileIndexes = ShortArray(tileIndexesSize),
     frameCount = frameCount,
     duration = durationMillis.milliseconds,
-    tilePool = tilePool(uniqueTileCount),
-    tileIndexes = UShortArray(tileIndexesSize),
 )

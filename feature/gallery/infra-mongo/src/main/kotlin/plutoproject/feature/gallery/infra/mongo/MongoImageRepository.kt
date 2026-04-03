@@ -39,6 +39,10 @@ class MongoImageRepository(
             .map { it.toDomain() }
     }
 
+    override suspend fun count(): Int {
+        return collection.countDocuments().toInt()
+    }
+
     override suspend fun save(image: Image) {
         val document = image.toDocument()
         collection.replaceOne(eq(ImageDocument::id.name, document.id), document, upsert)

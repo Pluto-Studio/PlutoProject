@@ -14,10 +14,10 @@ import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
 import plutoproject.feature.gallery.core.display.usecase.*
+import plutoproject.feature.gallery.core.image.ImageCache
+import plutoproject.feature.gallery.core.image.ImageDataEntryCache
 import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
-import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageRepository
-import plutoproject.feature.gallery.core.image.usecase.*
 import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
@@ -58,7 +58,9 @@ val commonModule = module {
         )
     }
 
-    singleOf(::ImageManager)
+    singleOf(::ImageCache)
+    singleOf(::ImageDataEntryCache)
+
     singleOf(::DisplayManager)
     singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
 
@@ -85,8 +87,6 @@ val commonModule = module {
             updateLimitSpan = get<GalleryConfig>().send.updateLimitSpan,
         )
     }
-
-    singleOf(::CreateImageUseCase)
     single<AllocateMapIdUseCase> {
         val allocationRange = get<GalleryConfig>().mapIdRange
         AllocateMapIdUseCase(
@@ -97,11 +97,6 @@ val commonModule = module {
             systemInformationRepository = get(),
         )
     }
-    singleOf(::GetImageUseCase)
-    singleOf(::DeleteImageUseCase)
-    singleOf(::RenameImageUseCase)
-    singleOf(::ChangeImageOwnerNameUseCase)
-    singleOf(::LookupImageByOwnerUseCase)
 
     singleOf(::CreateDisplayInstanceUseCase)
     singleOf(::DeleteDisplayInstanceUseCase)
@@ -109,14 +104,6 @@ val commonModule = module {
     singleOf(::GetDisplayInstancesByIdsUseCase)
     singleOf(::LookupDisplayInstanceByBelongsUseCase)
     singleOf(::LookupDisplayInstanceByChunkUseCase)
-
-    singleOf(::CreateImageDataEntryUseCase)
-    singleOf(::GetImageDataEntryUseCase)
-    singleOf(::GetImageDataEntriesByBelongsToUseCase)
-    singleOf(::DeleteImageDataEntryUseCase)
-    singleOf(::ReplaceImageDataEntryUseCase)
-
-    singleOf(::GetImagesByIdsUseCase)
 
     singleOf(::StartDisplayJobUseCase)
     singleOf(::StopDisplayJobUseCase)

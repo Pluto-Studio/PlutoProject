@@ -19,8 +19,8 @@ import plutoproject.feature.gallery.core.display.PlayerView
 import plutoproject.feature.gallery.core.display.SchedulerState
 import plutoproject.feature.gallery.core.display.Vec3
 import plutoproject.feature.gallery.core.display.ViewPort
-import plutoproject.feature.gallery.core.image.AnimatedImageData
 import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.render.tile.TilePool
@@ -81,8 +81,8 @@ class AnimatedDisplayJobTest {
             owner = dummyUuid(6210),
             ownerName = "Owner_6210",
             name = "animated-job-test",
-            mapWidthBlocks = 2,
-            mapHeightBlocks = 1,
+            widthBlocks = 2,
+            heightBlocks = 1,
             tileMapIds = intArrayOf(101, 102),
         )
         val frameOneTileA = ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 5 }
@@ -229,8 +229,8 @@ class AnimatedDisplayJobTest {
             owner = dummyUuid(6200),
             ownerName = "Owner_6200",
             name = "animated-image",
-            mapWidthBlocks = tileMapIds.size,
-            mapHeightBlocks = 1,
+            widthBlocks = tileMapIds.size,
+            heightBlocks = 1,
             tileMapIds = tileMapIds,
         )
     }
@@ -241,16 +241,16 @@ class AnimatedDisplayJobTest {
         durationMillis: Int,
     ): ImageDataEntry<*> {
         val encodedTiles = linkedMapOf<String, ByteArray>()
-        val frameIndexes = mutableListOf<UShort>()
+        val frameIndexes = mutableListOf<Short>()
 
         frameTileColors.flatten().forEach { tileColors ->
             val key = tileColors.contentToString()
             val tileIndex = encodedTiles.keys.indexOf(key)
             if (tileIndex >= 0) {
-                frameIndexes += tileIndex.toUShort()
+                frameIndexes += tileIndex.toShort()
             } else {
                 encodedTiles[key] = TileEncoder.encode(tileColors)
-                frameIndexes += (encodedTiles.size - 1).toUShort()
+                frameIndexes += (encodedTiles.size - 1).toShort()
             }
         }
 
@@ -272,11 +272,11 @@ class AnimatedDisplayJobTest {
         return ImageDataEntry(
             belongsTo = belongsTo,
             type = ImageType.ANIMATED,
-            data = AnimatedImageData(
+            data = ImageData.Animated(
+                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
+                tileIndexes = frameIndexes.toShortArray(),
                 frameCount = frameTileColors.size,
                 duration = durationMillis.milliseconds,
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
-                tileIndexes = frameIndexes.toUShortArray(),
             ),
         )
     }

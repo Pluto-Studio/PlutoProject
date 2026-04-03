@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.InMemoryImageRepository
 import plutoproject.feature.gallery.core.dummyUuid
@@ -32,7 +31,7 @@ class ImageCrudUseCaseTest {
             tileMapIds = intArrayOf(1),
         )
 
-        val image = (result as CreateImageUseCase.Result.Ok).image
+        val image = (result as CreateImageUseCase.Result.Success).image
         assertNotNull(repo.findById(id))
         assertSame(image, manager.getLoadedImage(id))
     }
@@ -56,7 +55,7 @@ class ImageCrudUseCaseTest {
             tileMapIds = intArrayOf(1),
         )
 
-        assertEquals(CreateImageUseCase.Result.AlreadyExisted(existed), result)
+        assertEquals(CreateImageUseCase.Result.AlreadyExists(existed), result)
     }
 
     @Test
@@ -70,8 +69,8 @@ class ImageCrudUseCaseTest {
         val first = useCase.execute(image.id)
         val second = useCase.execute(image.id)
 
-        assertSame((first as GetImageUseCase.Result.Ok).image, manager.getLoadedImage(image.id))
-        assertSame((second as GetImageUseCase.Result.Ok).image, manager.getLoadedImage(image.id))
+        assertSame((first as GetImageUseCase.Result.Success).image, manager.getLoadedImage(image.id))
+        assertSame((second as GetImageUseCase.Result.Success).image, manager.getLoadedImage(image.id))
     }
 
     @Test
@@ -85,7 +84,7 @@ class ImageCrudUseCaseTest {
 
         val result = useCase.execute(image.id, "new")
 
-        assertEquals(RenameImageUseCase.Result.Ok, result)
+        assertEquals(RenameImageUseCase.Result.Success, result)
         assertEquals("new", image.name)
         assertEquals("new", repo.findById(image.id)?.name)
     }
@@ -100,7 +99,7 @@ class ImageCrudUseCaseTest {
 
         val result = useCase.execute(image.id, "NewName")
 
-        assertEquals(ChangeImageOwnerNameUseCase.Result.Ok, result)
+        assertEquals(ChangeImageOwnerNameUseCase.Result.Success, result)
         assertEquals("NewName", repo.findById(image.id)?.ownerName)
         assertNull(manager.getLoadedImage(image.id))
     }
@@ -121,7 +120,7 @@ class ImageCrudUseCaseTest {
         val lookup = LookupImageByOwnerUseCase(repo)
         val delete = DeleteImageUseCase(repo, manager)
 
-        val ownerImages = (lookup.execute(owner) as LookupImageByOwnerUseCase.Result.Ok).images
+        val ownerImages = (lookup.execute(owner) as LookupImageByOwnerUseCase.Result.Success).images
         assertEquals(2, ownerImages.size)
 
         manager.loadImage(first)
@@ -138,6 +137,6 @@ class ImageCrudUseCaseTest {
 
         val result = useCase.execute(dummyUuid(2001))
 
-        assertEquals(DeleteImageUseCase.Result.NotExisted, result)
+        assertEquals(DeleteImageUseCase.Result.NotFound, result)
     }
 }

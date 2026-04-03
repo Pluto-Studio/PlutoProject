@@ -4,11 +4,11 @@ import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.core.image.ImageRepository
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.image.StaticImageData
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import java.util.UUID
@@ -29,8 +29,8 @@ internal fun sampleImage(
         owner = owner,
         ownerName = ownerName,
         name = name,
-        mapWidthBlocks = 2,
-        mapHeightBlocks = 2,
+        widthBlocks = 2,
+        heightBlocks = 2,
         tileMapIds = intArrayOf(100, 101, 102, 103),
     )
 }
@@ -61,14 +61,14 @@ internal fun sampleStaticImageDataEntry(belongsTo: UUID = dummyUuid(907)): Image
     return ImageDataEntry(
         belongsTo = belongsTo,
         type = ImageType.STATIC,
-        data = StaticImageData(
+        data = ImageData.Static(
             tilePool = TilePool.fromSnapshot(
                 TilePoolSnapshot(
                     offsets = intArrayOf(0, 0),
                     blob = ByteArray(0),
                 )
             ),
-            tileIndexes = ushortArrayOf(0u),
+            tileIndexes = shortArrayOf(0),
         ),
     )
 }
@@ -88,6 +88,10 @@ internal class InMemoryImageRepository(
         return storage.values.filter { it.owner == owner }
     }
 
+    override suspend fun count(): Int {
+        return storage.size
+    }
+
     override suspend fun save(image: Image) {
         storage[image.id] = image
     }
@@ -100,19 +104,19 @@ internal class InMemoryImageRepository(
 internal class InMemoryImageDataEntryRepository(
     private val storage: MutableMap<UUID, ImageDataEntry<*>> = mutableMapOf(),
 ) : ImageDataEntryRepository {
-    override suspend fun findByBelongsTo(belongsTo: UUID): ImageDataEntry<*>? {
-        return storage[belongsTo]
+    override suspend fun findByImageId(imageId: UUID): ImageDataEntry<*>? {
+        return storage[imageId]
     }
 
-    override suspend fun findByBelongsToIn(belongsToList: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
-        return belongsToList.mapNotNull { belongsTo -> storage[belongsTo]?.let { belongsTo to it } }.toMap()
+    override suspend fun findByImageIds(imageIds: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
+        return imageIds.mapNotNull { belongsTo -> storage[belongsTo]?.let { belongsTo to it } }.toMap()
     }
 
     override suspend fun save(entry: ImageDataEntry<*>) {
-        storage[entry.belongsTo] = entry
+        storage[entry.imageId] = entry
     }
 
-    override suspend fun deleteByBelongsTo(belongsTo: UUID) {
+    override suspend fun deleteByImageId(belongsTo: UUID) {
         storage.remove(belongsTo)
     }
 }

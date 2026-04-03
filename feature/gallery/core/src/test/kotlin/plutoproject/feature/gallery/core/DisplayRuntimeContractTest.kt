@@ -59,7 +59,7 @@ class DisplayRuntimeContractTest {
             check(!isStopped) { "DisplayJob is stopped" }
             require(displayInstance.belongsTo == belongsTo)
             require(image.id == belongsTo)
-            require(imageDataEntry.belongsTo == belongsTo)
+            require(imageDataEntry.imageId == belongsTo)
             managedDisplayInstances[displayInstance.id] = displayInstance
         }
 

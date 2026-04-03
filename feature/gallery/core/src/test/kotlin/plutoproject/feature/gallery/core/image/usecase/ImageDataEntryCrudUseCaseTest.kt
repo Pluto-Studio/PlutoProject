@@ -6,11 +6,9 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.image.ImageDataEntry
-import plutoproject.feature.gallery.core.image.AnimatedImageData
-import plutoproject.feature.gallery.core.image.ImageManager
-import plutoproject.feature.gallery.core.image.StaticImageData
 import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.image.ImageData
+import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.InMemoryImageDataEntryRepository
 import plutoproject.feature.gallery.core.dummyUuid
 
@@ -28,8 +26,8 @@ class ImageDataEntryCrudUseCaseTest {
             data = staticImageData(tileIndexesSize = 1),
         )
 
-        val entry = (result as CreateImageDataEntryUseCase.Result.Ok).entry
-        assertNotNull(repo.findByBelongsTo(belongsTo))
+        val entry = (result as CreateImageDataEntryUseCase.Result.Success).entry
+        assertNotNull(repo.findByImageId(belongsTo))
         assertSame(entry, manager.getLoadedImageDataEntry(belongsTo))
     }
 
@@ -52,7 +50,7 @@ class ImageDataEntryCrudUseCaseTest {
             data = staticImageData(tileIndexesSize = 1),
         )
 
-        assertEquals(CreateImageDataEntryUseCase.Result.AlreadyExisted(existed), result)
+        assertEquals(CreateImageDataEntryUseCase.Result.AlreadyExists(existed), result)
     }
 
     @Test
@@ -71,8 +69,8 @@ class ImageDataEntryCrudUseCaseTest {
         val first = useCase.execute(belongsTo)
         val second = useCase.execute(belongsTo)
 
-        assertSame((first as GetImageDataEntryUseCase.Result.Ok).entry, manager.getLoadedImageDataEntry(belongsTo))
-        assertSame((second as GetImageDataEntryUseCase.Result.Ok).entry, manager.getLoadedImageDataEntry(belongsTo))
+        assertSame((first as GetImageDataEntryUseCase.Result.Success).entry, manager.getLoadedImageDataEntry(belongsTo))
+        assertSame((second as GetImageDataEntryUseCase.Result.Success).entry, manager.getLoadedImageDataEntry(belongsTo))
     }
 
     @Test
@@ -92,9 +90,9 @@ class ImageDataEntryCrudUseCaseTest {
         val newData = staticImageData(tileIndexesSize = 4)
         val result = useCase.execute(belongsTo, newData)
 
-        assertEquals(ReplaceImageDataEntryUseCase.Result.Ok, result)
+        assertEquals(ReplaceImageDataEntryUseCase.Result.Success, result)
         assertSame(newData, entry.data)
-        assertSame(newData, (repo.findByBelongsTo(belongsTo)?.data as StaticImageData))
+        assertSame(newData, (repo.findByImageId(belongsTo)?.data as ImageData.Static))
     }
 
     @Test
@@ -113,8 +111,8 @@ class ImageDataEntryCrudUseCaseTest {
         val newData = animatedImageData(frameCount = 2, durationMillis = 100, tileIndexesSize = 2)
         val result = useCase.execute(belongsTo, newData)
 
-        assertEquals(ReplaceImageDataEntryUseCase.Result.Ok, result)
-        assertSame(newData, (repo.findByBelongsTo(belongsTo)?.data as AnimatedImageData))
+        assertEquals(ReplaceImageDataEntryUseCase.Result.Success, result)
+        assertSame(newData, (repo.findByImageId(belongsTo)?.data as ImageData.Animated))
         assertNull(manager.getLoadedImageDataEntry(belongsTo))
     }
 
@@ -134,8 +132,8 @@ class ImageDataEntryCrudUseCaseTest {
 
         val result = useCase.execute(belongsTo)
 
-        assertEquals(DeleteImageDataEntryUseCase.Result.Ok, result)
-        assertNull(repo.findByBelongsTo(belongsTo))
+        assertEquals(DeleteImageDataEntryUseCase.Result.Success, result)
+        assertNull(repo.findByImageId(belongsTo))
         assertNull(manager.getLoadedImageDataEntry(belongsTo))
     }
 
@@ -147,6 +145,6 @@ class ImageDataEntryCrudUseCaseTest {
 
         val result = useCase.execute(dummyUuid(331))
 
-        assertEquals(DeleteImageDataEntryUseCase.Result.NotExisted, result)
+        assertEquals(DeleteImageDataEntryUseCase.Result.NotFound, result)
     }
 }

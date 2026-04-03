@@ -181,7 +181,7 @@ class DisplayRuntimeLifecycleUseCaseTest {
 
         override fun attach(displayInstance: DisplayInstance, image: Image, imageDataEntry: ImageDataEntry<*>) {
             require(image.id == belongsTo)
-            require(imageDataEntry.belongsTo == belongsTo)
+            require(imageDataEntry.imageId == belongsTo)
             managedDisplayInstances[displayInstance.id] = displayInstance
             attachedInstances += displayInstance
         }
