@@ -1,33 +1,18 @@
 package plutoproject.feature.gallery.core.decode
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi
-import javax.imageio.spi.IIORegistry
+import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStreamSpi
+import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
 
-private val webpReaderSpi = WebPImageReaderSpi()
-private val pngReaderSpi: ImageReaderSpi by lazy { findReaderSpi("png") }
-private val jpegReaderSpi: ImageReaderSpi by lazy { findReaderSpi("jpeg") }
-private val gifReaderSpi: ImageReaderSpi by lazy { findReaderSpi("gif") }
-
-private fun findReaderSpi(format: String): ImageReaderSpi {
-    val providers = IIORegistry.getDefaultInstance()
-        .getServiceProviders(ImageReaderSpi::class.java, true)
-
-    return providers.asSequence().firstOrNull { spi ->
-        spi.formatNames.any { it.equals(format, ignoreCase = true) }
-    } ?: error("No ImageReaderSpi found for format: $format")
-}
-
-enum class DecodableImageFormat {
-    PNG, JPEG, WEBP, GIF;
-
-    val readerSpi: ImageReaderSpi
-        get() = when (this) {
-            PNG -> pngReaderSpi
-            JPEG -> jpegReaderSpi
-            WEBP -> webpReaderSpi
-            GIF -> gifReaderSpi
-        }
+enum class DecodableImageFormat(
+    val inputStreamSpi: ImageInputStreamSpi? = null,
+    val readerSpi: ImageReaderSpi? = null,
+) {
+    PNG,
+    JPEG,
+    WEBP(inputStreamSpi = ByteArrayImageInputStreamSpi(), readerSpi = WebPImageReaderSpi()),
+    GIF,
 }
 
 object ImageFormatSniffer {

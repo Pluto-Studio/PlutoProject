@@ -19,7 +19,6 @@ class StaticImageDecoderTest {
         val result = StaticImageDecoder.decode(
             bytes = encode(source, "png"),
             constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-            readerSpi = DecodableImageFormat.PNG.readerSpi
         )
 
         assertTrue(result is DecodeResult.Success)
@@ -40,7 +39,6 @@ class StaticImageDecoderTest {
         val result = StaticImageDecoder.decode(
             bytes = encode(source, "jpg"),
             constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-            readerSpi = DecodableImageFormat.JPEG.readerSpi
         )
 
         assertTrue(result is DecodeResult.Success)
@@ -57,12 +55,8 @@ class StaticImageDecoderTest {
         val jpgSource = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
         val constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 3, maxFrames = 500)
 
-        val pngResult = StaticImageDecoder.decode(
-            encode(pngSource, "png"), constraints, DecodableImageFormat.PNG.readerSpi
-        )
-        val jpgResult = StaticImageDecoder.decode(
-            encode(jpgSource, "jpg"), constraints, DecodableImageFormat.JPEG.readerSpi
-        )
+        val pngResult = StaticImageDecoder.decode(encode(pngSource, "png"), constraints)
+        val jpgResult = StaticImageDecoder.decode(encode(jpgSource, "jpg"), constraints)
 
         assertEquals(DecodeResult.ImageTooLarge, pngResult)
         assertEquals(DecodeResult.ImageTooLarge, jpgResult)
@@ -73,7 +67,6 @@ class StaticImageDecoderTest {
         val result = StaticImageDecoder.decode(
             bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2, 3),
             constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-            readerSpi = DecodableImageFormat.JPEG.readerSpi
         )
 
         assertEquals(DecodeResult.InvalidImage, result)

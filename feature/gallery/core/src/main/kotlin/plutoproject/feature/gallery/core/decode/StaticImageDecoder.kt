@@ -6,8 +6,9 @@ import kotlinx.coroutines.withContext
 import plutoproject.feature.gallery.core.render.PixelBuffer
 import java.io.ByteArrayInputStream
 import java.io.EOFException
-import javax.imageio.ImageIO
 import javax.imageio.IIOException
+import javax.imageio.ImageIO
+import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
 import javax.imageio.stream.ImageInputStream
 
@@ -15,21 +16,24 @@ object StaticImageDecoder {
     suspend fun decode(
         bytes: ByteArray,
         constraints: DecodeConstraints,
-        readerSpi: ImageReaderSpi
+        inputStreamSpi: ImageInputStreamSpi? = null,
+        readerSpi: ImageReaderSpi? = null,
     ): DecodeResult<PixelBuffer> = try {
         if (bytes.size > constraints.maxBytes) {
             return DecodeResult.ImageTooLarge
         }
 
-        val imageInput = withContext(Dispatchers.IO) {
-            ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
-        } ?: return DecodeResult.UnsupportedFormat
+        val imageInput = createImageInput(bytes, inputStreamSpi) ?: return DecodeResult.UnsupportedFormat
 
         imageInput.use { input ->
             decodeImageInput(input, constraints, readerSpi)
         }
     } catch (e: CancellationException) {
         throw e
+    } catch (_: EOFException) {
+        DecodeResult.InvalidImage
+    } catch (_: IIOException) {
+        DecodeResult.InvalidImage
     } catch (e: Throwable) {
         DecodeResult.UnknownFailure(e)
     }
@@ -38,11 +42,9 @@ object StaticImageDecoder {
 private suspend fun decodeImageInput(
     input: ImageInputStream,
     constraints: DecodeConstraints,
-    readerSpi: ImageReaderSpi
+    readerSpi: ImageReaderSpi?,
 ): DecodeResult<PixelBuffer> {
-    val reader = withContext(Dispatchers.IO) {
-        readerSpi.createReaderInstance()
-    }
+    val reader = createReader(input, readerSpi) ?: return DecodeResult.UnsupportedFormat
 
     try {
         reader.input = input
@@ -66,11 +68,25 @@ private suspend fun decodeImageInput(
         val pixels = image.getRGB(0, 0, width, height, IntArray(pixelCount.toInt()), 0, width)
 
         return DecodeResult.Success(PixelBuffer(width, height, pixels))
-    } catch (_: EOFException) {
-        return DecodeResult.InvalidImage
-    } catch (_: IIOException) {
-        return DecodeResult.InvalidImage
     } finally {
         reader.dispose()
     }
+}
+
+private suspend fun createImageInput(
+    bytes: ByteArray,
+    inputStreamSpi: ImageInputStreamSpi?,
+): ImageInputStream? = withContext(Dispatchers.IO) {
+    inputStreamSpi?.createInputStreamInstance(bytes, false, null)
+        ?: ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+}
+
+private suspend fun createReader(
+    input: ImageInputStream,
+    readerSpi: ImageReaderSpi?,
+) = withContext(Dispatchers.IO) {
+    readerSpi?.createReaderInstance()
+        ?: ImageIO.getImageReaders(input).asSequence().firstOrNull()?.also {
+            input.seek(0)
+        }
 }

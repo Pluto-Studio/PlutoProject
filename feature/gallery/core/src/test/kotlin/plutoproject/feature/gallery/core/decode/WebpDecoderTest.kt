@@ -12,6 +12,7 @@ class WebpDecoderTest {
         val result = StaticImageDecoder.decode(
             bytes = decodeBase64(WEBP_1X1_TRANSPARENT_BASE64),
             constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            inputStreamSpi = DecodableImageFormat.WEBP.inputStreamSpi,
             readerSpi = DecodableImageFormat.WEBP.readerSpi
         )
 
@@ -31,6 +32,7 @@ class WebpDecoderTest {
                 'W'.code.toByte(), 'E'.code.toByte(), 'B'.code.toByte(), 'P'.code.toByte(),
             ),
             constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            inputStreamSpi = DecodableImageFormat.WEBP.inputStreamSpi,
             readerSpi = DecodableImageFormat.WEBP.readerSpi
         )
 

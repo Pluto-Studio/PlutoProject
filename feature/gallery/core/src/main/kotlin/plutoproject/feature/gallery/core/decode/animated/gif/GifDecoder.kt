@@ -3,19 +3,21 @@ package plutoproject.feature.gallery.core.decode.animated.gif
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import plutoproject.feature.gallery.core.decode.DecodableImageFormat
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageMetadata
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import java.io.ByteArrayInputStream
 import java.io.EOFException
-import javax.imageio.ImageIO
 import javax.imageio.IIOException
+import javax.imageio.ImageIO
 import javax.imageio.stream.ImageInputStream
 
 object GifDecoder {
-    suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): DecodeResult<AnimatedImageSource> = try {
+    suspend fun decode(
+        bytes: ByteArray,
+        constraints: DecodeConstraints,
+    ): DecodeResult<AnimatedImageSource> = try {
         if (bytes.size > constraints.maxBytes) {
             return DecodeResult.ImageTooLarge
         }
@@ -29,6 +31,10 @@ object GifDecoder {
         }
     } catch (e: CancellationException) {
         throw e
+    } catch (_: EOFException) {
+        DecodeResult.InvalidImage
+    } catch (_: IIOException) {
+        DecodeResult.InvalidImage
     } catch (e: Throwable) {
         DecodeResult.UnknownFailure(e)
     }
@@ -37,11 +43,11 @@ object GifDecoder {
 private suspend fun decodeImageInput(
     bytes: ByteArray,
     input: ImageInputStream,
-    constraints: DecodeConstraints
+    constraints: DecodeConstraints,
 ): DecodeResult<AnimatedImageSource> {
     val reader = withContext(Dispatchers.IO) {
-        DecodableImageFormat.GIF.readerSpi.createReaderInstance()
-    }
+        ImageIO.getImageReadersByFormatName("gif").asSequence().firstOrNull()
+    } ?: return DecodeResult.UnsupportedFormat
 
     try {
         reader.input = input
@@ -81,10 +87,6 @@ private suspend fun decodeImageInput(
                 frameStreamOpener = { openFrameStream(bytes, metadata) },
             )
         )
-    } catch (_: EOFException) {
-        return DecodeResult.InvalidImage
-    } catch (_: IIOException) {
-        return DecodeResult.InvalidImage
     } finally {
         reader.dispose()
     }
@@ -96,12 +98,12 @@ private suspend fun openFrameStream(
 ): GifFrameStream {
     val imageInput = withContext(Dispatchers.IO) {
         ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
-    } ?: error("Failed to create gif image input stream")
+    } ?: error("Failed to create GIF image input stream")
 
     val reader = runCatching {
         withContext(Dispatchers.IO) {
-            DecodableImageFormat.GIF.readerSpi.createReaderInstance()
-        }
+            ImageIO.getImageReadersByFormatName("gif").asSequence().firstOrNull()
+        } ?: error("Failed to create GIF image reader")
     }.onFailure {
         imageInput.close()
     }.getOrThrow()
