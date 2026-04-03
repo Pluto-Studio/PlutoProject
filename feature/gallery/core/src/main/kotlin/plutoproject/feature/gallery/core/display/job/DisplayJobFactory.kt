@@ -1,11 +1,54 @@
 package plutoproject.feature.gallery.core.display.job
 
+import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
+import plutoproject.feature.gallery.core.image.ImageType
+import java.time.Clock
+import kotlin.time.Duration
 
-interface DisplayJobFactory {
+class DisplayJobFactory(
+    private val displayScheduler: DisplayScheduler,
+    private val viewPort: ViewPort,
+    private val displayManager: DisplayManager,
+    private val clock: Clock,
+    private val animatedMaxFramesPerSecond: Int,
+    private val visibleDistance: Double,
+    private val staticUpdateInterval: Duration,
+) {
     fun create(
         image: Image,
         imageDataEntry: ImageDataEntry<*>,
-    ): DisplayJob
+    ): DisplayJob {
+        require(image.id == imageDataEntry.belongsTo) {
+            "Image and ImageDataEntry mismatch: image.id=${image.id}, belongsTo=${imageDataEntry.belongsTo}"
+        }
+        require(image.type == imageDataEntry.type) {
+            "Image and ImageDataEntry type mismatch: image.type=${image.type}, entry.type=${imageDataEntry.type}"
+        }
+
+        return when (image.type) {
+            ImageType.STATIC -> StaticDisplayJob(
+                belongsTo = image.id,
+                displayScheduler = displayScheduler,
+                viewPort = viewPort,
+                displayManager = displayManager,
+                clock = clock,
+                visibleDistance = visibleDistance,
+                updateInterval = staticUpdateInterval,
+            )
+
+            ImageType.ANIMATED -> AnimatedDisplayJob(
+                belongsTo = image.id,
+                displayScheduler = displayScheduler,
+                viewPort = viewPort,
+                displayManager = displayManager,
+                clock = clock,
+                maxFramesPerSecond = animatedMaxFramesPerSecond,
+                visibleDistance = visibleDistance,
+            )
+        }
+    }
 }

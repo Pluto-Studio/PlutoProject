@@ -1,5 +1,9 @@
 package plutoproject.feature.gallery.core.display.job
 
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -10,6 +14,7 @@ import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.PlayerView
 import plutoproject.feature.gallery.core.display.SchedulerState
 import plutoproject.feature.gallery.core.display.Vec3
@@ -30,7 +35,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class AnimatedDisplayJobTest {
     @Test
-    fun `wake should send first frame and schedule next awake with fps budget`() {
+    fun `wake should send first frame and schedule next awake with fps budget`() = runTest {
         val belongsTo = dummyUuid(6201)
         val image = animatedImage(belongsTo, intArrayOf(90))
         val entry = animatedImageDataEntry(
@@ -42,8 +47,9 @@ class AnimatedDisplayJobTest {
             durationMillis = 200,
         )
         val scheduler = RecordingDisplayScheduler()
+        val sendJob = newRecordingSendJob(this, dummyUuid(6202))
         val displayManager = DisplayManager().also {
-            it.registerSendJob(RecordingSendJob(dummyUuid(6202)))
+            it.registerSendJob(sendJob.job)
         }
 
         val job = AnimatedDisplayJob(
@@ -58,16 +64,16 @@ class AnimatedDisplayJobTest {
 
         job.attach(singleTileDisplayInstance(belongsTo), image, entry)
         job.wake()
+        advanceUntilIdle()
 
-        val sendJob = displayManager.getLoadedSendJob(dummyUuid(6202)) as RecordingSendJob
-        assertEquals(1, sendJob.enqueuedUpdates.size)
-        assertEquals(90, sendJob.enqueuedUpdates.single().mapId)
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 1 }, sendJob.enqueuedUpdates.single().mapColors)
+        assertEquals(1, sendJob.sentUpdates.size)
+        assertEquals(90, sendJob.sentUpdates.single().mapId)
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 1 }, sendJob.sentUpdates.single().mapColors)
         assertEquals(Instant.ofEpochMilli(50L), scheduler.lastAwakeAt)
     }
 
     @Test
-    fun `wake should only send changed tiles for visible players`() {
+    fun `wake should only send changed tiles for visible players`() = runTest {
         val belongsTo = dummyUuid(6211)
         val image = Image(
             id = belongsTo,
@@ -93,8 +99,9 @@ class AnimatedDisplayJobTest {
         )
         val clock = MutableClock(0L)
         val scheduler = RecordingDisplayScheduler()
+        val sendJob = newRecordingSendJob(this, dummyUuid(6212))
         val displayManager = DisplayManager().also {
-            it.registerSendJob(RecordingSendJob(dummyUuid(6212)))
+            it.registerSendJob(sendJob.job)
         }
 
         val job = AnimatedDisplayJob(
@@ -125,20 +132,21 @@ class AnimatedDisplayJobTest {
             image,
             entry,
         )
-
+        
         job.wake()
-        val sendJob = displayManager.getLoadedSendJob(dummyUuid(6212)) as RecordingSendJob
-        assertEquals(listOf(101, 102), sendJob.enqueuedUpdates.map(MapUpdate::mapId))
+        advanceUntilIdle()
+        assertEquals(listOf(101, 102), sendJob.sentUpdates.map(MapUpdate::mapId))
 
         clock.currentMillis = 100L
         job.wake()
+        advanceUntilIdle()
 
-        assertEquals(listOf(101, 102, 102), sendJob.enqueuedUpdates.map(MapUpdate::mapId))
-        assertArrayEquals(frameTwoTileB, sendJob.enqueuedUpdates.last().mapColors)
+        assertEquals(listOf(101, 102, 102), sendJob.sentUpdates.map(MapUpdate::mapId))
+        assertArrayEquals(frameTwoTileB, sendJob.sentUpdates.last().mapColors)
     }
 
     @Test
-    fun `wake should schedule immediately when fps is unlimited and attach should reject after stop`() {
+    fun `wake should schedule immediately when fps is unlimited and attach should reject after stop`() = runTest {
         val belongsTo = dummyUuid(6221)
         val image = animatedImage(belongsTo, intArrayOf(110))
         val entry = animatedImageDataEntry(
@@ -148,8 +156,9 @@ class AnimatedDisplayJobTest {
         )
         val clock = MutableClock(200L)
         val scheduler = RecordingDisplayScheduler()
+        val sendJob = newRecordingSendJob(this, dummyUuid(6222))
         val displayManager = DisplayManager().also {
-            it.registerSendJob(RecordingSendJob(dummyUuid(6222)))
+            it.registerSendJob(sendJob.job)
         }
 
         val job = AnimatedDisplayJob(
@@ -165,6 +174,7 @@ class AnimatedDisplayJobTest {
 
         job.attach(displayInstance, image, entry)
         job.wake()
+        advanceUntilIdle()
         assertEquals(Instant.ofEpochMilli(200L), scheduler.lastAwakeAt)
 
         job.stop()
@@ -174,7 +184,7 @@ class AnimatedDisplayJobTest {
     }
 
     @Test
-    fun `wake should keep fixed started time and loop progress with modulo`() {
+    fun `wake should keep fixed started time and loop progress with modulo`() = runTest {
         val belongsTo = dummyUuid(6231)
         val image = animatedImage(belongsTo, intArrayOf(120))
         val entry = animatedImageDataEntry(
@@ -186,8 +196,9 @@ class AnimatedDisplayJobTest {
             durationMillis = 200,
         )
         val clock = MutableClock(0L)
+        val sendJob = newRecordingSendJob(this, dummyUuid(6232))
         val displayManager = DisplayManager().also {
-            it.registerSendJob(RecordingSendJob(dummyUuid(6232)))
+            it.registerSendJob(sendJob.job)
         }
         val job = AnimatedDisplayJob(
             belongsTo = belongsTo,
@@ -201,13 +212,14 @@ class AnimatedDisplayJobTest {
 
         job.attach(singleTileDisplayInstance(belongsTo), image, entry)
         job.wake()
+        advanceUntilIdle()
 
         clock.currentMillis = 350L
         job.wake()
+        advanceUntilIdle()
 
-        val sendJob = displayManager.getLoadedSendJob(dummyUuid(6232)) as RecordingSendJob
-        assertEquals(listOf(120, 120), sendJob.enqueuedUpdates.map(MapUpdate::mapId))
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 2 }, sendJob.enqueuedUpdates.last().mapColors)
+        assertEquals(listOf(120, 120), sendJob.sentUpdates.map(MapUpdate::mapId))
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 2 }, sendJob.sentUpdates.last().mapColors)
     }
 
     private fun animatedImage(belongsTo: UUID, tileMapIds: IntArray): Image {
@@ -319,16 +331,29 @@ class AnimatedDisplayJobTest {
         override fun stop() = Unit
     }
 
-    private class RecordingSendJob(
-        override val playerId: UUID,
-    ) : SendJob {
-        override val state: SendJobState = SendJobState.IDLING
-        val enqueuedUpdates = mutableListOf<MapUpdate>()
-
-        override fun enqueue(update: MapUpdate) {
-            enqueuedUpdates += update
-        }
-
-        override fun stop() = Unit
+    private fun newRecordingSendJob(scope: TestScope, playerId: UUID): RecordingSendJobHandle {
+        val sentUpdates = mutableListOf<MapUpdate>()
+        return RecordingSendJobHandle(
+            job = SendJob(
+                playerId = playerId,
+                maxQueueSize = 8,
+                maxUpdatesInSpan = 8,
+                updateLimitSpan = 1.milliseconds,
+                clock = MutableClock(0L),
+                coroutineScope = scope,
+                loopContext = StandardTestDispatcher(scope.testScheduler),
+                mapUpdatePort = object : MapUpdatePort {
+                    override fun send(playerId: UUID, update: MapUpdate) {
+                        sentUpdates += update
+                    }
+                },
+            ),
+            sentUpdates = sentUpdates,
+        )
     }
+
+    private data class RecordingSendJobHandle(
+        val job: SendJob,
+        val sentUpdates: MutableList<MapUpdate>,
+    )
 }

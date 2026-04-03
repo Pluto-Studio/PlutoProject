@@ -6,10 +6,12 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayInstance
-import plutoproject.feature.gallery.core.display.job.DisplayJob
-import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
+import plutoproject.feature.gallery.core.display.job.StaticDisplayJob
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.display.SchedulerState
@@ -21,29 +23,39 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
 
 class DisplayRuntimeLifecycleUseCaseTest {
     @Test
     fun `start display job should create attach bind and schedule first awake`() {
         val manager = DisplayManager()
         val scheduler = RecordingDisplayScheduler()
-        val job = FakeDisplayJob(dummyUuid(7001))
-        val factory = RecordingDisplayJobFactory(job)
+        val factory = DisplayJobFactory(
+            displayScheduler = scheduler,
+            viewPort = object : ViewPort {
+                override fun getPlayerViews(world: String) = emptyList<plutoproject.feature.gallery.core.display.PlayerView>()
+            },
+            displayManager = manager,
+            clock = fixedClock(1_000L),
+            animatedMaxFramesPerSecond = 20,
+            visibleDistance = 5.0,
+            staticUpdateInterval = 1.seconds,
+        )
         val useCase = StartDisplayJobUseCase(fixedClock(1_000L), scheduler, manager, factory)
-        val displayInstance = sampleDisplayInstance(id = dummyUuid(7002), belongsTo = job.belongsTo)
-        val image = sampleImage(id = job.belongsTo)
-        val entry = sampleStaticImageDataEntry(job.belongsTo)
+        val belongsTo = dummyUuid(7001)
+        val displayInstance = sampleDisplayInstance(id = dummyUuid(7002), belongsTo = belongsTo)
+        val image = sampleImage(id = belongsTo)
+        val entry = sampleStaticImageDataEntry(belongsTo)
 
         val result = useCase.execute(displayInstance, image, entry)
+        val job = (result as StartDisplayJobUseCase.Result.Ok).job
 
-        assertEquals(StartDisplayJobUseCase.Result.Ok(job), result)
+        assertTrue(job is StaticDisplayJob)
         assertSame(job, manager.getLoadedDisplayJob(job.belongsTo))
         assertEquals(job.belongsTo, manager.getJobBelongsToByDisplayInstanceId(displayInstance.id))
-        assertSame(displayInstance, job.attachedInstances.single())
+        assertSame(displayInstance, job.managedDisplayInstances[displayInstance.id])
         assertSame(job, scheduler.lastScheduledJob)
         assertEquals(Instant.ofEpochMilli(1_000L), scheduler.lastAwakeAt)
-        assertSame(image, factory.lastImage)
-        assertSame(entry, factory.lastImageDataEntry)
     }
 
     @Test
@@ -55,7 +67,17 @@ class DisplayRuntimeLifecycleUseCaseTest {
             fixedClock(0L),
             RecordingDisplayScheduler(),
             manager,
-            RecordingDisplayJobFactory(FakeDisplayJob(dummyUuid(7012)))
+            DisplayJobFactory(
+                displayScheduler = RecordingDisplayScheduler(),
+                viewPort = object : ViewPort {
+                    override fun getPlayerViews(world: String) = emptyList<plutoproject.feature.gallery.core.display.PlayerView>()
+                },
+                displayManager = manager,
+                clock = fixedClock(0L),
+                animatedMaxFramesPerSecond = 20,
+                visibleDistance = 5.0,
+                staticUpdateInterval = 1.seconds,
+            )
         )
 
         val result = useCase.execute(
@@ -147,19 +169,6 @@ class DisplayRuntimeLifecycleUseCaseTest {
         }
 
         override fun stop() = Unit
-    }
-
-    private class RecordingDisplayJobFactory(
-        private val job: DisplayJob,
-    ) : DisplayJobFactory {
-        var lastImage: Image? = null
-        var lastImageDataEntry: ImageDataEntry<*>? = null
-
-        override fun create(image: Image, imageDataEntry: ImageDataEntry<*>): DisplayJob {
-            lastImage = image
-            lastImageDataEntry = imageDataEntry
-            return job
-        }
     }
 
     private class FakeDisplayJob(

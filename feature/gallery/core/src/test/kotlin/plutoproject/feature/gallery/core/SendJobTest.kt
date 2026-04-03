@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.MapUpdatePort
-import plutoproject.feature.gallery.core.display.job.DefaultSendJob
+import plutoproject.feature.gallery.core.display.job.SendJob
 import plutoproject.feature.gallery.core.display.job.SendJobState
 import java.time.Clock
 import java.time.Instant
@@ -22,7 +22,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class DefaultSendJobTest {
+class SendJobTest {
     @Test
     fun `should drain queue and return to idling`() = runTest {
         val sent = mutableListOf<MapUpdate>()
@@ -133,8 +133,8 @@ class DefaultSendJobTest {
         maxUpdatesInSpan: Int = 2,
         updateLimitSpan: Duration = 50.milliseconds,
         mapUpdatePort: MapUpdatePort = RecordingMapUpdatePort(),
-    ): DefaultSendJob {
-        return DefaultSendJob(
+    ): SendJob {
+        return SendJob(
             playerId = dummyUuid(6001),
             maxQueueSize = maxQueueSize,
             maxUpdatesInSpan = maxUpdatesInSpan,

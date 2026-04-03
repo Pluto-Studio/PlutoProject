@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.core
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -8,13 +9,16 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayInstance
-import plutoproject.feature.gallery.core.display.job.DisplayJob
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.MapUpdatePort
+import plutoproject.feature.gallery.core.display.job.DisplayJob
 import plutoproject.feature.gallery.core.display.job.SendJob
-import plutoproject.feature.gallery.core.display.job.SendJobState
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataEntry
+import java.time.Clock
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.seconds
 import java.util.UUID
 
 class DisplayManagerTest {
@@ -96,7 +100,18 @@ class DisplayManagerTest {
     @Test
     fun `should manage send job registry independently from display caches`() {
         val manager = DisplayManager()
-        val sendJob = FakeSendJob(playerId = dummyUuid(4020))
+        val sendJob = SendJob(
+            playerId = dummyUuid(4020),
+            maxQueueSize = 8,
+            maxUpdatesInSpan = 2,
+            updateLimitSpan = 1.seconds,
+            clock = Clock.systemUTC(),
+            coroutineScope = kotlinx.coroutines.CoroutineScope(Job()),
+            loopContext = EmptyCoroutineContext,
+            mapUpdatePort = object : MapUpdatePort {
+                override fun send(playerId: UUID, update: MapUpdate) = Unit
+            },
+        )
         val display = sampleDisplayInstance(id = dummyUuid(4021), belongsTo = dummyUuid(4022), chunkX = 7, chunkZ = 8)
 
         manager.loadDisplayInstance(display)
@@ -133,13 +148,4 @@ class DisplayManagerTest {
         override fun stop() = Unit
     }
 
-    private class FakeSendJob(
-        override val playerId: UUID,
-    ) : SendJob {
-        override val state: SendJobState = SendJobState.IDLING
-
-        override fun enqueue(update: MapUpdate) = Unit
-
-        override fun stop() = Unit
-    }
 }

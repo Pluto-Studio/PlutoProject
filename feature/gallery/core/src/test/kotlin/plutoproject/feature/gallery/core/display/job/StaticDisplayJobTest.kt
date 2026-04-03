@@ -1,5 +1,9 @@
 package plutoproject.feature.gallery.core.display.job
 
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -11,6 +15,7 @@ import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.PlayerView
 import plutoproject.feature.gallery.core.display.SchedulerState
 import plutoproject.feature.gallery.core.display.Vec3
@@ -30,7 +35,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class StaticDisplayJobTest {
     @Test
-    fun `wake should send visible static tiles and schedule next awake`() {
+    fun `wake should send visible static tiles and schedule next awake`() = runTest {
         val belongsTo = dummyUuid(6101)
         val image = Image(
             id = belongsTo,
@@ -62,8 +67,8 @@ class StaticDisplayJobTest {
         )
         val scheduler = RecordingDisplayScheduler()
         val displayManager = DisplayManager()
-        val sendJob = RecordingSendJob(playerId = dummyUuid(6103))
-        displayManager.registerSendJob(sendJob)
+        val sendJob = newRecordingSendJob(this, dummyUuid(6103))
+        displayManager.registerSendJob(sendJob.job)
 
         val job = StaticDisplayJob(
             belongsTo = belongsTo,
@@ -72,7 +77,7 @@ class StaticDisplayJobTest {
                 playerViewsByWorld = mapOf(
                     "world" to listOf(
                         PlayerView(
-                            id = sendJob.playerId,
+                            id = sendJob.job.playerId,
                             eye = Vec3(0.0, 0.0, 1.0),
                             viewDirection = Vec3(0.0, 0.0, -1.0),
                         )
@@ -87,16 +92,17 @@ class StaticDisplayJobTest {
 
         job.attach(displayInstance, image, entry)
         job.wake()
+        advanceUntilIdle()
 
-        assertEquals(1, sendJob.enqueuedUpdates.size)
-        assertEquals(77, sendJob.enqueuedUpdates.single().mapId)
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }, sendJob.enqueuedUpdates.single().mapColors)
+        assertEquals(1, sendJob.sentUpdates.size)
+        assertEquals(77, sendJob.sentUpdates.single().mapId)
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }, sendJob.sentUpdates.single().mapColors)
         assertEquals(job, scheduler.lastScheduledJob)
         assertEquals(Instant.ofEpochMilli(1_200L), scheduler.lastAwakeAt)
     }
 
     @Test
-    fun `wake should not resend static map ids already received by player`() {
+    fun `wake should not resend static map ids already received by player`() = runTest {
         val belongsTo = dummyUuid(6111)
         val image = Image(
             id = belongsTo,
@@ -127,8 +133,8 @@ class StaticDisplayJobTest {
             itemFrameIds = listOf(dummyUuid(6114)),
         )
         val displayManager = DisplayManager()
-        val sendJob = RecordingSendJob(playerId = dummyUuid(6113))
-        displayManager.registerSendJob(sendJob)
+        val sendJob = newRecordingSendJob(this, dummyUuid(6113))
+        displayManager.registerSendJob(sendJob.job)
 
         val job = StaticDisplayJob(
             belongsTo = belongsTo,
@@ -136,7 +142,7 @@ class StaticDisplayJobTest {
             viewPort = FakeViewPort(
                 mapOf(
                     "world" to listOf(
-                        PlayerView(sendJob.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0))
+                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0))
                     )
                 )
             ),
@@ -148,13 +154,15 @@ class StaticDisplayJobTest {
 
         job.attach(displayInstance, image, entry)
         job.wake()
+        advanceUntilIdle()
         job.wake()
+        advanceUntilIdle()
 
-        assertEquals(1, sendJob.enqueuedUpdates.size)
+        assertEquals(1, sendJob.sentUpdates.size)
     }
 
     @Test
-    fun `wake should skip invisible players and attach should reject after stop`() {
+    fun `wake should skip invisible players and attach should reject after stop`() = runTest {
         val belongsTo = dummyUuid(6121)
         val image = Image(
             id = belongsTo,
@@ -185,8 +193,8 @@ class StaticDisplayJobTest {
             itemFrameIds = listOf(dummyUuid(6124)),
         )
         val displayManager = DisplayManager()
-        val sendJob = RecordingSendJob(playerId = dummyUuid(6123))
-        displayManager.registerSendJob(sendJob)
+        val sendJob = newRecordingSendJob(this, dummyUuid(6123))
+        displayManager.registerSendJob(sendJob.job)
 
         val job = StaticDisplayJob(
             belongsTo = belongsTo,
@@ -194,7 +202,7 @@ class StaticDisplayJobTest {
             viewPort = FakeViewPort(
                 mapOf(
                     "world" to listOf(
-                        PlayerView(sendJob.playerId, Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0))
+                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0))
                     )
                 )
             ),
@@ -206,8 +214,9 @@ class StaticDisplayJobTest {
 
         job.attach(displayInstance, image, entry)
         job.wake()
+        advanceUntilIdle()
 
-        assertTrue(sendJob.enqueuedUpdates.isEmpty())
+        assertTrue(sendJob.sentUpdates.isEmpty())
 
         job.stop()
         assertThrows(IllegalStateException::class.java) {
@@ -216,7 +225,7 @@ class StaticDisplayJobTest {
     }
 
     @Test
-    fun `wake should merge visible tiles from multiple instances of same image`() {
+    fun `wake should merge visible tiles from multiple instances of same image`() = runTest {
         val belongsTo = dummyUuid(6131)
         val image = Image(
             id = belongsTo,
@@ -264,8 +273,8 @@ class StaticDisplayJobTest {
             itemFrameIds = listOf(dummyUuid(6136), dummyUuid(6137)),
         )
         val displayManager = DisplayManager()
-        val sendJob = RecordingSendJob(playerId = dummyUuid(6138))
-        displayManager.registerSendJob(sendJob)
+        val sendJob = newRecordingSendJob(this, dummyUuid(6138))
+        displayManager.registerSendJob(sendJob.job)
 
         val job = StaticDisplayJob(
             belongsTo = belongsTo,
@@ -273,8 +282,8 @@ class StaticDisplayJobTest {
             viewPort = FakeViewPort(
                 mapOf(
                     "world" to listOf(
-                        PlayerView(sendJob.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
-                        PlayerView(sendJob.playerId, Vec3(0.5, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
+                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
+                        PlayerView(sendJob.job.playerId, Vec3(0.5, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
                     )
                 )
             ),
@@ -287,10 +296,11 @@ class StaticDisplayJobTest {
         job.attach(firstDisplayInstance, image, entry)
         job.attach(secondDisplayInstance, image, entry)
         job.wake()
+        advanceUntilIdle()
 
-        assertEquals(listOf(131, 132), sendJob.enqueuedUpdates.map(MapUpdate::mapId))
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 }, sendJob.enqueuedUpdates[0].mapColors)
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 }, sendJob.enqueuedUpdates[1].mapColors)
+        assertEquals(listOf(131, 132), sendJob.sentUpdates.map(MapUpdate::mapId))
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 }, sendJob.sentUpdates[0].mapColors)
+        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 }, sendJob.sentUpdates[1].mapColors)
     }
 
     private fun fixedClock(epochMillis: Long): Clock {
@@ -350,16 +360,29 @@ class StaticDisplayJobTest {
         override fun stop() = Unit
     }
 
-    private class RecordingSendJob(
-        override val playerId: UUID,
-    ) : SendJob {
-        override val state: SendJobState = SendJobState.IDLING
-        val enqueuedUpdates = mutableListOf<MapUpdate>()
-
-        override fun enqueue(update: MapUpdate) {
-            enqueuedUpdates += update
-        }
-
-        override fun stop() = Unit
+    private fun newRecordingSendJob(scope: TestScope, playerId: UUID): RecordingSendJobHandle {
+        val sentUpdates = mutableListOf<MapUpdate>()
+        return RecordingSendJobHandle(
+            job = SendJob(
+                playerId = playerId,
+                maxQueueSize = 8,
+                maxUpdatesInSpan = 8,
+                updateLimitSpan = 1.milliseconds,
+                clock = fixedClock(0L),
+                coroutineScope = scope,
+                loopContext = StandardTestDispatcher(scope.testScheduler),
+                mapUpdatePort = object : MapUpdatePort {
+                    override fun send(playerId: UUID, update: MapUpdate) {
+                        sentUpdates += update
+                    }
+                },
+            ),
+            sentUpdates = sentUpdates,
+        )
     }
+
+    private data class RecordingSendJobHandle(
+        val job: SendJob,
+        val sentUpdates: MutableList<MapUpdate>,
+    )
 }

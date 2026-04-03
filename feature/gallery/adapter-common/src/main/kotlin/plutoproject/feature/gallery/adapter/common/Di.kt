@@ -11,8 +11,6 @@ import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
-import plutoproject.feature.gallery.core.display.job.DefaultDisplayJobFactory
-import plutoproject.feature.gallery.core.display.job.DefaultSendJobFactory
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
 import plutoproject.feature.gallery.core.display.usecase.*
@@ -64,9 +62,9 @@ val commonModule = module {
     singleOf(::DisplayManager)
     singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
 
-    single<DisplayJobFactory> {
+    single {
         val config = get<GalleryConfig>()
-        DefaultDisplayJobFactory(
+        DisplayJobFactory(
             displayScheduler = get(),
             viewPort = get(),
             displayManager = get(),
@@ -76,8 +74,8 @@ val commonModule = module {
             staticUpdateInterval = config.display.static.updateInterval,
         )
     }
-    single<SendJobFactory> {
-        DefaultSendJobFactory(
+    single {
+        SendJobFactory(
             clock = get(),
             coroutineScope = get(),
             loopContext = get(),
