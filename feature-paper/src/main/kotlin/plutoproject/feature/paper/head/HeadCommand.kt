@@ -31,6 +31,7 @@ import plutoproject.framework.paper.util.dsl.ItemStack
 import plutoproject.framework.paper.util.hook.vaultHook
 import plutoproject.framework.paper.util.inventory.isFull
 import plutoproject.framework.paper.util.server
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private const val HEAD_COST_BYPASS_PERMISSION = "plutoproject.head.bypass_cost"
@@ -38,7 +39,9 @@ private const val HEAD_COST_BYPASS_PERMISSION = "plutoproject.head.bypass_cost"
 @Suppress("UNUSED", "UNUSED_PARAMETER")
 object HeadCommand : KoinComponent {
     private val config by inject<HeadConfig>()
-    private val headCache = cacheBuilder<String, ItemStack>().build()
+    private val headCache = cacheBuilder<String, ItemStack> {
+        expireAfterAccess = 30.minutes
+    }.build()
 
     private fun createHead(profile: PlayerProfile): ItemStack =
         ItemStack(Material.PLAYER_HEAD) {
