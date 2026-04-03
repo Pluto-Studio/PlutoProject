@@ -22,7 +22,7 @@ class VersionChecker : VelocityFeature(), KoinComponent {
     private val config by inject<VersionCheckerConfig>()
 
     private val featureModule = module {
-        single<VersionCheckerConfig> {
+        single<VersionCheckerConfig>(createdAtStart = true) {
             loadConfig(saveConfig()) {
                 addDecoder(IntRangeDecoder)
             }
