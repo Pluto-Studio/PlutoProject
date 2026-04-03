@@ -6,9 +6,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
+import plutoproject.feature.gallery.core.decode.GIF_PATCH_TIMELINE_BASE64
+import plutoproject.feature.gallery.core.decode.GIF_RESTORE_BACKGROUND_CLIPPED_BASE64
+import plutoproject.feature.gallery.core.decode.GIF_RESTORE_PREVIOUS_BASE64
+import plutoproject.feature.gallery.core.decode.GIF_TRANSPARENT_PATCH_OVERLAY_BASE64
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageFrame
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
-import java.util.Base64
+import plutoproject.feature.gallery.core.decode.decodeBase64
 import kotlin.time.Duration.Companion.milliseconds
 
 class GifDecoderTest {
@@ -104,40 +108,6 @@ class GifDecoderTest {
         assertEquals(DecodeResult.InvalidImage, result)
     }
 }
-
-private const val GIF_PATCH_TIMELINE_BASE64 =
-    // Generated via jshell + ImageIO GIF writer.
-    // logicalScreen=2x1; frames:
-    //   1) patch 2x1 @ (0,0), red, delay=1cs, disposal=none
-    //   2) patch 1x1 @ (1,0), green, delay=7cs, disposal=none
-    "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkEAAcAAAAsAQAAAAEAAQDAAP8AAP8ACAQAAQQEADs="
-
-private const val GIF_RESTORE_BACKGROUND_CLIPPED_BASE64 =
-    // Generated via jshell + ImageIO GIF writer.
-    // logicalScreen=2x1; frames:
-    //   1) patch 2x1 @ (0,0), red, delay=1cs, disposal=none
-    //   2) patch 2x1 @ (1,0), green, delay=0cs, disposal=restoreToBackgroundColor
-    //      (right half is out-of-bounds to exercise clipping)
-    //   3) patch 1x1 @ (0,0), blue, delay=1cs, disposal=none
-    "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkECAAAAAAsAQAAAAIAAQDAAP8AAP8ACAUAAQAICAAh+QQAAQAAACwAAAAAAQABAMAAAP8AAP8IBAABBAQAOw=="
-
-private const val GIF_RESTORE_PREVIOUS_BASE64 =
-    // Generated via jshell + ImageIO GIF writer.
-    // logicalScreen=2x1; frames:
-    //   1) patch 2x1 @ (0,0), red, delay=1cs, disposal=none
-    //   2) patch 1x1 @ (1,0), green, delay=1cs, disposal=restoreToPrevious
-    //   3) patch 1x1 @ (0,0), blue, delay=1cs, disposal=none
-    "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkEDAEAAAAsAQAAAAEAAQDAAP8AAP8ACAQAAQQEACH5BAABAAAALAAAAAABAAEAwAAA/wAA/wgEAAEEBAA7"
-
-private const val GIF_TRANSPARENT_PATCH_OVERLAY_BASE64 =
-    // Generated via jshell + ImageIO GIF writer.
-    // logicalScreen=2x1; frames:
-    //   1) patch 2x1 @ (0,0), red, delay=1cs, disposal=none
-    //   2) patch 1x1 @ (1,0), transparent, delay=1cs, disposal=none
-    // Expected: frame2 keeps previous red pixel at x=1 instead of clearing to transparent.
-    "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkEAQEAAAAsAQAAAAEAAQDAAAAAAAAACAQAAQQEADs="
-
-private fun decodeBase64(value: String): ByteArray = Base64.getDecoder().decode(value)
 
 private suspend fun readAllFrames(source: AnimatedImageSource): List<AnimatedImageFrame> {
     val stream = source.openFrameStream()

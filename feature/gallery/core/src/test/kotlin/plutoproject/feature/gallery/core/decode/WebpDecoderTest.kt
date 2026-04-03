@@ -4,7 +4,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.Base64
 
 class WebpDecoderTest {
     @Test
@@ -39,11 +38,3 @@ class WebpDecoderTest {
         assertEquals(DecodeResult.InvalidImage, result)
     }
 }
-
-private const val WEBP_1X1_TRANSPARENT_BASE64 =
-    // 1x1 transparent WebP sample used for decode smoke test.
-    // Source: public minimal sample string (RIFF/WEBP, VP8L) from Dirask snippet.
-    // Expected decoded image: width=1, height=1, alpha=0.
-    "UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=="
-
-private fun decodeBase64(value: String): ByteArray = Base64.getDecoder().decode(value)
