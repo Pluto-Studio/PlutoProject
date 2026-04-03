@@ -36,6 +36,7 @@ class AnimatedDisplayJob(
 
     private val _managedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
     private val displayGeometryByInstanceId = HashMap<UUID, DisplayGeometry>()
+    private val decodedTilesByTileId = HashMap<Int, ByteArray>()
 
     private var image: Image? = null
     private var imageDataEntry: ImageDataEntry<*>? = null
@@ -101,7 +102,7 @@ class AnimatedDisplayJob(
 
         if (changedTileIds.isNotEmpty()) {
             val visibleTileIdsByPlayer = collectVisibleTileIdsByPlayer(image)
-            val decodedTilesByTileId = HashMap<Int, ByteArray>()
+            val decodedTilesByTileId = this.decodedTilesByTileId.also { it.clear() }
 
             visibleTileIdsByPlayer.forEach { (playerId, visibleTileIds) ->
                 val sendJob = displayManager.getLoadedSendJob(playerId) ?: return@forEach
@@ -135,6 +136,7 @@ class AnimatedDisplayJob(
         isStopped = true
         _managedDisplayInstances.clear()
         displayGeometryByInstanceId.clear()
+        decodedTilesByTileId.clear()
         image = null
         imageDataEntry = null
         animationStartedAtMillis = null

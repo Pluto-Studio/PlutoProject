@@ -29,6 +29,8 @@ class StaticDisplayJob(
     private val _managedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
     private val displayGeometryByInstanceId = HashMap<UUID, DisplayGeometry>()
     private val receivedMapIdsByPlayer = HashMap<UUID, MutableSet<Int>>()
+    private val visibleTileIdsByPlayer = LinkedHashMap<UUID, LinkedHashSet<Int>>()
+    private val decodedTilesByTileId = HashMap<Int, ByteArray>()
 
     private var image: Image? = null
     private var imageDataEntry: ImageDataEntry<*>? = null
@@ -73,7 +75,7 @@ class StaticDisplayJob(
 
         val image = image ?: return
         val staticData = imageDataEntry?.asStaticData() ?: return
-        val visibleTileIdsByPlayer = LinkedHashMap<UUID, LinkedHashSet<Int>>()
+        val visibleTileIdsByPlayer = this.visibleTileIdsByPlayer.also { it.clear() }
 
         _managedDisplayInstances.values
             .groupBy(DisplayInstance::world)
@@ -103,7 +105,7 @@ class StaticDisplayJob(
                 }
             }
 
-        val decodedTilesByTileId = HashMap<Int, ByteArray>()
+        val decodedTilesByTileId = this.decodedTilesByTileId.also { it.clear() }
 
         visibleTileIdsByPlayer.forEach { (playerId, visibleTileIds) ->
             val sendJob = displayManager.getLoadedSendJob(playerId) ?: return@forEach
@@ -137,6 +139,8 @@ class StaticDisplayJob(
         _managedDisplayInstances.clear()
         displayGeometryByInstanceId.clear()
         receivedMapIdsByPlayer.clear()
+        visibleTileIdsByPlayer.clear()
+        decodedTilesByTileId.clear()
         image = null
         imageDataEntry = null
     }
