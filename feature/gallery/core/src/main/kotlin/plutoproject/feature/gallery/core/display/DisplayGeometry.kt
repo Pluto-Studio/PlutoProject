@@ -4,6 +4,16 @@ import plutoproject.feature.gallery.core.HORIZONTAL_FOV_RADIAN
 import plutoproject.feature.gallery.core.VERTICAL_FOV_RADIAN
 import kotlin.math.*
 
+private const val EPSILON = 1e-6
+
+private const val WORLD_UP_X = 0.0
+private const val WORLD_UP_Y = 1.0
+private const val WORLD_UP_Z = 0.0
+
+private const val FALLBACK_UP_X = 0.0
+private const val FALLBACK_UP_Y = 0.0
+private const val FALLBACK_UP_Z = 1.0
+
 data class DisplayGeometry(
     /**
      * 第一个展示框（Tile ID 为 0，地图画左上角）的中心位置。
@@ -42,7 +52,13 @@ data class DisplayGeometry(
 ) {
     fun computeVisibleTiles(view: PlayerView, visibleDistance: Double): TileRect? {
         val eye = view.eye
-        val forward = view.viewDirection.normalizedOrNull() ?: return null
+        val forwardLengthSquared = view.viewDirection.lengthSquared()
+        if (forwardLengthSquared < 1e-12) return null
+
+        val forwardInvLength = 1.0 / sqrt(forwardLengthSquared)
+        val forwardX = view.viewDirection.x * forwardInvLength
+        val forwardY = view.viewDirection.y * forwardInvLength
+        val forwardZ = view.viewDirection.z * forwardInvLength
 
         val visibleDist2 = visibleDistance * visibleDistance
 
@@ -51,41 +67,66 @@ data class DisplayGeometry(
 
         // 检查玩家到地图画的距离，超过就直接算看不到
         // distance 实际用的时候默认是 64，因为原版 Misc Entity 的默认追踪距离是 64
-        val toCenter = center - eye
-        val dist2ToCenter = toCenter.lengthSquared()
+        val toCenterX = center.x - eye.x
+        val toCenterY = center.y - eye.y
+        val toCenterZ = center.z - eye.z
+        val dist2ToCenter = lengthSquared(toCenterX, toCenterY, toCenterZ)
         if (dist2ToCenter > visibleDist2) {
             return null
         }
 
         // 检查玩家是否在地图画正面，客户端地图画渲染是单向的（虽然实际好像也不太可能从背面看到展示框吧...）
         // frontDot > 0 表示 eye 位于 normal 指向的一侧
-        val frontDot = (eye - center).dot(normal)
+        val frontDot = dot(
+            eye.x - center.x,
+            eye.y - center.y,
+            eye.z - center.z,
+            normal.x,
+            normal.y,
+            normal.z
+        )
         if (frontDot <= 0.0) {
             return null
         }
 
-        val forwardDotCenter = forward.dot(toCenter)
+        val forwardDotCenter = dot(forwardX, forwardY, forwardZ, toCenterX, toCenterY, toCenterZ)
         if (forwardDotCenter <= 0.0) {
             return null
         }
 
         // 下面是粗筛之后做 4-ray 精确求交
 
-        val cameraBasis = buildCameraBasis(forward) ?: return null
-        val right = cameraBasis.right
-        val up = cameraBasis.up
+        var rightX = forwardY * WORLD_UP_Z - forwardZ * WORLD_UP_Y
+        var rightY = forwardZ * WORLD_UP_X - forwardX * WORLD_UP_Z
+        var rightZ = forwardX * WORLD_UP_Y - forwardY * WORLD_UP_X
+        if (lengthSquared(rightX, rightY, rightZ) < EPSILON) {
+            rightX = forwardY * FALLBACK_UP_Z - forwardZ * FALLBACK_UP_Y
+            rightY = forwardZ * FALLBACK_UP_X - forwardX * FALLBACK_UP_Z
+            rightZ = forwardX * FALLBACK_UP_Y - forwardY * FALLBACK_UP_X
+            if (lengthSquared(rightX, rightY, rightZ) < EPSILON) {
+                return null
+            }
+        }
+
+        val rightLengthSquared = lengthSquared(rightX, rightY, rightZ)
+        if (rightLengthSquared < 1e-12) return null
+        val rightInvLength = 1.0 / sqrt(rightLengthSquared)
+        rightX *= rightInvLength
+        rightY *= rightInvLength
+        rightZ *= rightInvLength
+
+        var upX = rightY * forwardZ - rightZ * forwardY
+        var upY = rightZ * forwardX - rightX * forwardZ
+        var upZ = rightX * forwardY - rightY * forwardX
+        val upLengthSquared = lengthSquared(upX, upY, upZ)
+        if (upLengthSquared < 1e-12) return null
+        val upInvLength = 1.0 / sqrt(upLengthSquared)
+        upX *= upInvLength
+        upY *= upInvLength
+        upZ *= upInvLength
 
         val tanHalfHFov = tan(HORIZONTAL_FOV_RADIAN / 2.0)
         val tanHalfVFov = tan(VERTICAL_FOV_RADIAN / 2.0)
-
-        // 屏幕四角对应的四条边界射线方向
-        // 不要求单位长度，因为平面求交中的 t 参数会自动吸收长度比例
-        val rayDirs = arrayOf(
-            (forward + right * tanHalfHFov + up * tanHalfVFov).normalizedOrNull(),
-            (forward - right * tanHalfHFov + up * tanHalfVFov).normalizedOrNull(),
-            (forward + right * tanHalfHFov - up * tanHalfVFov).normalizedOrNull(),
-            (forward - right * tanHalfHFov - up * tanHalfVFov).normalizedOrNull()
-        )
 
         var minU = Double.POSITIVE_INFINITY
         var maxU = Double.NEGATIVE_INFINITY
@@ -93,53 +134,96 @@ data class DisplayGeometry(
         var maxV = Double.NEGATIVE_INFINITY
         var anyHit = false
 
-        val planePoint = center
+        fun accumulateRay(rayDirX: Double, rayDirY: Double, rayDirZ: Double): Boolean {
+            val hitT = intersectRayWithPlaneT(
+                rayOriginX = eye.x,
+                rayOriginY = eye.y,
+                rayOriginZ = eye.z,
+                rayDirX = rayDirX,
+                rayDirY = rayDirY,
+                rayDirZ = rayDirZ,
+                planePointX = center.x,
+                planePointY = center.y,
+                planePointZ = center.z,
+                planeNormalX = normal.x,
+                planeNormalY = normal.y,
+                planeNormalZ = normal.z
+            ) ?: return false
 
-        for (dir in rayDirs) {
-            val rayDir = dir ?: continue
-
-            val hit = intersectRayWithPlane(
-                rayOrigin = eye,
-                rayDir = rayDir,
-                planePoint = planePoint,
-                planeNormal = normal
-            ) ?: continue
-
-            // 只接受可见距离内的点
-            if ((hit - eye).lengthSquared() > visibleDist2) {
-                continue
+            val hitToEyeX = rayDirX * hitT
+            val hitToEyeY = rayDirY * hitT
+            val hitToEyeZ = rayDirZ * hitT
+            if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) > visibleDist2) {
+                return false
             }
 
-            // 投到 tile 局部坐标
-            val local = hit - origin
-            val u = local.dot(axisU)
-            val v = local.dot(axisV)
+            val localX = eye.x + hitToEyeX - origin.x
+            val localY = eye.y + hitToEyeY - origin.y
+            val localZ = eye.z + hitToEyeZ - origin.z
+            val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
+            val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
 
             minU = min(minU, u)
             maxU = max(maxU, u)
             minV = min(minV, v)
             maxV = max(maxV, v)
-            anyHit = true
+            return true
         }
+
+        anyHit = accumulateRay(
+            forwardX + rightX * tanHalfHFov + upX * tanHalfVFov,
+            forwardY + rightY * tanHalfHFov + upY * tanHalfVFov,
+            forwardZ + rightZ * tanHalfHFov + upZ * tanHalfVFov
+        ) || anyHit
+        anyHit = accumulateRay(
+            forwardX - rightX * tanHalfHFov + upX * tanHalfVFov,
+            forwardY - rightY * tanHalfHFov + upY * tanHalfVFov,
+            forwardZ - rightZ * tanHalfHFov + upZ * tanHalfVFov
+        ) || anyHit
+        anyHit = accumulateRay(
+            forwardX + rightX * tanHalfHFov - upX * tanHalfVFov,
+            forwardY + rightY * tanHalfHFov - upY * tanHalfVFov,
+            forwardZ + rightZ * tanHalfHFov - upZ * tanHalfVFov
+        ) || anyHit
+        anyHit = accumulateRay(
+            forwardX - rightX * tanHalfHFov - upX * tanHalfVFov,
+            forwardY - rightY * tanHalfHFov - upY * tanHalfVFov,
+            forwardZ - rightZ * tanHalfHFov - upZ * tanHalfVFov
+        ) || anyHit
 
         // 如果四个角都没打到，不能直接判 null
         // 可能出现「地图画完全覆盖屏幕中心，但四角射线都偏到展示面外侧」的情况
         // 所以补一条中心射线作为兜底
-        if (!anyHit) {
-            val centerHit = intersectRayWithPlane(
-                rayOrigin = eye,
-                rayDir = forward,
-                planePoint = planePoint,
-                planeNormal = normal
-            ) ?: return null
+        val centerHitT = intersectRayWithPlaneT(
+            rayOriginX = eye.x,
+            rayOriginY = eye.y,
+            rayOriginZ = eye.z,
+            rayDirX = forwardX,
+            rayDirY = forwardY,
+            rayDirZ = forwardZ,
+            planePointX = center.x,
+            planePointY = center.y,
+            planePointZ = center.z,
+            planeNormalX = normal.x,
+            planeNormalY = normal.y,
+            planeNormalZ = normal.z
+        )
 
-            if ((centerHit - eye).lengthSquared() > visibleDist2) {
+        if (!anyHit) {
+            val hitT = centerHitT ?: return null
+
+            val hitToEyeX = forwardX * hitT
+            val hitToEyeY = forwardY * hitT
+            val hitToEyeZ = forwardZ * hitT
+            if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) > visibleDist2) {
                 return null
             }
 
-            val local = centerHit - origin
-            val u = local.dot(axisU)
-            val v = local.dot(axisV)
+            val localX = eye.x + hitToEyeX - origin.x
+            val localY = eye.y + hitToEyeY - origin.y
+            val localZ = eye.z + hitToEyeZ - origin.z
+            val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
+            val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
 
             minU = u
             maxU = u
@@ -148,22 +232,22 @@ data class DisplayGeometry(
         } else {
             // 为了避免「中心在地图画上，但四角全落在外」导致包围范围偏移，
             // 把中心射线命中点也并进 bbox
-            val centerHit = intersectRayWithPlane(
-                rayOrigin = eye,
-                rayDir = forward,
-                planePoint = planePoint,
-                planeNormal = normal
-            )
+            if (centerHitT != null) {
+                val hitToEyeX = forwardX * centerHitT
+                val hitToEyeY = forwardY * centerHitT
+                val hitToEyeZ = forwardZ * centerHitT
+                if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) <= visibleDist2) {
+                    val localX = eye.x + hitToEyeX - origin.x
+                    val localY = eye.y + hitToEyeY - origin.y
+                    val localZ = eye.z + hitToEyeZ - origin.z
+                    val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
+                    val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
 
-            if (centerHit != null && (centerHit - eye).lengthSquared() <= visibleDist2) {
-                val local = centerHit - origin
-                val u = local.dot(axisU)
-                val v = local.dot(axisV)
-
-                minU = min(minU, u)
-                maxU = max(maxU, u)
-                minV = min(minV, v)
-                maxV = max(maxV, v)
+                    minU = min(minU, u)
+                    maxU = max(maxU, u)
+                    minV = min(minV, v)
+                    maxV = max(maxV, v)
+                }
             }
         }
 
@@ -197,51 +281,48 @@ data class DisplayGeometry(
         )
     }
 
-    private fun buildCameraBasis(forward: Vec3): CameraBasis? {
-        // 优先用世界 Y 轴作为 up 参考
-        val worldUp = Vec3(0.0, 1.0, 0.0)
-
-        var right = forward.cross(worldUp)
-        if (right.lengthSquared() < EPSILON) {
-            // 说明 forward 与 worldUp 近似平行，换一个参考轴
-            val fallbackUp = Vec3(0.0, 0.0, 1.0)
-            right = forward.cross(fallbackUp)
-            if (right.lengthSquared() < EPSILON) {
-                return null
-            }
-        }
-
-        right = right.normalizedOrNull() ?: return null
-        val up = right.cross(forward).normalizedOrNull() ?: return null
-
-        return CameraBasis(right = right, up = up)
-    }
-
-    private fun intersectRayWithPlane(
-        rayOrigin: Vec3,
-        rayDir: Vec3,
-        planePoint: Vec3,
-        planeNormal: Vec3
-    ): Vec3? {
-        val denom = rayDir.dot(planeNormal)
+    private fun intersectRayWithPlaneT(
+        rayOriginX: Double,
+        rayOriginY: Double,
+        rayOriginZ: Double,
+        rayDirX: Double,
+        rayDirY: Double,
+        rayDirZ: Double,
+        planePointX: Double,
+        planePointY: Double,
+        planePointZ: Double,
+        planeNormalX: Double,
+        planeNormalY: Double,
+        planeNormalZ: Double
+    ): Double? {
+        val denom = dot(rayDirX, rayDirY, rayDirZ, planeNormalX, planeNormalY, planeNormalZ)
         if (abs(denom) < EPSILON) {
             return null
         }
 
-        val t = (planePoint - rayOrigin).dot(planeNormal) / denom
+        val t = dot(
+            planePointX - rayOriginX,
+            planePointY - rayOriginY,
+            planePointZ - rayOriginZ,
+            planeNormalX,
+            planeNormalY,
+            planeNormalZ
+        ) / denom
         if (t <= 0.0) {
             return null
         }
 
-        return rayOrigin + rayDir * t
-    }
-
-    private data class CameraBasis(
-        val right: Vec3,
-        val up: Vec3
-    )
-
-    private companion object {
-        private const val EPSILON = 1e-6
+        return t
     }
 }
+
+private fun dot(
+    ax: Double,
+    ay: Double,
+    az: Double,
+    bx: Double,
+    by: Double,
+    bz: Double
+): Double = ax * bx + ay * by + az * bz
+
+private fun lengthSquared(x: Double, y: Double, z: Double): Double = x * x + y * y + z * z
