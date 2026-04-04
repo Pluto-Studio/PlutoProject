@@ -49,7 +49,7 @@ class DisplayRuntimeContractTest {
     private class FakeDisplayJob : DisplayJob {
         override val belongsTo: UUID = dummyUuid(8100)
         override var isStopped: Boolean = false
-        override val managedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
+        override val attachedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
 
         override fun attach(
             displayInstance: DisplayInstance,
@@ -60,7 +60,7 @@ class DisplayRuntimeContractTest {
             require(displayInstance.belongsTo == belongsTo)
             require(image.id == belongsTo)
             require(imageDataEntry.imageId == belongsTo)
-            managedDisplayInstances[displayInstance.id] = displayInstance
+            attachedDisplayInstances[displayInstance.id] = displayInstance
         }
 
         override fun detach(displayInstanceId: UUID): DisplayInstance? {
@@ -68,10 +68,10 @@ class DisplayRuntimeContractTest {
                 return null
             }
 
-            return managedDisplayInstances.remove(displayInstanceId)
+            return attachedDisplayInstances.remove(displayInstanceId)
         }
 
-        override fun isEmpty(): Boolean = managedDisplayInstances.isEmpty()
+        override fun isEmpty(): Boolean = attachedDisplayInstances.isEmpty()
 
         override fun wake() = Unit
 
@@ -81,7 +81,7 @@ class DisplayRuntimeContractTest {
             }
 
             isStopped = true
-            managedDisplayInstances.clear()
+            attachedDisplayInstances.clear()
         }
     }
 }

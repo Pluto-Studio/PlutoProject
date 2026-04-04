@@ -18,7 +18,7 @@ class StopDisplayJobUseCase(
         val job = displayManager.getLoadedDisplayJob(belongsTo) ?: return Result.NotStarted
 
         displayScheduler.unschedule(job)
-        job.managedDisplayInstances.keys.forEach(displayManager::unbindDisplayInstanceFromJob)
+        job.attachedDisplayInstances.keys.forEach(displayManager::unbindDisplayInstanceFromJob)
         job.stop()
         displayManager.removeDisplayJob(belongsTo)
         return Result.Ok(job)

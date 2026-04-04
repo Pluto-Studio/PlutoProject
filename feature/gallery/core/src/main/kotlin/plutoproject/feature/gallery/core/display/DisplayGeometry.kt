@@ -40,20 +40,7 @@ data class DisplayGeometry(
      */
     val heightBlocks: Int,
 ) {
-    fun computeVisibleTiles(playerViews: List<PlayerView>, visibleDistance: Double): Map<PlayerView, TileRect> {
-        val result = HashMap<PlayerView, TileRect>(playerViews.size)
-
-        for (view in playerViews) {
-            val rect = computeVisibleTilesForView(view = view, visibleDistance = visibleDistance)
-            if (rect != null) {
-                result[view] = rect
-            }
-        }
-
-        return result
-    }
-
-    private fun computeVisibleTilesForView(view: PlayerView, visibleDistance: Double): TileRect? {
+    fun computeVisibleTiles(view: PlayerView, visibleDistance: Double): TileRect? {
         val eye = view.eye
         val forward = view.viewDirection.normalizedOrNull() ?: return null
 

@@ -6,7 +6,7 @@ import java.util.*
 interface DisplayJob {
     val belongsTo: UUID
     val isStopped: Boolean
-    val managedDisplayInstances: Map<UUID, DisplayInstance>
+    val attachedDisplayInstances: Map<UUID, DisplayInstance>
 
     fun attach(displayInstance: DisplayInstance)
 

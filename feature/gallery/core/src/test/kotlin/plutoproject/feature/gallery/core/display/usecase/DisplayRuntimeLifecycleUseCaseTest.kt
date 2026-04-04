@@ -53,7 +53,7 @@ class DisplayRuntimeLifecycleUseCaseTest {
         assertTrue(job is StaticDisplayJob)
         assertSame(job, manager.getLoadedDisplayJob(job.belongsTo))
         assertEquals(job.belongsTo, manager.getJobBelongsToByDisplayInstanceId(displayInstance.id))
-        assertSame(displayInstance, job.managedDisplayInstances[displayInstance.id])
+        assertSame(displayInstance, job.attachedDisplayInstances[displayInstance.id])
         assertSame(job, scheduler.lastScheduledJob)
         assertEquals(Instant.ofEpochMilli(1_000L), scheduler.lastAwakeAt)
     }
@@ -175,27 +175,27 @@ class DisplayRuntimeLifecycleUseCaseTest {
         override val belongsTo: UUID,
     ) : DisplayJob {
         override var isStopped: Boolean = false
-        override val managedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
+        override val attachedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
         val attachedInstances = mutableListOf<DisplayInstance>()
         var stopCalled: Boolean = false
 
         override fun attach(displayInstance: DisplayInstance, image: Image, imageDataEntry: ImageDataEntry<*>) {
             require(image.id == belongsTo)
             require(imageDataEntry.imageId == belongsTo)
-            managedDisplayInstances[displayInstance.id] = displayInstance
+            attachedDisplayInstances[displayInstance.id] = displayInstance
             attachedInstances += displayInstance
         }
 
-        override fun detach(displayInstanceId: UUID): DisplayInstance? = managedDisplayInstances.remove(displayInstanceId)
+        override fun detach(displayInstanceId: UUID): DisplayInstance? = attachedDisplayInstances.remove(displayInstanceId)
 
-        override fun isEmpty(): Boolean = managedDisplayInstances.isEmpty()
+        override fun isEmpty(): Boolean = attachedDisplayInstances.isEmpty()
 
         override fun wake() = Unit
 
         override fun stop() {
             isStopped = true
             stopCalled = true
-            managedDisplayInstances.clear()
+            attachedDisplayInstances.clear()
         }
     }
 }

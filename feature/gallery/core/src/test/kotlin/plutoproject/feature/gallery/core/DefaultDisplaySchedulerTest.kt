@@ -110,7 +110,7 @@ class DefaultDisplaySchedulerTest {
     private class FakeDisplayJob : DisplayJob {
         override val belongsTo: UUID = dummyUuid(8001)
         override var isStopped: Boolean = false
-        override val managedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
+        override val attachedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
 
         var wakeCount: Int = 0
             private set
@@ -127,7 +127,7 @@ class DefaultDisplaySchedulerTest {
 
         override fun detach(displayInstanceId: UUID): DisplayInstance? = null
 
-        override fun isEmpty(): Boolean = managedDisplayInstances.isEmpty()
+        override fun isEmpty(): Boolean = attachedDisplayInstances.isEmpty()
 
         override fun wake() {
             wakeCount += 1

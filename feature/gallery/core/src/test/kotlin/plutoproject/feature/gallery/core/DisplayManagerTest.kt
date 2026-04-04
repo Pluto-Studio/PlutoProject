@@ -131,7 +131,7 @@ class DisplayManagerTest {
         override val belongsTo: UUID,
     ) : DisplayJob {
         override val isStopped: Boolean = false
-        override val managedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
+        override val attachedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
 
         override fun attach(
             displayInstance: DisplayInstance,
