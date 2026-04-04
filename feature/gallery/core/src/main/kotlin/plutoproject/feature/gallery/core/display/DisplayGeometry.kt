@@ -1,7 +1,5 @@
 package plutoproject.feature.gallery.core.display
 
-import plutoproject.feature.gallery.core.HORIZONTAL_FOV_RADIAN
-import plutoproject.feature.gallery.core.VERTICAL_FOV_RADIAN
 import kotlin.math.*
 
 private const val EPSILON = 1e-6
@@ -13,6 +11,9 @@ private const val WORLD_UP_Z = 0.0
 private const val FALLBACK_UP_X = 0.0
 private const val FALLBACK_UP_Y = 0.0
 private const val FALLBACK_UP_Z = 1.0
+
+private const val HORIZONTAL_FOV_RADIAN: Double = Math.PI / 2.0
+private const val VERTICAL_FOV_RADIAN: Double = Math.PI / 2.0
 
 data class DisplayGeometry(
     /**
@@ -134,120 +135,44 @@ data class DisplayGeometry(
         var maxV = Double.NEGATIVE_INFINITY
         var anyHit = false
 
-        fun accumulateRay(rayDirX: Double, rayDirY: Double, rayDirZ: Double): Boolean {
-            val hitT = intersectRayWithPlaneT(
-                rayOriginX = eye.x,
-                rayOriginY = eye.y,
-                rayOriginZ = eye.z,
-                rayDirX = rayDirX,
-                rayDirY = rayDirY,
-                rayDirZ = rayDirZ,
-                planePointX = center.x,
-                planePointY = center.y,
-                planePointZ = center.z,
-                planeNormalX = normal.x,
-                planeNormalY = normal.y,
-                planeNormalZ = normal.z
-            ) ?: return false
-
-            val hitToEyeX = rayDirX * hitT
-            val hitToEyeY = rayDirY * hitT
-            val hitToEyeZ = rayDirZ * hitT
-            if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) > visibleDist2) {
-                return false
+        for (horizontalSign in listOf(1.0, -1.0)) {
+            for (verticalSign in listOf(1.0, -1.0)) {
+                projectRayToDisplayUv(
+                    forwardX + rightX * tanHalfHFov * horizontalSign + upX * tanHalfVFov * verticalSign,
+                    forwardY + rightY * tanHalfHFov * horizontalSign + upY * tanHalfVFov * verticalSign,
+                    forwardZ + rightZ * tanHalfHFov * horizontalSign + upZ * tanHalfVFov * verticalSign,
+                    eye,
+                    visibleDist2
+                )?.let {
+                    minU = min(minU, it.u)
+                    maxU = max(maxU, it.u)
+                    minV = min(minV, it.v)
+                    maxV = max(maxV, it.v)
+                    anyHit = true
+                }
             }
-
-            val localX = eye.x + hitToEyeX - origin.x
-            val localY = eye.y + hitToEyeY - origin.y
-            val localZ = eye.z + hitToEyeZ - origin.z
-            val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
-            val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
-
-            minU = min(minU, u)
-            maxU = max(maxU, u)
-            minV = min(minV, v)
-            maxV = max(maxV, v)
-            return true
         }
-
-        anyHit = accumulateRay(
-            forwardX + rightX * tanHalfHFov + upX * tanHalfVFov,
-            forwardY + rightY * tanHalfHFov + upY * tanHalfVFov,
-            forwardZ + rightZ * tanHalfHFov + upZ * tanHalfVFov
-        ) || anyHit
-        anyHit = accumulateRay(
-            forwardX - rightX * tanHalfHFov + upX * tanHalfVFov,
-            forwardY - rightY * tanHalfHFov + upY * tanHalfVFov,
-            forwardZ - rightZ * tanHalfHFov + upZ * tanHalfVFov
-        ) || anyHit
-        anyHit = accumulateRay(
-            forwardX + rightX * tanHalfHFov - upX * tanHalfVFov,
-            forwardY + rightY * tanHalfHFov - upY * tanHalfVFov,
-            forwardZ + rightZ * tanHalfHFov - upZ * tanHalfVFov
-        ) || anyHit
-        anyHit = accumulateRay(
-            forwardX - rightX * tanHalfHFov - upX * tanHalfVFov,
-            forwardY - rightY * tanHalfHFov - upY * tanHalfVFov,
-            forwardZ - rightZ * tanHalfHFov - upZ * tanHalfVFov
-        ) || anyHit
 
         // 如果四个角都没打到，不能直接判 null
         // 可能出现「地图画完全覆盖屏幕中心，但四角射线都偏到展示面外侧」的情况
         // 所以补一条中心射线作为兜底
-        val centerHitT = intersectRayWithPlaneT(
-            rayOriginX = eye.x,
-            rayOriginY = eye.y,
-            rayOriginZ = eye.z,
-            rayDirX = forwardX,
-            rayDirY = forwardY,
-            rayDirZ = forwardZ,
-            planePointX = center.x,
-            planePointY = center.y,
-            planePointZ = center.z,
-            planeNormalX = normal.x,
-            planeNormalY = normal.y,
-            planeNormalZ = normal.z
-        )
+        val centerHit = projectRayToDisplayUv(forwardX, forwardY, forwardZ, eye, visibleDist2)
 
         if (!anyHit) {
-            val hitT = centerHitT ?: return null
+            centerHit ?: return null
 
-            val hitToEyeX = forwardX * hitT
-            val hitToEyeY = forwardY * hitT
-            val hitToEyeZ = forwardZ * hitT
-            if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) > visibleDist2) {
-                return null
-            }
-
-            val localX = eye.x + hitToEyeX - origin.x
-            val localY = eye.y + hitToEyeY - origin.y
-            val localZ = eye.z + hitToEyeZ - origin.z
-            val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
-            val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
-
-            minU = u
-            maxU = u
-            minV = v
-            maxV = v
+            minU = centerHit.u
+            maxU = centerHit.u
+            minV = centerHit.v
+            maxV = centerHit.v
         } else {
             // 为了避免「中心在地图画上，但四角全落在外」导致包围范围偏移，
             // 把中心射线命中点也并进 bbox
-            if (centerHitT != null) {
-                val hitToEyeX = forwardX * centerHitT
-                val hitToEyeY = forwardY * centerHitT
-                val hitToEyeZ = forwardZ * centerHitT
-                if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) <= visibleDist2) {
-                    val localX = eye.x + hitToEyeX - origin.x
-                    val localY = eye.y + hitToEyeY - origin.y
-                    val localZ = eye.z + hitToEyeZ - origin.z
-                    val u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z)
-                    val v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
-
-                    minU = min(minU, u)
-                    maxU = max(maxU, u)
-                    minV = min(minV, v)
-                    maxV = max(maxV, v)
-                }
+            if (centerHit != null) {
+                minU = min(minU, centerHit.u)
+                maxU = max(maxU, centerHit.u)
+                minV = min(minV, centerHit.v)
+                maxV = max(maxV, centerHit.v)
             }
         }
 
@@ -314,7 +239,50 @@ data class DisplayGeometry(
 
         return t
     }
+
+    private fun projectRayToDisplayUv(
+        rayDirX: Double,
+        rayDirY: Double,
+        rayDirZ: Double,
+        eye: Vec3,
+        visibleDist2: Double
+    ): DisplayUv? {
+        val hitT = intersectRayWithPlaneT(
+            rayOriginX = eye.x,
+            rayOriginY = eye.y,
+            rayOriginZ = eye.z,
+            rayDirX = rayDirX,
+            rayDirY = rayDirY,
+            rayDirZ = rayDirZ,
+            planePointX = center.x,
+            planePointY = center.y,
+            planePointZ = center.z,
+            planeNormalX = normal.x,
+            planeNormalY = normal.y,
+            planeNormalZ = normal.z
+        ) ?: return null
+
+        val hitToEyeX = rayDirX * hitT
+        val hitToEyeY = rayDirY * hitT
+        val hitToEyeZ = rayDirZ * hitT
+        if (lengthSquared(hitToEyeX, hitToEyeY, hitToEyeZ) > visibleDist2) {
+            return null
+        }
+
+        val localX = eye.x + hitToEyeX - origin.x
+        val localY = eye.y + hitToEyeY - origin.y
+        val localZ = eye.z + hitToEyeZ - origin.z
+        return DisplayUv(
+            u = dot(localX, localY, localZ, axisU.x, axisU.y, axisU.z),
+            v = dot(localX, localY, localZ, axisV.x, axisV.y, axisV.z)
+        )
+    }
 }
+
+private data class DisplayUv(
+    val u: Double,
+    val v: Double
+)
 
 private fun dot(
     ax: Double,

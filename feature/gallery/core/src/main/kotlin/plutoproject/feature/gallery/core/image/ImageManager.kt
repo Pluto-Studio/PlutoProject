@@ -21,10 +21,10 @@ private class LockHolder {
 }
 
 class ImageManager(
-    private val coroutineScope: CoroutineScope,
-    private val coroutineContext: CoroutineContext,
-    private val clock: Clock,
-    private val logger: Logger,
+    coroutineScope: CoroutineScope,
+    coroutineContext: CoroutineContext,
+    clock: Clock,
+    logger: Logger,
     private val imageRepo: ImageRepository,
     private val imageDataRepo: ImageDataEntryRepository,
 ) {
@@ -277,23 +277,23 @@ class ImageManager(
     private fun checkNotClosed() {
         check(!isClosed) { "Image manager already closed" }
     }
+}
 
-    private class ImageRuntimeStateCache(
-        coroutineScope: CoroutineScope,
-        coroutineContext: CoroutineContext,
-        clock: Clock,
-        logger: Logger,
-    ) : TtlCache<UUID, ImageRuntimeState, Unit>(
-        coroutineScope = coroutineScope,
-        coroutineContext = coroutineContext,
-        clock = clock,
-        logger = logger,
-    ) {
-        override fun keyOf(value: ImageRuntimeState): UUID {
-            return value.image?.id ?: value.imageDataEntry?.imageId
-            ?: error("ImageRuntimeState requires image or imageDataEntry to determine key")
-        }
-
-        override fun buildIndex(value: ImageRuntimeState) = Unit
+private class ImageRuntimeStateCache(
+    coroutineScope: CoroutineScope,
+    coroutineContext: CoroutineContext,
+    clock: Clock,
+    logger: Logger,
+) : TtlCache<UUID, ImageRuntimeState, Unit>(
+    coroutineScope = coroutineScope,
+    coroutineContext = coroutineContext,
+    clock = clock,
+    logger = logger,
+) {
+    override fun keyOf(value: ImageRuntimeState): UUID {
+        return value.image?.id ?: value.imageDataEntry?.imageId
+        ?: error("ImageRuntimeState requires image or imageDataEntry to determine key")
     }
+
+    override fun buildIndex(value: ImageRuntimeState) = Unit
 }

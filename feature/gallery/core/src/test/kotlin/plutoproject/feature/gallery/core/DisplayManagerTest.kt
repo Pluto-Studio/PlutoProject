@@ -48,20 +48,20 @@ class DisplayManagerTest {
         val entry = sampleStaticImageDataEntry(image.id)
 
         try {
-            val created = manager.createJob(image, entry)
-            val job = (created as DisplayManager.CreateJobResult.Success).job
+            val created = manager.createDisplayJob(image, entry)
+            val job = (created as DisplayManager.CreateDisplayJobResult.Success).job
 
             assertTrue(job is StaticDisplayJob)
-            assertSame(job, manager.getJob(image.id))
-            assertEquals(DisplayManager.CreateJobResult.AlreadyExists(job), manager.createJob(image, entry))
+            assertSame(job, manager.getDisplayJob(image.id))
+            assertEquals(DisplayManager.CreateDisplayJobResult.AlreadyExists(job), manager.createDisplayJob(image, entry))
 
-            manager.startJob(job)
+            manager.startDisplayJob(job)
             advanceUntilIdle()
 
             assertEquals(SchedulerState.RUNNING, scheduler.state)
-            assertEquals(DisplayManager.StopJobResult.Success(job), manager.stopJob(image.id))
-            assertNull(manager.getJob(image.id))
-            assertEquals(DisplayManager.StopJobResult.NotFound, manager.stopJob(image.id))
+            assertEquals(DisplayManager.StopDisplayJobResult.Success(job), manager.stopDisplayJob(image.id))
+            assertNull(manager.getDisplayJob(image.id))
+            assertEquals(DisplayManager.StopDisplayJobResult.NotFound, manager.stopDisplayJob(image.id))
         } finally {
             runtime.manager.close()
             runtime.scheduler.stop()

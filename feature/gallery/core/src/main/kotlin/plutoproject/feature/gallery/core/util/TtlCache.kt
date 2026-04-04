@@ -2,13 +2,14 @@ package plutoproject.feature.gallery.core.util
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.time.delay
-import plutoproject.feature.gallery.core.RESOURCE_CACHE_TTL_SECONDS
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
+
+private const val RESOURCE_CACHE_TTL_SECONDS = 30L
 
 abstract class TtlCache<K, V, I>(
     private val coroutineScope: CoroutineScope,

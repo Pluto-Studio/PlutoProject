@@ -236,7 +236,7 @@ internal fun newDisplayRuntime(
         coroutineContext = coroutineContext,
         clock = clock,
         logger = Logger.getLogger("DisplayManagerTest"),
-        instances = instances,
+        instanceRepo = instances,
         scheduler = scheduler,
         displayJobFactory = displayJobFactory,
         sendJobFactory = lazy { sendJobFactory },
