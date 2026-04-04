@@ -62,7 +62,7 @@ object AnimatedImageRenderer {
         }
 
         check(renderedFrameTileIndexes.keys.containsAll(requiredSourceFrameIndexes)) {
-            "frame stream did not produce all required source frames"
+            "Frame stream did not produce all required source frames"
         }
 
         val allFrameTileIndexes = ShortArray(totalTileIndexCount.toInt())

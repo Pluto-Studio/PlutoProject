@@ -20,7 +20,7 @@ class GifFrameStream(
     private var closed = false
 
     override suspend fun nextFrame(): AnimatedImageFrame? {
-        check(!closed) { "frame stream is already closed" }
+        check(!closed) { "Frame stream is already closed" }
         if (nextFrameIndex >= metadata.frameCount) {
             return null
         }
