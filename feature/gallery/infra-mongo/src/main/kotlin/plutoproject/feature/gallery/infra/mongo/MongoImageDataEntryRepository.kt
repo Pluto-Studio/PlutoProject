@@ -2,6 +2,8 @@ package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.Filters.`in`
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
@@ -15,6 +17,13 @@ class MongoImageDataEntryRepository(
     private val collection: MongoCollection<ImageDataEntryDocument>,
 ) : ImageDataEntryRepository {
     private val upsert = ReplaceOptions().upsert(true)
+
+    suspend fun ensureIndexes() {
+        collection.createIndex(
+            Indexes.ascending(ImageDataEntryDocument::imageId.name),
+            IndexOptions().unique(true),
+        )
+    }
 
     override suspend fun findByImageId(imageId: UUID): ImageDataEntry<*>? {
         return collection.find(eq(ImageDataEntryDocument::imageId.name, imageId))

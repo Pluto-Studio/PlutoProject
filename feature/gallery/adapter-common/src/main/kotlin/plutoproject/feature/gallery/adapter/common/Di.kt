@@ -1,6 +1,9 @@
 package plutoproject.feature.gallery.adapter.common
 
 import com.mongodb.kotlin.client.coroutine.MongoCollection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -14,18 +17,13 @@ import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
 import plutoproject.feature.gallery.core.display.usecase.*
-import plutoproject.feature.gallery.core.image.ImageCache
-import plutoproject.feature.gallery.core.image.ImageDataEntryCache
 import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
+import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataEntryRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoSystemInformationRepository
-import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
-import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
-import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
-import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.serverName
@@ -44,23 +42,33 @@ private inline fun <reified T : Any> getCollection(name: String): MongoCollectio
 val commonModule = module {
     single<Clock> { Clock.systemUTC() }
     single<ImageRepository> {
-        MongoImageRepository(getCollection<ImageDocument>(IMAGE_COLLECTION))
+        MongoImageRepository(getCollection(IMAGE_COLLECTION)).also { repo ->
+            get<CoroutineScope>().launch(Dispatchers.IO) {
+                repo.ensureIndexes()
+            }
+        }
     }
     single<DisplayInstanceRepository> {
-        MongoDisplayInstanceRepository(getCollection<DisplayInstanceDocument>(DISPLAY_INSTANCE_COLLECTION))
+        MongoDisplayInstanceRepository(getCollection(DISPLAY_INSTANCE_COLLECTION)).also { repo ->
+            get<CoroutineScope>().launch(Dispatchers.IO) {
+                repo.ensureIndexes()
+            }
+        }
     }
     single<ImageDataEntryRepository> {
-        MongoImageDataEntryRepository(getCollection<ImageDataEntryDocument>(IMAGE_DATA_ENTRY_COLLECTION))
+        MongoImageDataEntryRepository(getCollection(IMAGE_DATA_ENTRY_COLLECTION)).also { repo ->
+            get<CoroutineScope>().launch(Dispatchers.IO) {
+                repo.ensureIndexes()
+            }
+        }
     }
     single<SystemInformationRepository> {
         MongoSystemInformationRepository(
-            getCollection<MapIdSystemInformationDocument>(SYSTEM_INFORMATION_COLLECTION)
+            getCollection(SYSTEM_INFORMATION_COLLECTION)
         )
     }
 
-    singleOf(::ImageCache)
-    singleOf(::ImageDataEntryCache)
-
+    singleOf(::ImageManager)
     singleOf(::DisplayManager)
     singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
 

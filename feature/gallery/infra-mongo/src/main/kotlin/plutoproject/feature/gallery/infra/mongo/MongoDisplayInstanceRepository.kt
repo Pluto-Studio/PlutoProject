@@ -3,6 +3,8 @@ package plutoproject.feature.gallery.infra.mongo
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.Filters.`in`
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.flow.firstOrNull
@@ -16,6 +18,20 @@ class MongoDisplayInstanceRepository(
     private val collection: MongoCollection<DisplayInstanceDocument>,
 ) : DisplayInstanceRepository {
     private val upsert = ReplaceOptions().upsert(true)
+
+    suspend fun ensureIndexes() {
+        collection.createIndex(
+            Indexes.ascending(DisplayInstanceDocument::id.name),
+            IndexOptions().unique(true),
+        )
+        collection.createIndex(Indexes.ascending(DisplayInstanceDocument::belongsTo.name))
+        collection.createIndex(
+            Indexes.compoundIndex(
+                Indexes.ascending(DisplayInstanceDocument::chunkX.name),
+                Indexes.ascending(DisplayInstanceDocument::chunkZ.name),
+            )
+        )
+    }
 
     override suspend fun findById(id: UUID): DisplayInstance? {
         return collection.find(eq(DisplayInstanceDocument::id.name, id))

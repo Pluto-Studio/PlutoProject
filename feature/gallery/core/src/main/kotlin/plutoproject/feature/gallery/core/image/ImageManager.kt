@@ -29,8 +29,8 @@ private class LockHolder {
 class ImageManager(
     private val coroutineScope: CoroutineScope,
     private val coroutineContext: CoroutineContext,
-    private val clock: Clock = Clock.systemUTC(),
-    private val logger: Logger = Logger.getLogger(ImageManager::class.java.name),
+    private val clock: Clock,
+    private val logger: Logger,
     private val imageRepo: ImageRepository,
     private val imageDataRepo: ImageDataEntryRepository,
 ) {
@@ -57,7 +57,7 @@ class ImageManager(
     }
 
     sealed interface DeleteImageDataEntryResult {
-        data object Success : DeleteImageDataEntryResult
+        data class Success(val imageDataEntry: ImageDataEntry<*>) : DeleteImageDataEntryResult
         data object NotFound : DeleteImageDataEntryResult
     }
 
@@ -295,7 +295,7 @@ class ImageManager(
                 state.imageDataEntry = null
                 cleanupRuntimeStateIfEmpty(imageId, state)
             }
-            DeleteImageDataEntryResult.Success
+            DeleteImageDataEntryResult.Success(entry)
         }
     }
 
