@@ -1,15 +1,11 @@
 package plutoproject.feature.gallery.core.image
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.time.delay
-import plutoproject.feature.gallery.core.RESOURCE_CACHE_TTL_SECONDS
+import plutoproject.feature.gallery.core.util.TtlCache
 import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.util.*
-import java.util.logging.Level
+import java.util.UUID
 import java.util.logging.Logger
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
@@ -17,8 +13,6 @@ import kotlin.coroutines.CoroutineContext
 class ImageRuntimeState(
     var image: Image? = null,
     var imageDataEntry: ImageDataEntry<*>? = null,
-    var expiry: Instant? = null,
-    var isPinned: Boolean = false,
 )
 
 private class LockHolder {
@@ -37,9 +31,8 @@ class ImageManager(
     @Volatile
     private var isClosed = false
     private val lock = Any()
-    private val runtimeStatesByImageId = mutableMapOf<UUID, ImageRuntimeState>()
+    private val runtimeStatesByImageId = ImageRuntimeStateCache(coroutineScope, coroutineContext, clock, logger)
     private val lockHoldersByImageId = mutableMapOf<UUID, LockHolder>()
-    private var cleanerJob: Job? = null
 
     sealed interface CreateResult {
         data class Success(val image: Image) : CreateResult
@@ -61,84 +54,6 @@ class ImageManager(
         data object NotFound : DeleteImageDataEntryResult
     }
 
-    private fun nextExpireTime(): Instant {
-        return clock.instant().plusSeconds(RESOURCE_CACHE_TTL_SECONDS)
-    }
-
-    private fun ensureCleanerRunning() {
-        if (cleanerJob?.isActive == true) {
-            return
-        }
-
-        cleanerJob = coroutineScope.launch(coroutineContext) {
-            runCleaner()
-        }.also { job ->
-            job.invokeOnCompletion { cause ->
-                handleCleanerCompletion(cause)
-            }
-        }
-    }
-
-    private fun handleCleanerCompletion(cause: Throwable?) {
-        if (cause == null || cause is InternalCleanerCancellation || !coroutineScope.isActive) {
-            cleanerJob = null
-            return
-        }
-
-        logger.log(
-            Level.WARNING,
-            "An internal error occurred while running cleaner job for ${this::class.simpleName}",
-            cause
-        )
-        ensureCleanerRunning()
-    }
-
-    private suspend fun <T> withImageLock(id: UUID, block: suspend () -> T): T {
-        val lockHolder = synchronized(lock) {
-            lockHoldersByImageId.getOrPut(id) { LockHolder() }.also {
-                it.refCount += 1
-            }
-        }
-        return try {
-            lockHolder.mutex.withLock { block() }
-        } finally {
-            cleanupOperationLockIfUnused(id, lockHolder)
-        }
-    }
-
-    private suspend fun runCleaner() {
-        while (true) {
-            val nextCleanup = synchronized(lock) {
-                runtimeStatesByImageId
-                    .mapNotNull { (imageId, state) -> state.expiry?.let { imageId to it } }
-                    .minByOrNull { (_, expiry) -> expiry }
-            } ?: return
-
-            val (imageId, expiry) = nextCleanup
-            val now = clock.instant()
-            if (now < expiry) {
-                delay(Duration.between(now, expiry))
-            }
-
-            synchronized(lock) {
-                if (isClosed || cleanerJob?.isActive != true) {
-                    return
-                }
-
-                val state = runtimeStatesByImageId[imageId] ?: continue
-                if (state.expiry != expiry) {
-                    continue
-                }
-                if (state.isPinned) {
-                    state.expiry = null
-                    continue
-                }
-
-                runtimeStatesByImageId.remove(imageId)
-            }
-        }
-    }
-
     suspend fun createImage(
         id: UUID,
         type: ImageType,
@@ -147,13 +62,12 @@ class ImageManager(
         name: String,
         widthBlocks: Int,
         heightBlocks: Int,
-        tileMapIds: IntArray
+        tileMapIds: IntArray,
     ): CreateResult {
         return withImageLock(id) {
             checkNotClosed()
 
-            val existing = synchronized(lock) { runtimeStatesByImageId[id]?.image }
-                ?: imageRepo.findById(id)
+            val existing = runtimeStatesByImageId[id]?.image ?: imageRepo.findById(id)
             if (existing != null) {
                 return@withImageLock CreateResult.AlreadyExists
             }
@@ -176,10 +90,9 @@ class ImageManager(
 
     suspend fun getImage(id: UUID): Image? {
         return withImageLock(id) {
-            synchronized(lock) {
-                checkNotClosed()
-                runtimeStatesByImageId[id]?.image?.let { return@withImageLock it }
-            }
+            checkNotClosed()
+
+            runtimeStatesByImageId[id]?.image?.let { return@withImageLock it }
 
             val image = imageRepo.findById(id) ?: return@withImageLock null
             cacheImage(image)
@@ -199,30 +112,24 @@ class ImageManager(
 
     suspend fun findImageByOwner(owner: UUID): Collection<Image> {
         checkNotClosed()
-        val images = imageRepo.findByOwner(owner)
-        images.forEach { image ->
+
+        return imageRepo.findByOwner(owner).onEach { image ->
             withImageLock(image.id) {
-                val loaded = synchronized(lock) { runtimeStatesByImageId[image.id]?.image }
-                    ?: imageRepo.findById(image.id)
-                    ?: return@withImageLock
+                val loaded = runtimeStatesByImageId[image.id]?.image ?: imageRepo.findById(image.id) ?: return@withImageLock
                 cacheImage(loaded)
             }
         }
-        return images
     }
 
     suspend fun deleteImage(id: UUID): DeleteResult {
         return withImageLock(id) {
             checkNotClosed()
 
-            val image = synchronized(lock) { runtimeStatesByImageId[id]?.image }
-                ?: imageRepo.findById(id)
+            val image = runtimeStatesByImageId[id]?.image ?: imageRepo.findById(id)
                 ?: return@withImageLock DeleteResult.NotFound
 
             imageRepo.deleteById(id)
-            synchronized(lock) {
-                checkNotClosed()
-                val state = runtimeStatesByImageId[id] ?: return@synchronized
+            runtimeStatesByImageId[id]?.let { state ->
                 state.image = null
                 cleanupRuntimeStateIfEmpty(id, state)
             }
@@ -238,19 +145,18 @@ class ImageManager(
     suspend fun <T : ImageData> createImageDataEntry(
         imageId: UUID,
         type: ImageType,
-        data: T
+        data: T,
     ): CreateImageDataEntryResult<T> {
         return withImageLock(imageId) {
             checkNotClosed()
             require(type == data.type) { "Image type $type does not match image data type ${data.type}" }
 
-            val existing = synchronized(lock) { runtimeStatesByImageId[imageId]?.imageDataEntry }
-                ?: imageDataRepo.findByImageId(imageId)
+            val existing = runtimeStatesByImageId[imageId]?.imageDataEntry ?: imageDataRepo.findByImageId(imageId)
             if (existing != null) {
                 return@withImageLock CreateImageDataEntryResult.AlreadyExists
             }
 
-            val entry = createImageDataEntry(imageId, data)
+            val entry = createImageDataEntryInternal(imageId, data)
             imageDataRepo.save(entry)
             cacheImageDataEntry(entry)
             CreateImageDataEntryResult.Success(entry)
@@ -259,10 +165,9 @@ class ImageManager(
 
     suspend fun getImageDataEntry(imageId: UUID): ImageDataEntry<*>? {
         return withImageLock(imageId) {
-            synchronized(lock) {
-                checkNotClosed()
-                runtimeStatesByImageId[imageId]?.imageDataEntry?.let { return@withImageLock it }
-            }
+            checkNotClosed()
+
+            runtimeStatesByImageId[imageId]?.imageDataEntry?.let { return@withImageLock it }
 
             val entry = imageDataRepo.findByImageId(imageId) ?: return@withImageLock null
             cacheImageDataEntry(entry)
@@ -284,14 +189,11 @@ class ImageManager(
         return withImageLock(imageId) {
             checkNotClosed()
 
-            val entry = synchronized(lock) { runtimeStatesByImageId[imageId]?.imageDataEntry }
-                ?: imageDataRepo.findByImageId(imageId)
+            val entry = runtimeStatesByImageId[imageId]?.imageDataEntry ?: imageDataRepo.findByImageId(imageId)
                 ?: return@withImageLock DeleteImageDataEntryResult.NotFound
 
             imageDataRepo.deleteByImageId(imageId)
-            synchronized(lock) {
-                checkNotClosed()
-                val state = runtimeStatesByImageId[imageId] ?: return@synchronized
+            runtimeStatesByImageId[imageId]?.let { state ->
                 state.imageDataEntry = null
                 cleanupRuntimeStateIfEmpty(imageId, state)
             }
@@ -300,22 +202,13 @@ class ImageManager(
     }
 
     fun pin(imageId: UUID) {
-        synchronized(lock) {
-            checkNotClosed()
-            val state = runtimeStatesByImageId[imageId] ?: return
-            state.isPinned = true
-            state.expiry = null
-        }
+        checkNotClosed()
+        runtimeStatesByImageId.pin(imageId)
     }
 
     fun unpin(imageId: UUID) {
-        synchronized(lock) {
-            checkNotClosed()
-            val state = runtimeStatesByImageId[imageId] ?: return
-            state.isPinned = false
-            state.expiry = nextExpireTime()
-            ensureCleanerRunning()
-        }
+        checkNotClosed()
+        runtimeStatesByImageId.unpin(imageId)
     }
 
     fun close() {
@@ -324,42 +217,40 @@ class ImageManager(
         }
 
         isClosed = true
+        runtimeStatesByImageId.close()
         synchronized(lock) {
-            runtimeStatesByImageId.clear()
             lockHoldersByImageId.clear()
         }
-        cleanerJob?.cancel(InternalCleanerCancellation())
-        cleanerJob = null
+    }
+
+    private suspend fun <T> withImageLock(id: UUID, block: suspend () -> T): T {
+        val lockHolder = synchronized(lock) {
+            lockHoldersByImageId.getOrPut(id) { LockHolder() }.also {
+                it.refCount += 1
+            }
+        }
+        return try {
+            lockHolder.mutex.withLock { block() }
+        } finally {
+            cleanupOperationLockIfUnused(id, lockHolder)
+        }
     }
 
     private fun cacheImage(image: Image): Image {
-        synchronized(lock) {
-            checkNotClosed()
-            val state = runtimeStatesByImageId.getOrPut(image.id) { ImageRuntimeState() }
-            state.image = image
-            if (!state.isPinned) {
-                state.expiry = state.expiry ?: nextExpireTime()
-                ensureCleanerRunning()
-            }
-        }
+        val state = runtimeStatesByImageId[image.id] ?: ImageRuntimeState(image = image).also(runtimeStatesByImageId::put)
+        state.image = image
         return image
     }
 
     private fun cacheImageDataEntry(entry: ImageDataEntry<*>): ImageDataEntry<*> {
-        synchronized(lock) {
-            checkNotClosed()
-            val state = runtimeStatesByImageId.getOrPut(entry.imageId) { ImageRuntimeState() }
-            state.imageDataEntry = entry
-            if (!state.isPinned) {
-                state.expiry = state.expiry ?: nextExpireTime()
-                ensureCleanerRunning()
-            }
-        }
+        val state = runtimeStatesByImageId[entry.imageId]
+            ?: ImageRuntimeState(imageDataEntry = entry).also(runtimeStatesByImageId::put)
+        state.imageDataEntry = entry
         return entry
     }
 
     private fun cleanupRuntimeStateIfEmpty(imageId: UUID, state: ImageRuntimeState) {
-        if (state.image != null || state.imageDataEntry != null || state.isPinned) {
+        if (state.image != null || state.imageDataEntry != null) {
             return
         }
         runtimeStatesByImageId.remove(imageId)
@@ -368,7 +259,7 @@ class ImageManager(
     private fun cleanupOperationLockIfUnused(imageId: UUID, lockHolder: LockHolder) {
         synchronized(lock) {
             lockHolder.refCount -= 1
-            if (lockHolder.refCount > 0 || runtimeStatesByImageId.containsKey(imageId)) {
+            if (lockHolder.refCount > 0 || runtimeStatesByImageId[imageId] != null) {
                 return
             }
             lockHoldersByImageId.remove(imageId, lockHolder)
@@ -376,7 +267,7 @@ class ImageManager(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : ImageData> createImageDataEntry(imageId: UUID, data: T): ImageDataEntry<T> {
+    private fun <T : ImageData> createImageDataEntryInternal(imageId: UUID, data: T): ImageDataEntry<T> {
         return when (data) {
             is ImageData.Static -> ImageDataEntry.Static(imageId, data)
             is ImageData.Animated -> ImageDataEntry.Animated(imageId, data)
@@ -387,5 +278,22 @@ class ImageManager(
         check(!isClosed) { "Image manager already closed" }
     }
 
-    private class InternalCleanerCancellation : CancellationException()
+    private class ImageRuntimeStateCache(
+        coroutineScope: CoroutineScope,
+        coroutineContext: CoroutineContext,
+        clock: Clock,
+        logger: Logger,
+    ) : TtlCache<UUID, ImageRuntimeState, Unit>(
+        coroutineScope = coroutineScope,
+        coroutineContext = coroutineContext,
+        clock = clock,
+        logger = logger,
+    ) {
+        override fun keyOf(value: ImageRuntimeState): UUID {
+            return value.image?.id ?: value.imageDataEntry?.imageId
+            ?: error("ImageRuntimeState requires image or imageDataEntry to determine key")
+        }
+
+        override fun buildIndex(value: ImageRuntimeState) = Unit
+    }
 }

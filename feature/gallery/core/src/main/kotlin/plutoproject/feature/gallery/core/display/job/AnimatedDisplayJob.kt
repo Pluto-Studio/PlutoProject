@@ -14,7 +14,7 @@ import java.util.*
 import kotlin.math.roundToLong
 
 class AnimatedDisplayJob(
-    override val belongsTo: UUID,
+    override val imageId: UUID,
     private val image: Image,
     private val imageDataEntry: ImageDataEntry.Animated,
     private val displayScheduler: DisplayScheduler,
@@ -56,14 +56,14 @@ class AnimatedDisplayJob(
         image: Image,
         imageDataEntry: ImageDataEntry.Animated,
     ) {
-        require(image.id == belongsTo) {
-            "Image id mismatch: expected=$belongsTo, actual=${image.id}"
+        require(image.id == imageId) {
+            "Image id mismatch: expected=$imageId, actual=${image.id}"
         }
         require(image.type == ImageType.ANIMATED) {
             "AnimatedDisplayJob requires animated image, actual=${image.type}"
         }
-        require(imageDataEntry.imageId == belongsTo) {
-            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.imageId}"
+        require(imageDataEntry.imageId == imageId) {
+            "ImageDataEntry imageId mismatch: expected=$imageId, actual=${imageDataEntry.imageId}"
         }
         require(imageDataEntry.type == ImageType.ANIMATED) {
             "AnimatedDisplayJob requires animated image data, actual=${imageDataEntry.type}"
@@ -79,8 +79,8 @@ class AnimatedDisplayJob(
     }
 
     private fun validateDisplayInstance(displayInstance: DisplayInstance) {
-        require(displayInstance.belongsTo == belongsTo) {
-            "DisplayInstance belongsTo mismatch: expected=$belongsTo, actual=${displayInstance.belongsTo}"
+        require(displayInstance.imageId == imageId) {
+            "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
         }
     }
 
@@ -262,7 +262,7 @@ class AnimatedDisplayJob(
         animatedData: ImageData.Animated,
         framePoolIndexes: IntArray,
     ) {
-        val sendJob = displayManager.getLoadedSendJob(playerId) ?: return
+        val sendJob = displayManager.getSendJob(playerId) ?: return
         val previousPoolIndexes = lastSentPoolIndexes
 
         visibleTileIds.forEach { tileId ->

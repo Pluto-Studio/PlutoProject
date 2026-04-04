@@ -11,7 +11,7 @@ import plutoproject.feature.gallery.infra.mongo.model.*
 internal fun DisplayInstanceDocument.toDomain(): DisplayInstance {
     return DisplayInstance(
         id = id,
-        belongsTo = belongsTo,
+        imageId = imageId,
         world = world,
         chunkX = chunkX,
         chunkZ = chunkZ,
@@ -28,7 +28,7 @@ internal fun DisplayInstanceDocument.toDomain(): DisplayInstance {
 internal fun DisplayInstance.toDocument(): DisplayInstanceDocument {
     return DisplayInstanceDocument(
         id = id,
-        belongsTo = belongsTo,
+        imageId = imageId,
         world = world,
         chunkX = chunkX,
         chunkZ = chunkZ,

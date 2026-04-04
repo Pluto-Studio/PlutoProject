@@ -23,7 +23,7 @@ class DisplayJobFactory(
         imageDataEntry: ImageDataEntry<*>,
     ): DisplayJob {
         require(image.id == imageDataEntry.imageId) {
-            "Image and ImageDataEntry mismatch: image.id=${image.id}, belongsTo=${imageDataEntry.imageId}"
+            "Image and ImageDataEntry mismatch: image.id=${image.id}, imageId=${imageDataEntry.imageId}"
         }
         require(image.type == imageDataEntry.type) {
             "Image and ImageDataEntry type mismatch: image.type=${image.type}, entry.type=${imageDataEntry.type}"
@@ -31,7 +31,7 @@ class DisplayJobFactory(
 
         return when (image.type) {
             ImageType.STATIC -> StaticDisplayJob(
-                belongsTo = image.id,
+                imageId = image.id,
                 image = image,
                 imageDataEntry = imageDataEntry as? ImageDataEntry.Static
                     ?: error("ImageDataEntry type mismatch: expected Static, actual=${imageDataEntry::class.simpleName}"),
@@ -44,7 +44,7 @@ class DisplayJobFactory(
             )
 
             ImageType.ANIMATED -> AnimatedDisplayJob(
-                belongsTo = image.id,
+                imageId = image.id,
                 image = image,
                 imageDataEntry = imageDataEntry as? ImageDataEntry.Animated
                     ?: error("ImageDataEntry type mismatch: expected Animated, actual=${imageDataEntry::class.simpleName}"),

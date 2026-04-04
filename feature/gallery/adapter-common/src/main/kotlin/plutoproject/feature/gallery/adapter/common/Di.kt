@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.MapIdRange
@@ -15,7 +14,6 @@ import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
-import plutoproject.feature.gallery.core.display.usecase.*
 import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
 import plutoproject.feature.gallery.core.image.ImageManager
 import plutoproject.feature.gallery.core.image.ImageRepository
@@ -68,7 +66,18 @@ val commonModule = module {
     }
 
     singleOf(::ImageManager)
-    singleOf(::DisplayManager)
+    single {
+        DisplayManager(
+            coroutineScope = get(),
+            coroutineContext = get(),
+            clock = get(),
+            logger = get(),
+            instances = get(),
+            scheduler = get(),
+            displayJobFactory = lazy { get<DisplayJobFactory>() },
+            sendJobFactory = lazy { get<SendJobFactory>() },
+        )
+    }
     singleOf(::DisplayScheduler)
 
     single {
@@ -104,18 +113,4 @@ val commonModule = module {
             systemInformationRepository = get(),
         )
     }
-
-    singleOf(::CreateDisplayInstanceUseCase)
-    singleOf(::DeleteDisplayInstanceUseCase)
-    singleOf(::GetDisplayInstanceUseCase)
-    singleOf(::GetDisplayInstancesByIdsUseCase)
-    singleOf(::LookupDisplayInstanceByBelongsUseCase)
-    singleOf(::LookupDisplayInstanceByChunkUseCase)
-
-    singleOf(::StartDisplayJobUseCase)
-    singleOf(::StopDisplayJobUseCase)
-    singleOf(::AttachDisplayInstanceToJobUseCase)
-    singleOf(::DetachDisplayInstanceFromJobUseCase)
-    singleOf(::StartSendJobUseCase)
-    singleOf(::StopSendJobUseCase)
 }

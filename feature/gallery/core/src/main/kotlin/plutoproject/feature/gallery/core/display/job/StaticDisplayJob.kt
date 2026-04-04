@@ -13,7 +13,7 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 class StaticDisplayJob(
-    override val belongsTo: UUID,
+    override val imageId: UUID,
     private val image: Image,
     private val imageDataEntry: ImageDataEntry.Static,
     private val displayScheduler: DisplayScheduler,
@@ -52,14 +52,14 @@ class StaticDisplayJob(
         image: Image,
         imageDataEntry: ImageDataEntry.Static,
     ) {
-        require(image.id == belongsTo) {
-            "Image id mismatch: expected=$belongsTo, actual=${image.id}"
+        require(image.id == imageId) {
+            "Image id mismatch: expected=$imageId, actual=${image.id}"
         }
         require(image.type == ImageType.STATIC) {
             "StaticDisplayJob requires static image, actual=${image.type}"
         }
-        require(imageDataEntry.imageId == belongsTo) {
-            "ImageDataEntry belongsTo mismatch: expected=$belongsTo, actual=${imageDataEntry.imageId}"
+        require(imageDataEntry.imageId == imageId) {
+            "ImageDataEntry imageId mismatch: expected=$imageId, actual=${imageDataEntry.imageId}"
         }
         require(imageDataEntry.type == ImageType.STATIC) {
             "StaticDisplayJob requires static image data, actual=${imageDataEntry.type}"
@@ -75,8 +75,8 @@ class StaticDisplayJob(
     }
 
     private fun validateDisplayInstance(displayInstance: DisplayInstance) {
-        require(displayInstance.belongsTo == belongsTo) {
-            "DisplayInstance belongsTo mismatch: expected=$belongsTo, actual=${displayInstance.belongsTo}"
+        require(displayInstance.imageId == imageId) {
+            "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
         }
     }
 
@@ -181,7 +181,7 @@ class StaticDisplayJob(
         visibleTileIds: VisibleTileSet,
         imageData: ImageData.Static,
     ) {
-        val sendJob = displayManager.getLoadedSendJob(playerId) ?: return
+        val sendJob = displayManager.getSendJob(playerId) ?: return
         val sentMapIds = sentMapIdsByPlayer.getOrPut(playerId) { HashSet() }
 
         visibleTileIds.forEach { tileId ->

@@ -2,9 +2,9 @@ package plutoproject.feature.gallery.core.display
 
 import java.util.UUID
 
-class DisplayInstance(
+data class DisplayInstance(
     val id: UUID,
-    val belongsTo: UUID,
+    val imageId: UUID,
     val world: String,
     val chunkX: Int,
     val chunkZ: Int,
@@ -85,17 +85,6 @@ class DisplayInstance(
             widthBlocks = widthBlocks,
             heightBlocks = heightBlocks,
         )
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as DisplayInstance
-        return id == other.id
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
     }
 }
 

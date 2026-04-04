@@ -7,7 +7,7 @@ import java.util.UUID
 @Serializable
 data class DisplayInstanceDocument(
     val id: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
-    val belongsTo: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
+    val imageId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
     val world: String,
     val chunkX: Int,
     val chunkZ: Int,

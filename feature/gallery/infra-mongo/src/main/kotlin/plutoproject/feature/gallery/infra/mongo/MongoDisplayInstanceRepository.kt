@@ -2,7 +2,6 @@ package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.eq
-import com.mongodb.client.model.Filters.`in`
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.ReplaceOptions
@@ -24,7 +23,7 @@ class MongoDisplayInstanceRepository(
             Indexes.ascending(DisplayInstanceDocument::id.name),
             IndexOptions().unique(true),
         )
-        collection.createIndex(Indexes.ascending(DisplayInstanceDocument::belongsTo.name))
+        collection.createIndex(Indexes.ascending(DisplayInstanceDocument::imageId.name))
         collection.createIndex(
             Indexes.compoundIndex(
                 Indexes.ascending(DisplayInstanceDocument::chunkX.name),
@@ -39,19 +38,8 @@ class MongoDisplayInstanceRepository(
             ?.toDomain()
     }
 
-    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
-        if (ids.isEmpty()) {
-            return emptyMap()
-        }
-
-        return collection.find(`in`(DisplayInstanceDocument::id.name, ids))
-            .toList()
-            .map { it.toDomain() }
-            .associateBy(DisplayInstance::id)
-    }
-
-    override suspend fun findByBelongsTo(belongsTo: UUID): List<DisplayInstance> {
-        return collection.find(eq(DisplayInstanceDocument::belongsTo.name, belongsTo))
+    override suspend fun findByImageId(imageId: UUID): List<DisplayInstance> {
+        return collection.find(eq(DisplayInstanceDocument::imageId.name, imageId))
             .toList()
             .map { it.toDomain() }
     }
