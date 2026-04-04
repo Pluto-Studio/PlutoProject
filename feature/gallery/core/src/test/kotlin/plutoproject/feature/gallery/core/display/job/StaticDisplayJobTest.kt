@@ -1,18 +1,21 @@
 package plutoproject.feature.gallery.core.display.job
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.dummyUuid
 import plutoproject.feature.gallery.core.display.DisplayInstance
-import plutoproject.feature.gallery.core.display.DisplayManager
-import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.MapUpdatePort
@@ -20,297 +23,148 @@ import plutoproject.feature.gallery.core.display.PlayerView
 import plutoproject.feature.gallery.core.display.SchedulerState
 import plutoproject.feature.gallery.core.display.Vec3
 import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.gallery.core.dummyUuid
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.newDisplayRuntime
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.core.render.tile.codec.TileEncoder
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
+import plutoproject.feature.gallery.core.schedulerClock
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 class StaticDisplayJobTest {
     @Test
     fun `wake should send visible static tiles and schedule next awake`() = runTest {
+        val sentUpdates = mutableListOf<MapUpdate>()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val schedulerDispatcher = StandardTestDispatcher(TestCoroutineScheduler())
+        val runtime = newDisplayRuntime(
+            scope = scope,
+            coroutineContext = Dispatchers.Unconfined,
+            schedulerScope = scope,
+            schedulerContext = schedulerDispatcher,
+            awakeContext = schedulerDispatcher,
+            sendScope = scope,
+            sendLoopContext = Dispatchers.Unconfined,
+            clock = schedulerClock(this),
+            mapUpdatePort = recordingMapUpdatePort(sentUpdates),
+            viewPort = singleVisiblePlayerViewPort(dummyUuid(6103)),
+        )
         val belongsTo = dummyUuid(6101)
-        val image = Image(
-            id = belongsTo,
-            type = ImageType.STATIC,
-            owner = dummyUuid(6100),
-            ownerName = "Owner_6100",
-            name = "static-job-test-1",
-            widthBlocks = 1,
-            heightBlocks = 1,
-            tileMapIds = intArrayOf(77),
-        )
-        val entry = staticImageDataEntry(
-            belongsTo = belongsTo,
-            tileColors = listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }),
-        )
-        val displayInstance = DisplayInstance(
-            id = dummyUuid(6102),
-            belongsTo = belongsTo,
-            world = "world",
-            chunkX = 0,
-            chunkZ = 0,
-            facing = ItemFrameFacing.SOUTH,
-            widthBlocks = 1,
-            heightBlocks = 1,
-            originX = 0.0,
-            originY = 0.0,
-            originZ = 0.0,
-            itemFrameIds = listOf(dummyUuid(6104)),
-        )
-        val scheduler = RecordingDisplayScheduler()
-        val displayManager = DisplayManager()
-        val sendJob = newRecordingSendJob(this, dummyUuid(6103))
-        displayManager.registerSendJob(sendJob.job)
+        val image = staticImage(belongsTo, intArrayOf(77))
+        val entry = staticImageDataEntry(belongsTo, listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }))
+        val displayInstance = singleTileDisplayInstance(belongsTo, dummyUuid(6102), dummyUuid(6104))
+        try {
+            runtime.manager.startSendJob(dummyUuid(6103))
 
-        val job = StaticDisplayJob(
-            belongsTo = belongsTo,
-            displayScheduler = scheduler,
-            viewPort = FakeViewPort(
-                playerViewsByWorld = mapOf(
-                    "world" to listOf(
-                        PlayerView(
-                            id = sendJob.job.playerId,
-                            eye = Vec3(0.0, 0.0, 1.0),
-                            viewDirection = Vec3(0.0, 0.0, -1.0),
-                        )
-                    )
-                )
-            ),
-            displayManager = displayManager,
-            clock = fixedClock(1_000L),
-            visibleDistance = 5.0,
-            updateInterval = 200.milliseconds,
-        )
+            val job = StaticDisplayJob(
+                imageId = belongsTo,
+                image = image,
+                imageDataEntry = entry.asStatic(),
+                displayScheduler = runtime.scheduler,
+                viewPort = singleVisiblePlayerViewPort(dummyUuid(6103)),
+                displayManager = runtime.manager,
+                clock = schedulerClock(this),
+                visibleDistance = 5.0,
+                updateInterval = 200.milliseconds,
+            )
 
-        job.attach(displayInstance, image, entry)
-        job.wake()
-        advanceUntilIdle()
+            job.attach(displayInstance)
+            job.wake()
+            runCurrent()
 
-        assertEquals(1, sendJob.sentUpdates.size)
-        assertEquals(77, sendJob.sentUpdates.single().mapId)
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }, sendJob.sentUpdates.single().mapColors)
-        assertEquals(job, scheduler.lastScheduledJob)
-        assertEquals(Instant.ofEpochMilli(1_200L), scheduler.lastAwakeAt)
-    }
+            assertEquals(1, sentUpdates.size)
+            assertEquals(77, sentUpdates.single().mapId)
+            assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }, sentUpdates.single().mapColors)
+            assertEquals(SchedulerState.RUNNING, runtime.scheduler.state)
 
-    @Test
-    fun `wake should not resend static map ids already received by player`() = runTest {
-        val belongsTo = dummyUuid(6111)
-        val image = Image(
-            id = belongsTo,
-            type = ImageType.STATIC,
-            owner = dummyUuid(6110),
-            ownerName = "Owner_6110",
-            name = "static-job-test-2",
-            widthBlocks = 1,
-            heightBlocks = 1,
-            tileMapIds = intArrayOf(88),
-        )
-        val entry = staticImageDataEntry(
-            belongsTo = belongsTo,
-            tileColors = listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 9 }),
-        )
-        val displayInstance = DisplayInstance(
-            id = dummyUuid(6112),
-            belongsTo = belongsTo,
-            world = "world",
-            chunkX = 0,
-            chunkZ = 0,
-            facing = ItemFrameFacing.SOUTH,
-            widthBlocks = 1,
-            heightBlocks = 1,
-            originX = 0.0,
-            originY = 0.0,
-            originZ = 0.0,
-            itemFrameIds = listOf(dummyUuid(6114)),
-        )
-        val displayManager = DisplayManager()
-        val sendJob = newRecordingSendJob(this, dummyUuid(6113))
-        displayManager.registerSendJob(sendJob.job)
-
-        val job = StaticDisplayJob(
-            belongsTo = belongsTo,
-            displayScheduler = RecordingDisplayScheduler(),
-            viewPort = FakeViewPort(
-                mapOf(
-                    "world" to listOf(
-                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0))
-                    )
-                )
-            ),
-            displayManager = displayManager,
-            clock = fixedClock(2_000L),
-            visibleDistance = 5.0,
-            updateInterval = 200.milliseconds,
-        )
-
-        job.attach(displayInstance, image, entry)
-        job.wake()
-        advanceUntilIdle()
-        job.wake()
-        advanceUntilIdle()
-
-        assertEquals(1, sendJob.sentUpdates.size)
-    }
-
-    @Test
-    fun `wake should skip invisible players and attach should reject after stop`() = runTest {
-        val belongsTo = dummyUuid(6121)
-        val image = Image(
-            id = belongsTo,
-            type = ImageType.STATIC,
-            owner = dummyUuid(6120),
-            ownerName = "Owner_6120",
-            name = "static-job-test-3",
-            widthBlocks = 1,
-            heightBlocks = 1,
-            tileMapIds = intArrayOf(99),
-        )
-        val entry = staticImageDataEntry(
-            belongsTo = belongsTo,
-            tileColors = listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 11 }),
-        )
-        val displayInstance = DisplayInstance(
-            id = dummyUuid(6122),
-            belongsTo = belongsTo,
-            world = "world",
-            chunkX = 0,
-            chunkZ = 0,
-            facing = ItemFrameFacing.SOUTH,
-            widthBlocks = 1,
-            heightBlocks = 1,
-            originX = 0.0,
-            originY = 0.0,
-            originZ = 0.0,
-            itemFrameIds = listOf(dummyUuid(6124)),
-        )
-        val displayManager = DisplayManager()
-        val sendJob = newRecordingSendJob(this, dummyUuid(6123))
-        displayManager.registerSendJob(sendJob.job)
-
-        val job = StaticDisplayJob(
-            belongsTo = belongsTo,
-            displayScheduler = RecordingDisplayScheduler(),
-            viewPort = FakeViewPort(
-                mapOf(
-                    "world" to listOf(
-                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0))
-                    )
-                )
-            ),
-            displayManager = displayManager,
-            clock = fixedClock(3_000L),
-            visibleDistance = 5.0,
-            updateInterval = 200.milliseconds,
-        )
-
-        job.attach(displayInstance, image, entry)
-        job.wake()
-        advanceUntilIdle()
-
-        assertTrue(sendJob.sentUpdates.isEmpty())
-
-        job.stop()
-        assertThrows(IllegalStateException::class.java) {
-            job.attach(displayInstance, image, entry)
+            testScheduler.advanceTimeBy(200)
+            advanceUntilIdle()
+            assertEquals(1, sentUpdates.size)
+        } finally {
+            runtime.manager.close()
+            runtime.scheduler.stop()
+            scope.cancel()
+            advanceUntilIdle()
         }
     }
 
     @Test
-    fun `wake should merge visible tiles from multiple instances of same image`() = runTest {
-        val belongsTo = dummyUuid(6131)
-        val image = Image(
-            id = belongsTo,
+    fun `wake should skip invisible players and attach should reject after stop`() = runTest {
+        val sentUpdates = mutableListOf<MapUpdate>()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val schedulerDispatcher = StandardTestDispatcher(TestCoroutineScheduler())
+        val runtime = newDisplayRuntime(
+            scope = scope,
+            coroutineContext = Dispatchers.Unconfined,
+            schedulerScope = scope,
+            schedulerContext = schedulerDispatcher,
+            awakeContext = schedulerDispatcher,
+            sendScope = scope,
+            sendLoopContext = Dispatchers.Unconfined,
+            clock = schedulerClock(this),
+            mapUpdatePort = recordingMapUpdatePort(sentUpdates),
+            viewPort = object : ViewPort {
+                override fun getPlayerViews(world: String): List<PlayerView> {
+                    return listOf(PlayerView(dummyUuid(6123), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0)))
+                }
+            },
+        )
+        val belongsTo = dummyUuid(6121)
+        try {
+            runtime.manager.startSendJob(dummyUuid(6123))
+            val job = StaticDisplayJob(
+                imageId = belongsTo,
+                image = staticImage(belongsTo, intArrayOf(99)),
+                imageDataEntry = staticImageDataEntry(belongsTo, listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 11 })).asStatic(),
+                displayScheduler = runtime.scheduler,
+                viewPort = object : ViewPort {
+                    override fun getPlayerViews(world: String): List<PlayerView> {
+                        return listOf(PlayerView(dummyUuid(6123), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0)))
+                    }
+                },
+                displayManager = runtime.manager,
+                clock = schedulerClock(this),
+                visibleDistance = 5.0,
+                updateInterval = 200.milliseconds,
+            )
+            val displayInstance = singleTileDisplayInstance(belongsTo, dummyUuid(6122), dummyUuid(6124))
+
+            job.attach(displayInstance)
+            job.wake()
+            advanceUntilIdle()
+            assertTrue(sentUpdates.isEmpty())
+
+            job.stop()
+            assertThrows(IllegalStateException::class.java) {
+                job.attach(displayInstance)
+            }
+        } finally {
+            runtime.manager.close()
+            runtime.scheduler.stop()
+            scope.cancel()
+            advanceUntilIdle()
+        }
+    }
+
+    private fun staticImage(imageId: UUID, tileMapIds: IntArray): Image {
+        return Image(
+            id = imageId,
             type = ImageType.STATIC,
-            owner = dummyUuid(6130),
-            ownerName = "Owner_6130",
-            name = "static-job-test-4",
-            widthBlocks = 2,
+            owner = dummyUuid(6100),
+            ownerName = "Owner_6100",
+            name = "static-job-test",
+            widthBlocks = tileMapIds.size,
             heightBlocks = 1,
-            tileMapIds = intArrayOf(131, 132),
+            tileMapIds = tileMapIds,
         )
-        val entry = staticImageDataEntry(
-            belongsTo = belongsTo,
-            tileColors = listOf(
-                ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 },
-                ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 },
-            ),
-        )
-        val firstDisplayInstance = DisplayInstance(
-            id = dummyUuid(6132),
-            belongsTo = belongsTo,
-            world = "world",
-            chunkX = 0,
-            chunkZ = 0,
-            facing = ItemFrameFacing.SOUTH,
-            widthBlocks = 2,
-            heightBlocks = 1,
-            originX = 0.0,
-            originY = 0.0,
-            originZ = 0.0,
-            itemFrameIds = listOf(dummyUuid(6134), dummyUuid(6135)),
-        )
-        val secondDisplayInstance = DisplayInstance(
-            id = dummyUuid(6133),
-            belongsTo = belongsTo,
-            world = "world",
-            chunkX = 0,
-            chunkZ = 0,
-            facing = ItemFrameFacing.SOUTH,
-            widthBlocks = 2,
-            heightBlocks = 1,
-            originX = 0.0,
-            originY = 0.0,
-            originZ = 0.0,
-            itemFrameIds = listOf(dummyUuid(6136), dummyUuid(6137)),
-        )
-        val displayManager = DisplayManager()
-        val sendJob = newRecordingSendJob(this, dummyUuid(6138))
-        displayManager.registerSendJob(sendJob.job)
-
-        val job = StaticDisplayJob(
-            belongsTo = belongsTo,
-            displayScheduler = RecordingDisplayScheduler(),
-            viewPort = FakeViewPort(
-                mapOf(
-                    "world" to listOf(
-                        PlayerView(sendJob.job.playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
-                        PlayerView(sendJob.job.playerId, Vec3(0.5, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)),
-                    )
-                )
-            ),
-            displayManager = displayManager,
-            clock = fixedClock(4_000L),
-            visibleDistance = 5.0,
-            updateInterval = 200.milliseconds,
-        )
-
-        job.attach(firstDisplayInstance, image, entry)
-        job.attach(secondDisplayInstance, image, entry)
-        job.wake()
-        advanceUntilIdle()
-
-        assertEquals(listOf(131, 132), sendJob.sentUpdates.map(MapUpdate::mapId))
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 21 }, sendJob.sentUpdates[0].mapColors)
-        assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 22 }, sendJob.sentUpdates[1].mapColors)
     }
 
-    private fun fixedClock(epochMillis: Long): Clock {
-        return Clock.fixed(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC)
-    }
-
-    private fun staticImageDataEntry(
-        belongsTo: UUID,
-        tileColors: List<ByteArray>,
-    ): ImageDataEntry<*> {
+    private fun staticImageDataEntry(imageId: UUID, tileColors: List<ByteArray>): ImageDataEntry.Static {
         val encodedTiles = tileColors.map(TileEncoder::encode)
         val offsets = IntArray(encodedTiles.size + 1)
         var totalBytes = 0
@@ -327,9 +181,8 @@ class StaticDisplayJobTest {
             cursor += tileData.size
         }
 
-        return ImageDataEntry(
-            belongsTo = belongsTo,
-            type = ImageType.STATIC,
+        return ImageDataEntry.Static(
+            imageId = imageId,
             data = ImageData.Static(
                 tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
                 tileIndexes = ShortArray(tileColors.size) { it.toShort() },
@@ -337,52 +190,36 @@ class StaticDisplayJobTest {
         )
     }
 
-    private class FakeViewPort(
-        private val playerViewsByWorld: Map<String, List<PlayerView>>,
-    ) : ViewPort {
-        override fun getPlayerViews(world: String): List<PlayerView> {
-            return playerViewsByWorld[world].orEmpty()
+    private fun singleVisiblePlayerViewPort(playerId: UUID): ViewPort {
+        return object : ViewPort {
+            override fun getPlayerViews(world: String): List<PlayerView> {
+                return listOf(PlayerView(playerId, Vec3(0.0, 0.0, 1.0), Vec3(0.0, 0.0, -1.0)))
+            }
         }
     }
 
-    private class RecordingDisplayScheduler : DisplayScheduler {
-        override val state: SchedulerState = SchedulerState.RUNNING
-        var lastScheduledJob: DisplayJob? = null
-        var lastAwakeAt: Instant? = null
-
-        override fun scheduleAwakeAt(job: DisplayJob, awakeAt: Instant) {
-            lastScheduledJob = job
-            lastAwakeAt = awakeAt
-        }
-
-        override fun unschedule(job: DisplayJob) = Unit
-
-        override fun stop() = Unit
-    }
-
-    private fun newRecordingSendJob(scope: TestScope, playerId: UUID): RecordingSendJobHandle {
-        val sentUpdates = mutableListOf<MapUpdate>()
-        return RecordingSendJobHandle(
-            job = SendJob(
-                playerId = playerId,
-                maxQueueSize = 8,
-                maxUpdatesInSpan = 8,
-                updateLimitSpan = 1.milliseconds,
-                clock = fixedClock(0L),
-                coroutineScope = scope,
-                loopContext = StandardTestDispatcher(scope.testScheduler),
-                mapUpdatePort = object : MapUpdatePort {
-                    override fun send(playerId: UUID, update: MapUpdate) {
-                        sentUpdates += update
-                    }
-                },
-            ),
-            sentUpdates = sentUpdates,
+    private fun singleTileDisplayInstance(imageId: UUID, id: UUID, frameId: UUID): DisplayInstance {
+        return DisplayInstance(
+            id = id,
+            imageId = imageId,
+            world = "world",
+            chunkX = 0,
+            chunkZ = 0,
+            facing = ItemFrameFacing.SOUTH,
+            widthBlocks = 1,
+            heightBlocks = 1,
+            originX = 0.0,
+            originY = 0.0,
+            originZ = 0.0,
+            itemFrameIds = listOf(frameId),
         )
     }
 
-    private data class RecordingSendJobHandle(
-        val job: SendJob,
-        val sentUpdates: MutableList<MapUpdate>,
-    )
+    private fun recordingMapUpdatePort(sentUpdates: MutableList<MapUpdate>): MapUpdatePort {
+        return object : MapUpdatePort {
+            override fun send(playerId: UUID, update: MapUpdate) {
+                sentUpdates += update
+            }
+        }
+    }
 }

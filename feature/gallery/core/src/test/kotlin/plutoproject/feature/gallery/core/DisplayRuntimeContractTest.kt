@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.job.DisplayJob
-import plutoproject.feature.gallery.core.image.Image
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import java.util.UUID
 
 class DisplayRuntimeContractTest {
@@ -40,26 +38,20 @@ class DisplayRuntimeContractTest {
 
         assertTrue(job.isStopped)
         assertThrows(IllegalStateException::class.java) {
-            job.attach(sampleDisplayInstance(belongsTo = job.belongsTo), sampleImage(id = job.belongsTo), sampleStaticImageDataEntry(job.belongsTo))
+            job.attach(sampleDisplayInstance(imageId = job.imageId))
         }
         assertNull(job.detach(dummyUuid(8101)))
         assertTrue(job.isEmpty())
     }
 
     private class FakeDisplayJob : DisplayJob {
-        override val belongsTo: UUID = dummyUuid(8100)
+        override val imageId: UUID = dummyUuid(8100)
         override var isStopped: Boolean = false
         override val attachedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
 
-        override fun attach(
-            displayInstance: DisplayInstance,
-            image: Image,
-            imageDataEntry: ImageDataEntry<*>,
-        ) {
+        override fun attach(displayInstance: DisplayInstance) {
             check(!isStopped) { "DisplayJob is stopped" }
-            require(displayInstance.belongsTo == belongsTo)
-            require(image.id == belongsTo)
-            require(imageDataEntry.imageId == belongsTo)
+            require(displayInstance.imageId == imageId)
             attachedDisplayInstances[displayInstance.id] = displayInstance
         }
 

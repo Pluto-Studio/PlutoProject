@@ -12,10 +12,6 @@ import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.job.SendJob
 import plutoproject.feature.gallery.core.display.job.SendJobState
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
@@ -144,18 +140,6 @@ class SendJobTest {
             loopContext = loopContext,
             mapUpdatePort = mapUpdatePort,
         )
-    }
-
-    private fun schedulerClock(scope: TestScope): Clock {
-        return object : Clock() {
-            override fun getZone() = ZoneOffset.UTC
-
-            override fun withZone(zone: ZoneId?): Clock = this
-
-            override fun instant(): Instant {
-                return Instant.ofEpochMilli(scope.testScheduler.currentTime)
-            }
-        }
     }
 
     private class RecordingMapUpdatePort(

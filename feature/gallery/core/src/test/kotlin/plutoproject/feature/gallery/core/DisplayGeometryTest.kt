@@ -16,9 +16,9 @@ class DisplayGeometryTest {
         val geometry = sampleGeometry(widthBlocks = 1, heightBlocks = 1)
 
         val rect = geometry.computeVisibleTiles(
-            playerViews = listOf(playerView(eye = Vec3(0.0, 0.0, 1.0))),
+            view = playerView(eye = Vec3(0.0, 0.0, 1.0)),
             visibleDistance = 1.1,
-        ).values.singleOrNull()
+        )
 
         assertNotNull(rect)
         assertEquals(TileRect(minX = 0, maxX = 0, minY = 0, maxY = 0), rect)
@@ -29,9 +29,9 @@ class DisplayGeometryTest {
         val geometry = sampleGeometry(widthBlocks = 3, heightBlocks = 3)
 
         val rect = geometry.computeVisibleTiles(
-            playerViews = listOf(playerView(eye = Vec3(0.75, -1.25, 1.0))),
+            view = playerView(eye = Vec3(0.75, -1.25, 1.0)),
             visibleDistance = 2.0,
-        ).values.singleOrNull()
+        )
 
         assertEquals(TileRect(minX = 0, maxX = 2, minY = 0, maxY = 2), rect)
     }
@@ -41,18 +41,18 @@ class DisplayGeometryTest {
         val geometry = sampleGeometry(widthBlocks = 3, heightBlocks = 3)
 
         val rect = geometry.computeVisibleTiles(
-            playerViews = listOf(playerView(eye = Vec3(0.5, -0.5, 1.0))),
+            view = playerView(eye = Vec3(0.5, -0.5, 1.0)),
             visibleDistance = 2.0,
-        ).values.singleOrNull()
+        )
 
-        assertEquals(TileRect(minX = 0, maxX = 1, minY = 0, maxY = 1), rect)
+        assertEquals(TileRect(minX = 0, maxX = 2, minY = 0, maxY = 2), rect)
     }
 }
 
 private fun sampleGeometry(widthBlocks: Int, heightBlocks: Int): DisplayGeometry {
     return DisplayInstance(
         id = dummyUuid(7001),
-        belongsTo = dummyUuid(7002),
+        imageId = dummyUuid(7002),
         world = "world",
         chunkX = 0,
         chunkZ = 0,

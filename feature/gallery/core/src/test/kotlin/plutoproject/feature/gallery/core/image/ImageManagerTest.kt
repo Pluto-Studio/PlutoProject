@@ -1,87 +1,98 @@
 package plutoproject.feature.gallery.core.image
 
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.dummyUuid
+import plutoproject.feature.gallery.core.newImageManager
 import plutoproject.feature.gallery.core.sampleImage
 import plutoproject.feature.gallery.core.sampleStaticImageDataEntry
-import plutoproject.feature.gallery.core.render.tile.TilePool
-import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
-import kotlin.time.Duration.Companion.milliseconds
+import plutoproject.feature.gallery.core.schedulerClock
 
 class ImageManagerTest {
     @Test
-    fun `should manage image lifecycle independently from image data entry`() = runTest {
-        val manager = ImageManager()
+    fun `should create get and delete image`() = runTest {
+        val manager = newImageManager(clock = schedulerClock(this))
         val image = sampleImage(id = dummyUuid(10))
-        val entry = ImageDataEntry(
-            belongsTo = image.id,
-            type = ImageType.STATIC,
-            data = ImageData.Static(
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = intArrayOf(0, 0), blob = byteArrayOf())),
-                tileIndexes = shortArrayOf(0),
-            ),
-        )
 
-        manager.loadImage(image)
-        assertNotNull(manager.getLoadedImage(image.id))
-        assertNull(manager.getLoadedImageDataEntry(image.id))
-
-        manager.loadImageDataEntry(entry)
-        assertNotNull(manager.getLoadedImage(image.id))
-        assertNotNull(manager.getLoadedImageDataEntry(image.id))
-
-        manager.unloadImage(image.id)
-        assertNull(manager.getLoadedImage(image.id))
-        assertNotNull(manager.getLoadedImageDataEntry(image.id))
+        try {
+            val result = manager.createImage(
+                id = image.id,
+                type = image.type,
+                owner = image.owner,
+                ownerName = image.ownerName,
+                name = image.name,
+                widthBlocks = image.widthBlocks,
+                heightBlocks = image.heightBlocks,
+                tileMapIds = image.tileMapIds,
+            )
+            assertEquals(image.id, (result as ImageManager.CreateResult.Success).image.id)
+            assertNotNull(manager.getImage(image.id))
+            val deleted = manager.deleteImage(image.id)
+            assertEquals(image.id, (deleted as ImageManager.DeleteResult.Success).image.id)
+            assertNull(manager.getImage(image.id))
+        } finally {
+            manager.close()
+        }
     }
 
     @Test
-    fun `should load from io through lifecycle getters`() = runTest {
-        val manager = ImageManager()
-        val image = sampleImage(id = dummyUuid(11))
+    fun `should manage image data entry lifecycle independently`() = runTest {
+        val manager = newImageManager(clock = schedulerClock(this))
+        val entry = sampleStaticImageDataEntry(dummyUuid(20))
 
-        val loadedImage = manager.getImage(image.id) { image }
-        assertEquals(image.id, loadedImage?.id)
-        assertEquals(image.id, manager.getLoadedImage(image.id)?.id)
-
-        val entry = ImageDataEntry(
-            belongsTo = image.id,
-            type = ImageType.ANIMATED,
-            data = ImageData.Animated(
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = intArrayOf(0, 1), blob = byteArrayOf(1))),
-                tileIndexes = shortArrayOf(0, 0),
-                frameCount = 2,
-                duration = 100.milliseconds,
-            ),
-        )
-
-        val loadedEntry = manager.getImageDataEntry(image.id) { entry }
-        assertEquals(image.id, loadedEntry?.belongsTo)
-        assertEquals(image.id, manager.getLoadedImageDataEntry(image.id)?.belongsTo)
+        try {
+            val created = manager.createImageDataEntry(entry.imageId, entry.type, entry.asStatic().data)
+            assertEquals(entry.imageId, (created as ImageManager.CreateImageDataEntryResult.Success).imageDataEntry.imageId)
+            assertNotNull(manager.getImageDataEntry(entry.imageId))
+            val deleted = manager.deleteImageDataEntry(entry.imageId)
+            assertEquals(entry.imageId, (deleted as ImageManager.DeleteImageDataEntryResult.Success).imageDataEntry.imageId)
+            assertNull(manager.getImageDataEntry(entry.imageId))
+        } finally {
+            manager.close()
+        }
     }
 
     @Test
-    fun `should support batch image and image data entry cache helpers`() {
-        val manager = ImageManager()
-        val firstImage = sampleImage(id = dummyUuid(12))
-        val secondImage = sampleImage(id = dummyUuid(13))
-        val firstEntry = sampleStaticImageDataEntry(firstImage.id)
-        val secondEntry = sampleStaticImageDataEntry(secondImage.id)
+    fun `pin should keep cached image until unpin and ttl cleanup`() = runTest {
+        var repoHits = 0
+        val repo = object : plutoproject.feature.gallery.core.InMemoryImageRepository() {
+            override suspend fun findById(id: java.util.UUID) = super.findById(id).also {
+                repoHits += 1
+            }
+        }
+        val manager = newImageManager(clock = schedulerClock(this), imageRepo = repo)
+        val image = sampleImage(id = dummyUuid(30))
 
-        manager.loadImages(listOf(firstImage, secondImage))
-        manager.loadImageDataEntries(listOf(firstEntry, secondEntry))
+        try {
+            manager.createImage(
+                id = image.id,
+                type = image.type,
+                owner = image.owner,
+                ownerName = image.ownerName,
+                name = image.name,
+                widthBlocks = image.widthBlocks,
+                heightBlocks = image.heightBlocks,
+                tileMapIds = image.tileMapIds,
+            )
+            val repoHitsAfterCreate = repoHits
+            manager.pin(image.id)
 
-        assertEquals(setOf(firstImage.id, secondImage.id), manager.getLoadedImages(listOf(firstImage.id, secondImage.id, dummyUuid(14))).keys)
-        assertEquals(setOf(firstImage.id, secondImage.id), manager.getLoadedImageDataEntries(listOf(firstImage.id, secondImage.id, dummyUuid(15))).keys)
+            testScheduler.advanceTimeBy(31_000)
+            advanceUntilIdle()
+            manager.getImage(image.id)
+            assertEquals(repoHitsAfterCreate, repoHits)
 
-        assertEquals(2, manager.unloadImages(listOf(firstImage.id, secondImage.id)).size)
-        assertEquals(2, manager.unloadImageDataEntries(listOf(firstImage.id, secondImage.id)).size)
-        assertTrue(manager.getLoadedImages(listOf(firstImage.id, secondImage.id)).isEmpty())
-        assertTrue(manager.getLoadedImageDataEntries(listOf(firstImage.id, secondImage.id)).isEmpty())
+            manager.unpin(image.id)
+            testScheduler.advanceTimeBy(31_000)
+            advanceUntilIdle()
+            manager.getImage(image.id)
+            assertEquals(repoHitsAfterCreate + 1, repoHits)
+        } finally {
+            manager.close()
+        }
     }
 }

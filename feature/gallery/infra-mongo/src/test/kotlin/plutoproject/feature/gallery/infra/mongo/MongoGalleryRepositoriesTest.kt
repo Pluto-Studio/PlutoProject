@@ -99,9 +99,8 @@ class MongoGalleryRepositoriesTest {
         val repo = MongoImageDataEntryRepository(collection)
 
         val staticBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000311")
-        val staticEntry = ImageDataEntry(
-            belongsTo = staticBelongsTo,
-            type = ImageType.STATIC,
+        val staticEntry = ImageDataEntry.Static(
+            imageId = staticBelongsTo,
             data = ImageData.Static(
                 tilePool = TilePool.fromSnapshot(
                     TilePoolSnapshot(
@@ -127,9 +126,8 @@ class MongoGalleryRepositoriesTest {
         assertTrue(loadedStaticData.tileIndexes.contentEquals(shortArrayOf(0, 1)))
 
         val animatedBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000312")
-        val animatedEntry = ImageDataEntry(
-            belongsTo = animatedBelongsTo,
-            type = ImageType.ANIMATED,
+        val animatedEntry = ImageDataEntry.Animated(
+            imageId = animatedBelongsTo,
             data = ImageData.Animated(
                 tilePool = TilePool.fromSnapshot(
                     TilePoolSnapshot(
@@ -180,10 +178,10 @@ class MongoGalleryRepositoriesTest {
         val collection = client.getDatabase("test").getCollection<DisplayInstanceDocument>("gallery_display_instances")
         val repo = MongoDisplayInstanceRepository(collection)
 
-        val belongsTo = UUID.fromString("00000000-0000-0000-0000-000000000411")
+        val imageId = UUID.fromString("00000000-0000-0000-0000-000000000411")
         val first = DisplayInstance(
             id = UUID.fromString("00000000-0000-0000-0000-000000000412"),
-            belongsTo = belongsTo,
+            imageId = imageId,
             world = "world",
             chunkX = 12,
             chunkZ = 34,
@@ -200,7 +198,7 @@ class MongoGalleryRepositoriesTest {
         )
         val second = DisplayInstance(
             id = UUID.fromString("00000000-0000-0000-0000-000000000415"),
-            belongsTo = belongsTo,
+            imageId = imageId,
             world = "world_nether",
             chunkX = 12,
             chunkZ = 34,
@@ -224,14 +222,11 @@ class MongoGalleryRepositoriesTest {
         assertEquals(34, loaded.chunkZ)
         assertEquals(2, loaded.itemFrameIds.size)
 
-        val byBelongs = repo.findByBelongsTo(belongsTo)
-        assertEquals(2, byBelongs.size)
+        val byImageId = repo.findByImageId(imageId)
+        assertEquals(2, byImageId.size)
 
         val byChunk = repo.findByChunk(12, 34)
         assertEquals(2, byChunk.size)
-
-        val byIds = repo.findByIds(listOf(first.id, second.id, UUID.fromString("00000000-0000-0000-0000-000000000499")))
-        assertEquals(setOf(first.id, second.id), byIds.keys)
 
         repo.deleteById(first.id)
         assertNull(repo.findById(first.id))

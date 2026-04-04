@@ -7,12 +7,10 @@ import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
+import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.job.DisplayJob
 import plutoproject.feature.gallery.core.display.SchedulerState
-import plutoproject.feature.gallery.core.image.Image
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -68,7 +66,7 @@ class DefaultDisplaySchedulerTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val clock = SchedulerTestClock(testScheduler)
         val scope = CoroutineScope(parentJob + dispatcher)
-        val scheduler = DefaultDisplayScheduler(
+        val scheduler = DisplayScheduler(
             clock = clock,
             coroutineScope = scope,
             schedulerContext = dispatcher,
@@ -86,8 +84,8 @@ class DefaultDisplaySchedulerTest {
         }
     }
 
-    private fun createScheduler(dispatcher: TestDispatcher, clock: Clock): DefaultDisplayScheduler {
-        return DefaultDisplayScheduler(
+    private fun createScheduler(dispatcher: TestDispatcher, clock: Clock): DisplayScheduler {
+        return DisplayScheduler(
             clock = clock,
             coroutineScope = CoroutineScope(dispatcher),
             schedulerContext = dispatcher,
@@ -108,18 +106,14 @@ class DefaultDisplaySchedulerTest {
     }
 
     private class FakeDisplayJob : DisplayJob {
-        override val belongsTo: UUID = dummyUuid(8001)
+        override val imageId: UUID = dummyUuid(8001)
         override var isStopped: Boolean = false
         override val attachedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
 
         var wakeCount: Int = 0
             private set
 
-        override fun attach(
-            displayInstance: DisplayInstance,
-            image: Image,
-            imageDataEntry: ImageDataEntry<*>,
-        ) {
+        override fun attach(displayInstance: DisplayInstance) {
             if (isStopped) {
                 throw IllegalStateException("DisplayJob is stopped")
             }
