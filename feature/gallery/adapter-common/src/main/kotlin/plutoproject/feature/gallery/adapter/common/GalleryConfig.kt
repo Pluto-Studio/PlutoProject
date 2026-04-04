@@ -15,13 +15,21 @@ import plutoproject.feature.gallery.core.render.scale.BilinearScaler
 import plutoproject.feature.gallery.core.render.scale.Scaler
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 data class GalleryConfig(
-    val mapIdRange: MapIdRangeSettings = MapIdRangeSettings(),
+    val image: ImageSettings = ImageSettings(),
+    val upload: UploadSettings = UploadSettings(),
     val decode: DecodeSettings = DecodeSettings(),
     val render: RenderSettings = RenderSettings(),
     val display: DisplaySettings = DisplaySettings(),
     val send: SendSettings = SendSettings(),
+)
+
+data class ImageSettings(
+    val mapIdRange: MapIdRangeSettings = MapIdRangeSettings(),
+    val maxNameLength: Int = 20,
+    val maxImagesPerPlayer: Int = 20,
 )
 
 data class MapIdRangeSettings(
@@ -29,9 +37,23 @@ data class MapIdRangeSettings(
     val end: Int = 100_499_999,
 )
 
+data class UploadSettings(
+    val requestExpireAfter: Duration = 10.minutes,
+    val maxBytes: Int = 10 * 1024 * 1024, // 10 MiB
+    val maxWidth: Int = 4096,
+    val maxHeight: Int = 4096,
+    val maxPixels: Int = 16_777_216, // 4096 * 4096
+    val minShortEdge: Int = 16,
+    val minPixels: Int = 256, // 16 * 16
+    val maxAspectRatio: Double = 8.0,
+    val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
+    val supportedFormatNames: List<String> = listOf("PNG", "JPEG", "WebP", "GIF"),
+    val baseUrl: String = "https://gallery.plutoproject.club/",
+)
+
 data class DecodeSettings(
     val maxParallelTasks: Int = 2,
-    val maxBytes: Int = 10_485_760, // 10 * 1024 * 1024
+    val maxBytes: Int = 10_485_760, // 10 MiB
     val maxPixels: Int = 16_777_216, // 4096 * 4096
     val maxFrames: Int = 200,
 )

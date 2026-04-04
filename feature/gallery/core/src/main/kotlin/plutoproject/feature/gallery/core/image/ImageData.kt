@@ -8,6 +8,18 @@ sealed interface ImageData {
     val tilePool: TilePool
     val tileIndexes: ShortArray
 
+    fun isStatic(): Boolean = this is Static
+
+    fun isAnimated(): Boolean = this is Animated
+
+    fun asStaticOrNull(): Static? = this as? Static
+
+    fun asAnimatedOrNull(): Animated? = this as? Animated
+
+    fun asStatic(): Static = asStaticOrNull() ?: error("Type mismatch, expected static")
+
+    fun asAnimated(): Animated = asAnimatedOrNull() ?: error("Type mismatch, expected animated")
+
     class Static(
         override val tilePool: TilePool,
         override val tileIndexes: ShortArray

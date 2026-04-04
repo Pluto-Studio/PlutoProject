@@ -104,7 +104,7 @@ val commonModule = module {
         )
     }
     single<AllocateMapIdUseCase> {
-        val allocationRange = get<GalleryConfig>().mapIdRange
+        val allocationRange = get<GalleryConfig>().image.mapIdRange
         AllocateMapIdUseCase(
             mapIdRange = MapIdRange(
                 start = allocationRange.start,
