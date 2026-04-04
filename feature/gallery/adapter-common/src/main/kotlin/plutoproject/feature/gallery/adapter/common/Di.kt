@@ -10,7 +10,6 @@ import org.koin.dsl.module
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.SystemInformationRepository
-import plutoproject.feature.gallery.core.display.DefaultDisplayScheduler
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
 import plutoproject.feature.gallery.core.display.DisplayManager
 import plutoproject.feature.gallery.core.display.DisplayScheduler
@@ -70,7 +69,7 @@ val commonModule = module {
 
     singleOf(::ImageManager)
     singleOf(::DisplayManager)
-    singleOf(::DefaultDisplayScheduler) bind DisplayScheduler::class
+    singleOf(::DisplayScheduler)
 
     single {
         val config = get<GalleryConfig>()
