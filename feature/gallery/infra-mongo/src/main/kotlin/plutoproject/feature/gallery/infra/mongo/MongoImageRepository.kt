@@ -58,6 +58,11 @@ class MongoImageRepository(
         collection.replaceOne(eq(ImageDocument::id.name, document.id), document, upsert)
     }
 
+    override suspend fun update(image: Image): Boolean {
+        val document = image.toDocument()
+        return collection.replaceOne(eq(ImageDocument::id.name, document.id), document).matchedCount > 0
+    }
+
     override suspend fun deleteById(id: UUID) {
         collection.deleteOne(eq(ImageDocument::id.name, id))
     }

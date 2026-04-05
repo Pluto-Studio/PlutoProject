@@ -13,5 +13,7 @@ interface ImageRepository {
 
     suspend fun save(image: Image)
 
+    suspend fun update(image: Image): Boolean
+
     suspend fun deleteById(id: UUID)
 }

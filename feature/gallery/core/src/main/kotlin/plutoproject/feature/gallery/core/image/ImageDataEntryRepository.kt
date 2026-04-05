@@ -9,5 +9,7 @@ interface ImageDataEntryRepository {
 
     suspend fun save(entry: ImageDataEntry<*>)
 
+    suspend fun update(entry: ImageDataEntry<*>): Boolean
+
     suspend fun deleteByImageId(belongsTo: UUID)
 }

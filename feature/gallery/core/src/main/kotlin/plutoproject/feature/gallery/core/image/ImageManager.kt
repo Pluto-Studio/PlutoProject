@@ -58,24 +58,19 @@ class ImageManager(
     private val imageCache = ImageCache(coroutineScope, coroutineContext, clock, logger)
     private val lockHoldersByImageId = ConcurrentHashMap<UUID, LockHolder>()
 
-    sealed interface CreateResult {
-        data class Success(val image: Image) : CreateResult
-        data object AlreadyExists : CreateResult
+    sealed class CreateResult {
+        data class Success(val image: Image, val imageDataEntry: ImageDataEntry<*>) : CreateResult()
+        data object AlreadyExists : CreateResult()
     }
 
-    sealed interface DeleteResult {
-        data class Success(val image: Image) : DeleteResult
-        data object NotFound : DeleteResult
+    sealed class DeleteResult {
+        data class Success(val image: Image, val imageDataEntry: ImageDataEntry<*>) : DeleteResult()
+        data object NotFound : DeleteResult()
     }
 
-    sealed interface CreateImageDataEntryResult<out T> {
-        data class Success<T : Any>(val imageDataEntry: ImageDataEntry<T>) : CreateImageDataEntryResult<T>
-        data object AlreadyExists : CreateImageDataEntryResult<Nothing>
-    }
-
-    sealed interface DeleteImageDataEntryResult {
-        data class Success(val imageDataEntry: ImageDataEntry<*>) : DeleteImageDataEntryResult
-        data object NotFound : DeleteImageDataEntryResult
+    sealed interface SaveResult {
+        data object Success : SaveResult
+        data object NotFound : SaveResult
     }
 
     suspend fun createImage(
@@ -87,10 +82,13 @@ class ImageManager(
         widthBlocks: Int,
         heightBlocks: Int,
         tileMapIds: IntArray,
+        data: ImageData,
     ): CreateResult = operate {
         return withImageLock(id) {
-            val existing = imageCache[id]?.image ?: imageRepo.findById(id)
-            if (existing != null) {
+            require(type == data.type) { "Image type $type does not match image data type ${data.type}" }
+
+            val existingImage = imageCache[id]?.image ?: imageRepo.findById(id)
+            if (existingImage != null) {
                 return@withImageLock CreateResult.AlreadyExists
             }
 
@@ -104,10 +102,17 @@ class ImageManager(
                 heightBlocks = heightBlocks,
                 tileMapIds = tileMapIds,
             )
+            @Suppress("UNCHECKED_CAST")
+            val entry = when (data) {
+                is ImageData.Static -> ImageDataEntry.Static(id, data)
+                is ImageData.Animated -> ImageDataEntry.Animated(id, data)
+            } as ImageDataEntry<*>
 
+            imageDataRepo.save(entry)
             imageRepo.save(image)
             cacheImage(image)
-            CreateResult.Success(image)
+            cacheImageDataEntry(entry)
+            CreateResult.Success(image, entry)
         }
     }
 
@@ -180,38 +185,26 @@ class ImageManager(
         return withImageLock(id) {
             val image = imageCache[id]?.image ?: imageRepo.findById(id)
             ?: return@withImageLock DeleteResult.NotFound
+            val entry = imageCache[id]?.imageDataEntry ?: imageDataRepo.findByImageId(id)
+            ?: error("Image data entry for image $id is missing")
 
             imageRepo.deleteById(id)
             imageCache[id]?.let { state ->
                 state.image = null
                 cleanupImageCacheIfEmpty(id, state)
             }
-            DeleteResult.Success(image)
+
+            imageDataRepo.deleteByImageId(id)
+            imageCache[id]?.let { state ->
+                state.imageDataEntry = null
+                cleanupImageCacheIfEmpty(id, state)
+            }
+            DeleteResult.Success(image, entry)
         }
     }
 
     suspend fun countImage(): Int = operate {
         return imageRepo.count()
-    }
-
-    suspend fun <T : ImageData> createImageDataEntry(
-        imageId: UUID,
-        type: ImageType,
-        data: T,
-    ): CreateImageDataEntryResult<T> = operate {
-        return withImageLock(imageId) {
-            require(type == data.type) { "Image type $type does not match image data type ${data.type}" }
-
-            val existing = imageCache[imageId]?.imageDataEntry ?: imageDataRepo.findByImageId(imageId)
-            if (existing != null) {
-                return@withImageLock CreateImageDataEntryResult.AlreadyExists
-            }
-
-            val entry = createImageDataEntryInternal(imageId, data)
-            imageDataRepo.save(entry)
-            cacheImageDataEntry(entry)
-            CreateImageDataEntryResult.Success(entry)
-        }
     }
 
     suspend fun getImageDataEntry(imageId: UUID): ImageDataEntry<*>? = operate {
@@ -261,17 +254,39 @@ class ImageManager(
         return result
     }
 
-    suspend fun deleteImageDataEntry(imageId: UUID): DeleteImageDataEntryResult = operate {
-        return withImageLock(imageId) {
-            val entry = imageCache[imageId]?.imageDataEntry ?: imageDataRepo.findByImageId(imageId)
-            ?: return@withImageLock DeleteImageDataEntryResult.NotFound
-
-            imageDataRepo.deleteByImageId(imageId)
-            imageCache[imageId]?.let { state ->
-                state.imageDataEntry = null
-                cleanupImageCacheIfEmpty(imageId, state)
+    suspend fun saveImage(image: Image): SaveResult = operate {
+        return withImageLock(image.id) {
+            imageCache[image.id]?.image?.let { cached ->
+                require(cached === image) { "Cached image with id ${image.id} is not the same object instance" }
             }
-            DeleteImageDataEntryResult.Success(entry)
+
+            if (!imageRepo.update(image)) {
+                return@withImageLock SaveResult.NotFound
+            }
+
+            if (imageCache[image.id]?.image !== image) {
+                cacheImage(image)
+            }
+            SaveResult.Success
+        }
+    }
+
+    suspend fun saveImageDataEntry(imageDataEntry: ImageDataEntry<*>): SaveResult = operate {
+        return withImageLock(imageDataEntry.imageId) {
+            imageCache[imageDataEntry.imageId]?.imageDataEntry?.let { cached ->
+                require(cached === imageDataEntry) {
+                    "Cached image data entry with imageId ${imageDataEntry.imageId} is not the same object instance"
+                }
+            }
+
+            if (!imageDataRepo.update(imageDataEntry)) {
+                return@withImageLock SaveResult.NotFound
+            }
+
+            if (imageCache[imageDataEntry.imageId]?.imageDataEntry !== imageDataEntry) {
+                cacheImageDataEntry(imageDataEntry)
+            }
+            SaveResult.Success
         }
     }
 
@@ -367,11 +382,4 @@ class ImageManager(
         lockHoldersByImageId.remove(imageId, lockHolder)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : ImageData> createImageDataEntryInternal(imageId: UUID, data: T): ImageDataEntry<T> {
-        return when (data) {
-            is ImageData.Static -> ImageDataEntry.Static(imageId, data)
-            is ImageData.Animated -> ImageDataEntry.Animated(imageId, data)
-        } as ImageDataEntry<T>
-    }
 }

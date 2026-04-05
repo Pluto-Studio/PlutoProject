@@ -116,6 +116,15 @@ internal open class InMemoryImageRepository(
         storage[image.id] = image
     }
 
+    override suspend fun update(image: Image): Boolean {
+        if (image.id !in storage) {
+            return false
+        }
+
+        storage[image.id] = image
+        return true
+    }
+
     override suspend fun deleteById(id: UUID) {
         storage.remove(id)
     }
@@ -134,6 +143,15 @@ internal open class InMemoryImageDataEntryRepository(
 
     override suspend fun save(entry: ImageDataEntry<*>) {
         storage[entry.imageId] = entry
+    }
+
+    override suspend fun update(entry: ImageDataEntry<*>): Boolean {
+        if (entry.imageId !in storage) {
+            return false
+        }
+
+        storage[entry.imageId] = entry
+        return true
     }
 
     override suspend fun deleteByImageId(imageId: UUID) {
