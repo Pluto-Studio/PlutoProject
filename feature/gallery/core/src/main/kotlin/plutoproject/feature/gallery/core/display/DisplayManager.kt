@@ -164,21 +164,41 @@ class DisplayManager(
     }
 
     suspend fun findInstanceByImageId(imageId: UUID): List<DisplayInstance> = operate {
-        val loaded = instanceCache.findByImageId(imageId)
-        if (loaded.isNotEmpty()) {
-            return loaded
+        val result = mutableListOf<DisplayInstance>()
+
+        instanceRepo.findByImageId(imageId).forEach { instance ->
+            withInstanceLock(instance.id) {
+                val cached = instanceCache[instance.id]
+                if (cached != null) {
+                    result.add(cached)
+                    return@withInstanceLock
+                }
+
+                val loaded = instanceRepo.findById(instance.id) ?: return@withInstanceLock
+                result.add(instanceCache.put(loaded))
+            }
         }
 
-        return instanceRepo.findByImageId(imageId).also(instanceCache::putAll)
+        return result
     }
 
     suspend fun findInstanceByChunk(chunkX: Int, chunkZ: Int): List<DisplayInstance> = operate {
-        val loaded = instanceCache.findByChunk(chunkX, chunkZ)
-        if (loaded.isNotEmpty()) {
-            return loaded
+        val result = mutableListOf<DisplayInstance>()
+
+        instanceRepo.findByChunk(chunkX, chunkZ).forEach { instance ->
+            withInstanceLock(instance.id) {
+                val cached = instanceCache[instance.id]
+                if (cached != null) {
+                    result.add(cached)
+                    return@withInstanceLock
+                }
+
+                val loaded = instanceRepo.findById(instance.id) ?: return@withInstanceLock
+                result.add(instanceCache.put(loaded))
+            }
         }
 
-        return instanceRepo.findByChunk(chunkX, chunkZ).also(instanceCache::putAll)
+        return result
     }
 
     suspend fun deleteInstance(id: UUID): DeleteInstanceResult = operate {
