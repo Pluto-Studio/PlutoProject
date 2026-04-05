@@ -3,7 +3,9 @@ package plutoproject.feature.gallery.infra.mongo
 import org.bson.BsonBinary
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
-import plutoproject.feature.gallery.core.image.*
+import plutoproject.feature.gallery.core.image.Image
+import plutoproject.feature.gallery.core.image.ImageData
+import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.infra.mongo.model.*
@@ -68,55 +70,49 @@ internal fun Image.toDocument(): ImageDocument {
     )
 }
 
-internal fun ImageDataEntryDocument.toDomain(): ImageDataEntry<*> {
+internal fun ImageDataDocument.toDomain(): ImageData {
     return when (type.toDomain()) {
-        ImageType.STATIC -> ImageDataEntry.Static(
-            imageId = imageId,
-            data = ImageData.Static(
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(tilePool.offset, tilePool.blob.data)),
-                tileIndexes = tileIndexes,
-            ),
+        ImageType.STATIC -> ImageData.Static(
+            tilePool = TilePool.fromSnapshot(TilePoolSnapshot(tilePool.offset, tilePool.blob.data)),
+            tileIndexes = tileIndexes,
         )
 
-        ImageType.ANIMATED -> ImageDataEntry.Animated(
-            imageId = imageId,
-            data = ImageData.Animated(
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(tilePool.offset, tilePool.blob.data)),
-                tileIndexes = tileIndexes,
-                frameCount = requireNotNull(frameCount) {
-                    "frameCount must not be null for animated image"
-                },
-                duration = requireNotNull(duration) {
-                    "duration must not be null for animated image"
-                },
-            ),
+        ImageType.ANIMATED -> ImageData.Animated(
+            tilePool = TilePool.fromSnapshot(TilePoolSnapshot(tilePool.offset, tilePool.blob.data)),
+            tileIndexes = tileIndexes,
+            frameCount = requireNotNull(frameCount) {
+                "frameCount must not be null for animated image"
+            },
+            duration = requireNotNull(duration) {
+                "duration must not be null for animated image"
+            },
         )
     }
 }
 
-internal fun ImageDataEntry<*>.toDocument(): ImageDataEntryDocument {
+internal fun ImageData.toDocument(imageId: java.util.UUID): ImageDataDocument {
     return when (this) {
-        is ImageDataEntry.Static -> {
-            val snapshot = data.tilePool.snapshot()
-            ImageDataEntryDocument(
+        is ImageData.Static -> {
+            val snapshot = tilePool.snapshot()
+            ImageDataDocument(
                 imageId = imageId,
                 type = type.toDocument(),
                 tilePool = TilePoolDocument(snapshot.offsets, BsonBinary(snapshot.blob)),
-                tileIndexes = data.tileIndexes,
+                tileIndexes = tileIndexes,
                 frameCount = null,
                 duration = null,
             )
         }
 
-        is ImageDataEntry.Animated -> {
-            val snapshot = data.tilePool.snapshot()
-            ImageDataEntryDocument(
+        is ImageData.Animated -> {
+            val snapshot = tilePool.snapshot()
+            ImageDataDocument(
                 imageId = imageId,
                 type = type.toDocument(),
                 tilePool = TilePoolDocument(snapshot.offsets, BsonBinary(snapshot.blob)),
-                tileIndexes = data.tileIndexes,
-                frameCount = data.frameCount,
-                duration = data.duration,
+                tileIndexes = tileIndexes,
+                frameCount = frameCount,
+                duration = duration,
             )
         }
     }

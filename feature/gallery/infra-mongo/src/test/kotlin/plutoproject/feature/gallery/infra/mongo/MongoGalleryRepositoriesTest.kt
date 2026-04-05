@@ -23,12 +23,11 @@ import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
-import plutoproject.feature.gallery.infra.mongo.model.ImageDataEntryDocument
+import plutoproject.feature.gallery.infra.mongo.model.ImageDataDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 import java.util.UUID
@@ -95,29 +94,26 @@ class MongoGalleryRepositoriesTest {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = newClient()
-        val collection = client.getDatabase("test").getCollection<ImageDataEntryDocument>("gallery_image_data_entries")
-        val repo = MongoImageDataEntryRepository(collection)
+        val collection = client.getDatabase("test").getCollection<ImageDataDocument>("gallery_image_data_entries")
+        val repo = MongoImageDataRepository(collection)
 
         val staticBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000311")
-        val staticEntry = ImageDataEntry.Static(
-            imageId = staticBelongsTo,
-            data = ImageData.Static(
-                tilePool = TilePool.fromSnapshot(
-                    TilePoolSnapshot(
-                        offsets = intArrayOf(0, 2),
-                        blob = byteArrayOf(7, 9),
-                    )
-                ),
-                tileIndexes = shortArrayOf(0, 1),
+        val staticData = ImageData.Static(
+            tilePool = TilePool.fromSnapshot(
+                TilePoolSnapshot(
+                    offsets = intArrayOf(0, 2),
+                    blob = byteArrayOf(7, 9),
+                )
             ),
+            tileIndexes = shortArrayOf(0, 1),
         )
-        repo.save(staticEntry)
+        repo.save(staticBelongsTo, staticData)
 
         val loadedStatic = repo.findByImageId(staticBelongsTo)
         assertNotNull(loadedStatic)
         loadedStatic!!
         assertEquals(ImageType.STATIC, loadedStatic.type)
-        val loadedStaticData = loadedStatic.data as ImageData.Static
+        val loadedStaticData = loadedStatic as ImageData.Static
         assertTilePoolEquals(
             expectedOffsets = intArrayOf(0, 2),
             expectedBlob = byteArrayOf(7, 9),
@@ -126,27 +122,24 @@ class MongoGalleryRepositoriesTest {
         assertTrue(loadedStaticData.tileIndexes.contentEquals(shortArrayOf(0, 1)))
 
         val animatedBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000312")
-        val animatedEntry = ImageDataEntry.Animated(
-            imageId = animatedBelongsTo,
-            data = ImageData.Animated(
-                tilePool = TilePool.fromSnapshot(
-                    TilePoolSnapshot(
-                        offsets = intArrayOf(0, 1, 3),
-                        blob = byteArrayOf(1, 2, 3),
-                    )
-                ),
-                tileIndexes = shortArrayOf(0, 1, 1, 0),
-                frameCount = 2,
-                duration = 120.milliseconds,
+        val animatedData = ImageData.Animated(
+            tilePool = TilePool.fromSnapshot(
+                TilePoolSnapshot(
+                    offsets = intArrayOf(0, 1, 3),
+                    blob = byteArrayOf(1, 2, 3),
+                )
             ),
+            tileIndexes = shortArrayOf(0, 1, 1, 0),
+            frameCount = 2,
+            duration = 120.milliseconds,
         )
-        repo.save(animatedEntry)
+        repo.save(animatedBelongsTo, animatedData)
 
         val loadedAnimated = repo.findByImageId(animatedBelongsTo)
         assertNotNull(loadedAnimated)
         loadedAnimated!!
         assertEquals(ImageType.ANIMATED, loadedAnimated.type)
-        val loadedAnimatedData = loadedAnimated.data as ImageData.Animated
+        val loadedAnimatedData = loadedAnimated as ImageData.Animated
         assertEquals(2, loadedAnimatedData.frameCount)
         assertEquals(120.milliseconds, loadedAnimatedData.duration)
         assertTilePoolEquals(

@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.MapUpdate
 import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.job.DisplayResource
+import plutoproject.feature.gallery.core.image.ImageType
 import java.util.UUID
 
 class DisplayRuntimeContractTest {
@@ -46,6 +48,7 @@ class DisplayRuntimeContractTest {
 
     private class FakeDisplayJob : DisplayJob {
         override val imageId: UUID = dummyUuid(8100)
+        override val type = ImageType.STATIC
         override var isStopped: Boolean = false
         override val attachedDisplayInstances = linkedMapOf<UUID, DisplayInstance>()
 
@@ -62,6 +65,8 @@ class DisplayRuntimeContractTest {
 
             return attachedDisplayInstances.remove(displayInstanceId)
         }
+
+        override fun replaceResource(resource: DisplayResource) = Unit
 
         override fun isEmpty(): Boolean = attachedDisplayInstances.isEmpty()
 

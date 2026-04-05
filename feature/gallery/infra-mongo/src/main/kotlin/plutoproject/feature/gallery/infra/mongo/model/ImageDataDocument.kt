@@ -6,7 +6,7 @@ import java.util.*
 import kotlin.time.Duration
 
 @Serializable
-data class ImageDataEntryDocument(
+data class ImageDataDocument(
     val imageId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
     val type: ImageTypeDocument,
     val tilePool: TilePoolDocument,
@@ -32,7 +32,7 @@ data class ImageDataEntryDocument(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ImageDataEntryDocument
+        other as ImageDataDocument
 
         if (frameCount != other.frameCount) return false
         if (imageId != other.imageId) return false

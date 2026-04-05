@@ -8,24 +8,48 @@ class Image(
     val id: UUID,
     val type: ImageType,
     val owner: UUID,
-    ownerName: String,
-    name: String,
+    val ownerName: String,
+    val name: String,
     val widthBlocks: Int,
     val heightBlocks: Int,
     val tileMapIds: IntArray,
 ) {
-    var ownerName = ownerName
-        private set
-
-    var name = name
-        private set
-
-    internal fun changeOwnerName(name: String) {
+    fun withOwnerName(name: String): Image {
         require(USERNAME_REGEX.matches(name)) { "Owner username $name must be a valid Minecraft username" }
-        ownerName = name
+        return copy(
+            ownerName = name,
+        )
     }
 
-    internal fun rename(name: String) {
-        this.name = name
+    fun renamed(name: String): Image {
+        return copy(
+            name = name,
+        )
+    }
+
+    private fun copy(
+        ownerName: String = this.ownerName,
+        name: String = this.name,
+    ): Image {
+        return Image(
+            id = id,
+            type = type,
+            owner = owner,
+            ownerName = ownerName,
+            name = name,
+            widthBlocks = widthBlocks,
+            heightBlocks = heightBlocks,
+            tileMapIds = tileMapIds,
+        )
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Image) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
     }
 }

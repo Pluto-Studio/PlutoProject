@@ -1,154 +1,176 @@
 package plutoproject.feature.gallery.core.display.job
 
-import plutoproject.feature.gallery.core.display.*
+import plutoproject.feature.gallery.core.display.DisplayGeometry
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.PlayerView
+import plutoproject.feature.gallery.core.display.TileRect
+import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.image.Image
-import plutoproject.feature.gallery.core.image.ImageData
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.render.tile.codec.TileDecoder
 import plutoproject.feature.gallery.core.util.VisibleTileSet
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.util.*
+import java.util.HashMap
+import java.util.HashSet
+import java.util.UUID
 import kotlin.math.roundToLong
 
 class AnimatedDisplayJob(
     override val imageId: UUID,
     private val image: Image,
-    private val imageDataEntry: ImageDataEntry.Animated,
+    initialResource: AnimatedDisplayResource,
     private val displayScheduler: DisplayScheduler,
     private val viewPort: ViewPort,
-    private val displayManager: DisplayManager,
+    private val sendJobRegistry: SendJobRegistry,
     private val clock: Clock,
     private val maxFramesPerSecond: Int,
     private val visibleDistance: Double,
 ) : DisplayJob {
-    override var isStopped: Boolean = false
-        private set
+    override val type: ImageType = ImageType.ANIMATED
 
-    override val attachedDisplayInstances
-        get() = _attachedDisplayInstances
+    override val isStopped: Boolean
+        get() = synchronized(lock) { stopped }
 
-    private val _attachedDisplayInstances = HashMap<UUID, DisplayInstance>()
+    override val attachedDisplayInstances: Map<UUID, DisplayInstance>
+        get() = synchronized(lock) { attachedInstances.toMap() }
+
+    private val lock = Any()
+    private val attachedInstances = HashMap<UUID, DisplayInstance>()
     private val displayGeometryByInstanceId = HashMap<UUID, DisplayGeometry>()
-    private val maxTileCount = image.widthBlocks * image.heightBlocks
-
-    // wake 内使用，每轮可能清理
     private val visibleTileIdsByPlayer = HashMap<UUID, VisibleTileSet>()
     private val activePlayerIds = HashSet<UUID>()
-    private val decodedTilesByPoolIndex = HashMap<Int, ByteArray>()
     private val playerViewsByWorld = HashMap<String, List<PlayerView>>()
+    private val maxTileCount = image.widthBlocks * image.heightBlocks
 
+    private var stopped = false
+    private var resource: AnimatedDisplayResource = initialResource
     private var animationStartedAtMillis: Long? = null
     private var lastSentPoolIndexes: IntArray? = null
-    private var cachedImageData: ImageData.Animated = imageDataEntry.data
 
     init {
-        validateSharedObjects(image, imageDataEntry)
-        require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
-        require(maxFramesPerSecond == -1 || maxFramesPerSecond > 0) {
-            "maxFramesPerSecond must be -1 or greater than 0"
-        }
-    }
-
-    private fun validateSharedObjects(
-        image: Image,
-        imageDataEntry: ImageDataEntry.Animated,
-    ) {
         require(image.id == imageId) {
             "Image id mismatch: expected=$imageId, actual=${image.id}"
         }
         require(image.type == ImageType.ANIMATED) {
             "AnimatedDisplayJob requires animated image, actual=${image.type}"
         }
-        require(imageDataEntry.imageId == imageId) {
-            "ImageDataEntry imageId mismatch: expected=$imageId, actual=${imageDataEntry.imageId}"
-        }
-        require(imageDataEntry.type == ImageType.ANIMATED) {
-            "AnimatedDisplayJob requires animated image data, actual=${imageDataEntry.type}"
+        require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
+        require(maxFramesPerSecond == -1 || maxFramesPerSecond > 0) {
+            "maxFramesPerSecond must be -1 or greater than 0"
         }
     }
 
     override fun attach(displayInstance: DisplayInstance) {
-        check(!isStopped) { "DisplayJob is stopped" }
-        validateDisplayInstance(displayInstance)
+        synchronized(lock) {
+            check(!stopped) { "DisplayJob is stopped" }
+            require(displayInstance.imageId == imageId) {
+                "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
+            }
 
-        _attachedDisplayInstances[displayInstance.id] = displayInstance
-        displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
-    }
-
-    private fun validateDisplayInstance(displayInstance: DisplayInstance) {
-        require(displayInstance.imageId == imageId) {
-            "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
+            attachedInstances[displayInstance.id] = displayInstance
+            displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
+            displayScheduler.scheduleAwakeAt(this, clock.instant())
         }
     }
 
     override fun detach(displayInstanceId: UUID): DisplayInstance? {
-        if (isStopped) {
-            return null
+        return synchronized(lock) {
+            if (stopped) {
+                return@synchronized null
+            }
+
+            displayGeometryByInstanceId.remove(displayInstanceId)
+            attachedInstances.remove(displayInstanceId)
+        }
+    }
+
+    override fun replaceResource(resource: DisplayResource) {
+        require(resource is AnimatedDisplayResource) {
+            "AnimatedDisplayJob requires animated display resource, actual=${resource::class.simpleName}"
         }
 
-        displayGeometryByInstanceId.remove(displayInstanceId)
-        return _attachedDisplayInstances.remove(displayInstanceId)
+        synchronized(lock) {
+            check(!stopped) { "DisplayJob is stopped" }
+            this.resource = resource
+            animationStartedAtMillis = null
+            lastSentPoolIndexes = null
+            if (attachedInstances.isNotEmpty()) {
+                displayScheduler.scheduleAwakeAt(this, clock.instant())
+            }
+        }
     }
 
     override fun isEmpty(): Boolean {
-        return _attachedDisplayInstances.isEmpty()
+        return synchronized(lock) {
+            attachedInstances.isEmpty()
+        }
     }
 
     override fun wake() {
-        if (isStopped || _attachedDisplayInstances.isEmpty()) {
-            return
-        }
+        synchronized(lock) {
+            if (stopped || attachedInstances.isEmpty()) {
+                return
+            }
 
-        val wakeStartedAt = clock.instant()
-        val animatedData = currentImageData(wakeStartedAt.toEpochMilli())
-        if (animatedData.frameCount <= 0 || !animatedData.duration.isPositive()) {
-            return
-        }
+            val wakeStartedAt = clock.instant()
+            val framePoolIndexes = currentFramePoolIndexes(wakeStartedAt.toEpochMilli(), resource)
+            if (hasNoChangedTiles(framePoolIndexes)) {
+                lastSentPoolIndexes = framePoolIndexes
+                scheduleNextAwake(wakeStartedAt)
+                return
+            }
 
-        val framePoolIndexes = currentFramePoolIndexes(wakeStartedAt.toEpochMilli(), animatedData)
-        if (hasNoChangedTiles(framePoolIndexes)) {
+            playerViewsByWorld.clear()
+            activePlayerIds.clear()
+            visibleTileIdsByPlayer.values.forEach(VisibleTileSet::clear)
+
+            collectVisibleTileIds()
+            pruneInactivePlayerTileCaches()
+            sendVisibleTiles(resource, framePoolIndexes)
+
             lastSentPoolIndexes = framePoolIndexes
             scheduleNextAwake(wakeStartedAt)
-            return
         }
-
-        playerViewsByWorld.clear()
-        activePlayerIds.clear()
-        visibleTileIdsByPlayer.values.forEach(VisibleTileSet::clear)
-
-        collectVisibleTileIds()
-        pruneInactivePlayerTileCaches()
-        sendVisibleTiles(animatedData, framePoolIndexes)
-
-        lastSentPoolIndexes = framePoolIndexes
-        scheduleNextAwake(wakeStartedAt)
     }
 
-    private fun currentImageData(wakeStartedAtMillis: Long): ImageData.Animated {
-        val currentData = imageDataEntry.data
-        if (cachedImageData !== currentData) {
-            cachedImageData = currentData
-            decodedTilesByPoolIndex.clear()
-            animationStartedAtMillis = wakeStartedAtMillis
+    override fun stop() {
+        synchronized(lock) {
+            if (stopped) {
+                return
+            }
+
+            stopped = true
+            displayScheduler.unschedule(this)
+            attachedInstances.clear()
+            displayGeometryByInstanceId.clear()
+            visibleTileIdsByPlayer.clear()
+            activePlayerIds.clear()
+            playerViewsByWorld.clear()
+            animationStartedAtMillis = null
             lastSentPoolIndexes = null
         }
-        return currentData
+    }
+
+    fun removePlayerCache(player: UUID) {
+        synchronized(lock) {
+            visibleTileIdsByPlayer.remove(player)
+        }
     }
 
     private fun currentFramePoolIndexes(
         wakeStartedAtMillis: Long,
-        animatedData: ImageData.Animated,
+        resource: AnimatedDisplayResource,
     ): IntArray {
         val startedAtMillis = animationStartedAtMillis ?: wakeStartedAtMillis.also {
             animationStartedAtMillis = it
         }
         val elapsedMillis = (wakeStartedAtMillis - startedAtMillis).coerceAtLeast(0L)
-        val progressMillis = elapsedMillis % animatedData.duration.inWholeMilliseconds
-        val frameIndex = frameIndexAt(progressMillis, animatedData)
-        return framePoolIndexes(frameIndex, maxTileCount, animatedData)
+        val progressMillis = elapsedMillis % resource.duration.inWholeMilliseconds
+        val frameIndex = frameIndexAt(progressMillis, resource)
+        return framePoolIndexes(frameIndex, maxTileCount, resource)
     }
 
     private fun hasNoChangedTiles(framePoolIndexes: IntArray): Boolean {
@@ -162,7 +184,7 @@ class AnimatedDisplayJob(
     }
 
     private fun scheduleNextAwake(wakeStartedAt: Instant) {
-        if (isStopped || _attachedDisplayInstances.isEmpty()) {
+        if (stopped || attachedInstances.isEmpty()) {
             return
         }
         displayScheduler.scheduleAwakeAt(this, nextAwakeAt(wakeStartedAt))
@@ -180,30 +202,30 @@ class AnimatedDisplayJob(
         return wakeFinishedAt.plusMillis(waitMillis.roundToLong())
     }
 
-    private fun frameIndexAt(progressMillis: Long, animatedData: ImageData.Animated): Int {
-        if (animatedData.frameCount == 1) {
+    private fun frameIndexAt(progressMillis: Long, resource: AnimatedDisplayResource): Int {
+        if (resource.frameCount == 1) {
             return 0
         }
 
-        val frameDuration = animatedData.duration.inWholeMilliseconds.toDouble() / animatedData.frameCount.toDouble()
+        val frameDuration = resource.duration.inWholeMilliseconds.toDouble() / resource.frameCount.toDouble()
         return (progressMillis / frameDuration)
             .toInt()
-            .coerceIn(0, animatedData.frameCount - 1)
+            .coerceIn(0, resource.frameCount - 1)
     }
 
     private fun framePoolIndexes(
         frameIndex: Int,
         singleFrameTileCount: Int,
-        animatedData: ImageData.Animated,
+        resource: AnimatedDisplayResource,
     ): IntArray {
         val base = frameIndex * singleFrameTileCount
         return IntArray(singleFrameTileCount) { tileId ->
-            animatedData.tileIndexes[base + tileId].toInt() and 0xFFFF
+            resource.tileIndexes[base + tileId].toInt() and 0xFFFF
         }
     }
 
     private fun collectVisibleTileIds() {
-        _attachedDisplayInstances.forEach { (_, instance) ->
+        attachedInstances.forEach { (_, instance) ->
             val playerViews = playerViewsByWorld.getOrPut(instance.world) {
                 viewPort.getPlayerViews(instance.world).also { views ->
                     views.forEach { activePlayerIds.add(it.id) }
@@ -245,24 +267,24 @@ class AnimatedDisplayJob(
     }
 
     private fun sendVisibleTiles(
-        animatedData: ImageData.Animated,
+        resource: AnimatedDisplayResource,
         framePoolIndexes: IntArray,
     ) {
         visibleTileIdsByPlayer.forEach { (playerId, visibleTileIds) ->
             if (visibleTileIds.size == 0) {
                 return@forEach
             }
-            sendPlayerVisibleTiles(playerId, visibleTileIds, animatedData, framePoolIndexes)
+            sendPlayerVisibleTiles(playerId, visibleTileIds, resource, framePoolIndexes)
         }
     }
 
     private fun sendPlayerVisibleTiles(
         playerId: UUID,
         visibleTileIds: VisibleTileSet,
-        animatedData: ImageData.Animated,
+        resource: AnimatedDisplayResource,
         framePoolIndexes: IntArray,
     ) {
-        val sendJob = displayManager.getSendJob(playerId) ?: return
+        val sendJob = sendJobRegistry.get(playerId) ?: return
         val previousPoolIndexes = lastSentPoolIndexes
 
         visibleTileIds.forEach { tileId ->
@@ -271,33 +293,7 @@ class AnimatedDisplayJob(
             }
 
             val tilePoolIndex = framePoolIndexes[tileId]
-            val mapColors = decodedTilesByPoolIndex.getOrPut(tilePoolIndex) {
-                TileDecoder.decode(animatedData.tilePool.getTile(tilePoolIndex).toByteArray())
-            }
-            sendJob.enqueue(MapUpdate(image.tileMapIds[tileId], mapColors))
+            sendJob.enqueue(MapUpdate(image.tileMapIds[tileId], resource.decodedTilePool.getTile(tilePoolIndex)))
         }
-    }
-
-    fun removePlayerCache(player: UUID) {
-        visibleTileIdsByPlayer.remove(player)
-    }
-
-    override fun stop() {
-        if (isStopped) {
-            return
-        }
-
-        isStopped = true
-
-        _attachedDisplayInstances.clear()
-        displayGeometryByInstanceId.clear()
-
-        visibleTileIdsByPlayer.clear()
-        activePlayerIds.clear()
-        decodedTilesByPoolIndex.clear()
-        playerViewsByWorld.clear()
-
-        animationStartedAtMillis = null
-        lastSentPoolIndexes = null
     }
 }

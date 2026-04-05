@@ -1,135 +1,163 @@
 package plutoproject.feature.gallery.core.display.job
 
-import plutoproject.feature.gallery.core.display.*
+import plutoproject.feature.gallery.core.display.DisplayGeometry
+import plutoproject.feature.gallery.core.display.DisplayInstance
+import plutoproject.feature.gallery.core.display.DisplayScheduler
+import plutoproject.feature.gallery.core.display.MapUpdate
+import plutoproject.feature.gallery.core.display.PlayerView
+import plutoproject.feature.gallery.core.display.TileRect
+import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.image.Image
-import plutoproject.feature.gallery.core.image.ImageData
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.feature.gallery.core.render.tile.codec.TileDecoder
 import plutoproject.feature.gallery.core.util.VisibleTileSet
 import java.time.Clock
-import java.util.*
+import java.util.HashMap
+import java.util.HashSet
+import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 class StaticDisplayJob(
     override val imageId: UUID,
     private val image: Image,
-    private val imageDataEntry: ImageDataEntry.Static,
+    initialResource: StaticDisplayResource,
     private val displayScheduler: DisplayScheduler,
     private val viewPort: ViewPort,
-    private val displayManager: DisplayManager,
+    private val sendJobRegistry: SendJobRegistry,
     private val clock: Clock,
     private val visibleDistance: Double,
     private val updateInterval: Duration,
 ) : DisplayJob {
-    override var isStopped: Boolean = false
-        private set
+    override val type: ImageType = ImageType.STATIC
 
-    override val attachedDisplayInstances
-        get() = _attachedDisplayInstances
+    override val isStopped: Boolean
+        get() = synchronized(lock) { stopped }
 
-    private val _attachedDisplayInstances = HashMap<UUID, DisplayInstance>()
+    override val attachedDisplayInstances: Map<UUID, DisplayInstance>
+        get() = synchronized(lock) { attachedInstances.toMap() }
+
+    private val lock = Any()
+    private val attachedInstances = HashMap<UUID, DisplayInstance>()
     private val displayGeometryByInstanceId = HashMap<UUID, DisplayGeometry>()
     private val sentMapIdsByPlayer = HashMap<UUID, MutableSet<Int>>()
-    private val maxTileCount = image.widthBlocks * image.heightBlocks
-
-    // wake 内使用，每轮可能清理
     private val visibleTileIdsByPlayer = HashMap<UUID, VisibleTileSet>()
     private val activePlayerIds = HashSet<UUID>()
-    private val decodedTilesByPoolIndex = HashMap<Int, ByteArray>()
     private val playerViewsByWorld = HashMap<String, List<PlayerView>>()
+    private val maxTileCount = image.widthBlocks * image.heightBlocks
 
-    private var cachedImageData: ImageData.Static = imageDataEntry.data
+    private var stopped = false
+    private var resource: StaticDisplayResource = initialResource
 
     init {
-        validateSharedObjects(image, imageDataEntry)
-        require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
-        require(updateInterval.isPositive()) { "updateInterval must be greater than 0" }
-    }
-
-    private fun validateSharedObjects(
-        image: Image,
-        imageDataEntry: ImageDataEntry.Static,
-    ) {
         require(image.id == imageId) {
             "Image id mismatch: expected=$imageId, actual=${image.id}"
         }
         require(image.type == ImageType.STATIC) {
             "StaticDisplayJob requires static image, actual=${image.type}"
         }
-        require(imageDataEntry.imageId == imageId) {
-            "ImageDataEntry imageId mismatch: expected=$imageId, actual=${imageDataEntry.imageId}"
-        }
-        require(imageDataEntry.type == ImageType.STATIC) {
-            "StaticDisplayJob requires static image data, actual=${imageDataEntry.type}"
-        }
+        require(visibleDistance > 0.0) { "visibleDistance must be greater than 0" }
+        require(updateInterval.isPositive()) { "updateInterval must be greater than 0" }
     }
 
     override fun attach(displayInstance: DisplayInstance) {
-        check(!isStopped) { "DisplayJob is stopped" }
-        validateDisplayInstance(displayInstance)
+        synchronized(lock) {
+            check(!stopped) { "DisplayJob is stopped" }
+            require(displayInstance.imageId == imageId) {
+                "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
+            }
 
-        _attachedDisplayInstances[displayInstance.id] = displayInstance
-        displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
-    }
-
-    private fun validateDisplayInstance(displayInstance: DisplayInstance) {
-        require(displayInstance.imageId == imageId) {
-            "DisplayInstance imageId mismatch: expected=$imageId, actual=${displayInstance.imageId}"
+            attachedInstances[displayInstance.id] = displayInstance
+            displayGeometryByInstanceId[displayInstance.id] = displayInstance.buildGeometry()
+            displayScheduler.scheduleAwakeAt(this, clock.instant())
         }
     }
 
     override fun detach(displayInstanceId: UUID): DisplayInstance? {
-        if (isStopped) {
-            return null
+        return synchronized(lock) {
+            if (stopped) {
+                return@synchronized null
+            }
+
+            displayGeometryByInstanceId.remove(displayInstanceId)
+            attachedInstances.remove(displayInstanceId)
+        }
+    }
+
+    override fun replaceResource(resource: DisplayResource) {
+        require(resource is StaticDisplayResource) {
+            "StaticDisplayJob requires static display resource, actual=${resource::class.simpleName}"
         }
 
-        displayGeometryByInstanceId.remove(displayInstanceId)
-        return _attachedDisplayInstances.remove(displayInstanceId)
+        synchronized(lock) {
+            check(!stopped) { "DisplayJob is stopped" }
+            this.resource = resource
+            sentMapIdsByPlayer.clear()
+            if (attachedInstances.isNotEmpty()) {
+                displayScheduler.scheduleAwakeAt(this, clock.instant())
+            }
+        }
     }
 
     override fun isEmpty(): Boolean {
-        return _attachedDisplayInstances.isEmpty()
+        return synchronized(lock) {
+            attachedInstances.isEmpty()
+        }
     }
 
     override fun wake() {
-        if (isStopped || _attachedDisplayInstances.isEmpty()) {
-            return
+        synchronized(lock) {
+            if (stopped || attachedInstances.isEmpty()) {
+                return
+            }
+
+            playerViewsByWorld.clear()
+            activePlayerIds.clear()
+            visibleTileIdsByPlayer.values.forEach(VisibleTileSet::clear)
+
+            collectVisibleTileIds()
+            pruneInactivePlayerTileCaches()
+            sendVisibleTiles(resource)
+            scheduleNextAwake()
         }
+    }
 
-        playerViewsByWorld.clear()
-        activePlayerIds.clear()
-        visibleTileIdsByPlayer.values.forEach(VisibleTileSet::clear)
+    override fun stop() {
+        synchronized(lock) {
+            if (stopped) {
+                return
+            }
 
-        collectVisibleTileIds()
-        pruneInactivePlayerTileCaches()
-        sendVisibleTiles(currentImageData())
-        scheduleNextAwake()
+            stopped = true
+            displayScheduler.unschedule(this)
+            attachedInstances.clear()
+            displayGeometryByInstanceId.clear()
+            sentMapIdsByPlayer.clear()
+            visibleTileIdsByPlayer.clear()
+            activePlayerIds.clear()
+            playerViewsByWorld.clear()
+        }
+    }
+
+    fun removePlayerCache(player: UUID) {
+        synchronized(lock) {
+            sentMapIdsByPlayer.remove(player)
+            visibleTileIdsByPlayer.remove(player)
+        }
     }
 
     private fun scheduleNextAwake() {
-        if (isStopped || _attachedDisplayInstances.isEmpty()) {
+        if (stopped || attachedInstances.isEmpty()) {
             return
         }
         val nextAwake = clock.instant().plus(updateInterval.toJavaDuration())
         displayScheduler.scheduleAwakeAt(this, nextAwake)
     }
 
-    private fun currentImageData(): ImageData.Static {
-        val currentData = imageDataEntry.data
-        if (cachedImageData !== currentData) {
-            cachedImageData = currentData
-            decodedTilesByPoolIndex.clear()
-        }
-        return currentData
-    }
-
     private fun collectVisibleTileIds() {
-        _attachedDisplayInstances.forEach { (_, instance) ->
+        attachedInstances.forEach { (_, instance) ->
             val views = playerViewsByWorld.getOrPut(instance.world) {
-                viewPort.getPlayerViews(instance.world).also { views ->
-                    views.forEach { activePlayerIds.add(it.id) }
+                viewPort.getPlayerViews(instance.world).also { currentViews ->
+                    currentViews.forEach { activePlayerIds.add(it.id) }
                 }
             }
 
@@ -167,21 +195,21 @@ class StaticDisplayJob(
         }
     }
 
-    private fun sendVisibleTiles(imageData: ImageData.Static) {
+    private fun sendVisibleTiles(resource: StaticDisplayResource) {
         visibleTileIdsByPlayer.forEach { (playerId, visibleTileIds) ->
             if (visibleTileIds.size == 0) {
                 return@forEach
             }
-            sendPlayerVisibleTiles(playerId, visibleTileIds, imageData)
+            sendPlayerVisibleTiles(playerId, visibleTileIds, resource)
         }
     }
 
     private fun sendPlayerVisibleTiles(
         playerId: UUID,
         visibleTileIds: VisibleTileSet,
-        imageData: ImageData.Static,
+        resource: StaticDisplayResource,
     ) {
-        val sendJob = displayManager.getSendJob(playerId) ?: return
+        val sendJob = sendJobRegistry.get(playerId) ?: return
         val sentMapIds = sentMapIdsByPlayer.getOrPut(playerId) { HashSet() }
 
         visibleTileIds.forEach { tileId ->
@@ -190,34 +218,8 @@ class StaticDisplayJob(
                 return@forEach
             }
 
-            val tilePoolIndex = imageData.tileIndexes[tileId].toInt() and 0xFFFF
-            val mapColors = decodedTilesByPoolIndex.getOrPut(tilePoolIndex) {
-                TileDecoder.decode(imageData.tilePool.getTile(tilePoolIndex).toByteArray())
-            }
-            sendJob.enqueue(MapUpdate(mapId, mapColors))
+            val tilePoolIndex = resource.tileIndexes[tileId].toInt() and 0xFFFF
+            sendJob.enqueue(MapUpdate(mapId, resource.decodedTilePool.getTile(tilePoolIndex)))
         }
-    }
-
-    // 玩家退出的时候调用
-    fun removePlayerCache(player: UUID) {
-        sentMapIdsByPlayer.remove(player)
-        visibleTileIdsByPlayer.remove(player)
-    }
-
-    override fun stop() {
-        if (isStopped) {
-            return
-        }
-
-        isStopped = true
-
-        _attachedDisplayInstances.clear()
-        displayGeometryByInstanceId.clear()
-        sentMapIdsByPlayer.clear()
-
-        visibleTileIdsByPlayer.clear()
-        activePlayerIds.clear()
-        decodedTilesByPoolIndex.clear()
-        playerViewsByWorld.clear()
     }
 }

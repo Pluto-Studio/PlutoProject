@@ -2,6 +2,7 @@ package plutoproject.feature.gallery.core.display.job
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,7 +27,6 @@ import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.dummyUuid
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
-import plutoproject.feature.gallery.core.image.ImageDataEntry
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.newDisplayRuntime
 import plutoproject.feature.gallery.core.render.tile.TilePool
@@ -36,6 +36,7 @@ import plutoproject.feature.gallery.core.schedulerClock
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class StaticDisplayJobTest {
     @Test
     fun `wake should send visible static tiles and schedule next awake`() = runTest {
@@ -56,26 +57,26 @@ class StaticDisplayJobTest {
         )
         val belongsTo = dummyUuid(6101)
         val image = staticImage(belongsTo, intArrayOf(77))
-        val entry = staticImageDataEntry(belongsTo, listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }))
+        val data = staticImageData(listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 7 }))
         val displayInstance = singleTileDisplayInstance(belongsTo, dummyUuid(6102), dummyUuid(6104))
         try {
-            runtime.manager.startSendJob(dummyUuid(6103))
+            runtime.sendJobRegistry.start(dummyUuid(6103))
 
             val job = StaticDisplayJob(
                 imageId = belongsTo,
                 image = image,
-                imageDataEntry = entry.asStatic(),
+                initialResource = DisplayResourceFactory().create(data) as StaticDisplayResource,
                 displayScheduler = runtime.scheduler,
                 viewPort = singleVisiblePlayerViewPort(dummyUuid(6103)),
-                displayManager = runtime.manager,
+                sendJobRegistry = runtime.sendJobRegistry,
                 clock = schedulerClock(this),
                 visibleDistance = 5.0,
                 updateInterval = 200.milliseconds,
             )
 
             job.attach(displayInstance)
-            job.wake()
-            runCurrent()
+            schedulerDispatcher.scheduler.runCurrent()
+            schedulerDispatcher.scheduler.runCurrent()
 
             assertEquals(1, sentUpdates.size)
             assertEquals(77, sentUpdates.single().mapId)
@@ -86,10 +87,58 @@ class StaticDisplayJobTest {
             advanceUntilIdle()
             assertEquals(1, sentUpdates.size)
         } finally {
-            runtime.manager.close()
+            runtime.runtimeRegistry.close()
+            runtime.sendJobRegistry.close()
             runtime.scheduler.stop()
             scope.cancel()
             advanceUntilIdle()
+        }
+    }
+
+    @Test
+    fun `replace resource should resend updated tile colors`() = runTest {
+        val sentUpdates = mutableListOf<MapUpdate>()
+        val runtime = newDisplayRuntime(
+            this,
+            clock = schedulerClock(this),
+            mapUpdatePort = recordingMapUpdatePort(sentUpdates),
+            viewPort = singleVisiblePlayerViewPort(dummyUuid(6113)),
+        )
+        val imageId = dummyUuid(6111)
+        val job = StaticDisplayJob(
+            imageId = imageId,
+            image = staticImage(imageId, intArrayOf(88)),
+            initialResource = DisplayResourceFactory().create(
+                staticImageData(listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 1 }))
+            ) as StaticDisplayResource,
+            displayScheduler = runtime.scheduler,
+            viewPort = singleVisiblePlayerViewPort(dummyUuid(6113)),
+            sendJobRegistry = runtime.sendJobRegistry,
+            clock = schedulerClock(this),
+            visibleDistance = 5.0,
+            updateInterval = 200.milliseconds,
+        )
+
+        try {
+            runtime.sendJobRegistry.start(dummyUuid(6113))
+            job.attach(singleTileDisplayInstance(imageId, dummyUuid(6112), dummyUuid(6114)))
+            runCurrent()
+            runCurrent()
+
+            job.replaceResource(
+                DisplayResourceFactory().create(
+                    staticImageData(listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 9 }))
+                )
+            )
+            runCurrent()
+            runCurrent()
+
+            assertEquals(2, sentUpdates.size)
+            assertArrayEquals(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 9 }, sentUpdates.last().mapColors)
+        } finally {
+            runtime.runtimeRegistry.close()
+            runtime.sendJobRegistry.close()
+            runtime.scheduler.stop()
         }
     }
 
@@ -116,18 +165,20 @@ class StaticDisplayJobTest {
         )
         val belongsTo = dummyUuid(6121)
         try {
-            runtime.manager.startSendJob(dummyUuid(6123))
+            runtime.sendJobRegistry.start(dummyUuid(6123))
             val job = StaticDisplayJob(
                 imageId = belongsTo,
                 image = staticImage(belongsTo, intArrayOf(99)),
-                imageDataEntry = staticImageDataEntry(belongsTo, listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 11 })).asStatic(),
+                initialResource = DisplayResourceFactory().create(
+                    staticImageData(listOf(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 11 }))
+                ) as StaticDisplayResource,
                 displayScheduler = runtime.scheduler,
                 viewPort = object : ViewPort {
                     override fun getPlayerViews(world: String): List<PlayerView> {
                         return listOf(PlayerView(dummyUuid(6123), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 0.0, -1.0)))
                     }
                 },
-                displayManager = runtime.manager,
+                sendJobRegistry = runtime.sendJobRegistry,
                 clock = schedulerClock(this),
                 visibleDistance = 5.0,
                 updateInterval = 200.milliseconds,
@@ -135,8 +186,8 @@ class StaticDisplayJobTest {
             val displayInstance = singleTileDisplayInstance(belongsTo, dummyUuid(6122), dummyUuid(6124))
 
             job.attach(displayInstance)
-            job.wake()
-            advanceUntilIdle()
+            runCurrent()
+            runCurrent()
             assertTrue(sentUpdates.isEmpty())
 
             job.stop()
@@ -144,7 +195,8 @@ class StaticDisplayJobTest {
                 job.attach(displayInstance)
             }
         } finally {
-            runtime.manager.close()
+            runtime.runtimeRegistry.close()
+            runtime.sendJobRegistry.close()
             runtime.scheduler.stop()
             scope.cancel()
             advanceUntilIdle()
@@ -164,7 +216,7 @@ class StaticDisplayJobTest {
         )
     }
 
-    private fun staticImageDataEntry(imageId: UUID, tileColors: List<ByteArray>): ImageDataEntry.Static {
+    private fun staticImageData(tileColors: List<ByteArray>): ImageData.Static {
         val encodedTiles = tileColors.map(TileEncoder::encode)
         val offsets = IntArray(encodedTiles.size + 1)
         var totalBytes = 0
@@ -181,12 +233,9 @@ class StaticDisplayJobTest {
             cursor += tileData.size
         }
 
-        return ImageDataEntry.Static(
-            imageId = imageId,
-            data = ImageData.Static(
-                tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
-                tileIndexes = ShortArray(tileColors.size) { it.toShort() },
-            ),
+        return ImageData.Static(
+            tilePool = TilePool.fromSnapshot(TilePoolSnapshot(offsets = offsets, blob = blob)),
+            tileIndexes = ShortArray(tileColors.size) { it.toShort() },
         )
     }
 

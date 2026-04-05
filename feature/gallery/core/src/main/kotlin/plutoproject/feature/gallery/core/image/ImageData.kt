@@ -25,6 +25,20 @@ sealed interface ImageData {
         override val tileIndexes: ShortArray
     ) : ImageData {
         override val type: ImageType = ImageType.STATIC
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Static) return false
+            if (!tilePool.contentEquals(other.tilePool)) return false
+            if (!tileIndexes.contentEquals(other.tileIndexes)) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = tilePool.contentHashCode()
+            result = 31 * result + tileIndexes.contentHashCode()
+            return result
+        }
     }
 
     class Animated(
@@ -34,5 +48,37 @@ sealed interface ImageData {
         val duration: Duration,
     ) : ImageData {
         override val type: ImageType = ImageType.ANIMATED
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Animated) return false
+            if (frameCount != other.frameCount) return false
+            if (duration != other.duration) return false
+            if (!tilePool.contentEquals(other.tilePool)) return false
+            if (!tileIndexes.contentEquals(other.tileIndexes)) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = tilePool.contentHashCode()
+            result = 31 * result + tileIndexes.contentHashCode()
+            result = 31 * result + frameCount
+            result = 31 * result + duration.hashCode()
+            return result
+        }
     }
+}
+
+private fun TilePool.contentEquals(other: TilePool): Boolean {
+    val snapshot = snapshot()
+    val otherSnapshot = other.snapshot()
+    return snapshot.offsets.contentEquals(otherSnapshot.offsets)
+        && snapshot.blob.contentEquals(otherSnapshot.blob)
+}
+
+private fun TilePool.contentHashCode(): Int {
+    val snapshot = snapshot()
+    var result = snapshot.offsets.contentHashCode()
+    result = 31 * result + snapshot.blob.contentHashCode()
+    return result
 }

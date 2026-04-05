@@ -8,7 +8,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayInstanceRepository
-import plutoproject.feature.gallery.core.display.DisplayManager
+import plutoproject.feature.gallery.core.display.DisplayInstanceStore
+import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
 import plutoproject.feature.gallery.core.display.MapUpdate
@@ -16,21 +17,23 @@ import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.PlayerView
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
+import plutoproject.feature.gallery.core.display.job.DisplayResourceFactory
 import plutoproject.feature.gallery.core.display.job.SendJobFactory
+import plutoproject.feature.gallery.core.display.job.SendJobRegistry
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
-import plutoproject.feature.gallery.core.image.ImageDataEntry
-import plutoproject.feature.gallery.core.image.ImageManager
-import plutoproject.feature.gallery.core.image.ImageDataEntryRepository
+import plutoproject.feature.gallery.core.image.ImageDataRepository
 import plutoproject.feature.gallery.core.image.ImageRepository
+import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.feature.gallery.core.image.ImageType
+import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
+import plutoproject.feature.gallery.core.render.tile.codec.TileEncoder
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
-import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -78,18 +81,16 @@ internal fun sampleDisplayInstance(
     )
 }
 
-internal fun sampleStaticImageDataEntry(imageId: UUID = dummyUuid(907)): ImageDataEntry<*> {
-    return ImageDataEntry.Static(
-        imageId = imageId,
-        data = ImageData.Static(
-            tilePool = TilePool.fromSnapshot(
-                TilePoolSnapshot(
-                    offsets = intArrayOf(0, 0),
-                    blob = ByteArray(0),
-                )
-            ),
-            tileIndexes = shortArrayOf(0),
+internal fun sampleStaticImageData(): ImageData.Static {
+    val encodedTile = TileEncoder.encode(ByteArray(MapUpdate.MAP_UPDATE_PIXEL_COUNT) { 1 })
+    return ImageData.Static(
+        tilePool = TilePool.fromSnapshot(
+            TilePoolSnapshot(
+                offsets = intArrayOf(0, encodedTile.size),
+                blob = encodedTile,
+            )
         ),
+        tileIndexes = shortArrayOf(0),
     )
 }
 
@@ -101,7 +102,7 @@ internal open class InMemoryImageRepository(
     }
 
     override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, Image> {
-        return ids.mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
+        return ids.distinct().mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
     }
 
     override suspend fun findByOwner(owner: UUID): List<Image> {
@@ -130,27 +131,27 @@ internal open class InMemoryImageRepository(
     }
 }
 
-internal open class InMemoryImageDataEntryRepository(
-    private val storage: MutableMap<UUID, ImageDataEntry<*>> = mutableMapOf(),
-) : ImageDataEntryRepository {
-    override suspend fun findByImageId(imageId: UUID): ImageDataEntry<*>? {
+internal open class InMemoryImageDataRepository(
+    private val storage: MutableMap<UUID, ImageData> = mutableMapOf(),
+) : ImageDataRepository {
+    override suspend fun findByImageId(imageId: UUID): ImageData? {
         return storage[imageId]
     }
 
-    override suspend fun findByImageIds(imageIds: Collection<UUID>): Map<UUID, ImageDataEntry<*>> {
-        return imageIds.mapNotNull { belongsTo -> storage[belongsTo]?.let { belongsTo to it } }.toMap()
+    override suspend fun findByImageIds(imageIds: Collection<UUID>): Map<UUID, ImageData> {
+        return imageIds.distinct().mapNotNull { imageId -> storage[imageId]?.let { imageId to it } }.toMap()
     }
 
-    override suspend fun save(entry: ImageDataEntry<*>) {
-        storage[entry.imageId] = entry
+    override suspend fun save(imageId: UUID, data: ImageData) {
+        storage[imageId] = data
     }
 
-    override suspend fun update(entry: ImageDataEntry<*>): Boolean {
-        if (entry.imageId !in storage) {
+    override suspend fun update(imageId: UUID, data: ImageData): Boolean {
+        if (imageId !in storage) {
             return false
         }
 
-        storage[entry.imageId] = entry
+        storage[imageId] = data
         return true
     }
 
@@ -183,25 +184,22 @@ internal open class InMemoryDisplayInstanceRepository(
     }
 }
 
-internal fun newImageManager(
-    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
-    coroutineContext: CoroutineContext = Dispatchers.Unconfined,
-    clock: Clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+internal fun newImageStore(
     imageRepo: ImageRepository = InMemoryImageRepository(),
-    imageDataRepo: ImageDataEntryRepository = InMemoryImageDataEntryRepository(),
-): ImageManager {
-    return ImageManager(
-        coroutineScope = scope,
-        coroutineContext = coroutineContext,
-        clock = clock,
-        logger = Logger.getLogger("ImageManagerTest"),
-        imageRepo = imageRepo,
-        imageDataRepo = imageDataRepo,
-    )
+): ImageStore {
+    return ImageStore(imageRepo)
+}
+
+internal fun newImageDataStore(
+    imageDataRepo: ImageDataRepository = InMemoryImageDataRepository(),
+): ImageDataStore {
+    return ImageDataStore(imageDataRepo)
 }
 
 internal data class DisplayRuntimeFixture(
-    val manager: DisplayManager,
+    val displayInstanceStore: DisplayInstanceStore,
+    val runtimeRegistry: DisplayRuntimeRegistry,
+    val sendJobRegistry: SendJobRegistry,
     val scheduler: DisplayScheduler,
 )
 
@@ -228,38 +226,36 @@ internal fun newDisplayRuntime(
         schedulerContext = schedulerContext,
         awakeContext = awakeContext,
     )
-    lateinit var manager: DisplayManager
-    val sendJobFactory = SendJobFactory(
-        clock = clock,
-        coroutineScope = sendScope,
-        loopContext = sendLoopContext,
-        mapUpdatePort = mapUpdatePort,
-        maxQueueSize = 8,
-        maxUpdatesInSpan = 8,
-        updateLimitSpan = 1.seconds,
-    )
-    val displayJobFactory = lazy {
-        DisplayJobFactory(
-            displayScheduler = scheduler,
-            viewPort = viewPort,
-            displayManager = manager,
+    val sendJobRegistry = SendJobRegistry(
+        SendJobFactory(
             clock = clock,
-            animatedMaxFramesPerSecond = 20,
-            visibleDistance = 5.0,
-            staticUpdateInterval = 1.seconds,
+            coroutineScope = sendScope,
+            loopContext = sendLoopContext,
+            mapUpdatePort = mapUpdatePort,
+            maxQueueSize = 8,
+            maxUpdatesInSpan = 8,
+            updateLimitSpan = 1.seconds,
         )
-    }
-    manager = DisplayManager(
-        coroutineScope = scope,
-        coroutineContext = coroutineContext,
-        clock = clock,
-        logger = Logger.getLogger("DisplayManagerTest"),
-        instanceRepo = instances,
-        scheduler = scheduler,
-        displayJobFactory = displayJobFactory,
-        sendJobFactory = lazy { sendJobFactory },
     )
-    return DisplayRuntimeFixture(manager, scheduler)
+    val displayJobFactory = DisplayJobFactory(
+        displayScheduler = scheduler,
+        viewPort = viewPort,
+        sendJobRegistry = sendJobRegistry,
+        clock = clock,
+        animatedMaxFramesPerSecond = 20,
+        visibleDistance = 5.0,
+        staticUpdateInterval = 1.seconds,
+    )
+
+    return DisplayRuntimeFixture(
+        displayInstanceStore = DisplayInstanceStore(instances),
+        runtimeRegistry = DisplayRuntimeRegistry(
+            displayResourceFactory = DisplayResourceFactory(),
+            displayJobFactory = displayJobFactory,
+        ),
+        sendJobRegistry = sendJobRegistry,
+        scheduler = scheduler,
+    )
 }
 
 internal fun TestScope.newDisplayRuntime(
@@ -288,20 +284,20 @@ internal fun TestScope.newDisplayRuntime(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun TestScope.newImageManager(
-    clock: Clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
+internal fun TestScope.newImageStore(
     imageRepo: ImageRepository = InMemoryImageRepository(),
-    imageDataRepo: ImageDataEntryRepository = InMemoryImageDataEntryRepository(),
-): ImageManager {
-    return newImageManager(
-        scope = this,
-        coroutineContext = StandardTestDispatcher(testScheduler),
-        clock = clock,
-        imageRepo = imageRepo,
-        imageDataRepo = imageDataRepo,
-    )
+): ImageStore {
+    return ImageStore(imageRepo)
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun TestScope.newImageDataStore(
+    imageDataRepo: ImageDataRepository = InMemoryImageDataRepository(),
+): ImageDataStore {
+    return ImageDataStore(imageDataRepo)
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
 internal fun schedulerClock(scope: TestScope): Clock {
     return object : Clock() {
         override fun instant(): Instant = Instant.ofEpochMilli(scope.testScheduler.currentTime)

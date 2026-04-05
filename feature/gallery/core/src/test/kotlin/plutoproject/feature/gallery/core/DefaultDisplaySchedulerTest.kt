@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.job.DisplayJob
+import plutoproject.feature.gallery.core.display.job.DisplayResource
 import plutoproject.feature.gallery.core.display.SchedulerState
+import plutoproject.feature.gallery.core.image.ImageType
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -107,6 +109,7 @@ class DefaultDisplaySchedulerTest {
 
     private class FakeDisplayJob : DisplayJob {
         override val imageId: UUID = dummyUuid(8001)
+        override val type = ImageType.STATIC
         override var isStopped: Boolean = false
         override val attachedDisplayInstances: Map<UUID, DisplayInstance> = emptyMap()
 
@@ -120,6 +123,8 @@ class DefaultDisplaySchedulerTest {
         }
 
         override fun detach(displayInstanceId: UUID): DisplayInstance? = null
+
+        override fun replaceResource(resource: DisplayResource) = Unit
 
         override fun isEmpty(): Boolean = attachedDisplayInstances.isEmpty()
 
