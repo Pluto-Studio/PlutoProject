@@ -154,7 +154,7 @@ class ImageManager(
                     return@withImageLock
                 }
 
-                val loaded = loadedById[id] ?: return@withImageLock
+                val loaded = loadedById[id] ?: imageRepo.findById(id) ?: return@withImageLock
                 cacheImage(loaded)
                 result[id] = loaded
             }
@@ -174,7 +174,8 @@ class ImageManager(
                     return@withImageLock
                 }
 
-                result.add(cacheImage(image))
+                val loaded = imageRepo.findById(image.id) ?: return@withImageLock
+                result.add(cacheImage(loaded))
             }
         }
 
@@ -245,7 +246,7 @@ class ImageManager(
                     return@withImageLock
                 }
 
-                val loaded = loadedById[id] ?: return@withImageLock
+                val loaded = loadedById[id] ?: imageDataRepo.findByImageId(id) ?: return@withImageLock
                 cacheImageDataEntry(loaded)
                 result[id] = loaded
             }

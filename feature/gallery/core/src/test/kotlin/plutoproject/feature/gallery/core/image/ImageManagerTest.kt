@@ -146,6 +146,100 @@ class ImageManagerTest {
     }
 
     @Test
+    fun `batch getters should reload entry when cached value expires before lock acquisition`() = runTest {
+        var singleImageFindHits = 0
+        val imageRepo = object : InMemoryImageRepository() {
+            override suspend fun findByIds(ids: Collection<java.util.UUID>): Map<java.util.UUID, Image> {
+                testScheduler.advanceTimeBy(31_000)
+                advanceUntilIdle()
+                return super.findByIds(ids)
+            }
+
+            override suspend fun findById(id: java.util.UUID): Image? {
+                singleImageFindHits += 1
+                return super.findById(id)
+            }
+        }
+        val imageManager = newImageManager(
+            clock = schedulerClock(this),
+            imageRepo = imageRepo,
+            imageDataRepo = InMemoryImageDataEntryRepository(),
+        )
+        val cachedImage = sampleImage(id = dummyUuid(23))
+        val cachedEntry = sampleStaticImageDataEntry(cachedImage.id)
+        val otherImage = sampleImage(id = dummyUuid(24))
+
+        try {
+            imageManager.createImage(
+                id = cachedImage.id,
+                type = cachedImage.type,
+                owner = cachedImage.owner,
+                ownerName = cachedImage.ownerName,
+                name = cachedImage.name,
+                widthBlocks = cachedImage.widthBlocks,
+                heightBlocks = cachedImage.heightBlocks,
+                tileMapIds = cachedImage.tileMapIds,
+                data = cachedEntry.asStatic().data,
+            )
+            imageRepo.save(otherImage)
+            singleImageFindHits = 0
+
+            val images = imageManager.getImages(listOf(cachedImage.id, otherImage.id))
+
+            assertEquals(setOf(cachedImage.id, otherImage.id), images.keys)
+            assertEquals(1, singleImageFindHits)
+        } finally {
+            imageManager.close()
+        }
+
+        var singleImageDataFindHits = 0
+        val imageDataRepo = object : InMemoryImageDataEntryRepository() {
+            override suspend fun findByImageIds(imageIds: Collection<java.util.UUID>): Map<java.util.UUID, ImageDataEntry<*>> {
+                testScheduler.advanceTimeBy(31_000)
+                advanceUntilIdle()
+                return super.findByImageIds(imageIds)
+            }
+
+            override suspend fun findByImageId(imageId: java.util.UUID): ImageDataEntry<*>? {
+                singleImageDataFindHits += 1
+                return super.findByImageId(imageId)
+            }
+        }
+        val entryManager = newImageManager(
+            clock = schedulerClock(this),
+            imageRepo = InMemoryImageRepository(),
+            imageDataRepo = imageDataRepo,
+        )
+        val cachedImageForEntry = sampleImage(id = dummyUuid(25))
+        val cachedEntryForEntry = sampleStaticImageDataEntry(cachedImageForEntry.id)
+        val otherImageForEntry = sampleImage(id = dummyUuid(26))
+        val otherEntry = sampleStaticImageDataEntry(otherImageForEntry.id)
+
+        try {
+            entryManager.createImage(
+                id = cachedImageForEntry.id,
+                type = cachedImageForEntry.type,
+                owner = cachedImageForEntry.owner,
+                ownerName = cachedImageForEntry.ownerName,
+                name = cachedImageForEntry.name,
+                widthBlocks = cachedImageForEntry.widthBlocks,
+                heightBlocks = cachedImageForEntry.heightBlocks,
+                tileMapIds = cachedImageForEntry.tileMapIds,
+                data = cachedEntryForEntry.asStatic().data,
+            )
+            imageDataRepo.save(otherEntry)
+            singleImageDataFindHits = 0
+
+            val entries = entryManager.getImageDataEntries(listOf(cachedImageForEntry.id, otherImageForEntry.id))
+
+            assertEquals(setOf(cachedImageForEntry.id, otherImageForEntry.id), entries.keys)
+            assertEquals(1, singleImageDataFindHits)
+        } finally {
+            entryManager.close()
+        }
+    }
+
+    @Test
     fun `pin should keep cached image until unpin and ttl cleanup`() = runTest {
         var repoHits = 0
         val repo = object : plutoproject.feature.gallery.core.InMemoryImageRepository() {
