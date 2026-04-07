@@ -49,6 +49,7 @@ data class UploadSettings(
     val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
     val supportedFormatNames: List<String> = listOf("PNG", "JPEG", "WebP", "GIF"),
     val baseUrl: String = "https://gallery.plutoproject.club/",
+    val port: Int = 24213,
 )
 
 data class DecodeSettings(
