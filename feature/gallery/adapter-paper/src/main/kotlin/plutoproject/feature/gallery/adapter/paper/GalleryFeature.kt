@@ -7,6 +7,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.commonModule
+import plutoproject.feature.gallery.adapter.common.koin
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
@@ -15,8 +16,6 @@ import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.paper.api.feature.PaperFeature
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
-
-internal lateinit var koin: Koin
 
 @Feature(
     id = "gallery",

@@ -33,5 +33,8 @@ dependencies {
         downloadIfRequired(libs.hash4j)
         downloadIfRequired(libs.imageioWebp)
         downloadIfRequired(libs.charonflow)
+        downloadIfRequired(libs.ktor.server.core)
+        downloadIfRequired(libs.ktor.server.netty)
+        downloadIfRequired(libs.ktor.server.content.negotiation)
     }
 }

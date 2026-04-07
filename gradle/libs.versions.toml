@@ -1,5 +1,6 @@
 [versions]
 kotlin = "2.3.0"
+ktor = "3.4.2"
 kotlinx-coroutine = "1.10.2"
 kotlinx-serialization = "1.10.0"
 mongodb = "5.4.0"
@@ -93,6 +94,9 @@ cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-a
 cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
 gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
 luckperms-api = { module = "net.luckperms:api", version = "5.4" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 
 # Platform - Paper
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }

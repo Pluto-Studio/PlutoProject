@@ -4,6 +4,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.Koin
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
@@ -35,6 +36,8 @@ private const val IMAGE_COLLECTION = "image"
 private const val IMAGE_DATA_ENTRY_COLLECTION = "image_data"
 private const val DISPLAY_INSTANCE_COLLECTION = "display_instance"
 private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
+
+lateinit var koin: Koin
 
 private inline fun <reified T : Any> getCollection(name: String): MongoCollection<T> {
     return MongoConnection.getCollection("$GALLERY_PREFIX${serverName}_$name")
