@@ -36,4 +36,8 @@ class VisibleTileSet(capacity: Int) {
             block(values[index])
         }
     }
+
+    override fun toString(): String {
+        return "VisibleTileSet[values=${values.contentToString()}]"
+    }
 }

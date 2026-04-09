@@ -105,7 +105,7 @@ fun createImageItem(image: Image): ItemStack {
         DataComponentTypes.LORE,
         ItemLore.lore(IMAGE_ITEM_LORE.map { it.resolveImagePlaceholders(image) })
     )
-    itemStack.itemMeta.setImageItemData(image)
+    itemStack.itemMeta = itemStack.itemMeta.apply { setImageItemData(image) } // getItemMeta 怎么拿的是 copy。。
 
     return itemStack
 }

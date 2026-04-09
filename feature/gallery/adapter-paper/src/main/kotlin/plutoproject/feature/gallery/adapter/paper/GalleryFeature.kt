@@ -8,12 +8,14 @@ import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.*
 import plutoproject.feature.gallery.adapter.paper.listener.ChunkListener
 import plutoproject.feature.gallery.adapter.paper.listener.ItemFrameListener
+import plutoproject.feature.gallery.adapter.paper.listener.PlayerListener
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.paper.api.feature.PaperFeature
+import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
 import java.util.logging.Logger
@@ -42,6 +44,8 @@ class GalleryFeature : PaperFeature() {
         }
 
         onFeatureEnable()
+        AnnotationParser.parse(GalleyDebugCommand)
+        server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
         server.pluginManager.registerSuspendingEvents(ChunkListener, plugin)
         server.pluginManager.registerSuspendingEvents(ItemFrameListener, plugin)
     }

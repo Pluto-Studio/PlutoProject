@@ -281,7 +281,7 @@ object ItemFrameListener : Listener {
     }
 }
 
-private data class WallAxis(
+internal data class WallAxis(
     val right: BlockFace,
     val down: BlockFace,
 )
@@ -335,30 +335,32 @@ private fun rightOf(facing: BlockFace): BlockFace = when (facing) {
     else -> error("Expected 4-way horizontal facing, got $facing")
 }
 
-private fun wallAxisOf(
+internal fun wallAxisOf(
     frameFacing: BlockFace,
     playerHorizontalFacing: BlockFace,
 ): WallAxis = when (frameFacing) {
+    // 必须和 DisplayInstance.buildGeometry() 里的 axisU 保持一致，否则 tileX 会左右镜像
     BlockFace.NORTH -> WallAxis(
-        right = BlockFace.EAST,
-        down = BlockFace.DOWN,
-    )
-
-    BlockFace.SOUTH -> WallAxis(
         right = BlockFace.WEST,
         down = BlockFace.DOWN,
     )
 
-    BlockFace.EAST -> WallAxis(
-        right = BlockFace.SOUTH,
+    BlockFace.SOUTH -> WallAxis(
+        right = BlockFace.EAST,
         down = BlockFace.DOWN,
     )
 
-    BlockFace.WEST -> WallAxis(
+    BlockFace.EAST -> WallAxis(
         right = BlockFace.NORTH,
         down = BlockFace.DOWN,
     )
 
+    BlockFace.WEST -> WallAxis(
+        right = BlockFace.SOUTH,
+        down = BlockFace.DOWN,
+    )
+
+    // TODO: 修复水平放置
     // 地板：展示框朝上
     BlockFace.UP -> WallAxis(
         right = rightOf(playerHorizontalFacing),

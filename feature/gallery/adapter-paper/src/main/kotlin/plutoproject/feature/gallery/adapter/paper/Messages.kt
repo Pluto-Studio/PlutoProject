@@ -9,19 +9,19 @@ val IMAGE_ITEM_NAME = component {
 }
 
 val IMAGE_ITEM_LORE = listOf(
-    component { text("由 <creator>") with mochaSubtext0 },
-    component { text("创建于 <time>") with mochaSubtext0 },
+    component { text("由 <creator>") with mochaSubtext0 without italic() },
+    component { text("创建于 <time>") with mochaSubtext0 without italic() },
     component { empty() },
-    component { text("这是一幅地图画！") with mochaFlamingo },
+    component { text("这是一幅地图画！") with mochaFlamingo without italic() },
     component {
-        text("你可以把它放入有 ") with mochaText
-        text("<width> × <height> ") with mochaLavender
-        text("大小的展示框墙内") with mochaText
+        text("你可以把它放入一面 ") with mochaText without italic()
+        text("<width> × <height> ") with mochaLavender without italic()
+        text("的展示框内") with mochaText without italic()
     },
     component { empty() },
     component {
-        keybind("key.use") with mochaLavender
-        text(" 放入展示框") with mochaText
+        keybind("key.use") with mochaLavender without italic()
+        text(" 放入展示框") with mochaText without italic()
     }
 )
 
