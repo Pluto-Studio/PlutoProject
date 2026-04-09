@@ -14,6 +14,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 
+val IMAGE_ITEM_MATERIAL = Material.PAPER
+
 private val IMAGE_ITEM_DATA_KEY = NamespacedKey("plutoproject_gallery", "image_item_data")
 private const val DATA_VERSION = 1
 
@@ -58,7 +60,7 @@ class ImageItemData(
             val expectedTileCount = Math.multiplyExact(widthBlocks, heightBlocks)
 
             require(tileMapIds.size == expectedTileCount) {
-                "Corrupted image item data: expected $expectedTileCount tileMapIds, got ${tileMapIds.size}"
+                "Corrupted image item data: expected tileMapIds.size to be $expectedTileCount, got ${tileMapIds.size}"
             }
 
             return ImageItemData(imageId, widthBlocks, heightBlocks, tileMapIds)
@@ -103,7 +105,7 @@ fun createImageItem(image: Image): ItemStack {
         DataComponentTypes.LORE,
         ItemLore.lore(IMAGE_ITEM_LORE.map { it.resolveImagePlaceholders(image) })
     )
-    itemStack.itemMeta.insertImageItemData(image)
+    itemStack.itemMeta.setImageItemData(image)
 
     return itemStack
 }
@@ -124,7 +126,7 @@ fun ItemStack.imageItemData(): ImageItemData? {
     return ImageItemData.fromBytes(bytes)
 }
 
-private fun ItemMeta.insertImageItemData(image: Image) {
+private fun ItemMeta.setImageItemData(image: Image) {
     val data = ImageItemData(
         imageId = image.id,
         widthBlocks = image.widthBlocks,
