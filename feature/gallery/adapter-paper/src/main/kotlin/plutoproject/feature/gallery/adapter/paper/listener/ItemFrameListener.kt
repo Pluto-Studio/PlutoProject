@@ -18,14 +18,17 @@ import org.bukkit.entity.ItemFrame
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.inventory.ItemStack
+import plutoproject.feature.gallery.adapter.common.DisplayInstanceIndex
 import plutoproject.feature.gallery.adapter.common.koin
 import plutoproject.feature.gallery.adapter.paper.*
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayInstanceStore
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.ItemFrameFacing
+import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
+import plutoproject.feature.gallery.core.util.ChunkKey
 import plutoproject.framework.common.util.chat.component.replace
 import java.util.*
 import java.util.logging.Logger
@@ -48,6 +51,7 @@ object ItemFrameListener : Listener {
     private val imageDataStore = koin.get<ImageDataStore>()
     private val displayInstanceStore = koin.get<DisplayInstanceStore>()
     private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
+    private val displayIndex = koin.get<DisplayInstanceIndex>()
     private val coroutineScope = koin.get<CoroutineScope>()
 
     @EventHandler
@@ -165,6 +169,12 @@ object ItemFrameListener : Listener {
             }
         }
 
+        displayIndex.add(
+            itemFrame.world.name,
+            ChunkKey(origin.chunk.x, origin.chunk.z),
+            displayInstance.id
+        )
+
         selectedFrames.forEachIndexed { index, frame ->
             val tileIndex = frame.tileY * width + frame.tileX
             val mapId = image.tileMapIds[tileIndex]
@@ -197,16 +207,22 @@ object ItemFrameListener : Listener {
             }
         }
 
+        event.setItemStack(ItemStack.empty())
+
+        if (originFrame !is ItemFrame) {
+            removeWithDisplayInstance(event, imageDeferred)
+            return
+        }
+
         coroutineScope.launch(Dispatchers.IO) {
             displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
         }
 
-        event.setItemStack(ItemStack.empty())
-
-        if (originFrame !is ItemFrame) {
-            removeWithDisplayInstance(event)
-            return
-        }
+        displayIndex.remove(
+            itemFrame.world.name,
+            ChunkKey(originFrame.chunk.x, originFrame.chunk.z),
+            imageItemFrameData.displayInstanceId
+        )
 
         var currentFrame: ItemFrame? = originFrame
 
@@ -224,30 +240,27 @@ object ItemFrameListener : Listener {
         itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
     }
 
-    private suspend fun removeWithDisplayInstance(event: PlayerItemFrameChangeEvent) {
+    private suspend fun removeWithDisplayInstance(event: PlayerItemFrameChangeEvent, imageDeferred: Deferred<Image?>) {
         val itemFrame = event.itemFrame
 
         val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
-        displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
-
         val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
             }
         }
-        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
-            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
-                imageStore.get(imageItemFrameData.imageId)
-            }
-        }
-
-        event.setItemStack(ItemStack.empty())
 
         val displayInstance = displayInstanceDeferred.await()
         if (displayInstance == null) {
             imageDeferred.cancel()
             return
         }
+
+        displayIndex.remove(
+            itemFrame.world.name,
+            ChunkKey(displayInstance.chunkX, displayInstance.chunkZ),
+            displayInstance.id
+        )
 
         displayInstance.itemFrameIds
             .mapNotNull { itemFrame.world.getEntity(it) }

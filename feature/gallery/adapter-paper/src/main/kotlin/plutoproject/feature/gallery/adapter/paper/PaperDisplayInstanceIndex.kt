@@ -73,12 +73,6 @@ class PaperDisplayInstanceIndex : DisplayInstanceIndex {
         if (!world.isChunkLoaded(chunkKey.x, chunkKey.z)) return null
         return world.getChunkAt(chunkKey.x, chunkKey.z)
     }
-
-    private fun checkMainThread() {
-        check(Bukkit.isPrimaryThread()) {
-            "Display instance lookup must only be accessed from the main server thread"
-        }
-    }
 }
 
 private fun encodeUuidSet(uuids: Set<UUID>): ByteArray {
@@ -98,7 +92,7 @@ private fun decodeUuidSet(bytes: ByteArray): Set<UUID> {
     val buffer = ByteBuffer.wrap(bytes)
     return buildSet(bytes.size / 16) {
         while (buffer.remaining() >= 16) {
-            add(UUID(buffer.getLong(), buffer.getLong()))
+            add(UUID(buffer.long, buffer.long))
         }
     }
 }
