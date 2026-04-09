@@ -6,7 +6,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.*
-import plutoproject.feature.gallery.adapter.paper.listeners.ChunkListener
+import plutoproject.feature.gallery.adapter.paper.listener.ChunkListener
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform

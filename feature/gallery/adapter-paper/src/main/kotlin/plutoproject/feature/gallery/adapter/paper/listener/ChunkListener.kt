@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.listeners
+package plutoproject.feature.gallery.adapter.paper.listener
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
