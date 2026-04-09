@@ -21,6 +21,7 @@ class ImageItemFrameData(
         private const val SIZE = 4 + 16 + 16 + 16 + 16
 
         fun fromBytes(bytes: ByteArray): ImageItemFrameData {
+            // TODO: 确认 nextItemFrame = null 时尾部写 0 不会有问题
             require(bytes.size == SIZE) {
                 "Corrupted image item frame data: expected size to be $SIZE, got ${bytes.size}"
             }

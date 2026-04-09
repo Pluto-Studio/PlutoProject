@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import org.bukkit.Material
+import org.bukkit.Rotation
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.ItemFrame
@@ -183,6 +184,7 @@ object ItemFrameListener : Listener {
                 setData(DataComponentTypes.MAP_ID, MapId.mapId(mapId))
             }
             frame.itemFrame.setItem(itemStack)
+            frame.itemFrame.rotation = Rotation.NONE
             frame.itemFrame.setImageItemFrame(displayInstance, nextFrame?.itemFrame?.uniqueId)
         }
 
