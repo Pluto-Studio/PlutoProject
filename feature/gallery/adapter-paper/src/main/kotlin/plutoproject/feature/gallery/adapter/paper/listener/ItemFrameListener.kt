@@ -227,10 +227,10 @@ object ItemFrameListener : Listener {
         var currentFrame: ItemFrame? = originFrame
 
         while (currentFrame != null) {
+            val frameData = currentFrame.imageItemFrameData()
             currentFrame.unsetImageItemFrame()
             currentFrame.setItem(ItemStack.empty())
-            currentFrame = currentFrame.imageItemFrameData()?.nextItemFrame
-                ?.let { event.itemFrame.world.getEntity(it) as? ItemFrame }
+            currentFrame = frameData?.nextItemFrame?.let { event.itemFrame.world.getEntity(it) as? ItemFrame }
         }
 
         val image = imageDeferred.await()
