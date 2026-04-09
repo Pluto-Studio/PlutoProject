@@ -52,16 +52,9 @@ object ItemFrameListener : Listener {
 
     @EventHandler
     suspend fun onItemFrameChange(event: PlayerItemFrameChangeEvent) {
-        if (event.itemStack.type != IMAGE_ITEM_MATERIAL
-            || event.itemStack.imageItemData() == null
-            || event.action == ROTATE
-        ) {
-            return
-        }
-
         when (event.action) {
             PLACE -> onPlace(event)
-            REMOVE -> onRemove(event.itemFrame, event.itemStack)
+            REMOVE -> onRemove(event)
             ROTATE -> return
         }
     }
@@ -70,6 +63,10 @@ object ItemFrameListener : Listener {
         val player = event.player
         val itemFrame = event.itemFrame
         val itemStack = event.itemStack
+
+        if (event.action != PLACE || itemStack.type != IMAGE_ITEM_MATERIAL) {
+            return
+        }
 
         val imageItemData = itemStack.imageItemData() ?: return
         val imageDeferred = coroutineScope.async(Dispatchers.IO) {
@@ -182,7 +179,88 @@ object ItemFrameListener : Listener {
         displayRuntime.attach(image, imageData, displayInstance)
     }
 
-    private fun onRemove(itemFrame: ItemFrame, itemStack: ItemStack) {
+    private suspend fun onRemove(event: PlayerItemFrameChangeEvent) {
+        val itemFrame = event.itemFrame
+        val itemStack = event.itemStack
+
+        if (event.action != REMOVE || itemStack.type != Material.FILLED_MAP) {
+            return
+        }
+
+        val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
+        displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
+
+        val originFrame = event.itemFrame.world.getEntity(imageItemFrameData.originItemFrame)
+        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+                imageStore.get(imageItemFrameData.imageId)
+            }
+        }
+
+        coroutineScope.launch(Dispatchers.IO) {
+            displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
+        }
+
+        event.setItemStack(ItemStack.empty())
+
+        if (originFrame !is ItemFrame) {
+            removeWithDisplayInstance(event)
+            return
+        }
+
+        var currentFrame: ItemFrame? = originFrame
+
+        while (currentFrame != null) {
+            currentFrame.unsetImageItemFrame()
+            currentFrame.setItem(ItemStack.empty())
+            currentFrame = currentFrame.imageItemFrameData()?.nextItemFrame
+                ?.let { event.itemFrame.world.getEntity(it) as? ItemFrame }
+        }
+
+        val image = imageDeferred.await()
+        val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
+
+        // TODO: 模拟真实物品展示框掉落
+        itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+    }
+
+    private suspend fun removeWithDisplayInstance(event: PlayerItemFrameChangeEvent) {
+        val itemFrame = event.itemFrame
+
+        val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
+        displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
+
+        val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
+            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+                displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
+            }
+        }
+        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+                imageStore.get(imageItemFrameData.imageId)
+            }
+        }
+
+        event.setItemStack(ItemStack.empty())
+
+        val displayInstance = displayInstanceDeferred.await()
+        if (displayInstance == null) {
+            imageDeferred.cancel()
+            return
+        }
+
+        displayInstance.itemFrameIds
+            .mapNotNull { itemFrame.world.getEntity(it) }
+            .filterIsInstance<ItemFrame>()
+            .forEach { itemFrame ->
+                itemFrame.unsetImageItemFrame()
+                itemFrame.setItem(ItemStack.empty())
+            }
+
+        val image = imageDeferred.await()
+        val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
+
+        itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
     }
 }
 
@@ -219,17 +297,6 @@ private fun BlockFace.itemFrameFacing(): ItemFrameFacing {
     }
 }
 
-/**
- * 把玩家 facing 归一化成纯四方向。
- *
- * 原因：
- * - Player#getFacing() 可能返回 16 方位里的值
- * - 但我们这里的局部坐标系只接受 NORTH/SOUTH/EAST/WEST
- *
- * 做法：
- * - 取 facing 在 XZ 平面的主轴方向
- * - 哪个轴绝对值更大，就归到哪个主方向
- */
 private fun normalizeHorizontalFacing(facing: BlockFace): BlockFace {
     val x = facing.modX
     val z = facing.modZ
@@ -243,9 +310,6 @@ private fun normalizeHorizontalFacing(facing: BlockFace): BlockFace {
     }
 }
 
-/**
- * 计算“某个四方向朝向的右边”。
- */
 private fun rightOf(facing: BlockFace): BlockFace = when (facing) {
     BlockFace.NORTH -> BlockFace.EAST
     BlockFace.EAST -> BlockFace.SOUTH
@@ -254,15 +318,6 @@ private fun rightOf(facing: BlockFace): BlockFace = when (facing) {
     else -> error("Expected 4-way horizontal facing, got $facing")
 }
 
-/**
- * 根据展示框朝向，定义这张图所在平面的局部坐标轴。
- *
- * 规则：
- * - 墙面：使用固定阅读方向
- * - 地板/天花板：相对于玩家
- *   - right = 玩家右边
- *   - down  = 玩家正前方（XZ 平面的 facing）
- */
 private fun wallAxisOf(
     frameFacing: BlockFace,
     playerHorizontalFacing: BlockFace,
@@ -302,14 +357,6 @@ private fun wallAxisOf(
     else -> error("Unexpected item frame facing: $frameFacing")
 }
 
-/**
- * 从 seed 开始，在当前展示平面里做 4 邻接 BFS，
- * 收集同朝向、连通的全部 ItemFrame。
- *
- * 注意：
- * 这里只关心“有没有 frame”，不关心它是否为空。
- * 空不空由 placement 检查负责。
- */
 private fun collectConnectedFrames(seed: ItemFrame, axis: WallAxis): Set<ItemFrame> {
     val queue = ArrayDeque<ItemFrame>()
     val visited = mutableSetOf<UUID>()
@@ -344,20 +391,11 @@ private fun collectConnectedFrames(seed: ItemFrame, axis: WallAxis): Set<ItemFra
     return result
 }
 
-/**
- * 找 current 在某个“平面方向”上的相邻展示框。
- */
 private fun findAdjacentFrame(current: ItemFrame, direction: BlockFace): ItemFrame? {
     val targetBlock = current.location.block.getRelative(direction)
     return findItemFrameAt(current, targetBlock)
 }
 
-/**
- * 在指定方块位置上找一个和 reference 同朝向的 ItemFrame。
- *
- * Bukkit 没有 block -> item frame 的直接索引，
- * 这里先从 block 所在 chunk 的实体里过滤。
- */
 private fun findItemFrameAt(reference: ItemFrame, block: Block): ItemFrame? {
     val world = reference.world
     val chunk = block.chunk
@@ -374,14 +412,6 @@ private fun findItemFrameAt(reference: ItemFrame, block: Block): ItemFrame? {
         }
 }
 
-/**
- * 把 target frame 投影成相对于 origin 的局部二维网格坐标。
- *
- * 约定：
- * - origin 自己就是 (0, 0)
- * - 沿 right 方向每走一格，u + 1
- * - 沿 down 方向每走一格，v + 1
- */
 private fun toGridPos(origin: ItemFrame, target: ItemFrame, axis: WallAxis): GridPos {
     val originBlock = origin.location.block
     val targetBlock = target.location.block
@@ -396,11 +426,6 @@ private fun toGridPos(origin: ItemFrame, target: ItemFrame, axis: WallAxis): Gri
     return GridPos(u, v)
 }
 
-/**
- * 在所有“包含点击框 (0,0)” 的 width * height placement 里找第一个合法的。
- *
- * 先试四个角，再试其它包含点击点的情况。
- */
 private fun findPlacement(
     framesByGridPos: Map<GridPos, ItemFrame>,
     width: Int,
@@ -433,13 +458,6 @@ private fun findPlacement(
     return null
 }
 
-/**
- * 检查一个 placement 是否合法。
- *
- * 合法条件：
- * - 矩形内每个格子都必须存在 ItemFrame
- * - 且每个 ItemFrame 都必须为空
- */
 private fun isValidPlacement(
     framesByGridPos: Map<GridPos, ItemFrame>,
     placement: Placement,

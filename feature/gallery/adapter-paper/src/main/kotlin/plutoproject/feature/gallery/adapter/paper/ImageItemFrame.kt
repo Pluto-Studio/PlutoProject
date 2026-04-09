@@ -59,7 +59,6 @@ class ImageItemFrameData(
         if (nextItemFrame != null) {
             buffer.putLong(nextItemFrame.mostSignificantBits)
             buffer.putLong(nextItemFrame.leastSignificantBits)
-
         }
 
         return buffer.array()
@@ -86,4 +85,8 @@ fun ItemFrame.setImageItemFrame(displayInstance: DisplayInstance, nextItemFrame:
         PersistentDataType.BYTE_ARRAY,
         data.toByteArray()
     )
+}
+
+fun ItemFrame.unsetImageItemFrame() {
+    persistentDataContainer.remove(IMAGE_ITEM_FRAME_DATA_KEY)
 }
