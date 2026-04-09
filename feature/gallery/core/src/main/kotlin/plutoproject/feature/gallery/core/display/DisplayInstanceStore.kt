@@ -18,6 +18,10 @@ class DisplayInstanceStore(
         return instanceRepo.findById(id)
     }
 
+    suspend fun getMany(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
+        return instanceRepo.findByIds(ids)
+    }
+
     suspend fun findByImageId(imageId: UUID): List<DisplayInstance> {
         return instanceRepo.findByImageId(imageId)
     }

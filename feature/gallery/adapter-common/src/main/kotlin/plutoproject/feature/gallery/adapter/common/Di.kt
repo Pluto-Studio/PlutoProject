@@ -78,8 +78,8 @@ val commonModule = module {
     singleOf(::DisplayInstanceStore)
     singleOf(::DisplayScheduler) { createdAtStart() }
     singleOf(::DisplayResourceFactory)
-    singleOf(::SendJobRegistry)
-    singleOf(::DisplayRuntimeRegistry)
+    singleOf(::SendJobRegistry) { createdAtStart() }
+    singleOf(::DisplayRuntimeRegistry) { createdAtStart() }
     single(createdAtStart = true) {
         UploadService(
             clock = get(),

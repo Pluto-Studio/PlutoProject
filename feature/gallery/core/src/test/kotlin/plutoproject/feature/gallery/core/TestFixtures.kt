@@ -167,6 +167,10 @@ internal open class InMemoryDisplayInstanceRepository(
         return storage[id]
     }
 
+    override suspend fun findByIds(ids: Collection<UUID>): Map<UUID, DisplayInstance> {
+        return ids.distinct().mapNotNull { id -> storage[id]?.let { id to it } }.toMap()
+    }
+
     override suspend fun findByImageId(imageId: UUID): List<DisplayInstance> {
         return storage.values.filter { it.imageId == imageId }
     }

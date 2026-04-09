@@ -215,6 +215,16 @@ class MongoGalleryRepositoriesTest {
         assertEquals(34, loaded.chunkZ)
         assertEquals(2, loaded.itemFrameIds.size)
 
+        val byIds = repo.findByIds(
+            listOf(
+                first.id,
+                second.id,
+                first.id,
+                UUID.fromString("00000000-0000-0000-0000-000000000499"),
+            )
+        )
+        assertEquals(setOf(first.id, second.id), byIds.keys)
+
         val byImageId = repo.findByImageId(imageId)
         assertEquals(2, byImageId.size)
 

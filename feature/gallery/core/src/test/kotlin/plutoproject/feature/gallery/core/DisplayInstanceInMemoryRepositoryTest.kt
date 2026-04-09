@@ -20,6 +20,10 @@ class DisplayInstanceInMemoryRepositoryTest {
         repo.save(third)
 
         assertNotNull(repo.findById(first.id))
+        assertEquals(
+            mapOf(first.id to first, second.id to second),
+            repo.findByIds(listOf(first.id, second.id, first.id, dummyUuid(5999)))
+        )
         assertEquals(2, repo.findByImageId(imageId).size)
         assertEquals(2, repo.findByChunk(1, 2).size)
 
