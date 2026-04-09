@@ -14,10 +14,11 @@ private const val DATA_VERSION = 1
 class ImageItemFrameData(
     val imageId: UUID, // 16 bytes
     val displayInstanceId: UUID, // 16 bytes
-    val tileId: Int, // 4 bytes
+    val originItemFrame: UUID, // 16 bytes
+    val nextItemFrame: UUID?, // 16 bytes
 ) {
     companion object {
-        private const val SIZE = 4 + 16 + 16 + 4
+        private const val SIZE = 4 + 16 + 16 + 16 + 16
 
         fun fromBytes(bytes: ByteArray): ImageItemFrameData {
             require(bytes.size == SIZE) {
@@ -29,21 +30,19 @@ class ImageItemFrameData(
             val version = buffer.int
             val imageId = UUID(buffer.long, buffer.long)
             val displayInstanceId = UUID(buffer.long, buffer.long)
-            val tileId = buffer.int
+            val originItemFrame = UUID(buffer.long, buffer.long)
+            val nextItemFrame = if (buffer.remaining() >= 16) {
+                UUID(buffer.long, buffer.long)
+            } else {
+                null
+            }
 
             require(version == DATA_VERSION) {
                 "Image item frame version mismatch: expected $DATA_VERSION, got $version"
             }
-            require(tileId >= 0) {
-                "Corrupted image item frame data: tileId must be >= 0, got $tileId"
-            }
 
-            return ImageItemFrameData(imageId, displayInstanceId, tileId)
+            return ImageItemFrameData(imageId, displayInstanceId, originItemFrame, nextItemFrame)
         }
-    }
-
-    init {
-        require(tileId >= 0) { "tileId must be >= 0, got $tileId" }
     }
 
     fun toByteArray(): ByteArray {
@@ -54,7 +53,14 @@ class ImageItemFrameData(
         buffer.putLong(imageId.leastSignificantBits)
         buffer.putLong(displayInstanceId.mostSignificantBits)
         buffer.putLong(displayInstanceId.leastSignificantBits)
-        buffer.putInt(tileId)
+        buffer.putLong(originItemFrame.mostSignificantBits)
+        buffer.putLong(originItemFrame.leastSignificantBits)
+
+        if (nextItemFrame != null) {
+            buffer.putLong(nextItemFrame.mostSignificantBits)
+            buffer.putLong(nextItemFrame.leastSignificantBits)
+
+        }
 
         return buffer.array()
     }
@@ -68,11 +74,12 @@ fun ItemFrame.imageItemFrameData(): ImageItemFrameData? {
     return ImageItemFrameData.fromBytes(bytes)
 }
 
-fun ItemFrame.setImageItemFrame(displayInstance: DisplayInstance, tileId: Int) {
+fun ItemFrame.setImageItemFrame(displayInstance: DisplayInstance, nextItemFrame: UUID?) {
     val data = ImageItemFrameData(
         imageId = displayInstance.imageId,
         displayInstanceId = displayInstance.id,
-        tileId = tileId
+        originItemFrame = displayInstance.itemFrameIds.first(),
+        nextItemFrame = nextItemFrame
     )
     persistentDataContainer.set(
         IMAGE_ITEM_FRAME_DATA_KEY,
