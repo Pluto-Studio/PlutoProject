@@ -198,7 +198,7 @@ object ItemFrameListener : Listener {
         }
 
         val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
-        displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
+        val displayInstance = displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
 
         val originFrame = event.itemFrame.world.getEntity(imageItemFrameData.originItemFrame)
         val imageDeferred = coroutineScope.async(Dispatchers.IO) {
@@ -210,7 +210,7 @@ object ItemFrameListener : Listener {
         event.setItemStack(ItemStack.empty())
 
         if (originFrame !is ItemFrame) {
-            removeWithDisplayInstance(event, imageDeferred)
+            removeWithDisplayInstance(event, imageDeferred, displayInstance)
             return
         }
 
@@ -240,17 +240,21 @@ object ItemFrameListener : Listener {
         itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
     }
 
-    private suspend fun removeWithDisplayInstance(event: PlayerItemFrameChangeEvent, imageDeferred: Deferred<Image?>) {
+    private suspend fun removeWithDisplayInstance(
+        event: PlayerItemFrameChangeEvent,
+        imageDeferred: Deferred<Image?>,
+        displayInstance: DisplayInstance?
+    ) {
         val itemFrame = event.itemFrame
 
         val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
         val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
-            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+            displayInstance ?: withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
             }
         }
 
-        val displayInstance = displayInstanceDeferred.await()
+        val displayInstance = displayInstance ?: displayInstanceDeferred.await()
         if (displayInstance == null) {
             imageDeferred.cancel()
             return
