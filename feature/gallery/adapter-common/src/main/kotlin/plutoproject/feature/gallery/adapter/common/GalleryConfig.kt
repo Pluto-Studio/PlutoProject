@@ -48,7 +48,7 @@ data class UploadSettings(
     val maxAspectRatio: Double = 8.0,
     val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
     val supportedFormatNames: List<String> = listOf("PNG", "JPEG", "WebP", "GIF"),
-    val tempFolder: String = $$"/temp/plutoproject_gallery_$id",
+    val tempFolderRoot: String = "/tmp/",
     val baseUrl: String = "https://gallery.plutoproject.club/",
     val port: Int = 24213,
 )

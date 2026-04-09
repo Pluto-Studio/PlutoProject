@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.Koin
+import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
@@ -75,10 +76,18 @@ val commonModule = module {
     singleOf(::ImageStore)
     singleOf(::ImageDataStore)
     singleOf(::DisplayInstanceStore)
-    singleOf(::DisplayScheduler)
+    singleOf(::DisplayScheduler) { createdAtStart() }
     singleOf(::DisplayResourceFactory)
     singleOf(::SendJobRegistry)
     singleOf(::DisplayRuntimeRegistry)
+    single(createdAtStart = true) {
+        UploadService(
+            clock = get(),
+            tempFolder = initializeTempFolder().getOrThrow(),
+            coroutineScope = get(),
+            loopContext = get(),
+        )
+    }
 
     single {
         val config = get<GalleryConfig>()

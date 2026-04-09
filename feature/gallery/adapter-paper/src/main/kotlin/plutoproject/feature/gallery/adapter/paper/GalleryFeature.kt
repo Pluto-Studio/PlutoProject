@@ -1,13 +1,14 @@
 package plutoproject.feature.gallery.adapter.paper
 
 import kotlinx.coroutines.CoroutineScope
-import org.koin.core.Koin
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.commonModule
 import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.adapter.common.startWebServer
+import plutoproject.feature.gallery.adapter.common.stopWebServer
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.framework.common.api.feature.Platform
@@ -37,8 +38,11 @@ class GalleryFeature : PaperFeature() {
         featureKoin {
             modules(commonModule, module)
         }
+
+        startWebServer()
     }
 
     override fun onDisable() {
+        stopWebServer()
     }
 }
