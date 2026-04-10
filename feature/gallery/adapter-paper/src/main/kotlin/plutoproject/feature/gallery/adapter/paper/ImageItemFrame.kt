@@ -18,12 +18,12 @@ class ImageItemFrameData(
     val nextItemFrame: UUID?, // 16 bytes
 ) {
     companion object {
-        private const val SIZE = 4 + 16 + 16 + 16 + 16
+        private const val SIZE_WITHOUT_NEXT = 4 + 16 + 16 + 16
+        private const val SIZE_WITH_NEXT = SIZE_WITHOUT_NEXT + 16
 
         fun fromBytes(bytes: ByteArray): ImageItemFrameData {
-            // TODO: 确认 nextItemFrame = null 时尾部写 0 不会有问题
-            require(bytes.size == SIZE) {
-                "Corrupted image item frame data: expected size to be $SIZE, got ${bytes.size}"
+            require(bytes.size == SIZE_WITHOUT_NEXT || bytes.size == SIZE_WITH_NEXT) {
+                "Corrupted image item frame data: expected size to be $SIZE_WITHOUT_NEXT or $SIZE_WITH_NEXT, got ${bytes.size}"
             }
 
             val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
@@ -47,7 +47,8 @@ class ImageItemFrameData(
     }
 
     fun toByteArray(): ByteArray {
-        val buffer = ByteBuffer.allocate(SIZE).order(ByteOrder.BIG_ENDIAN)
+        val size = if (nextItemFrame != null) SIZE_WITH_NEXT else SIZE_WITHOUT_NEXT
+        val buffer = ByteBuffer.allocate(size).order(ByteOrder.BIG_ENDIAN)
 
         buffer.putInt(DATA_VERSION)
         buffer.putLong(imageId.mostSignificantBits)
