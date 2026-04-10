@@ -118,6 +118,10 @@ private fun Component.resolveImagePlaceholders(image: Image): Component {
         .replace("<height>", image.heightBlocks)
 }
 
+fun ItemStack.isImageItem(): Boolean {
+    return persistentDataContainer.has(IMAGE_ITEM_DATA_KEY)
+}
+
 fun ItemStack.imageItemData(): ImageItemData? {
     val bytes = persistentDataContainer.get(
         IMAGE_ITEM_DATA_KEY,

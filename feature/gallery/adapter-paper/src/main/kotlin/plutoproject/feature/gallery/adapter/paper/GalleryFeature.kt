@@ -7,6 +7,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.feature.gallery.adapter.common.*
 import plutoproject.feature.gallery.adapter.paper.listener.ChunkListener
+import plutoproject.feature.gallery.adapter.paper.listener.CraftListener
 import plutoproject.feature.gallery.adapter.paper.listener.ItemFrameListener
 import plutoproject.feature.gallery.adapter.paper.listener.PlayerListener
 import plutoproject.feature.gallery.core.display.MapUpdatePort
@@ -48,6 +49,7 @@ class GalleryFeature : PaperFeature() {
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
         server.pluginManager.registerSuspendingEvents(ChunkListener, plugin)
         server.pluginManager.registerSuspendingEvents(ItemFrameListener, plugin)
+        server.pluginManager.registerSuspendingEvents(CraftListener, plugin)
     }
 
     override fun onDisable() {
