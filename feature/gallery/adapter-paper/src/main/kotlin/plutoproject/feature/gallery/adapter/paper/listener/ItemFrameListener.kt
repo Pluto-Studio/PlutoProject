@@ -16,6 +16,10 @@ import org.bukkit.Material
 import org.bukkit.Rotation
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
+import org.bukkit.craftbukkit.CraftWorld
+import org.bukkit.craftbukkit.entity.CraftItemFrame
+import org.bukkit.craftbukkit.entity.CraftPlayer
+import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemFrame
 import org.bukkit.event.EventHandler
@@ -38,6 +42,7 @@ import plutoproject.framework.common.util.chat.component.replace
 import java.util.*
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.seconds
+import net.minecraft.world.item.ItemStack as NmsItemStack
 
 private const val IMAGE_LOOKUP_TIMEOUT_SECONDS = 5
 private const val DISPLAY_INSTANCE_SAVE_TIMEOUT_SECONDS = 10
@@ -235,7 +240,7 @@ object ItemFrameListener : Listener {
 
         if (originFrame !is ItemFrame) {
             val imageItem = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
-            itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+            itemFrame.dropItem(imageItem, event.player)
             return
         }
 
@@ -252,8 +257,7 @@ object ItemFrameListener : Listener {
         val image = imageDeferred.await()
         val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
 
-        // TODO: 模拟真实物品展示框掉落
-        itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+        itemFrame.dropItem(imageItem, event.player)
     }
 
     private suspend fun removeWithDisplayInstance(
@@ -307,10 +311,9 @@ object ItemFrameListener : Listener {
             itemFrame.remove()
             playBreakSound(itemFrame)
 
-            // TODO: 模拟真实物品展示框掉落
             if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
-                itemFrame.world.dropItemNaturally(itemFrame.location, itemFrameItem)
-                itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+                itemFrame.dropItem(itemFrameItem, null)
+                itemFrame.dropItem(imageItem, null)
             }
             return
         }
@@ -332,10 +335,9 @@ object ItemFrameListener : Listener {
         itemFrame.remove()
         playBreakSound(itemFrame)
 
-        // TODO: 模拟真实物品展示框掉落
         if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
-            itemFrame.world.dropItemNaturally(itemFrame.location, itemFrameItem)
-            itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+            itemFrame.dropItem(itemFrameItem, null)
+            itemFrame.dropItem(imageItem, null)
         }
     }
 
@@ -652,4 +654,16 @@ private fun isValidPlacement(
     }
 
     return true
+}
+
+private fun ItemFrame.dropItem(item: ItemStack, breaker: Entity?) {
+    val nmsPlayer = (breaker as? CraftPlayer)?.handle
+
+    if (nmsPlayer != null && nmsPlayer.hasInfiniteMaterials()) {
+        return
+    }
+
+    val nmsItemFrame = (this as CraftItemFrame).handle
+    val nmsWorld = (world as CraftWorld).handle
+    nmsItemFrame.spawnAtLocation(nmsWorld, NmsItemStack.fromBukkitCopy(item))
 }
