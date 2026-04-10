@@ -148,7 +148,7 @@ object GalleyDebugCommand {
             ditherMode = ditherMode,
         ) ?: return
 
-        val session = uploadService.createUploadSession(player.uniqueId)
+        val session = uploadService.createSession(player.uniqueId)
         player.sendMessage(
             "Create-upload session created. sessionId=${session.id}, uploadUrl=${quote(session.uploadUrl)}, name=${quote(request.name)}, " +
                 "size=${request.width}x${request.height}, mapCount=${request.mapCount}, modes={reposition=${request.repositionMode}, scale=${request.scaleMode}, quantize=${request.quantizeMode}, dither=${request.ditherMode}}"
@@ -486,6 +486,22 @@ object GalleyDebugCommand {
                             )
                         }
                     }
+                    true
+                }
+
+                UploadState.Cancelled -> {
+                    sendPlayerMessage(
+                        playerId,
+                        "Create-upload session update: state=Cancelled, sessionId=${session.id}. The upload session was cancelled before image creation completed."
+                    )
+                    true
+                }
+
+                is UploadState.UnknownFailure -> {
+                    sendPlayerMessage(
+                        playerId,
+                        "Create-upload session update: state=UnknownFailure, sessionId=${session.id}, cause=${state.cause}"
+                    )
                     true
                 }
             }

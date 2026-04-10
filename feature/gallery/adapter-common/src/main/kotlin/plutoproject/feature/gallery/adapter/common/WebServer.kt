@@ -125,7 +125,7 @@ private suspend fun handleUploadFile(call: ApplicationCall) {
             call.respondJson(HttpStatusCode.Gone, ErrorResponse("上传会话已过期"))
         }
 
-        is UploadSubmissionResult.Failed -> {
+        is UploadSubmissionResult.UnknownFailure -> {
             logger.log(Level.SEVERE, "An error occurred while handling upload request", result.cause)
             call.respondJson(HttpStatusCode.InternalServerError, ErrorResponse("服务器暂时无法处理该请求"))
         }

@@ -1,15 +1,8 @@
 package plutoproject.feature.gallery.adapter.common
 
 import io.ktor.http.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import plutoproject.feature.gallery.core.decode.DecodableImageFormat
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
 import java.io.BufferedInputStream
@@ -18,19 +11,14 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
-import java.time.Duration as JavaDuration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.*
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 private val config by lazy { koin.get<GalleryConfig>() }
 private val logger by lazy { koin.get<Logger>() }
@@ -79,6 +67,8 @@ sealed interface UploadState {
     data object Waiting : UploadState
     data object Expired : UploadState
     data object Processing : UploadState
+    data object Cancelled : UploadState
+    data class UnknownFailure(val cause: Throwable?) : UploadState
     data class VerificationFailure(val result: VerificationResult) : UploadState
 }
 
@@ -87,13 +77,7 @@ sealed interface UploadSubmissionResult {
     data object NotFound : UploadSubmissionResult
     data object Expired : UploadSubmissionResult
     data object Conflict : UploadSubmissionResult
-    data class Failed(val cause: Throwable) : UploadSubmissionResult
-}
-
-private enum class UploadExpirationLoopState {
-    RUNNING,
-    IDLING,
-    CLOSED,
+    data class UnknownFailure(val cause: Throwable) : UploadSubmissionResult
 }
 
 class UploadSession(
@@ -102,6 +86,7 @@ class UploadSession(
     val createdAt: Instant,
     val state: MutableStateFlow<UploadState>,
     val uploadUrl: String,
+    val expiryJob: Job
 )
 
 /**
@@ -157,15 +142,16 @@ class UploadService(
     private val clock: Clock,
     private val tempFolder: Path,
     private val coroutineScope: CoroutineScope,
-    private val loopContext: CoroutineContext,
 ) {
     init {
         check(tempFolder.exists()) { "Temp folder must be existed" }
         check(tempFolder.isReadable() && tempFolder.isWritable()) { "Temp folder must be readable and writable" }
     }
 
-    private val lock = Any()
+    @Volatile
+    private var isClosed = false
     private val uploadSessionsById = ConcurrentHashMap<UUID, UploadSession>()
+
     private val uploadConfig by lazy { koin.get<GalleryConfig>().upload }
     private val allowedExtensions = uploadConfig.allowedFileExtensions.map { it.lowercase() }.toSet()
     private val supportedMimeTypes = listOf(
@@ -174,31 +160,36 @@ class UploadService(
         ContentType("image", "webp"),
         ContentType.Image.GIF
     )
-    private var expirationLoopState = UploadExpirationLoopState.IDLING
-    private var expirationLoopJob: Job? = null
 
-    fun createUploadSession(creator: UUID): UploadSession {
-        return synchronized(lock) {
-            check(expirationLoopState != UploadExpirationLoopState.CLOSED) { "UploadService is closed" }
-
-            val id = UUID.randomUUID()
-            UploadSession(
-                id = id,
-                creator = creator,
-                createdAt = clock.instant(),
-                state = MutableStateFlow(UploadState.Waiting),
-                uploadUrl = "${uploadConfig.baseUrl.trimEnd('/')}/upload/$id"
-            ).also { session ->
-                uploadSessionsById[id] = session
-                ensureExpirationLoopRunningLocked()
-            }
+    fun createSession(creator: UUID): UploadSession {
+        check(!isClosed) { "UploadService is closed" }
+        val id = UUID.randomUUID()
+        return UploadSession(
+            id = id,
+            creator = creator,
+            createdAt = clock.instant(),
+            state = MutableStateFlow(UploadState.Waiting),
+            uploadUrl = "${uploadConfig.baseUrl.trimEnd('/')}/upload/$id",
+            expiryJob = createExpiryJob(id)
+        ).also {
+            uploadSessionsById[id] = it
         }
     }
 
-    fun findUploadSession(id: UUID): UploadSession? {
-        return synchronized(lock) {
-            uploadSessionsById[id]
+    private fun createExpiryJob(sessionId: UUID): Job {
+        return coroutineScope.launch {
+            delay(uploadConfig.requestExpireAfter)
+            tryExpire(sessionId)
         }
+    }
+
+    private fun tryExpire(sessionId: UUID) {
+        val uploadSession = uploadSessionsById[sessionId] ?: return
+        uploadSession.state.compareAndSet(UploadState.Waiting, UploadState.Expired)
+    }
+
+    fun findUploadSession(id: UUID): UploadSession? {
+        return uploadSessionsById[id]
     }
 
     suspend fun submitUpload(
@@ -207,12 +198,13 @@ class UploadService(
         contentType: ContentType?,
         bytes: ByteArray,
     ): UploadSubmissionResult {
-        synchronized(lock) {
-            val session = uploadSessionsById[id] ?: return UploadSubmissionResult.NotFound
-            when (session.state.value) {
-                UploadState.Waiting -> session.state.value = UploadState.Processing
-                UploadState.Expired -> return UploadSubmissionResult.Expired
-                else -> return UploadSubmissionResult.Conflict
+        check(!isClosed) { "UploadService is closed" }
+
+        val session = uploadSessionsById[id] ?: return UploadSubmissionResult.NotFound
+        if (!session.state.compareAndSet(UploadState.Waiting, UploadState.Processing)) {
+            return when (session.state.value) {
+                UploadState.Expired -> UploadSubmissionResult.Expired
+                else -> UploadSubmissionResult.Conflict
             }
         }
 
@@ -229,139 +221,34 @@ class UploadService(
             UploadSubmissionResult.Accepted
         }.getOrElse { exception ->
             logger.log(Level.SEVERE, "An error occurred while storing uploaded file", exception)
-            updateUploadSession(id, UploadState.Waiting)
-            UploadSubmissionResult.Failed(exception)
+            updateUploadSession(id, UploadState.UnknownFailure(exception))
+            UploadSubmissionResult.UnknownFailure(exception)
         }
+    }
+
+    private fun updateUploadSession(sessionId: UUID, newState: UploadState) {
+        val session = uploadSessionsById[sessionId] ?: return
+        session.state.value = newState
     }
 
     @OptIn(ExperimentalPathApi::class)
     fun close() {
-        val sessions = synchronized(lock) {
-            if (expirationLoopState == UploadExpirationLoopState.CLOSED) {
-                return
-            }
-
-            val currentSessions = uploadSessionsById.values.toList()
-            uploadSessionsById.clear()
-            expirationLoopState = UploadExpirationLoopState.CLOSED
-            expirationLoopJob = expirationLoopJob?.also {
-                it.cancel(InternalLoopCancellation("UploadService closed explicitly"))
-            }
-            currentSessions
+        if (isClosed) {
+            return
         }
 
-        sessions.forEach { session ->
-            val uploadedFile = (session.state.value as? UploadState.Success)?.uploadedFile ?: return@forEach
+        isClosed = true
+        uploadSessionsById.forEach { (_, session) ->
+            session.expiryJob.cancel()
+            if (session.state.value !is UploadState.Success) {
+                session.state.value = UploadState.Cancelled
+                return@forEach
+            }
+            val uploadedFile = (session.state.value as UploadState.Success).uploadedFile
             uploadedFile.discard()
         }
-
+        uploadSessionsById.clear()
         tempFolder.deleteRecursively()
-    }
-
-    private fun updateUploadSession(id: UUID, newState: UploadState) {
-        synchronized(lock) {
-            val session = uploadSessionsById[id] ?: return
-            session.state.value = newState
-            if (newState == UploadState.Waiting) {
-                ensureExpirationLoopRunningLocked()
-            }
-        }
-    }
-
-    private fun ensureExpirationLoopRunningLocked() {
-        if (expirationLoopState == UploadExpirationLoopState.CLOSED || !hasWaitingSessionsLocked()) {
-            return
-        }
-
-        if (expirationLoopJob?.isActive == true) {
-            expirationLoopState = UploadExpirationLoopState.RUNNING
-            return
-        }
-
-        expirationLoopJob = coroutineScope.launch(loopContext) {
-            runExpirationLoop()
-        }.also { job ->
-            job.invokeOnCompletion { cause ->
-                handleExpirationLoopCompletion(job, cause)
-            }
-        }
-        expirationLoopState = UploadExpirationLoopState.RUNNING
-    }
-
-    private suspend fun runExpirationLoop() {
-        currentCoroutineContext()[Job]
-            ?: error("UploadService expiration loop is missing its Job")
-
-        while (true) {
-            val nextDelay = expireWaitingSessionsAndScheduleNext() ?: return
-            if (nextDelay > Duration.ZERO) {
-                delay(nextDelay)
-            }
-        }
-    }
-
-    private fun expireWaitingSessionsAndScheduleNext(): Duration? = synchronized(lock) {
-        if (expirationLoopState == UploadExpirationLoopState.CLOSED) {
-            return@synchronized null
-        }
-
-        val now = clock.instant()
-        var nextExpiresAt: Instant? = null
-
-        uploadSessionsById.values.forEach { session ->
-            val expiresAt = session.expiresAt()
-            when (session.state.value) {
-                UploadState.Waiting -> {
-                    if (!expiresAt.isAfter(now)) {
-                        session.state.value = UploadState.Expired
-                        return@forEach
-                    }
-
-                    if (nextExpiresAt == null || expiresAt.isBefore(nextExpiresAt)) {
-                        nextExpiresAt = expiresAt
-                    }
-                }
-
-                else -> Unit
-            }
-        }
-
-        if (nextExpiresAt == null) {
-            expirationLoopJob = null
-            expirationLoopState = UploadExpirationLoopState.IDLING
-            return@synchronized null
-        }
-
-        JavaDuration.between(now, nextExpiresAt).toNanos()
-            .coerceAtLeast(0)
-            .toDuration(DurationUnit.NANOSECONDS)
-    }
-
-    private fun handleExpirationLoopCompletion(job: Job, cause: Throwable?) {
-        synchronized(lock) {
-            if (expirationLoopJob === job) {
-                expirationLoopJob = null
-            }
-
-            if (expirationLoopState == UploadExpirationLoopState.CLOSED) {
-                return
-            }
-
-            if (cause == null || cause is InternalLoopCancellation) {
-                if (!hasWaitingSessionsLocked()) {
-                    expirationLoopState = UploadExpirationLoopState.IDLING
-                }
-                return
-            }
-
-            logger.log(Level.SEVERE, "An error occurred while running upload expiration loop", cause)
-            expirationLoopState = UploadExpirationLoopState.IDLING
-            ensureExpirationLoopRunningLocked()
-        }
-    }
-
-    private fun hasWaitingSessionsLocked(): Boolean {
-        return uploadSessionsById.values.any { it.state.value == UploadState.Waiting }
     }
 
     private suspend fun verifyFile(
@@ -409,39 +296,6 @@ class UploadService(
         return VerificationResult.Pass
     }
 
-    private suspend fun readImageDimensions(
-        bytes: ByteArray,
-        format: DecodableImageFormat,
-    ): ImageDimensions? = withContext(Dispatchers.IO) {
-        val imageInput = format.inputStreamSpi?.createInputStreamInstance(bytes, false, null)
-            ?: ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
-            ?: return@withContext null
-
-        imageInput.use { input ->
-            val reader = format.readerSpi?.createReaderInstance()
-                ?: ImageIO.getImageReaders(input).asSequence().firstOrNull()?.also {
-                    input.seek(0)
-                }
-                ?: return@withContext null
-
-            try {
-                reader.input = input
-                val width = reader.getWidth(0)
-                val height = reader.getHeight(0)
-                if (width <= 0 || height <= 0) {
-                    return@withContext null
-                }
-
-                return@withContext ImageDimensions(width, height)
-            } catch (exception: Exception) {
-                logger.log(Level.FINE, "An error occurred while reading image dimensions", exception)
-                return@withContext null
-            } finally {
-                reader.dispose()
-            }
-        }
-    }
-
     private fun createTempFileFor(id: UUID, fileName: String?): Path {
         val extension = fileName.extensionOrEmpty().ifBlank { "upload" }
         val tempFile = tempFolder.resolve("${id}_${UUID.randomUUID()}.$extension")
@@ -449,12 +303,6 @@ class UploadService(
         tempFile.createFile()
         return tempFile
     }
-
-    private fun UploadSession.expiresAt(): Instant {
-        return createdAt.plusMillis(uploadConfig.requestExpireAfter.inWholeMilliseconds)
-    }
-
-    private class InternalLoopCancellation(message: String) : CancellationException(message)
 }
 
 private data class ImageDimensions(
@@ -467,4 +315,35 @@ private fun String?.extensionOrEmpty(): String {
         ?.substringAfterLast('.', missingDelimiterValue = "")
         ?.lowercase()
         .orEmpty()
+}
+
+private suspend fun readImageDimensions(
+    bytes: ByteArray,
+    format: DecodableImageFormat,
+): ImageDimensions? = withContext(Dispatchers.IO) {
+    val imageInput = format.inputStreamSpi?.createInputStreamInstance(bytes, false, null)
+        ?: ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+        ?: return@withContext null
+
+    imageInput.use { input ->
+        val reader = format.readerSpi?.createReaderInstance()
+            ?: ImageIO.getImageReaders(input).asSequence().firstOrNull()?.also { input.seek(0) }
+            ?: return@withContext null
+
+        try {
+            reader.input = input
+            val width = reader.getWidth(0)
+            val height = reader.getHeight(0)
+            if (width <= 0 || height <= 0) {
+                return@withContext null
+            }
+
+            return@withContext ImageDimensions(width, height)
+        } catch (exception: Exception) {
+            logger.log(Level.FINE, "An error occurred while reading image dimensions", exception)
+            return@withContext null
+        } finally {
+            reader.dispose()
+        }
+    }
 }

@@ -85,7 +85,6 @@ val commonModule = module {
             clock = get(),
             tempFolder = initializeTempFolder().getOrThrow(),
             coroutineScope = get(),
-            loopContext = get(),
         )
     }
 
