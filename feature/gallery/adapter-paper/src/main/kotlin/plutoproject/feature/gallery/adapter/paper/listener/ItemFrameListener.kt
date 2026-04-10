@@ -514,7 +514,6 @@ internal fun wallAxisOf(
         down = BlockFace.DOWN,
     )
 
-    // TODO: 修复水平放置
     // 地板：展示框朝上
     BlockFace.UP -> WallAxis(
         right = rightOf(playerHorizontalFacing),
