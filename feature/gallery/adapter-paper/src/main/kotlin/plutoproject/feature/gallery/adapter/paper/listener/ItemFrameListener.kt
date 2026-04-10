@@ -605,10 +605,10 @@ private fun findPlacement(
     height: Int,
 ): Placement? {
     val preferredPlacements = listOf(
-        Placement(left = -(width - 1), top = -(height - 1)),
-        Placement(left = 0, top = -(height - 1)),
         Placement(left = 0, top = 0),
         Placement(left = -(width - 1), top = 0),
+        Placement(left = 0, top = -(height - 1)),
+        Placement(left = -(width - 1), top = -(height - 1)),
     ).distinct()
 
     for (placement in preferredPlacements) {
