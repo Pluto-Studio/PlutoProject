@@ -1,6 +1,7 @@
 package plutoproject.feature.gallery.adapter.paper.listener
 
 import ink.pmc.advkt.component.text
+import ink.pmc.advkt.playSound
 import ink.pmc.advkt.showTitle
 import ink.pmc.advkt.sound.*
 import ink.pmc.advkt.title.*
@@ -15,9 +16,12 @@ import org.bukkit.Material
 import org.bukkit.Rotation
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemFrame
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.hanging.HangingBreakEvent
 import org.bukkit.inventory.ItemStack
 import plutoproject.feature.gallery.adapter.common.DisplayInstanceIndex
 import plutoproject.feature.gallery.adapter.common.koin
@@ -230,13 +234,12 @@ object ItemFrameListener : Listener {
         event.setItemStack(ItemStack.empty())
 
         if (originFrame !is ItemFrame) {
-            removeWithDisplayInstance(event, imageDeferred, displayInstance)
+            val imageItem = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
+            itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
             return
         }
 
-        coroutineScope.launch(Dispatchers.IO) {
-            displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
-        }
+        deleteDisplayInstance(imageItemFrameData.displayInstanceId)
 
         displayIndex.remove(
             itemFrame.world.name,
@@ -244,15 +247,7 @@ object ItemFrameListener : Listener {
             imageItemFrameData.displayInstanceId
         )
 
-        var currentFrame: ItemFrame? = originFrame
-
-        while (currentFrame != null) {
-            val frameData = currentFrame.imageItemFrameData()
-            currentFrame.unsetImageItemFrame()
-            currentFrame.rotation = Rotation.NONE
-            currentFrame.setItem(ItemStack.empty())
-            currentFrame = frameData?.nextItemFrame?.let { event.itemFrame.world.getEntity(it) as? ItemFrame }
-        }
+        clearDisplayFrames(originFrame, itemFrame.world)
 
         val image = imageDeferred.await()
         val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
@@ -262,23 +257,15 @@ object ItemFrameListener : Listener {
     }
 
     private suspend fun removeWithDisplayInstance(
-        event: PlayerItemFrameChangeEvent,
+        itemFrame: ItemFrame,
         imageDeferred: Deferred<Image?>,
         displayInstance: DisplayInstance?
-    ) {
-        val itemFrame = event.itemFrame
-
-        val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
-        val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
-            displayInstance ?: withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
-                displayInstanceStore.delete(imageItemFrameData.displayInstanceId)
-            }
-        }
-
-        val displayInstance = displayInstance ?: displayInstanceDeferred.await()
+    ): ItemStack? {
+        val imageItemFrameData = itemFrame.imageItemFrameData() ?: return null
+        val displayInstance = resolveDisplayInstanceForRemoval(imageItemFrameData.displayInstanceId, displayInstance)
         if (displayInstance == null) {
             imageDeferred.cancel()
-            return
+            return null
         }
 
         displayIndex.remove(
@@ -287,19 +274,131 @@ object ItemFrameListener : Listener {
             displayInstance.id
         )
 
-        displayInstance.itemFrameIds
-            .mapNotNull { itemFrame.world.getEntity(it) }
-            .filterIsInstance<ItemFrame>()
-            .forEach { itemFrame ->
-                itemFrame.unsetImageItemFrame()
-                itemFrame.rotation = Rotation.NONE
-                itemFrame.setItem(ItemStack.empty())
+        clearDisplayFrames(displayInstance, itemFrame.world)
+
+        val image = imageDeferred.await()
+        return image?.let { createImageItem(it) } ?: ItemStack.empty()
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    suspend fun onItemFrameBreak(event: HangingBreakEvent) {
+        if (event.cause == HangingBreakEvent.RemoveCause.ENTITY) {
+            return
+        }
+
+        val itemFrame = event.entity as? ItemFrame ?: return
+
+        val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
+        val displayInstance = displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
+
+        val originFrame = itemFrame.world.getEntity(imageItemFrameData.originItemFrame)
+        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+                imageStore.get(imageItemFrameData.imageId)
             }
+        }
+
+        event.isCancelled = true
+
+        if (originFrame !is ItemFrame) {
+            val imageItem = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
+            val itemFrameItem = createItemFrameItem(itemFrame)
+
+            itemFrame.remove()
+            playBreakSound(itemFrame)
+
+            // TODO: 模拟真实物品展示框掉落
+            if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
+                itemFrame.world.dropItemNaturally(itemFrame.location, itemFrameItem)
+                itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+            }
+            return
+        }
+
+        deleteDisplayInstance(imageItemFrameData.displayInstanceId)
+
+        displayIndex.remove(
+            itemFrame.world.name,
+            ChunkKey(originFrame.chunk.x, originFrame.chunk.z),
+            imageItemFrameData.displayInstanceId
+        )
+
+        clearDisplayFrames(originFrame, itemFrame.world)
 
         val image = imageDeferred.await()
         val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
+        val itemFrameItem = createItemFrameItem(itemFrame)
 
-        itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+        itemFrame.remove()
+        playBreakSound(itemFrame)
+
+        // TODO: 模拟真实物品展示框掉落
+        if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
+            itemFrame.world.dropItemNaturally(itemFrame.location, itemFrameItem)
+            itemFrame.world.dropItemNaturally(itemFrame.location, imageItem)
+        }
+    }
+
+    private fun deleteDisplayInstance(displayInstanceId: UUID) {
+        coroutineScope.launch(Dispatchers.IO) {
+            displayInstanceStore.delete(displayInstanceId)
+        }
+    }
+
+    private suspend fun resolveDisplayInstanceForRemoval(
+        displayInstanceId: UUID,
+        displayInstance: DisplayInstance?
+    ): DisplayInstance? {
+        val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
+            withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
+                displayInstanceStore.delete(displayInstanceId)
+            }
+        }
+
+        return displayInstance ?: displayInstanceDeferred.await()
+    }
+
+    private fun clearDisplayFrames(displayInstance: DisplayInstance, world: org.bukkit.World) {
+        displayInstance.itemFrameIds
+            .mapNotNull { world.getEntity(it) }
+            .filterIsInstance<ItemFrame>()
+            .forEach(::clearDisplayFrame)
+    }
+
+    private fun clearDisplayFrames(originFrame: ItemFrame, world: org.bukkit.World) {
+        var currentFrame: ItemFrame? = originFrame
+
+        while (currentFrame != null) {
+            val frameData = currentFrame.imageItemFrameData()
+            clearDisplayFrame(currentFrame)
+            currentFrame = frameData?.nextItemFrame?.let { world.getEntity(it) as? ItemFrame }
+        }
+    }
+
+    private fun clearDisplayFrame(itemFrame: ItemFrame) {
+        itemFrame.unsetImageItemFrame()
+        itemFrame.rotation = Rotation.NONE
+        itemFrame.setItem(ItemStack.empty())
+    }
+
+    private fun createItemFrameItem(itemFrame: ItemFrame): ItemStack {
+        return when (itemFrame.type) {
+            EntityType.ITEM_FRAME -> ItemStack(Material.ITEM_FRAME)
+            EntityType.GLOW_ITEM_FRAME -> ItemStack(Material.GLOW_ITEM_FRAME)
+            else -> error("Unexpected")
+        }
+    }
+
+    private fun playBreakSound(itemFrame: ItemFrame) {
+        itemFrame.world.playSound(itemFrame.x, itemFrame.y, itemFrame.z) {
+            val soundKey = when (itemFrame.type) {
+                EntityType.ITEM_FRAME -> "entity.item_frame.break"
+                EntityType.GLOW_ITEM_FRAME -> "entity.glow_item_frame.break"
+                else -> error("Unexpected")
+            }
+            key(Key.key(soundKey))
+            source(Sound.Source.NEUTRAL)
+        }
     }
 }
 

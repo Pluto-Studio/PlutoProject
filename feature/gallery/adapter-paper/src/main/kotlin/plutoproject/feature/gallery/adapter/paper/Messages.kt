@@ -34,7 +34,7 @@ val IMAGE_ITEM_PLACEMENT_FAILED_INVALID = component {
 }
 
 val IMAGE_ITEM_PLACEMENT_FAILED_NO_SPACE_SUBTITLE = component {
-    text("空间不足，需一面 ") with mochaMaroon
+    text("空间不足，需要一面 ") with mochaMaroon
     text("<width> × <height> ") with mochaText
     text("的展示框") with mochaMaroon
 }
