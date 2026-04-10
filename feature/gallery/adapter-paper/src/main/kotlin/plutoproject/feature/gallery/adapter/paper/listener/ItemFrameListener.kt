@@ -602,6 +602,7 @@ private fun findPlacement(
     width: Int,
     height: Int,
 ): Placement? {
+    // TODO: 优先作为右下角放置
     val preferredPlacements = listOf(
         Placement(left = 0, top = 0),
         Placement(left = -(width - 1), top = 0),
