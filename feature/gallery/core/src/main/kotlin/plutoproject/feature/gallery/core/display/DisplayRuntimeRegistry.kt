@@ -3,9 +3,10 @@ package plutoproject.feature.gallery.core.display
 import plutoproject.feature.gallery.core.display.job.DisplayJob
 import plutoproject.feature.gallery.core.display.job.DisplayJobFactory
 import plutoproject.feature.gallery.core.display.job.DisplayResourceFactory
+import plutoproject.feature.gallery.core.display.job.StaticDisplayJob
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
-import java.util.UUID
+import java.util.*
 
 sealed interface ReplaceRuntimeImageDataResult {
     data class Updated(val job: DisplayJob) : ReplaceRuntimeImageDataResult
@@ -76,6 +77,16 @@ class DisplayRuntimeRegistry(
             val job = jobsByImageId.remove(imageId) ?: return StopDisplayRuntimeResult.NotRunning
             job.stop()
             StopDisplayRuntimeResult.Stopped(job)
+        }
+    }
+
+    fun clearPlayerCache(player: UUID) {
+        synchronized(lock) {
+            jobsByImageId.values
+                .filterIsInstance<StaticDisplayJob>()
+                .forEach { job ->
+                    job.clearPlayerCache(player)
+                }
         }
     }
 

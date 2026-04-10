@@ -5,11 +5,13 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
 
 @Suppress("UNUSED")
 object PlayerListener : Listener {
     private val sendJobRegistry = koin.get<SendJobRegistry>()
+    private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
@@ -18,6 +20,8 @@ object PlayerListener : Listener {
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        sendJobRegistry.stop(event.player.uniqueId)
+        val uniqueId = event.player.uniqueId
+        displayRuntime.clearPlayerCache(uniqueId)
+        sendJobRegistry.stop(uniqueId)
     }
 }

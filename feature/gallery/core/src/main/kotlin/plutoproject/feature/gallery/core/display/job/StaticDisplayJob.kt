@@ -138,7 +138,7 @@ class StaticDisplayJob(
         }
     }
 
-    fun removePlayerCache(player: UUID) {
+    fun clearPlayerCache(player: UUID) {
         synchronized(lock) {
             sentMapIdsByPlayer.remove(player)
             visibleTileIdsByPlayer.remove(player)
