@@ -234,6 +234,7 @@ class UploadService(
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     fun close() {
         val sessions = synchronized(lock) {
             if (expirationLoopState == UploadExpirationLoopState.CLOSED) {
@@ -253,6 +254,8 @@ class UploadService(
             val uploadedFile = (session.state.value as? UploadState.Success)?.uploadedFile ?: return@forEach
             uploadedFile.discard()
         }
+
+        tempFolder.deleteRecursively()
     }
 
     private fun updateUploadSession(id: UUID, newState: UploadState) {

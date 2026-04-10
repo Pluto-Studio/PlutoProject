@@ -9,8 +9,9 @@ fun onFeatureEnable() {
 }
 
 fun onFeatureDisable() {
+    stopWebServer()
+    koin.get<UploadService>().close()
     koin.get<DisplayScheduler>().stop()
     koin.get<DisplayRuntimeRegistry>().close()
     koin.get<SendJobRegistry>().close()
-    stopWebServer()
 }
