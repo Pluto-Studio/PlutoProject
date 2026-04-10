@@ -29,10 +29,20 @@ data class Vec3(
     fun lengthSquared(): Double =
         x * x + y * y + z * z
 
+    fun distanceTo(other: Vec3): Double =
+        sqrt((this - other).lengthSquared())
+
     fun normalizedOrNull(): Vec3? {
         val len2 = lengthSquared()
         if (len2 < 1e-12) return null
         val invLen = 1.0 / sqrt(len2)
         return Vec3(x * invLen, y * invLen, z * invLen)
     }
+
+    fun lerpTo(other: Vec3, t: Double): Vec3 =
+        Vec3(
+            x + (other.x - x) * t,
+            y + (other.y - y) * t,
+            z + (other.z - z) * t
+        )
 }

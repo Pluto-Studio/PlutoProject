@@ -90,6 +90,7 @@ object ItemFrameListener : Listener {
 
         val playerHorizontalFacing = normalizeHorizontalFacing(player.facing)
         val axis = wallAxisOf(itemFrame.facing, playerHorizontalFacing)
+        val frameRotation = frameRotationOf(itemFrame.facing, playerHorizontalFacing)
 
         val connectedFrames = collectConnectedFrames(itemFrame, axis)
         val framesByGridPos: Map<GridPos, ItemFrame> = connectedFrames.associateBy { frame ->
@@ -135,7 +136,7 @@ object ItemFrameListener : Listener {
         check(selectedFrames.isNotEmpty()) { "Unexpected, selectedFrames should not be empty" }
 
         val origin = selectedFrames.first().itemFrame
-        val originCenter = origin.location.toCenterLocation()
+        val originLocation = origin.location
         val displayInstance = DisplayInstance(
             id = UUID.randomUUID(),
             imageId = imageItemData.imageId,
@@ -145,9 +146,9 @@ object ItemFrameListener : Listener {
             facing = origin.facing.itemFrameFacing(),
             widthBlocks = imageItemData.widthBlocks,
             heightBlocks = imageItemData.heightBlocks,
-            originX = originCenter.x,
-            originY = originCenter.y,
-            originZ = originCenter.z,
+            originX = originLocation.x,
+            originY = originLocation.y,
+            originZ = originLocation.z,
             itemFrameIds = selectedFrames.map { it.itemFrame.uniqueId }
         )
 
@@ -163,7 +164,7 @@ object ItemFrameListener : Listener {
             } else {
                 frame.itemFrame.setItem(itemStack)
             }
-            frame.itemFrame.rotation = Rotation.NONE
+            frame.itemFrame.rotation = frameRotation
             frame.itemFrame.setImageItemFrame(displayInstance, nextFrame?.itemFrame?.uniqueId)
         }
 
@@ -226,7 +227,7 @@ object ItemFrameListener : Listener {
             }
         }
 
-        // event.setItemStack(ItemStack.empty())
+        event.setItemStack(ItemStack.empty())
 
         if (originFrame !is ItemFrame) {
             removeWithDisplayInstance(event, imageDeferred, displayInstance)
@@ -248,6 +249,7 @@ object ItemFrameListener : Listener {
         while (currentFrame != null) {
             val frameData = currentFrame.imageItemFrameData()
             currentFrame.unsetImageItemFrame()
+            currentFrame.rotation = Rotation.NONE
             currentFrame.setItem(ItemStack.empty())
             currentFrame = frameData?.nextItemFrame?.let { event.itemFrame.world.getEntity(it) as? ItemFrame }
         }
@@ -290,6 +292,7 @@ object ItemFrameListener : Listener {
             .filterIsInstance<ItemFrame>()
             .forEach { itemFrame ->
                 itemFrame.unsetImageItemFrame()
+                itemFrame.rotation = Rotation.NONE
                 itemFrame.setItem(ItemStack.empty())
             }
 
@@ -354,6 +357,37 @@ private fun rightOf(facing: BlockFace): BlockFace = when (facing) {
     else -> error("Expected 4-way horizontal facing, got $facing")
 }
 
+internal fun frameRotationOf(
+    frameFacing: BlockFace,
+    playerHorizontalFacing: BlockFace,
+): Rotation {
+    return when (frameFacing) {
+        BlockFace.UP -> floorFrameRotationOf(playerHorizontalFacing)
+        BlockFace.DOWN -> ceilingFrameRotationOf(playerHorizontalFacing)
+        else -> Rotation.NONE
+    }
+}
+
+internal fun ceilingFrameRotationOf(playerHorizontalFacing: BlockFace): Rotation {
+    return when (playerHorizontalFacing) {
+        BlockFace.NORTH -> Rotation.NONE
+        BlockFace.EAST -> Rotation.CLOCKWISE_135
+        BlockFace.SOUTH -> Rotation.CLOCKWISE
+        BlockFace.WEST -> Rotation.CLOCKWISE_45
+        else -> error("Expected 4-way horizontal facing, got $playerHorizontalFacing")
+    }
+}
+
+internal fun floorFrameRotationOf(playerHorizontalFacing: BlockFace): Rotation {
+    return when (playerHorizontalFacing) {
+        BlockFace.NORTH -> Rotation.NONE
+        BlockFace.EAST -> Rotation.CLOCKWISE_45
+        BlockFace.SOUTH -> Rotation.CLOCKWISE
+        BlockFace.WEST -> Rotation.CLOCKWISE_135
+        else -> error("Expected 4-way horizontal facing, got $playerHorizontalFacing")
+    }
+}
+
 internal fun wallAxisOf(
     frameFacing: BlockFace,
     playerHorizontalFacing: BlockFace,
@@ -383,7 +417,7 @@ internal fun wallAxisOf(
     // 地板：展示框朝上
     BlockFace.UP -> WallAxis(
         right = rightOf(playerHorizontalFacing),
-        down = playerHorizontalFacing,
+        down = playerHorizontalFacing.oppositeFace,
     )
 
     // 天花板：展示框朝下
