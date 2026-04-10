@@ -133,7 +133,45 @@ object ItemFrameListener : Listener {
         }
 
         check(selectedFrames.isNotEmpty()) { "Unexpected, selectedFrames should not be empty" }
-        event.setItemStack(ItemStack.empty())
+
+        val origin = selectedFrames.first().itemFrame
+        val originCenter = origin.location.toCenterLocation()
+        val displayInstance = DisplayInstance(
+            id = UUID.randomUUID(),
+            imageId = imageItemData.imageId,
+            world = itemFrame.world.name,
+            chunkX = origin.chunk.x,
+            chunkZ = origin.chunk.z,
+            facing = origin.facing.itemFrameFacing(),
+            widthBlocks = imageItemData.widthBlocks,
+            heightBlocks = imageItemData.heightBlocks,
+            originX = originCenter.x,
+            originY = originCenter.y,
+            originZ = originCenter.z,
+            itemFrameIds = selectedFrames.map { it.itemFrame.uniqueId }
+        )
+
+        selectedFrames.forEachIndexed { index, frame ->
+            val tileIndex = frame.tileY * width + frame.tileX
+            val mapId = imageItemData.tileMapIds[tileIndex]
+            val nextFrame = selectedFrames.getOrNull(index + 1)
+            val itemStack = ItemStack(Material.FILLED_MAP).apply {
+                setData(DataComponentTypes.MAP_ID, MapId.mapId(mapId))
+            }
+            if (frame.itemFrame == itemFrame) {
+                event.setItemStack(itemStack)
+            } else {
+                frame.itemFrame.setItem(itemStack)
+            }
+            frame.itemFrame.rotation = Rotation.NONE
+            frame.itemFrame.setImageItemFrame(displayInstance, nextFrame?.itemFrame?.uniqueId)
+        }
+
+        displayIndex.add(
+            itemFrame.world.name,
+            ChunkKey(origin.chunk.x, origin.chunk.z),
+            displayInstance.id
+        )
 
         val image = imageDeferred.await()
         val imageData = imageDataDeferred.await()
@@ -144,25 +182,9 @@ object ItemFrameListener : Listener {
             }
             player.playSound(PLACEMENT_FAILED_SOUND)
             player.sendMessage(IMAGE_ITEM_PLACEMENT_FAILED_INVALID)
+            rollbackPlacement(selectedFrames, displayInstance)
             return
         }
-
-        val origin = selectedFrames.first().itemFrame
-        val originCenter = origin.location.toCenterLocation()
-        val displayInstance = DisplayInstance(
-            id = UUID.randomUUID(),
-            imageId = image.id,
-            world = itemFrame.world.name,
-            chunkX = origin.chunk.x,
-            chunkZ = origin.chunk.z,
-            facing = origin.facing.itemFrameFacing(),
-            widthBlocks = image.widthBlocks,
-            heightBlocks = image.heightBlocks,
-            originX = originCenter.x,
-            originY = originCenter.y,
-            originZ = originCenter.z,
-            itemFrameIds = selectedFrames.map { it.itemFrame.uniqueId }
-        )
 
         coroutineScope.launch(Dispatchers.IO) {
             withTimeout(DISPLAY_INSTANCE_SAVE_TIMEOUT_SECONDS.seconds) {
@@ -170,25 +192,20 @@ object ItemFrameListener : Listener {
             }
         }
 
-        displayIndex.add(
-            itemFrame.world.name,
-            ChunkKey(origin.chunk.x, origin.chunk.z),
+        displayRuntime.attach(image, imageData, displayInstance)
+    }
+
+    private suspend fun rollbackPlacement(itemFrames: List<PlacedItemFrame>, displayInstance: DisplayInstance) {
+        val originFrame = itemFrames.first().itemFrame
+        itemFrames.map { it.itemFrame }.forEach { itemFrame ->
+            itemFrame.setItem(ItemStack.empty())
+            itemFrame.unsetImageItemFrame()
+        }
+        displayIndex.remove(
+            originFrame.world.name,
+            ChunkKey(originFrame.chunk.x, originFrame.chunk.z),
             displayInstance.id
         )
-
-        selectedFrames.forEachIndexed { index, frame ->
-            val tileIndex = frame.tileY * width + frame.tileX
-            val mapId = image.tileMapIds[tileIndex]
-            val nextFrame = selectedFrames.getOrNull(index + 1)
-            val itemStack = ItemStack(Material.FILLED_MAP).apply {
-                setData(DataComponentTypes.MAP_ID, MapId.mapId(mapId))
-            }
-            frame.itemFrame.setItem(itemStack)
-            frame.itemFrame.rotation = Rotation.NONE
-            frame.itemFrame.setImageItemFrame(displayInstance, nextFrame?.itemFrame?.uniqueId)
-        }
-
-        displayRuntime.attach(image, imageData, displayInstance)
     }
 
     private suspend fun onRemove(event: PlayerItemFrameChangeEvent) {
@@ -209,7 +226,7 @@ object ItemFrameListener : Listener {
             }
         }
 
-        event.setItemStack(ItemStack.empty())
+        // event.setItemStack(ItemStack.empty())
 
         if (originFrame !is ItemFrame) {
             removeWithDisplayInstance(event, imageDeferred, displayInstance)
