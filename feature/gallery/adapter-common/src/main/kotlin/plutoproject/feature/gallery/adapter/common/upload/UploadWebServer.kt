@@ -34,7 +34,7 @@ private val json = Json {
 
 private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
 
-private const val GALLERY_RESOURCE_PREFIX = "/gallery_web"
+private const val GALLERY_RESOURCE_PREFIX = "/gallery_frontend"
 
 fun startWebServer() {
     if (engine != null) {

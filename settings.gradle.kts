@@ -58,6 +58,7 @@ includeProject(":feature:gallery:core")
 includeProject(":feature:gallery:adapter-common")
 includeProject(":feature:gallery:infra-mongo")
 includeProject(":feature:gallery:adapter-paper")
+includeProject(":feature:gallery:frontend")
 
 include("platform-paper")
 include("platform-velocity")
