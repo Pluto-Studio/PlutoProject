@@ -328,6 +328,7 @@ class UploadService(
         }
         channel.trySend(Msg.Stop)
         job.join()
+        channel.close()
     }
 
     fun getTempFile(sessionId: UUID): Result<Path> = runCatching {
