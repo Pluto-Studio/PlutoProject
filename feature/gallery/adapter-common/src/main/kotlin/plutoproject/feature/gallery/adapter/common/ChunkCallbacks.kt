@@ -32,7 +32,9 @@ suspend fun chunkLoad(world: String, chunk: ChunkKey) {
 
     val invalidImages = images.filter { (id, _) -> !imageData.containsKey(id) }.values
     val invalidImageString = invalidImages.joinToString(", ") { "\"${it.name}\"" }
-    logger.log(Level.WARNING, "Found ${invalidImages.size} image(s) without corresponding data: $invalidImageString")
+    if (invalidImages.isNotEmpty()) {
+        logger.log(Level.WARNING, "Found ${invalidImages.size} image(s) without corresponding data: $invalidImageString")
+    }
 
     instances.forEach { (_, instance) ->
         val image = images[instance.imageId] ?: return@forEach
