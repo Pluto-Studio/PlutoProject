@@ -9,10 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@tabler/icons-react": "^3.41.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@catppuccin/tailwindcss": "^1.0.0",
     "@tailwindcss/vite": "^4.1.13",
     "@vitejs/plugin-react-swc": "^4.0.1",
     "eslint": "^9.36.0",

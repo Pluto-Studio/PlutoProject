@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+@import '@catppuccin/tailwindcss/mocha.css';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(18px);
+  }
+}
+
+@keyframes dialog-overlay-out {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(18px);
+  }
+
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.dialog-overlay {
+  backdrop-filter: blur(18px);
+  will-change: opacity, backdrop-filter;
+}
+
+.dialog-overlay[data-state='open'] {
+  animation: dialog-overlay-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dialog-overlay[data-state='closed'] {
+  animation: dialog-overlay-out 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.dialog-content {
+  pointer-events: none;
+}
+
+.dialog-panel {
+  pointer-events: auto;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.dialog-content[data-state='open'] > .dialog-panel {
+  animation: dialog-content-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dialog-content[data-state='closed'] > .dialog-panel {
+  animation: dialog-content-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}

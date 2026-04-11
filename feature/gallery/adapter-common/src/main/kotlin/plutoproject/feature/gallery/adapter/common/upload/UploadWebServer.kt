@@ -221,6 +221,8 @@ private suspend inline fun <reified T> ApplicationCall.respondJson(response: T) 
 data class UploadConfigResponse(
     val maxBytes: Long,
     val maxPixels: Int,
+    val suggestedMaxWidth: Int,
+    val suggestedMaxHeight: Int,
     val supportedFileExtensions: List<String>,
     val supportedMimeTypes: List<String>,
     val supportedFormatNames: List<String>,
@@ -229,6 +231,8 @@ data class UploadConfigResponse(
 private fun buildConfigResponse() = UploadConfigResponse(
     maxBytes = config.fileProcessing.maxBytes,
     maxPixels = config.fileProcessing.maxPixels,
+    suggestedMaxWidth = config.upload.suggestedMaxWidth,
+    suggestedMaxHeight = config.upload.suggestedMaxHeight,
     supportedFileExtensions = SupportedImageFormat.SUPPORTED_FILE_EXTENSIONS,
     supportedMimeTypes = SupportedImageFormat.SUPPORTED_MIME_TYPES.map { "${it.contentType}/${it.contentSubType}" },
     supportedFormatNames = SupportedImageFormat.SUPPORTED_FORMAT_NAMES,
