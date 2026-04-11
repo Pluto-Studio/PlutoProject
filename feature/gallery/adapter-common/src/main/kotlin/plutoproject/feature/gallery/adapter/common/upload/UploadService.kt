@@ -14,7 +14,12 @@ import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import java.io.BufferedInputStream
 import java.io.InputStream
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.channels.OverlappingFileLockException
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -27,35 +32,110 @@ import kotlin.io.path.*
 import kotlin.time.toJavaDuration
 import plutoproject.feature.gallery.core.decode.ContentType as CoreContentType
 
-private val config by lazy { koin.get<GalleryConfig>() }
 private val logger by lazy { koin.get<Logger>() }
 
-private const val TEMP_FOLDER_SUB = "plutoproject_gallery_"
+private const val TEMP_FOLDER_PREFIX = "plutoproject_gallery_"
+private const val TEMP_LOCK_FILE_NAME = ".lock"
+private val STALE_TEMP_FOLDER_AGE: Duration = Duration.ofMinutes(5)
 
-fun initializeTempFolder(): Result<Path> {
+class TempFolderHandle(
+    val path: Path,
+    private val lockChannel: FileChannel,
+    private val lock: FileLock,
+) {
+    fun close() {
+        listOf(
+            runCatching { lock.release() } to "releasing temp folder lock",
+            runCatching { lockChannel.close() } to "closing temp folder lock channel"
+        ).forEach { (result, action) ->
+            result.onFailure {
+                logger.log(Level.WARNING, "An error occurred while $action", it)
+            }
+        }
+    }
+
+    fun cleanupAndClose() {
+        listOf(
+            runCatching { path.deleteRecursively() } to "deleting temp folder",
+            runCatching { close() } to "closing temp folder handle"
+        ).forEach { (result, action) ->
+            result.onFailure {
+                logger.log(Level.WARNING, "An error occurred while $action", it)
+            }
+        }
+    }
+}
+
+internal fun initializeTempFolder(): Result<TempFolderHandle> {
     cleanupTempFolders()
-
-    val sub = "$TEMP_FOLDER_SUB${UUID.randomUUID()}"
-    val path = Path(config.fileProcessing.tempFolder, sub)
-
-    return runCatching {
-        path.createDirectories()
-        path
-    }.onFailure { exception ->
+    return runCatching(::createTempFolderHandle).onFailure { exception ->
         logger.log(Level.SEVERE, "An error occurred while creating temp folder", exception)
     }
 }
 
+private fun createTempFolderHandle(): TempFolderHandle {
+    while (true) {
+        val path = Files.createTempDirectory(TEMP_FOLDER_PREFIX)
+        tryAcquireTempFolderHandle(path)?.let { return it }
+        runCatching { path.deleteRecursively() }
+    }
+}
+
 private fun cleanupTempFolders() {
-    val tempParent = Path(config.fileProcessing.tempFolder)
+    val tempParent = Path(System.getProperty("java.io.tmpdir"))
     runCatching {
         if (!tempParent.exists()) return@runCatching
         tempParent.listDirectoryEntries()
-            .filter { it.fileName.toString().startsWith(TEMP_FOLDER_SUB) }
-            .forEach { it.deleteRecursively() }
-    }.onFailure {
-        logger.log(Level.WARNING, "An error occurred while cleaning-up temp folders", it)
+            .filter { it.isDirectory() && it.fileName.toString().startsWith(TEMP_FOLDER_PREFIX) }
+            .filter { it.isReadable() && it.isWritable() }
+            .filter { Duration.between(it.getLastModifiedTime().toInstant(), Instant.now()) > STALE_TEMP_FOLDER_AGE }
+            .forEach(::cleanupTempFolder)
     }
+}
+
+private fun cleanupTempFolder(path: Path) {
+    val handle = tryAcquireTempFolderHandle(path) ?: return
+
+    try {
+        try {
+            path.deleteRecursively()
+        } catch (_: Exception) {
+            return
+        }
+    } finally {
+        handle.close()
+    }
+}
+
+private fun tryAcquireTempFolderHandle(path: Path): TempFolderHandle? {
+    val lockChannel = runCatching {
+        FileChannel.open(
+            path.resolve(TEMP_LOCK_FILE_NAME),
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+        )
+    }.getOrElse {
+        return null
+    }
+
+    val lock = try {
+        lockChannel.tryLock()
+    } catch (_: OverlappingFileLockException) {
+        null
+    } catch (_: Exception) {
+        null
+    }
+
+    if (lock == null) {
+        runCatching { lockChannel.close() }
+        return null
+    }
+
+    return TempFolderHandle(
+        path = path,
+        lockChannel = lockChannel,
+        lock = lock,
+    )
 }
 
 sealed interface VerificationResult {
@@ -161,9 +241,11 @@ private val SUPPORTED_MIME_TYPES = SupportedImageFormat.SUPPORTED_MIME_TYPES.map
 
 class UploadService(
     private val clock: Clock,
-    private val tempFolder: Path,
+    private val tempFolderHandle: TempFolderHandle,
     coroutineScope: CoroutineScope,
 ) {
+    private val tempFolder = tempFolderHandle.path
+
     init {
         check(tempFolder.exists()) { "Temp folder must be existed" }
         check(tempFolder.isReadable() && tempFolder.isWritable()) { "Temp folder must be readable and writable" }
@@ -329,6 +411,7 @@ class UploadService(
         channel.trySend(Msg.Stop)
         job.join()
         channel.close()
+        tempFolderHandle.cleanupAndClose()
     }
 
     fun getTempFile(sessionId: UUID): Result<Path> = runCatching {

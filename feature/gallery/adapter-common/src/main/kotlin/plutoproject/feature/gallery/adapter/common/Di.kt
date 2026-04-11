@@ -85,7 +85,7 @@ val commonModule = module {
     single(createdAtStart = true) {
         UploadService(
             clock = get(),
-            tempFolder = initializeTempFolder().getOrThrow(),
+            tempFolderHandle = initializeTempFolder().getOrThrow(),
             coroutineScope = get(),
         )
     }

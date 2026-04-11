@@ -53,7 +53,6 @@ data class FileProcessingSettings(
     val maxBytes: Long = 10 * 1024 * 1024, // 10 MiB
     val maxPixels: Int = 16_777_216, // 4096 * 4096
     val maxFrames: Int = 200,
-    val tempFolder: String = "/tmp/",
 )
 
 data class UploadSettings(
