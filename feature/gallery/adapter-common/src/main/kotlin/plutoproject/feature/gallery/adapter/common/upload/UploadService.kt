@@ -159,8 +159,8 @@ sealed interface UploadState {
     data class Completed(val file: UploadedFile) : Finished
     data object Expired : Finished
     data object Cancelled : Finished
-    data class VerificationFailed(val result: VerificationResult.Rejected) : UploadState
-    data class Failed(val cause: Throwable?) : UploadState
+    data class VerificationFailed(val result: VerificationResult.Rejected) : Finished
+    data class Failed(val cause: Throwable?) : Finished
 }
 
 sealed interface UploadSubmissionResult {
@@ -181,6 +181,10 @@ class UploadSession(
 ) {
     fun isWaitingUpload(): Boolean {
         return state.value is UploadState.Waiting
+    }
+
+    fun isFinished(): Boolean {
+        return state.value is UploadState.Finished
     }
 }
 
@@ -259,7 +263,9 @@ class UploadService(
         val uploadSessionsById = mutableMapOf<UUID, UploadSession>()
 
         while (true) {
-            val nextExpire = uploadSessionsById.values.minByOrNull { it.expireAt }
+            val nextExpire = uploadSessionsById.values
+                .filter { !it.isFinished() }
+                .minByOrNull { it.expireAt }
             val nextRemove = uploadSessionsById.values.minByOrNull { it.removeAt }
             val nextTimeoutActionAt = if (nextExpire != null && nextRemove != null) {
                 minOf(nextExpire.expireAt, nextRemove.removeAt)
@@ -292,7 +298,7 @@ class UploadService(
             }
 
             val now = clock.instant()
-            val expireDue = uploadSessionsById.filterValues { !it.expireAt.isAfter(now) }
+            val expireDue = uploadSessionsById.filterValues { !it.isFinished() && !it.expireAt.isAfter(now) }
             val removeDue = uploadSessionsById.filterValues { !it.removeAt.isAfter(now) }
 
             expireDue.forEach { (_, session) ->
@@ -300,7 +306,7 @@ class UploadService(
             }
 
             removeDue.forEach { (id, session) ->
-                if (session.state.value !is UploadState.Finished) {
+                if (!session.isFinished()) {
                     session.state.value = UploadState.Cancelled
                 }
                 uploadSessionsById.remove(id)
@@ -380,16 +386,16 @@ class UploadService(
 
     suspend fun createSession(creator: UUID): UploadSession {
         check(job.isActive) { "UploadService is closed" }
-        return CompletableDeferred<UploadSession>()
-            .also { channel.trySend(Msg.CreateSession(creator, it)) }
-            .await()
+        val reply = CompletableDeferred<UploadSession>()
+        channel.trySend(Msg.CreateSession(creator, reply))
+        return reply.await()
     }
 
     suspend fun getSession(sessionId: UUID): UploadSession? {
         check(job.isActive) { "UploadService is closed" }
-        return CompletableDeferred<UploadSession?>()
-            .also { channel.trySend(Msg.GetSession(sessionId, it)) }
-            .await()
+        val reply = CompletableDeferred<UploadSession?>()
+        channel.trySend(Msg.GetSession(sessionId, reply))
+        return reply.await()
     }
 
     suspend fun submitUpload(
@@ -399,9 +405,9 @@ class UploadService(
         originalFileName: String?
     ): UploadSubmissionResult {
         check(job.isActive) { "UploadService is closed" }
-        return CompletableDeferred<UploadSubmissionResult>()
-            .also { channel.trySend(Msg.SubmitUpload(sessionId, tempFile, contentType, originalFileName, it)) }
-            .await()
+        val reply = CompletableDeferred<UploadSubmissionResult>()
+        channel.trySend(Msg.SubmitUpload(sessionId, tempFile, contentType, originalFileName, reply))
+        return reply.await()
     }
 
     suspend fun close() {
