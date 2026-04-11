@@ -3,6 +3,7 @@ package plutoproject.feature.gallery.adapter.common
 import plutoproject.feature.gallery.core.render.RenderComponents
 import plutoproject.feature.gallery.core.render.dither.Ditherer
 import plutoproject.feature.gallery.core.render.dither.FloydSteinbergDitherer
+import plutoproject.feature.gallery.core.render.dither.NoneDitherer
 import plutoproject.feature.gallery.core.render.dither.OrderedBayerDitherer
 import plutoproject.feature.gallery.core.render.quantize.NearestColorQuantizer
 import plutoproject.feature.gallery.core.render.quantize.Quantizer
@@ -107,10 +108,11 @@ enum class QuantizeMode {
 }
 
 enum class DitherMode {
-    FLOYD_STEINBERG, ORDERED_BAYER;
+    NONE, FLOYD_STEINBERG, ORDERED_BAYER;
 
     val ditherer: Ditherer
         get() = when (this) {
+            NONE -> NoneDitherer
             FLOYD_STEINBERG -> FloydSteinbergDitherer
             ORDERED_BAYER -> OrderedBayerDitherer
         }
