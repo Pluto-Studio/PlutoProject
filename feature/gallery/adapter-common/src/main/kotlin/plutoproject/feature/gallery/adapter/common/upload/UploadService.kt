@@ -236,7 +236,7 @@ class UploadService(
             expireAt = now.plus(config.upload.requestExpireAfter.toJavaDuration()),
             removeAt = now.plus(config.upload.requestRemoveAfter.toJavaDuration()),
             state = MutableStateFlow(UploadState.Waiting),
-            uploadUrl = "${config.upload.baseUrl.trimEnd('/')}/upload/$id",
+            uploadUrl = "${config.upload.baseUrl.trimEnd('/')}/upload/$id/",
         )
         uploadSessionsById[id] = session
         msg.reply.complete(session)

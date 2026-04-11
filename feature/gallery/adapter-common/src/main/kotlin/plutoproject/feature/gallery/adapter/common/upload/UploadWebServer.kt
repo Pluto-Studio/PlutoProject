@@ -69,7 +69,7 @@ private fun webModule(): Application.() -> Unit = {
     routing {
         apiRoutes()
         uploadPageRoute()
-        staticResources("/assets", "$GALLERY_RESOURCE_PREFIX/assets/")
+        uploadAssetRoute()
     }
 }
 
@@ -167,15 +167,50 @@ private fun Route.uploadPageRoute() {
     get("/upload/{id}") {
         val id = call.parameters["id"]?.uuidOrNull()
             ?: return@get call.respond(HttpStatusCode.BadRequest)
-        val session = uploadService.getSession(id)
-            ?: return@get call.respond(HttpStatusCode.NotFound)
+        call.respondRedirect("/upload/$id/")
+    }
 
-        if (!session.isWaitingUpload()) {
-            return@get call.respond(HttpStatusCode.Gone)
-        }
-
+    get("/upload/{id}/") {
+        validateUploadSession() ?: return@get
         call.respondResource("$GALLERY_RESOURCE_PREFIX/index.html")
     }
+}
+
+private fun Route.uploadAssetRoute() {
+    get("/upload/{id}/assets/{path...}") {
+        validateUploadSession() ?: return@get
+
+        val resourcePath = call.parameters.getAll("path")
+            ?.takeIf { it.isNotEmpty() }
+            ?.joinToString("/")
+            ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+        if (resourcePath.contains("..")) {
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        call.respondResource("$GALLERY_RESOURCE_PREFIX/assets/$resourcePath")
+    }
+}
+
+private suspend fun RoutingContext.validateUploadSession(): UploadSession? {
+    val id = call.parameters["id"]?.uuidOrNull()
+        ?: run {
+            call.respond(HttpStatusCode.BadRequest)
+            return null
+        }
+    val session = uploadService.getSession(id)
+        ?: run {
+            call.respond(HttpStatusCode.NotFound)
+            return null
+        }
+
+    if (!session.isWaitingUpload()) {
+        call.respond(HttpStatusCode.Gone)
+        return null
+    }
+
+    return session
 }
 
 private suspend inline fun <reified T> ApplicationCall.respondJson(response: T) {
