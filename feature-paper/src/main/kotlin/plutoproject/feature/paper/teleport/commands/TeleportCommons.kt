@@ -14,7 +14,7 @@ import plutoproject.feature.paper.teleport.COMMAND_TPACCEPT_FAILED_NO_PENDING
 import plutoproject.feature.paper.teleport.COMMAND_TPACCEPT_FAILED_NO_REQUEST
 import plutoproject.feature.paper.teleport.COMMAND_TPACCEPT_FAILED_NO_REQUEST_ID
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.data.convertToUuidOrNull
+import plutoproject.framework.common.util.data.uuidOrNull
 import plutoproject.framework.paper.util.server
 import kotlin.jvm.optionals.getOrNull
 
@@ -30,7 +30,7 @@ object TeleportCommons {
         val player = context.sender() as Player
         val stringParser = StringParser.quotedStringParser<CommandSender>().parser()
         val string = stringParser.parse(context, input).parsedValue().getOrNull() ?: error("Unable to parse request")
-        val uuid = string.convertToUuidOrNull()
+        val uuid = string.uuidOrNull()
         val source = server.getPlayer(string)
         val request = when {
             uuid != null -> TeleportManager.getRequest(uuid) ?: throw TeleportRequestNotFound()

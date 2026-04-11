@@ -50,20 +50,26 @@ data class MapIdRangeSettings(
 )
 
 data class FileProcessingSettings(
-    val maxBytes: Int = 10 * 1024 * 1024, // 10 MiB
+    val maxBytes: Long = 10 * 1024 * 1024, // 10 MiB
     val maxPixels: Int = 16_777_216, // 4096 * 4096
     val maxFrames: Int = 200,
-    val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
-    val tempFolderRoot: String = "/tmp/",
+    val tempFolder: String = "/tmp/",
 )
 
 data class UploadSettings(
-    val requestExpireAfter: Duration = 10.minutes,
+    val requestExpireAfter: Duration = 5.minutes,
+    val requestRemoveAfter: Duration = 10.minutes,
     val baseUrl: String = "https://gallery.plutoproject.club/",
     val port: Int = 24213,
     val suggestedMaxWidth: Int = 4096,
     val suggestedMaxHeight: Int = 4096,
-)
+) {
+    init {
+        check(requestExpireAfter.isPositive()) { "requestExpireAfter must be positive" }
+        check(requestRemoveAfter.isPositive()) { "requestRemoveAfter must be positive" }
+        check(requestRemoveAfter > requestExpireAfter) { "requestRemoveAfter must be > requestExpireAfter" }
+    }
+}
 
 data class DecodeSettings(
     val maxParallelTasks: Int = 2,

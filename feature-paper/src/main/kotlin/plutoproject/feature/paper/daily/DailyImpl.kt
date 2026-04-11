@@ -18,7 +18,7 @@ import plutoproject.feature.paper.daily.repositories.DailyHistoryRepository
 import plutoproject.feature.paper.daily.repositories.DailyUserRepository
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.coroutine.PluginScope
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import plutoproject.framework.common.util.time.LocalZoneId
 import plutoproject.framework.common.util.time.atEndOfDay
 import plutoproject.framework.common.util.time.toOffset
@@ -98,7 +98,7 @@ class DailyImpl : Daily, KoinComponent {
 
     override suspend fun listHistory(user: UUID): Collection<DailyHistory> {
         return historyRepo.findByOwner(user).map {
-            val uuid = it.id.convertToUuid()
+            val uuid = it.id.uuid()
             historyCaches.getIfPresent(uuid)?.get() ?: DailyHistoryImpl(it).also { h ->
                 historyCaches.put(uuid, CompletableFuture.completedFuture(h))
             }
@@ -123,7 +123,7 @@ class DailyImpl : Daily, KoinComponent {
 
     override suspend fun getHistoryByTime(user: UUID, start: Long, end: Long): Collection<DailyHistory> {
         return historyRepo.findByTime(user, start, end).map {
-            val uuid = it.id.convertToUuid()
+            val uuid = it.id.uuid()
             historyCaches.getIfPresent(uuid)?.get() ?: DailyHistoryImpl(it).also { h ->
                 historyCaches.put(uuid, CompletableFuture.completedFuture(h))
             }

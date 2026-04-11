@@ -14,7 +14,7 @@ import plutoproject.feature.paper.daily.models.toModel
 import plutoproject.feature.paper.daily.repositories.DailyHistoryRepository
 import plutoproject.feature.paper.daily.repositories.DailyUserRepository
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import plutoproject.framework.common.util.time.LocalZoneId
 import plutoproject.framework.common.util.time.currentTimestampMillis
 import plutoproject.framework.common.util.time.toInstant
@@ -29,7 +29,7 @@ class DailyUserImpl(model: DailyUserModel) : DailyUser, KoinComponent {
     private val historyRepo by inject<DailyHistoryRepository>()
     private val userRepo by inject<DailyUserRepository>()
 
-    override val id: UUID = model.id.convertToUuid()
+    override val id: UUID = model.id.uuid()
     override val player: OfflinePlayer by lazy { Bukkit.getOfflinePlayer(id) }
     override var lastCheckIn: Instant? = model.lastCheckIn?.toInstant()
     override val lastCheckInDate: LocalDate?

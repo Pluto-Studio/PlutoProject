@@ -1,7 +1,7 @@
 package plutoproject.feature.gallery.core.decode
 
 class DecodeConstraints(
-    val maxBytes: Int,
+    val maxBytes: Long,
     val maxPixels: Int,
     val maxFrames: Int,
 ) {

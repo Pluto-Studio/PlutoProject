@@ -15,7 +15,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.chat.palettes.mochaMaroon
 import plutoproject.framework.common.util.chat.palettes.mochaPink
 import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
@@ -92,7 +92,7 @@ object WhitelistCommand : KoinComponent {
             }
             return
         }
-        repo.deleteById(model.id.convertToUuid())
+        repo.deleteById(model.id.uuid())
         send {
             text("已经移除玩家 ") with mochaPink
             text("${model.rawName} ") with mochaText

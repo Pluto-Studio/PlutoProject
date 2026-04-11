@@ -18,7 +18,7 @@ import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
 import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import java.time.Clock
 
 @Suppress("UNUSED")
@@ -50,7 +50,7 @@ object MigratorCommand : KoinComponent {
         val oldRecords = loadLegacyWhitelist()
         val recordsToMigrate = oldRecords.map { oldRecord ->
             WhitelistRecord(
-                uniqueId = oldRecord.id.convertToUuid(),
+                uniqueId = oldRecord.id.uuid(),
                 username = oldRecord.rawName,
                 granter = WhitelistOperator.Console,
                 createdAt = clock.instant(),

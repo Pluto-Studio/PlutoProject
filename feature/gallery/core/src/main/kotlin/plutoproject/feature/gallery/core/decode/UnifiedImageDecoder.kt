@@ -13,12 +13,8 @@ object UnifiedImageDecoder {
         data class Failure(override val result: DecodeResult<*>) : Result
     }
 
-    suspend fun decode(
-        bytes: ByteArray,
-        constraints: DecodeConstraints,
-        fileNameHint: String? = null,
-    ): Result {
-        val format = ImageFormatSniffer.sniff(bytes, fileNameHint)
+    suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): Result {
+        val format = ImageFormatSniffer.sniff(bytes)
             ?: return Result.Failure(DecodeResult.UnsupportedFormat)
 
         return when (format) {

@@ -8,6 +8,8 @@ import org.koin.core.Koin
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
+import plutoproject.feature.gallery.adapter.common.upload.UploadService
+import plutoproject.feature.gallery.adapter.common.upload.initializeTempFolder
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.SystemInformationRepository

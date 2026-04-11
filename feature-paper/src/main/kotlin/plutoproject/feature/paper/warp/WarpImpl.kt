@@ -25,7 +25,7 @@ import plutoproject.framework.common.api.profile.ProfileLookup
 import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 import plutoproject.framework.common.util.coroutine.*
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import plutoproject.framework.common.util.time.formatDate
 import plutoproject.framework.paper.api.provider.timezone
 import plutoproject.framework.paper.util.data.models.toModel
@@ -39,7 +39,7 @@ class WarpImpl(private val model: WarpModel) : Warp, KoinComponent {
     override val id: UUID = model.id
     override val name: String = model.name
     override var alias: String? = model.alias
-    override var founderId = model.founder?.convertToUuid()
+    override var founderId = model.founder?.uuid()
     override val founder: Deferred<Profile>?
         get() = founderId?.let {
             PluginScope.async(Dispatchers.Loom) {

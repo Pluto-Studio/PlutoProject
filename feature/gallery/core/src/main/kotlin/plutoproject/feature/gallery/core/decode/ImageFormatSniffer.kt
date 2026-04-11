@@ -2,8 +2,10 @@ package plutoproject.feature.gallery.core.decode
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStreamSpi
+import java.nio.file.Path
 import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
+import kotlin.io.path.inputStream
 
 class A {
 
@@ -15,6 +17,7 @@ sealed interface SupportedImageFormat {
 
     companion object {
         val SUPPORTED_FORMAT_NAMES = listOf("PNG", "JPEG", "WebP", "GIF")
+        val SUPPORTED_FILE_EXTENSIONS = listOf("png", "jpg", "jpeg", "webp", "gif")
         val SUPPORTED_MIME_TYPES = listOf(
             ContentType("png"),
             ContentType("jpeg"),
@@ -50,41 +53,39 @@ data class ContentType(
     val contentType: String = "image"
 }
 
+private const val PNG_MAGIC_SIZE = 8
+private const val JPEG_MAGIC_SIZE = 3
+private const val WEBP_MAGIC_SIZE = 12
+private const val GIF_MAGIC_SIZE = 6
+
+private val SNIFFER_HEADER_SIZE = maxOf(PNG_MAGIC_SIZE, JPEG_MAGIC_SIZE, WEBP_MAGIC_SIZE, GIF_MAGIC_SIZE)
+
+
 object ImageFormatSniffer {
-    fun sniff(bytes: ByteArray, fileNameHint: String?): SupportedImageFormat? {
-        sniffByMagic(bytes)?.let { return it }
-        return sniffByFileName(fileNameHint)
+    fun sniff(bytes: ByteArray): SupportedImageFormat? {
+        return when {
+            isPng(bytes) -> SupportedImageFormat.Png
+            isJpeg(bytes) -> SupportedImageFormat.Jpeg
+            isGif(bytes) -> SupportedImageFormat.Gif
+            isWebp(bytes) -> SupportedImageFormat.Webp
+            else -> null
+        }
+    }
+
+    fun sniff(filePath: Path): SupportedImageFormat? {
+        val header = readHeader(filePath) ?: return null
+        return sniff(header)
     }
 }
 
-
-private fun sniffByMagic(bytes: ByteArray): SupportedImageFormat? {
-    return when {
-        isPng(bytes) -> SupportedImageFormat.Png
-        isJpeg(bytes) -> SupportedImageFormat.Jpeg
-        isGif(bytes) -> SupportedImageFormat.Gif
-        isWebp(bytes) -> SupportedImageFormat.Webp
-        else -> null
+private fun readHeader(tempFile: Path): ByteArray? = runCatching {
+    tempFile.inputStream().use { inputStream ->
+        inputStream.readNBytes(SNIFFER_HEADER_SIZE)
     }
-}
-
-private fun sniffByFileName(fileNameHint: String?): SupportedImageFormat? {
-    val extension = fileNameHint
-        ?.substringAfterLast('.', missingDelimiterValue = "")
-        ?.lowercase()
-        .orEmpty()
-
-    return when (extension) {
-        "png" -> SupportedImageFormat.Png
-        "jpg", "jpeg" -> SupportedImageFormat.Jpeg
-        "gif" -> SupportedImageFormat.Gif
-        "webp" -> SupportedImageFormat.Webp
-        else -> null
-    }
-}
+}.getOrNull()
 
 private fun isPng(bytes: ByteArray): Boolean {
-    if (bytes.size < 8) return false
+    if (bytes.size < PNG_MAGIC_SIZE) return false
     return bytes[0] == 0x89.toByte() &&
             bytes[1] == 0x50.toByte() &&
             bytes[2] == 0x4E.toByte() &&
@@ -96,24 +97,14 @@ private fun isPng(bytes: ByteArray): Boolean {
 }
 
 private fun isJpeg(bytes: ByteArray): Boolean {
-    if (bytes.size < 3) return false
+    if (bytes.size < JPEG_MAGIC_SIZE) return false
     return bytes[0] == 0xFF.toByte() &&
             bytes[1] == 0xD8.toByte() &&
             bytes[2] == 0xFF.toByte()
 }
 
-private fun isGif(bytes: ByteArray): Boolean {
-    if (bytes.size < 6) return false
-    return (bytes[0] == 'G'.code.toByte() &&
-            bytes[1] == 'I'.code.toByte() &&
-            bytes[2] == 'F'.code.toByte() &&
-            bytes[3] == '8'.code.toByte() &&
-            (bytes[4] == '7'.code.toByte() || bytes[4] == '9'.code.toByte()) &&
-            bytes[5] == 'a'.code.toByte())
-}
-
 private fun isWebp(bytes: ByteArray): Boolean {
-    if (bytes.size < 12) return false
+    if (bytes.size < WEBP_MAGIC_SIZE) return false
     return bytes[0] == 'R'.code.toByte() &&
             bytes[1] == 'I'.code.toByte() &&
             bytes[2] == 'F'.code.toByte() &&
@@ -122,4 +113,14 @@ private fun isWebp(bytes: ByteArray): Boolean {
             bytes[9] == 'E'.code.toByte() &&
             bytes[10] == 'B'.code.toByte() &&
             bytes[11] == 'P'.code.toByte()
+}
+
+private fun isGif(bytes: ByteArray): Boolean {
+    if (bytes.size < GIF_MAGIC_SIZE) return false
+    return (bytes[0] == 'G'.code.toByte() &&
+            bytes[1] == 'I'.code.toByte() &&
+            bytes[2] == 'F'.code.toByte() &&
+            bytes[3] == '8'.code.toByte() &&
+            (bytes[4] == '7'.code.toByte() || bytes[4] == '9'.code.toByte()) &&
+            bytes[5] == 'a'.code.toByte())
 }

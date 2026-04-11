@@ -16,17 +16,11 @@ import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.feature.gallery.adapter.common.DitherMode
-import plutoproject.feature.gallery.adapter.common.FileProcessingSettings
-import plutoproject.feature.gallery.adapter.common.GalleryConfig
-import plutoproject.feature.gallery.adapter.common.QuantizeMode
-import plutoproject.feature.gallery.adapter.common.RepositionMode
-import plutoproject.feature.gallery.adapter.common.ScaleMode
-import plutoproject.feature.gallery.adapter.common.UploadService
-import plutoproject.feature.gallery.adapter.common.UploadSession
-import plutoproject.feature.gallery.adapter.common.UploadState
-import plutoproject.feature.gallery.adapter.common.VerificationResult
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.adapter.common.*
+import plutoproject.feature.gallery.adapter.common.upload.UploadService
+import plutoproject.feature.gallery.adapter.common.upload.UploadSession
+import plutoproject.feature.gallery.adapter.common.upload.UploadState
+import plutoproject.feature.gallery.adapter.common.upload.VerificationResult
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
@@ -39,16 +33,10 @@ import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
-import plutoproject.feature.gallery.core.render.AnimatedImageRenderSettings
-import plutoproject.feature.gallery.core.render.AnimatedImageRenderer
-import plutoproject.feature.gallery.core.render.BasicRenderSettings
-import plutoproject.feature.gallery.core.render.PixelBuffer
-import plutoproject.feature.gallery.core.render.RenderComponents
-import plutoproject.feature.gallery.core.render.RenderResult
-import plutoproject.feature.gallery.core.render.StaticImageRenderer
+import plutoproject.feature.gallery.core.render.*
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.paper.util.coroutine.coroutineContext
-import java.util.UUID
+import java.util.*
 import kotlin.math.ceil
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -261,11 +249,7 @@ object GalleyDebugCommand {
         bytes: ByteArray,
         fileNameHint: String?,
     ): CreateImageDebugResult {
-        val decodeResult = UnifiedImageDecoder.decode(
-            bytes = bytes,
-            constraints = galleryConfig.fileProcessing.decodeConstraints(),
-            fileNameHint = fileNameHint,
-        )
+        val decodeResult = UnifiedImageDecoder.decode(bytes, galleryConfig.fileProcessing.decodeConstraints())
 
         val imageData = when (decodeResult) {
             is UnifiedImageDecoder.Result.Failure -> {
@@ -637,11 +621,13 @@ object GalleyDebugCommand {
     private fun describeVerificationResult(result: VerificationResult): String {
         return when (result) {
             VerificationResult.Ok -> "VerificationResult.Pass"
-            is VerificationResult.FileTooLarge -> "VerificationResult.FileTooLarge(size=${result.size})"
+            is VerificationResult.FileTooLarge -> "VerificationResult.FileTooLarge(size=${result.fileSize})"
             is VerificationResult.ImageTooLarge -> "VerificationResult.ImageTooLarge(width=${result.width}, height=${result.height}, pixels=${result.pixels})"
             is VerificationResult.UnallowedExtension -> "VerificationResult.UnallowedExtension(fileName=${quote(result.fileName)})"
             is VerificationResult.TooManyFrames ->"VerificationResult.TooManyFrames(frameCount=${result.frameCount})"
             VerificationResult.UnsupportedFormat -> "VerificationResult.UnsupportedFormat"
+            VerificationResult.Corrupted -> "VerificationResult.Corrupted"
+            is VerificationResult.Failed -> "VerificationResult.Failed(cause=${result.cause})"
         }
     }
 

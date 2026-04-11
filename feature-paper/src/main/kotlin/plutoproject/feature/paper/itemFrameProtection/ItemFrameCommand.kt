@@ -12,7 +12,7 @@ import org.bukkit.persistence.PersistentDataType
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.data.convertToUuidOrNull
+import plutoproject.framework.common.util.data.uuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 
@@ -39,7 +39,7 @@ internal val ItemFrame.protect: Boolean
 internal val ItemFrame.protector: OfflinePlayer?
     get() {
         val uuid =
-            persistentDataContainer.get(protectorKey, PersistentDataType.STRING)?.convertToUuidOrNull() ?: return null
+            persistentDataContainer.get(protectorKey, PersistentDataType.STRING)?.uuidOrNull() ?: return null
         return Bukkit.getOfflinePlayer(uuid)
     }
 
