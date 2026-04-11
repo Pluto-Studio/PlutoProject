@@ -27,6 +27,7 @@ import kotlin.io.path.outputStream
 private val config by lazy { koin.get<GalleryConfig>() }
 private val uploadService by lazy { koin.get<UploadService>() }
 private val logger by lazy { koin.get<Logger>() }
+private val resourceClassLoader = object {}.javaClass.classLoader
 private val json = Json {
     ignoreUnknownKeys = true
     explicitNulls = false
@@ -43,7 +44,14 @@ fun startWebServer() {
 
     val server = embeddedServer(
         factory = Netty,
-        port = config.upload.port,
+        environment = applicationEnvironment {
+            classLoader = resourceClassLoader
+        },
+        configure = {
+            connector {
+                port = config.upload.port
+            }
+        },
         module = webModule()
     )
     server.start(wait = false)
