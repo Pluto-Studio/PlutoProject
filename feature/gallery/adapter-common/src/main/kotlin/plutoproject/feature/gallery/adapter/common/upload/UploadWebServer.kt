@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.bodylimit.RequestBodyLimit
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -66,6 +67,10 @@ fun stopWebServer() {
 }
 
 private fun webModule(): Application.() -> Unit = {
+    install(RequestBodyLimit) {
+        bodyLimit { config.fileProcessing.maxBytes }
+    }
+
     routing {
         apiRoutes()
         uploadPageRoute()
@@ -94,6 +99,9 @@ private suspend fun RoutingContext.handleUpload() {
         return call.respond(HttpStatusCode.Gone)
     }
 
+    val tempFile = uploadService.getTempFile(id).getOrNull()
+        ?: return call.respond(HttpStatusCode.InternalServerError)
+
     val multipart = call.receiveMultipart()
     var storedPath: Path? = null
     var contentType: ContentType? = null
@@ -105,9 +113,6 @@ private suspend fun RoutingContext.handleUpload() {
             if (part !is PartData.FileItem) {
                 continue
             }
-
-            val tempFile = uploadService.getTempFile(id).getOrNull()
-                ?: return call.respond(HttpStatusCode.InternalServerError)
 
             val isSizeAcceptable = tempFile.outputStream().use { output ->
                 readAndWriteFile(part.provider(), output)
@@ -151,7 +156,6 @@ private suspend fun readAndWriteFile(channel: ByteReadChannel, output: OutputStr
 
         total += read
         if (total > config.fileProcessing.maxBytes) {
-            channel.cancel()
             return false
         }
 

@@ -96,7 +96,8 @@ gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "grem
 luckperms-api = { module = "net.luckperms:api", version = "5.4" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
-ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+# ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-body-limit = { module = "io.ktor:ktor-server-body-limit", version.ref = "ktor" }
 
 # Platform - Paper
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }
@@ -149,4 +150,9 @@ mccoroutine-paper = [
 mccoroutine-velocity = [
     "mccoroutine-velocity-api",
     "mccoroutine-velocity-core"
+]
+ktor-server = [
+    "ktor-server-core",
+    "ktor-server-netty",
+    "ktor-server-body-limit"
 ]

@@ -21,6 +21,7 @@ dependencies {
         downloadIfRequired(libs.bundles.koin)
         downloadIfRequired(libs.bundles.hoplite)
         downloadIfRequired(libs.bundles.commons)
+        downloadIfRequired(libs.bundles.ktor.server)
         downloadIfRequired(libs.okhttp)
         downloadIfRequired(libs.gson)
         downloadIfRequired(libs.caffeine)
@@ -33,8 +34,5 @@ dependencies {
         downloadIfRequired(libs.hash4j)
         downloadIfRequired(libs.imageioWebp)
         downloadIfRequired(libs.charonflow)
-        downloadIfRequired(libs.ktor.server.core)
-        downloadIfRequired(libs.ktor.server.netty)
-        downloadIfRequired(libs.ktor.server.content.negotiation)
     }
 }
