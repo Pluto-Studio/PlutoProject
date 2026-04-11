@@ -3,8 +3,8 @@ package plutoproject.feature.gallery.adapter.common
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import plutoproject.feature.gallery.core.decode.DecodableImageFormat
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
+import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import java.io.BufferedInputStream
 import java.io.ByteArrayInputStream
 import java.io.InputStream
@@ -17,8 +17,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
 import kotlin.io.path.*
-import kotlin.math.max
-import kotlin.math.min
+import plutoproject.feature.gallery.core.decode.ContentType as CoreContentType
 
 private val config by lazy { koin.get<GalleryConfig>() }
 private val logger by lazy { koin.get<Logger>() }
@@ -29,7 +28,7 @@ fun initializeTempFolder(): Result<Path> {
     cleanupTempFolders()
 
     val sub = "$TEMP_FOLDER_SUB${UUID.randomUUID()}"
-    val path = Path(config.upload.tempFolderRoot, sub)
+    val path = Path(config.fileProcessing.tempFolderRoot, sub)
 
     return runCatching {
         path.createDirectories()
@@ -41,7 +40,7 @@ fun initializeTempFolder(): Result<Path> {
 
 @OptIn(ExperimentalPathApi::class)
 private fun cleanupTempFolders() {
-    val tempRoot = Path(config.upload.tempFolderRoot)
+    val tempRoot = Path(config.fileProcessing.tempFolderRoot)
     runCatching {
         if (!tempRoot.exists()) return@runCatching
         tempRoot.listDirectoryEntries()
@@ -53,23 +52,26 @@ private fun cleanupTempFolders() {
 }
 
 sealed interface VerificationResult {
-    data object Pass : VerificationResult
-    data class FileTooLarge(val size: Int) : VerificationResult
-    data class ImageTooLarge(val width: Int, val height: Int, val pixels: Int) : VerificationResult
-    data class ImageTooSmall(val width: Int, val height: Int, val pixels: Int) : VerificationResult
-    data class AbnormalAspectRatio(val width: Int, val height: Int, val aspectRatio: Double) : VerificationResult
-    data class UnallowedExtension(val fileName: String) : VerificationResult
-    data object UnsupportedFormat : VerificationResult
+    data object Ok : VerificationResult
+
+    sealed interface Rejected : VerificationResult
+    data class FileTooLarge(val size: Int) : Rejected
+    data class ImageTooLarge(val width: Int, val height: Int, val pixels: Long) : Rejected
+    data class TooManyFrames(val frameCount: Int) : Rejected
+    data class UnallowedExtension(val fileName: String) : Rejected
+    data object UnsupportedFormat : Rejected
 }
 
 sealed interface UploadState {
-    data class Success(val uploadedFile: UploadedFile) : UploadState
     data object Waiting : UploadState
-    data object Expired : UploadState
-    data object Processing : UploadState
-    data object Cancelled : UploadState
-    data class UnknownFailure(val cause: Throwable?) : UploadState
-    data class VerificationFailure(val result: VerificationResult) : UploadState
+    data object Processing: UploadState
+
+    sealed interface Finished : UploadState
+    data class Completed(val file: UploadedFile) : Finished
+    data object Expired : Finished
+    data object Cancelled : Finished
+    data class VerificationFailed(val result: VerificationResult.Rejected) : UploadState
+    data class Failed(val cause: Throwable?) : UploadState
 }
 
 sealed interface UploadSubmissionResult {
@@ -138,6 +140,12 @@ class UploadedFile(private val tempFile: Path) {
     }
 }
 
+private fun CoreContentType.toKtor(): ContentType {
+    return ContentType(contentType, contentSubType)
+}
+
+private val SUPPORTED_MIME_TYPES = SupportedImageFormat.SUPPORTED_MIME_TYPES.map { it.toKtor() }
+
 class UploadService(
     private val clock: Clock,
     private val tempFolder: Path,
@@ -152,14 +160,8 @@ class UploadService(
     private var isClosed = false
     private val uploadSessionsById = ConcurrentHashMap<UUID, UploadSession>()
 
-    private val uploadConfig by lazy { koin.get<GalleryConfig>().upload }
-    private val allowedExtensions = uploadConfig.allowedFileExtensions.map { it.lowercase() }.toSet()
-    private val supportedMimeTypes = listOf(
-        ContentType.Image.PNG,
-        ContentType.Image.JPEG,
-        ContentType("image", "webp"),
-        ContentType.Image.GIF
-    )
+    private val config by koin.inject<GalleryConfig>()
+    private val allowedExtensions = config.fileProcessing.allowedFileExtensions.map { it.lowercase() }.toSet()
 
     fun createSession(creator: UUID): UploadSession {
         check(!isClosed) { "UploadService is closed" }
@@ -169,7 +171,7 @@ class UploadService(
             creator = creator,
             createdAt = clock.instant(),
             state = MutableStateFlow(UploadState.Waiting),
-            uploadUrl = "${uploadConfig.baseUrl.trimEnd('/')}/upload/$id",
+            uploadUrl = "${config.upload.baseUrl.trimEnd('/')}/upload/$id",
             expiryJob = createExpiryJob(id)
         ).also {
             uploadSessionsById[id] = it
@@ -178,7 +180,7 @@ class UploadService(
 
     private fun createExpiryJob(sessionId: UUID): Job {
         return coroutineScope.launch {
-            delay(uploadConfig.requestExpireAfter)
+            delay(config.upload.requestExpireAfter)
             tryExpire(sessionId)
         }
     }
@@ -209,19 +211,19 @@ class UploadService(
         }
 
         val verificationResult = verifyFile(fileName, contentType, bytes)
-        if (verificationResult != VerificationResult.Pass) {
-            updateUploadSession(id, UploadState.VerificationFailure(verificationResult))
+        if (verificationResult is VerificationResult.Rejected) {
+            updateUploadSession(id, UploadState.VerificationFailed(verificationResult))
             return UploadSubmissionResult.Accepted
         }
 
         return runCatching {
             val tempFile = createTempFileFor(id, fileName)
             tempFile.writeBytes(bytes)
-            updateUploadSession(id, UploadState.Success(UploadedFile(tempFile)))
+            updateUploadSession(id, UploadState.Completed(UploadedFile(tempFile)))
             UploadSubmissionResult.Accepted
         }.getOrElse { exception ->
             logger.log(Level.SEVERE, "An error occurred while storing uploaded file", exception)
-            updateUploadSession(id, UploadState.UnknownFailure(exception))
+            updateUploadSession(id, UploadState.Failed(exception))
             UploadSubmissionResult.UnknownFailure(exception)
         }
     }
@@ -240,11 +242,11 @@ class UploadService(
         isClosed = true
         uploadSessionsById.forEach { (_, session) ->
             session.expiryJob.cancel()
-            if (session.state.value !is UploadState.Success) {
+            if (session.state.value !is UploadState.Completed) {
                 session.state.value = UploadState.Cancelled
                 return@forEach
             }
-            val uploadedFile = (session.state.value as UploadState.Success).uploadedFile
+            val uploadedFile = (session.state.value as UploadState.Completed).file
             uploadedFile.discard()
         }
         uploadSessionsById.clear()
@@ -256,7 +258,7 @@ class UploadService(
         contentType: ContentType?,
         bytes: ByteArray,
     ): VerificationResult {
-        if (bytes.size > uploadConfig.maxBytes) {
+        if (bytes.size > config.fileProcessing.maxBytes) {
             return VerificationResult.FileTooLarge(bytes.size)
         }
 
@@ -265,35 +267,19 @@ class UploadService(
             return VerificationResult.UnallowedExtension(fileName.orEmpty())
         }
 
-        if (contentType != null && contentType !in supportedMimeTypes) {
+        if (contentType != null && contentType !in SUPPORTED_MIME_TYPES) {
             return VerificationResult.UnsupportedFormat
         }
 
         val format = ImageFormatSniffer.sniff(bytes, fileName) ?: return VerificationResult.UnsupportedFormat
         val dimensions = readImageDimensions(bytes, format) ?: return VerificationResult.UnsupportedFormat
-        val pixels = (dimensions.width.toLong() * dimensions.height.toLong())
-            .coerceAtMost(Int.MAX_VALUE.toLong())
-            .toInt()
+        val pixels = dimensions.width.toLong() * dimensions.height.toLong()
 
-        if (
-            dimensions.width > uploadConfig.maxWidth ||
-            dimensions.height > uploadConfig.maxHeight ||
-            pixels > uploadConfig.maxPixels
-        ) {
+        if (pixels > config.fileProcessing.maxPixels.toLong() || pixels > Int.MAX_VALUE.toLong()) {
             return VerificationResult.ImageTooLarge(dimensions.width, dimensions.height, pixels)
         }
 
-        val shortEdge = min(dimensions.width, dimensions.height)
-        if (shortEdge < uploadConfig.minShortEdge || pixels < uploadConfig.minPixels) {
-            return VerificationResult.ImageTooSmall(dimensions.width, dimensions.height, pixels)
-        }
-
-        val aspectRatio = max(dimensions.width, dimensions.height).toDouble() / shortEdge.toDouble()
-        if (aspectRatio > uploadConfig.maxAspectRatio) {
-            return VerificationResult.AbnormalAspectRatio(dimensions.width, dimensions.height, aspectRatio)
-        }
-
-        return VerificationResult.Pass
+        return VerificationResult.Ok
     }
 
     private fun createTempFileFor(id: UUID, fileName: String?): Path {
@@ -319,7 +305,7 @@ private fun String?.extensionOrEmpty(): String {
 
 private suspend fun readImageDimensions(
     bytes: ByteArray,
-    format: DecodableImageFormat,
+    format: SupportedImageFormat,
 ): ImageDimensions? = withContext(Dispatchers.IO) {
     val imageInput = format.inputStreamSpi?.createInputStreamInstance(bytes, false, null)
         ?: ImageIO.createImageInputStream(ByteArrayInputStream(bytes))

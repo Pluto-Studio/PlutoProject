@@ -22,7 +22,7 @@ object UnifiedImageDecoder {
             ?: return Result.Failure(DecodeResult.UnsupportedFormat)
 
         return when (format) {
-            DecodableImageFormat.GIF -> GifDecoder.decode(bytes, constraints).wrapAnimated()
+            SupportedImageFormat.Gif -> GifDecoder.decode(bytes, constraints).wrapAnimated()
             else -> StaticImageDecoder.decode(
                 bytes = bytes,
                 constraints = constraints,

@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.minutes
 
 data class GalleryConfig(
     val image: ImageSettings = ImageSettings(),
+    val fileProcessing: FileProcessingSettings = FileProcessingSettings(),
     val upload: UploadSettings = UploadSettings(),
     val decode: DecodeSettings = DecodeSettings(),
     val render: RenderSettings = RenderSettings(),
@@ -31,49 +32,56 @@ data class ImageSettings(
     val mapIdRange: MapIdRangeSettings = MapIdRangeSettings(),
     val maxNameLength: Int = 20,
     val maxImagesPerPlayer: Int = 20,
-)
+    val maxMapBlocks: Int = 16,
+    val staticMaxMapBlocks: Int? = null,
+    val animatedMaxMapBlocks: Int? = 1,
+    val maxLongEdgeBlocks: Int = 8,
+) {
+    val effectiveStaticMaxMapBlocks: Int
+        get() = staticMaxMapBlocks ?: maxMapBlocks
+
+    val effectiveAnimatedMaxMapBlocks: Int
+        get() = animatedMaxMapBlocks ?: maxMapBlocks
+}
 
 data class MapIdRangeSettings(
     val start: Int = 100_000_000,
     val end: Int = 100_499_999,
 )
 
+data class FileProcessingSettings(
+    val maxBytes: Int = 10 * 1024 * 1024, // 10 MiB
+    val maxPixels: Int = 16_777_216, // 4096 * 4096
+    val maxFrames: Int = 200,
+    val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
+    val tempFolderRoot: String = "/tmp/",
+)
+
 data class UploadSettings(
     val requestExpireAfter: Duration = 10.minutes,
-    val maxBytes: Int = 10 * 1024 * 1024, // 10 MiB
-    val maxWidth: Int = 4096,
-    val maxHeight: Int = 4096,
-    val maxPixels: Int = 16_777_216, // 4096 * 4096
-    val minShortEdge: Int = 16,
-    val minPixels: Int = 256, // 16 * 16
-    val maxAspectRatio: Double = 8.0,
-    val allowedFileExtensions: List<String> = listOf("png", "jpg", "jpeg", "webp", "gif"),
-    val supportedFormatNames: List<String> = listOf("PNG", "JPEG", "WebP", "GIF"),
-    val tempFolderRoot: String = "/tmp/",
     val baseUrl: String = "https://gallery.plutoproject.club/",
     val port: Int = 24213,
+    val suggestedMaxWidth: Int = 4096,
+    val suggestedMaxHeight: Int = 4096,
 )
 
 data class DecodeSettings(
     val maxParallelTasks: Int = 2,
-    val maxBytes: Int = 10_485_760, // 10 MiB
-    val maxPixels: Int = 16_777_216, // 4096 * 4096
-    val maxFrames: Int = 200,
 )
 
 data class RenderSettings(
     val maxParallelTasks: Int = 4,
-    val defaultRepositionMode: RepositionMode = RepositionMode.CONTAIN,
-    val defaultScaleMode: ScaleMode = ScaleMode.BILINEAR,
-    val defaultQuantizeMode: QuantizeMode = QuantizeMode.RGB565,
-    val defaultDitherMode: DitherMode = DitherMode.FLOYD_STEINBERG,
+    val repositionMode: RepositionMode = RepositionMode.CONTAIN,
+    val scaleMode: ScaleMode = ScaleMode.BILINEAR,
+    val quantizeMode: QuantizeMode = QuantizeMode.RGB565,
+    val ditherMode: DitherMode = DitherMode.FLOYD_STEINBERG,
 ) {
     val renderComponents: RenderComponents
         get() = RenderComponents(
-            repositioner = defaultRepositionMode.repositioner,
-            scaler = defaultScaleMode.scaler,
-            quantizer = defaultQuantizeMode.quantizer,
-            ditherer = defaultDitherMode.ditherer
+            repositioner = repositionMode.repositioner,
+            scaler = scaleMode.scaler,
+            quantizer = quantizeMode.quantizer,
+            ditherer = ditherMode.ditherer
         )
 }
 

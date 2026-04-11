@@ -5,45 +5,80 @@ import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStreamSpi
 import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
 
-enum class DecodableImageFormat(
-    val inputStreamSpi: ImageInputStreamSpi? = null,
-    val readerSpi: ImageReaderSpi? = null,
+class A {
+
+}
+
+sealed interface SupportedImageFormat {
+    val inputStreamSpi: ImageInputStreamSpi?
+    val readerSpi: ImageReaderSpi?
+
+    companion object {
+        val SUPPORTED_FORMAT_NAMES = listOf("PNG", "JPEG", "WebP", "GIF")
+        val SUPPORTED_MIME_TYPES = listOf(
+            ContentType("png"),
+            ContentType("jpeg"),
+            ContentType("webp"),
+            ContentType("gif"),
+        )
+    }
+
+    data object Png : SupportedImageFormat {
+        override val inputStreamSpi: ImageInputStreamSpi? = null
+        override val readerSpi: ImageReaderSpi? = null
+    }
+
+    data object Jpeg : SupportedImageFormat {
+        override val inputStreamSpi: ImageInputStreamSpi? = null
+        override val readerSpi: ImageReaderSpi? = null
+    }
+
+    data object Webp : SupportedImageFormat {
+        override val inputStreamSpi: ImageInputStreamSpi = ByteArrayImageInputStreamSpi()
+        override val readerSpi: ImageReaderSpi = WebPImageReaderSpi()
+    }
+
+    data object Gif : SupportedImageFormat {
+        override val inputStreamSpi: ImageInputStreamSpi? = null
+        override val readerSpi: ImageReaderSpi? = null
+    }
+}
+
+data class ContentType(
+    val contentSubType: String
 ) {
-    PNG,
-    JPEG,
-    WEBP(inputStreamSpi = ByteArrayImageInputStreamSpi(), readerSpi = WebPImageReaderSpi()),
-    GIF,
+    val contentType: String = "image"
 }
 
 object ImageFormatSniffer {
-    fun sniff(bytes: ByteArray, fileNameHint: String?): DecodableImageFormat? {
+    fun sniff(bytes: ByteArray, fileNameHint: String?): SupportedImageFormat? {
         sniffByMagic(bytes)?.let { return it }
         return sniffByFileName(fileNameHint)
     }
 }
 
 
-private fun sniffByMagic(bytes: ByteArray): DecodableImageFormat? {
+private fun sniffByMagic(bytes: ByteArray): SupportedImageFormat? {
     return when {
-        isPng(bytes) -> DecodableImageFormat.PNG
-        isJpeg(bytes) -> DecodableImageFormat.JPEG
-        isGif(bytes) -> DecodableImageFormat.GIF
-        isWebp(bytes) -> DecodableImageFormat.WEBP
+        isPng(bytes) -> SupportedImageFormat.Png
+        isJpeg(bytes) -> SupportedImageFormat.Jpeg
+        isGif(bytes) -> SupportedImageFormat.Gif
+        isWebp(bytes) -> SupportedImageFormat.Webp
         else -> null
     }
 }
 
-private fun sniffByFileName(fileNameHint: String?): DecodableImageFormat? {
+private fun sniffByFileName(fileNameHint: String?): SupportedImageFormat? {
     val extension = fileNameHint
         ?.substringAfterLast('.', missingDelimiterValue = "")
         ?.lowercase()
         .orEmpty()
 
     return when (extension) {
-        "png" -> DecodableImageFormat.PNG
-        "jpg", "jpeg" -> DecodableImageFormat.JPEG
-        "gif" -> DecodableImageFormat.GIF
-        "webp" -> DecodableImageFormat.WEBP
+        "png" -> SupportedImageFormat.Png
+        "jpg", "jpeg" -> SupportedImageFormat.Jpeg
+        "gif" -> SupportedImageFormat.Gif
+        "webp" -> SupportedImageFormat.Webp
         else -> null
     }
 }

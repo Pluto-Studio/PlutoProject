@@ -16,8 +16,8 @@ import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.feature.gallery.adapter.common.DecodeSettings
 import plutoproject.feature.gallery.adapter.common.DitherMode
+import plutoproject.feature.gallery.adapter.common.FileProcessingSettings
 import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.QuantizeMode
 import plutoproject.feature.gallery.adapter.common.RepositionMode
@@ -263,7 +263,7 @@ object GalleyDebugCommand {
     ): CreateImageDebugResult {
         val decodeResult = UnifiedImageDecoder.decode(
             bytes = bytes,
-            constraints = galleryConfig.decode.toConstraints(),
+            constraints = galleryConfig.fileProcessing.decodeConstraints(),
             fileNameHint = fileNameHint,
         )
 
@@ -377,10 +377,10 @@ object GalleyDebugCommand {
                 return null
             }
 
-        val effectiveRepositionMode = repositionMode ?: galleryConfig.render.defaultRepositionMode
-        val effectiveScaleMode = scaleMode ?: galleryConfig.render.defaultScaleMode
-        val effectiveQuantizeMode = quantizeMode ?: galleryConfig.render.defaultQuantizeMode
-        val effectiveDitherMode = ditherMode ?: galleryConfig.render.defaultDitherMode
+        val effectiveRepositionMode = repositionMode ?: galleryConfig.render.repositionMode
+        val effectiveScaleMode = scaleMode ?: galleryConfig.render.scaleMode
+        val effectiveQuantizeMode = quantizeMode ?: galleryConfig.render.quantizeMode
+        val effectiveDitherMode = ditherMode ?: galleryConfig.render.ditherMode
 
         return CreateRequest(
             name = name,
@@ -433,7 +433,7 @@ object GalleyDebugCommand {
                     true
                 }
 
-                is UploadState.VerificationFailure -> {
+                is UploadState.VerificationFailed -> {
                     sendPlayerMessage(
                         playerId,
                         "Create-upload session update: state=VerificationFailure, sessionId=${session.id}. reason=${describeVerificationResult(state.result)}"
@@ -441,14 +441,14 @@ object GalleyDebugCommand {
                     true
                 }
 
-                is UploadState.Success -> {
+                is UploadState.Completed -> {
                     sendPlayerMessage(
                         playerId,
                         "Create-upload session update: state=Success, sessionId=${session.id}. The file upload succeeded and image creation is starting."
                     )
 
                     val uploadedBytes = withContext(Dispatchers.Loom) {
-                        state.uploadedFile.use { inputStream -> inputStream.readBytes() }
+                        state.file.use { inputStream -> inputStream.readBytes() }
                     }
                     val bytes = uploadedBytes.getOrElse {
                         sendPlayerMessage(
@@ -497,7 +497,7 @@ object GalleyDebugCommand {
                     true
                 }
 
-                is UploadState.UnknownFailure -> {
+                is UploadState.Failed -> {
                     sendPlayerMessage(
                         playerId,
                         "Create-upload session update: state=UnknownFailure, sessionId=${session.id}, cause=${state.cause}"
@@ -605,7 +605,7 @@ object GalleyDebugCommand {
         }
     }
 
-    private fun DecodeSettings.toConstraints(): DecodeConstraints {
+    private fun FileProcessingSettings.decodeConstraints(): DecodeConstraints {
         return DecodeConstraints(
             maxBytes = maxBytes,
             maxPixels = maxPixels,
@@ -636,12 +636,11 @@ object GalleyDebugCommand {
 
     private fun describeVerificationResult(result: VerificationResult): String {
         return when (result) {
-            VerificationResult.Pass -> "VerificationResult.Pass"
+            VerificationResult.Ok -> "VerificationResult.Pass"
             is VerificationResult.FileTooLarge -> "VerificationResult.FileTooLarge(size=${result.size})"
             is VerificationResult.ImageTooLarge -> "VerificationResult.ImageTooLarge(width=${result.width}, height=${result.height}, pixels=${result.pixels})"
-            is VerificationResult.ImageTooSmall -> "VerificationResult.ImageTooSmall(width=${result.width}, height=${result.height}, pixels=${result.pixels})"
-            is VerificationResult.AbnormalAspectRatio -> "VerificationResult.AbnormalAspectRatio(width=${result.width}, height=${result.height}, aspectRatio=${result.aspectRatio})"
             is VerificationResult.UnallowedExtension -> "VerificationResult.UnallowedExtension(fileName=${quote(result.fileName)})"
+            is VerificationResult.TooManyFrames ->"VerificationResult.TooManyFrames(frameCount=${result.frameCount})"
             VerificationResult.UnsupportedFormat -> "VerificationResult.UnsupportedFormat"
         }
     }

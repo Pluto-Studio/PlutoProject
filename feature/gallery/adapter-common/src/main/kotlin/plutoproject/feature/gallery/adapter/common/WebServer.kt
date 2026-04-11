@@ -11,6 +11,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.serialization.json.Json
+import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import plutoproject.framework.common.util.featureDataFolder
 import java.nio.file.Path
 import java.util.*
@@ -18,7 +19,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.io.path.createDirectories
 
-private val galleryConfig by lazy { koin.get<GalleryConfig>() }
+private val config by lazy { koin.get<GalleryConfig>() }
 private val uploadService by lazy { koin.get<UploadService>() }
 private val logger by lazy { koin.get<Logger>() }
 private val webRoot = featureDataFolder.resolve("gallery/web").toPath().also { it.createDirectories() }
@@ -38,13 +39,13 @@ fun startWebServer() {
 
     val server = embeddedServer(
         factory = Netty,
-        port = galleryConfig.upload.port,
+        port = config.upload.port,
         module = createWebModule()
     )
     server.start(wait = false)
     engine = server
 
-    logger.info("Gallery web server started on port ${galleryConfig.upload.port}")
+    logger.info("Gallery web server started on port ${config.upload.port}")
 }
 
 fun stopWebServer() {
@@ -141,7 +142,7 @@ private suspend fun ApplicationCall.readUploadedFile(): UploadedMultipartFile? {
     var contentType: io.ktor.http.ContentType? = null
     var bytes: ByteArray? = null
 
-    val multipart = receiveMultipart(formFieldLimit = galleryConfig.upload.maxBytes.toLong() + 1024)
+    val multipart = receiveMultipart(formFieldLimit = config.fileProcessing.maxBytes.toLong() + 1024)
     while (true) {
         val part = multipart.readPart() ?: break
         when (part) {
@@ -193,30 +194,15 @@ private suspend inline fun <reified T> ApplicationCall.respondJson(status: HttpS
 }
 
 private fun buildConfigPayload() = UploadConfigResponse(
-    maxBytes = galleryConfig.upload.maxBytes,
-    maxWidth = galleryConfig.upload.maxWidth,
-    maxHeight = galleryConfig.upload.maxHeight,
-    maxPixels = galleryConfig.upload.maxPixels,
-    minShortEdge = galleryConfig.upload.minShortEdge,
-    minPixels = galleryConfig.upload.minPixels,
-    maxAspectRatio = galleryConfig.upload.maxAspectRatio,
-    allowedFileExtensions = galleryConfig.upload.allowedFileExtensions,
-    allowedMimeTypes = galleryConfig.upload.allowedFileExtensions.mapNotNull(::mimeTypeFor).distinct(),
-    supportedFormatNames = galleryConfig.upload.supportedFormatNames,
+    maxBytes = config.fileProcessing.maxBytes,
+    maxPixels = config.fileProcessing.maxPixels,
+    allowedFileExtensions = config.fileProcessing.allowedFileExtensions,
+    allowedMimeTypes = SupportedImageFormat.SUPPORTED_MIME_TYPES.map { "${it.contentType}/${it.contentSubType}" },
+    supportedFormatNames = SupportedImageFormat.SUPPORTED_FORMAT_NAMES,
 )
 
 private data class UploadedMultipartFile(
     val fileName: String?,
-    val contentType: io.ktor.http.ContentType?,
+    val contentType: ContentType?,
     val bytes: ByteArray,
 )
-
-private fun mimeTypeFor(extension: String): String? {
-    return when (extension.lowercase()) {
-        "png" -> "image/png"
-        "jpg", "jpeg" -> "image/jpeg"
-        "gif" -> "image/gif"
-        "webp" -> "image/webp"
-        else -> null
-    }
-}
