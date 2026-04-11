@@ -135,7 +135,7 @@ enum class DitherMode {
 data class DisplaySettings(
     val static: StaticDisplaySettings = StaticDisplaySettings(),
     val animated: AnimatedDisplaySettings = AnimatedDisplaySettings(),
-    val visibleDistance: Double = 64.0,
+    val visibleDistance: Double = 32.0,
 )
 
 data class StaticDisplaySettings(
@@ -143,11 +143,11 @@ data class StaticDisplaySettings(
 )
 
 data class AnimatedDisplaySettings(
-    val maxFramesPerSecond: Int = 20,
+    val maxFramesPerSecond: Int = 10,
 )
 
 data class SendSettings(
     val maxQueueSize: Int = 256,
-    val maxUpdatesInSpan: Int = 10,
-    val updateLimitSpan: Duration = 50.milliseconds,
+    val maxUpdatesInSpan: Int = 1,
+    val updateLimitSpan: Duration = 100.milliseconds,
 )
