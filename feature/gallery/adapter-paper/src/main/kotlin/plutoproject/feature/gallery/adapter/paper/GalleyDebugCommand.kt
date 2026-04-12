@@ -37,9 +37,7 @@ import plutoproject.feature.gallery.core.render.*
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 import java.util.*
-import kotlin.math.ceil
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val PERMISSION_GALLERY_DEBUG = "plutoproject.gallery.command.gallery.debug"
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
@@ -549,20 +547,11 @@ object GalleyDebugCommand {
         width: Int,
         height: Int,
     ): AnimatedImageRenderSettings {
-        val frameInterval = frameInterval(galleryConfig.display.animated.maxFramesPerSecond)
         return AnimatedImageRenderSettings(
             basicSettings = buildBasicRenderSettings(renderComponents, width, height),
-            minFrameDuration = frameInterval,
-            outputFrameInterval = frameInterval,
+            minFrameDuration = galleryConfig.render.animated.minFrameDuration,
+            outputFrameInterval = galleryConfig.render.animated.outputFrameInterval,
         )
-    }
-
-    private fun frameInterval(maxFramesPerSecond: Int): Duration {
-        if (maxFramesPerSecond <= 0) {
-            return 50.milliseconds
-        }
-
-        return maxOf(1L, ceil(1000.0 / maxFramesPerSecond.toDouble()).toLong()).milliseconds
     }
 
     private fun giveItem(player: Player, itemStack: ItemStack): Int {

@@ -80,6 +80,7 @@ data class RenderSettings(
     val scaleMode: ScaleMode = ScaleMode.BILINEAR,
     val quantizeMode: QuantizeMode = QuantizeMode.RGB565,
     val ditherMode: DitherMode = DitherMode.FLOYD_STEINBERG,
+    val animated: AnimatedRenderSettings = AnimatedRenderSettings(),
 ) {
     val renderComponents: RenderComponents
         get() = RenderComponents(
@@ -88,6 +89,16 @@ data class RenderSettings(
             quantizer = quantizeMode.quantizer,
             ditherer = ditherMode.ditherer
         )
+}
+
+data class AnimatedRenderSettings(
+    val minFrameDuration: Duration = 20.milliseconds,
+    val outputFrameInterval: Duration = 50.milliseconds,
+) {
+    init {
+        check(minFrameDuration.isPositive()) { "minFrameDuration must be positive" }
+        check(outputFrameInterval.isPositive()) { "outputFrameInterval must be positive" }
+    }
 }
 
 enum class RepositionMode {

@@ -56,12 +56,10 @@ import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 import java.util.UUID
-import kotlin.math.ceil
-import kotlin.time.Duration.Companion.milliseconds
 
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
 
-private val galleryConfig = koin.get<GalleryConfig>()
+private val config = koin.get<GalleryConfig>()
 private val allocateMapIdUseCase = koin.get<AllocateMapIdUseCase>()
 private val imageStore = koin.get<ImageStore>()
 private val imageDataStore = koin.get<ImageDataStore>()
@@ -100,7 +98,7 @@ suspend fun hasUnfinishedImageCreateSession(playerId: UUID): Boolean {
 }
 
 suspend fun hasReachedImageLimit(playerId: UUID): Boolean {
-    return imageStore.findByOwner(playerId).size >= galleryConfig.image.maxImagesPerPlayer
+    return imageStore.findByOwner(playerId).size >= config.image.maxImagesPerPlayer
 }
 
 suspend fun deleteOwnedImage(playerId: UUID, imageId: UUID): Boolean {
@@ -127,7 +125,7 @@ suspend fun submitImageCreate(
 ): ImageCreateSubmissionResult {
     val mapCount = runCatching { Math.multiplyExact(width, height) }
         .getOrElse { return ImageCreateSubmissionResult.TooManyMapBlocks }
-    if (mapCount > galleryConfig.image.maxMapBlocks) {
+    if (mapCount > config.image.maxMapBlocks) {
         return ImageCreateSubmissionResult.TooManyMapBlocks
     }
     if (hasReachedImageLimit(player.uniqueId)) {
@@ -139,11 +137,11 @@ suspend fun submitImageCreate(
         width = width,
         height = height,
         mapCount = mapCount,
-        repositionMode = galleryConfig.render.repositionMode,
-        scaleMode = galleryConfig.render.scaleMode,
-        quantizeMode = galleryConfig.render.quantizeMode,
-        ditherMode = galleryConfig.render.ditherMode,
-        renderComponents = galleryConfig.render.renderComponents,
+        repositionMode = config.render.repositionMode,
+        scaleMode = config.render.scaleMode,
+        quantizeMode = config.render.quantizeMode,
+        ditherMode = config.render.ditherMode,
+        renderComponents = config.render.renderComponents,
     )
 
     return when (val result = uploadService.createSessionIfAbsent(player.uniqueId)) {
@@ -165,7 +163,7 @@ suspend fun submitImageCreate(
                     raw(
                         IMAGE_CREATE_SESSION_CREATED_SUFFIX.replace(
                             IMAGE_PLACEHOLDER_EXPIRE,
-                            galleryConfig.upload.requestExpireAfter.toFormattedComponent()
+                            config.upload.requestExpireAfter.toFormattedComponent()
                         )
                     )
                 }
@@ -264,7 +262,7 @@ private suspend fun createImageFromBytes(
     request: ImageCreateRequest,
     bytes: ByteArray,
 ): ImageCreateResult {
-    val decodeResult = UnifiedImageDecoder.decode(bytes, galleryConfig.fileProcessing.decodeConstraints())
+    val decodeResult = UnifiedImageDecoder.decode(bytes, config.fileProcessing.decodeConstraints())
 
     val imageData = when (decodeResult) {
         is UnifiedImageDecoder.Result.Failure -> {
@@ -386,20 +384,11 @@ private fun buildAnimatedRenderSettings(
     width: Int,
     height: Int,
 ): AnimatedImageRenderSettings {
-    val frameInterval = frameInterval(galleryConfig.display.animated.maxFramesPerSecond)
     return AnimatedImageRenderSettings(
         basicSettings = buildBasicRenderSettings(renderComponents, width, height),
-        minFrameDuration = frameInterval,
-        outputFrameInterval = frameInterval,
+        minFrameDuration = config.render.animated.minFrameDuration,
+        outputFrameInterval = config.render.animated.outputFrameInterval,
     )
-}
-
-private fun frameInterval(maxFramesPerSecond: Int): kotlin.time.Duration {
-    if (maxFramesPerSecond <= 0) {
-        return 50.milliseconds
-    }
-
-    return maxOf(1L, ceil(1000.0 / maxFramesPerSecond.toDouble()).toLong()).milliseconds
 }
 
 private fun giveItem(player: Player, itemStack: ItemStack): Int {
