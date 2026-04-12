@@ -170,6 +170,11 @@ sealed interface UploadSubmissionResult {
     data object Conflict : UploadSubmissionResult
 }
 
+sealed interface UploadSessionCreateResult {
+    data class Created(val session: UploadSession) : UploadSessionCreateResult
+    data class Conflict(val session: UploadSession) : UploadSessionCreateResult
+}
+
 class UploadSession(
     val id: UUID,
     val creator: UUID,
@@ -287,7 +292,10 @@ class UploadService(
             if (msg != null) {
                 when (msg) {
                     is Msg.CreateSession -> handleCreateSession(uploadSessionsById, msg)
+                    is Msg.CreateSessionIfAbsent -> handleCreateSessionIfAbsent(uploadSessionsById, msg)
                     is Msg.GetSession -> handleGetSession(uploadSessionsById, msg)
+                    is Msg.GetUnfinishedSession -> handleGetUnfinishedSession(uploadSessionsById, msg)
+                    is Msg.CancelUnfinishedSession -> handleCancelUnfinishedSession(uploadSessionsById, msg)
                     is Msg.SubmitUpload -> handleSubmitUpload(uploadSessionsById, msg)
                     Msg.Stop -> {
                         handleStop(uploadSessionsById)
@@ -315,23 +323,46 @@ class UploadService(
     }
 
     private fun handleCreateSession(uploadSessionsById: MutableMap<UUID, UploadSession>, msg: Msg.CreateSession) {
-        val id = UUID.randomUUID()
-        val now = clock.instant()
-        val session = UploadSession(
-            id = id,
-            creator = msg.creator,
-            createdAt = now,
-            expireAt = now.plus(config.upload.requestExpireAfter.toJavaDuration()),
-            removeAt = now.plus(config.upload.requestRemoveAfter.toJavaDuration()),
-            state = MutableStateFlow(UploadState.Waiting),
-            uploadUrl = "${config.upload.baseUrl.trimEnd('/')}/upload/$id/",
-        )
-        uploadSessionsById[id] = session
+        val session = newSession(msg.creator)
+        uploadSessionsById[session.id] = session
         msg.reply.complete(session)
+    }
+
+    private fun handleCreateSessionIfAbsent(
+        uploadSessionsById: MutableMap<UUID, UploadSession>,
+        msg: Msg.CreateSessionIfAbsent
+    ) {
+        val existingSession = findUnfinishedSession(uploadSessionsById, msg.creator)
+        if (existingSession != null) {
+            msg.reply.complete(UploadSessionCreateResult.Conflict(existingSession))
+            return
+        }
+
+        val session = newSession(msg.creator)
+        uploadSessionsById[session.id] = session
+        msg.reply.complete(UploadSessionCreateResult.Created(session))
     }
 
     private fun handleGetSession(uploadSessionsById: MutableMap<UUID, UploadSession>, msg: Msg.GetSession) {
         msg.reply.complete(uploadSessionsById[msg.sessionId])
+    }
+
+    private fun handleGetUnfinishedSession(
+        uploadSessionsById: MutableMap<UUID, UploadSession>,
+        msg: Msg.GetUnfinishedSession
+    ) {
+        msg.reply.complete(findUnfinishedSession(uploadSessionsById, msg.creator))
+    }
+
+    private fun handleCancelUnfinishedSession(
+        uploadSessionsById: MutableMap<UUID, UploadSession>,
+        msg: Msg.CancelUnfinishedSession
+    ) {
+        val session = findUnfinishedSession(uploadSessionsById, msg.creator)
+        if (session != null) {
+            session.state.value = UploadState.Cancelled
+        }
+        msg.reply.complete(session)
     }
 
     private suspend fun handleSubmitUpload(uploadSessionsById: MutableMap<UUID, UploadSession>, msg: Msg.SubmitUpload) {
@@ -372,7 +403,13 @@ class UploadService(
 
     private sealed interface Msg {
         data class CreateSession(val creator: UUID, val reply: CompletableDeferred<UploadSession>) : Msg
+        data class CreateSessionIfAbsent(
+            val creator: UUID,
+            val reply: CompletableDeferred<UploadSessionCreateResult>
+        ) : Msg
         data class GetSession(val sessionId: UUID, val reply: CompletableDeferred<UploadSession?>) : Msg
+        data class GetUnfinishedSession(val creator: UUID, val reply: CompletableDeferred<UploadSession?>) : Msg
+        data class CancelUnfinishedSession(val creator: UUID, val reply: CompletableDeferred<UploadSession?>) : Msg
         data class SubmitUpload(
             val sessionId: UUID,
             val tempFile: Path,
@@ -391,10 +428,31 @@ class UploadService(
         return reply.await()
     }
 
+    suspend fun createSessionIfAbsent(creator: UUID): UploadSessionCreateResult {
+        check(job.isActive) { "UploadService is closed" }
+        val reply = CompletableDeferred<UploadSessionCreateResult>()
+        channel.trySend(Msg.CreateSessionIfAbsent(creator, reply))
+        return reply.await()
+    }
+
     suspend fun getSession(sessionId: UUID): UploadSession? {
         check(job.isActive) { "UploadService is closed" }
         val reply = CompletableDeferred<UploadSession?>()
         channel.trySend(Msg.GetSession(sessionId, reply))
+        return reply.await()
+    }
+
+    suspend fun getUnfinishedSession(creator: UUID): UploadSession? {
+        check(job.isActive) { "UploadService is closed" }
+        val reply = CompletableDeferred<UploadSession?>()
+        channel.trySend(Msg.GetUnfinishedSession(creator, reply))
+        return reply.await()
+    }
+
+    suspend fun cancelUnfinishedSession(creator: UUID): UploadSession? {
+        check(job.isActive) { "UploadService is closed" }
+        val reply = CompletableDeferred<UploadSession?>()
+        channel.trySend(Msg.CancelUnfinishedSession(creator, reply))
         return reply.await()
     }
 
@@ -418,6 +476,29 @@ class UploadService(
         job.join()
         channel.close()
         tempFolderHandle.cleanupAndClose()
+    }
+
+    private fun newSession(creator: UUID): UploadSession {
+        val id = UUID.randomUUID()
+        val now = clock.instant()
+        return UploadSession(
+            id = id,
+            creator = creator,
+            createdAt = now,
+            expireAt = now.plus(config.upload.requestExpireAfter.toJavaDuration()),
+            removeAt = now.plus(config.upload.requestRemoveAfter.toJavaDuration()),
+            state = MutableStateFlow(UploadState.Waiting),
+            uploadUrl = "${config.upload.baseUrl.trimEnd('/')}/upload/$id/",
+        )
+    }
+
+    private fun findUnfinishedSession(
+        uploadSessionsById: Map<UUID, UploadSession>,
+        creator: UUID
+    ): UploadSession? {
+        return uploadSessionsById.values
+            .filter { it.creator == creator && !it.isFinished() }
+            .maxByOrNull { it.createdAt }
     }
 
     fun getTempFile(sessionId: UUID): Result<Path> = runCatching {

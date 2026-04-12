@@ -12,7 +12,11 @@ import plutoproject.feature.gallery.adapter.paper.listener.ItemFrameListener
 import plutoproject.feature.gallery.adapter.paper.listener.PlayerListener
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.paper.api.menu.MenuManager
+import plutoproject.feature.paper.api.menu.isMenuAvailable
+import plutoproject.framework.common.api.feature.Load
 import plutoproject.framework.common.api.feature.Platform
+import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.paper.api.feature.PaperFeature
@@ -24,7 +28,8 @@ import kotlin.coroutines.CoroutineContext
 
 @Feature(
     id = "gallery",
-    platform = Platform.PAPER
+    platform = Platform.PAPER,
+    dependencies = [Dependency(id = "menu", load = Load.BEFORE, required = false)]
 )
 class GalleryFeature : PaperFeature() {
     private val module = module {
@@ -45,7 +50,13 @@ class GalleryFeature : PaperFeature() {
         }
 
         onFeatureEnable()
-        AnnotationParser.parse(GalleyDebugCommand)
+        if (isMenuAvailable) {
+            MenuManager.registerButton(ImageListMenuButtonDescriptor) { ImageListMenuButton() }
+        }
+        AnnotationParser.parse(
+            GalleyDebugCommand,
+            GalleryCancelUploadCommand,
+        )
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
         server.pluginManager.registerSuspendingEvents(ChunkListener, plugin)
         server.pluginManager.registerSuspendingEvents(ItemFrameListener, plugin)

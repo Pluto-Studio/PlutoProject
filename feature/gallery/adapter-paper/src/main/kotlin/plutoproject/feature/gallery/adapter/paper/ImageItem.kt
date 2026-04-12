@@ -111,11 +111,11 @@ fun createImageItem(image: Image): ItemStack {
 }
 
 private fun Component.resolveImagePlaceholders(image: Image): Component {
-    return replace("<name>", image.name)
-        .replace("<creator>", image.ownerName)
-        .replace("<time>", "TODO")
-        .replace("<width>", image.widthBlocks)
-        .replace("<height>", image.heightBlocks)
+    return replace(IMAGE_PLACEHOLDER_NAME, image.name)
+        .replace(IMAGE_PLACEHOLDER_CREATOR, image.ownerName)
+        .replace(IMAGE_PLACEHOLDER_TIME, "TODO")
+        .replace(IMAGE_PLACEHOLDER_WIDTH, image.widthBlocks)
+        .replace(IMAGE_PLACEHOLDER_HEIGHT, image.heightBlocks)
 }
 
 fun ItemStack.isImageItem(): Boolean {
