@@ -1,10 +1,10 @@
 package plutoproject.framework.common.util.buildinfo
 
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.time.Instant
 
 interface BuildInfo {
-    companion object : BuildInfo by Koin.get()
+    companion object : BuildInfo by globalKoin.get()
 
     val version: String
     val releaseName: String

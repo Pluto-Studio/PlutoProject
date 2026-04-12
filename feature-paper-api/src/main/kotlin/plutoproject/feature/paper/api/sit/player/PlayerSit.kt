@@ -3,13 +3,13 @@ package plutoproject.feature.paper.api.sit.player
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.SitOptions
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 /**
  * 玩家乘坐玩家功能基础接口。
  */
 interface PlayerSit {
-    companion object : PlayerSit by Koin.get()
+    companion object : PlayerSit by globalKoin.get()
 
     /**
      * 已创建的 [PlayerStack] 实例。

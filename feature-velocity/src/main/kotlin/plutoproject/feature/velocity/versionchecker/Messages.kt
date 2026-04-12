@@ -2,9 +2,9 @@ package plutoproject.feature.velocity.versionchecker
 
 import ink.pmc.advkt.component.*
 import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
-private val config by Koin.inject<VersionCheckerConfig>()
+private val config by globalKoin.inject<VersionCheckerConfig>()
 
 val VERSION_RANGE = if (config.supportedGameVersions.size == 1) {
     config.supportedGameVersions.first()

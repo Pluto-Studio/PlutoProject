@@ -8,7 +8,7 @@ import plutoproject.feature.paper.recipe.recipes.registerVanillaExtend
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
@@ -25,7 +25,7 @@ class RecipeFeature : PaperFeature(), KoinComponent {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)

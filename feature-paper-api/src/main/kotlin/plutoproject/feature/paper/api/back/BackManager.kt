@@ -2,11 +2,11 @@ package plutoproject.feature.paper.api.back
 
 import org.bukkit.Location
 import org.bukkit.entity.Player
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 @Suppress("UNUSED")
 interface BackManager {
-    companion object : BackManager by Koin.get()
+    companion object : BackManager by globalKoin.get()
 
     suspend fun has(player: Player): Boolean
 

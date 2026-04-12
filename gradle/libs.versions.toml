@@ -1,5 +1,6 @@
 [versions]
 kotlin = "2.3.0"
+ktor = "3.4.2"
 kotlinx-coroutine = "1.10.2"
 kotlinx-serialization = "1.10.0"
 mongodb = "5.4.0"
@@ -16,6 +17,8 @@ gremlin = "0.0.6"
 ksp = "2.3.5"
 junit = "5.11.4"
 testcontainers = "1.20.4"
+hash4j = "0.30.0"
+twelvemonkeys = "3.13.0"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-rc3" }
@@ -61,6 +64,8 @@ guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
 ksp-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2" }
 charonflow = { module = "club.plutoproject.charonflow:charonflow", version = "1.0.0-20260131.074812-13" }
+hash4j = { module = "com.dynatrace.hash4j:hash4j", version.ref = "hash4j" }
+imageioWebp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
 
 # Test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -89,6 +94,10 @@ cloud-annotations-coroutines = { module = "org.incendo:cloud-kotlin-coroutines-a
 cloud-minecraft-extras = { module = "org.incendo:cloud-minecraft-extras", version.ref = "cloud-minecraft" }
 gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
 luckperms-api = { module = "net.luckperms:api", version = "5.4" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+# ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-body-limit = { module = "io.ktor:ktor-server-body-limit", version.ref = "ktor" }
 
 # Platform - Paper
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-minecraft" }
@@ -141,4 +150,9 @@ mccoroutine-paper = [
 mccoroutine-velocity = [
     "mccoroutine-velocity-api",
     "mccoroutine-velocity-core"
+]
+ktor-server = [
+    "ktor-server-core",
+    "ktor-server-netty",
+    "ktor-server-body-limit"
 ]

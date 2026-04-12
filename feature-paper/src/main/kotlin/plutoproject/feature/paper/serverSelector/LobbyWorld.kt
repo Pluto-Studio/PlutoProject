@@ -1,11 +1,11 @@
 package plutoproject.feature.paper.serverSelector
 
 import org.bukkit.*
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.io.File
 import kotlin.system.measureTimeMillis
 
-private val config = Koin.get<ServerSelectorConfig>().lobby
+private val config = globalKoin.get<ServerSelectorConfig>().lobby
 private val worldName = config.world
 
 val lobbyWorld: World

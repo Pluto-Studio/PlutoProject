@@ -1,13 +1,13 @@
 package plutoproject.framework.common.api.databasepersist
 
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.util.*
 
 /**
  * 玩家数据库容器 API。
  */
 interface DatabasePersist {
-    companion object : DatabasePersist by Koin.get()
+    companion object : DatabasePersist by globalKoin.get()
 
     /**
      * 获取指定 [UUID] 玩家的 [PersistContainer] 实例。

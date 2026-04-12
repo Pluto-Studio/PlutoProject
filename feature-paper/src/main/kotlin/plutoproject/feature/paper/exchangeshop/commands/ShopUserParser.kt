@@ -16,7 +16,7 @@ import plutoproject.feature.paper.api.exchangeshop.ShopUser
 import plutoproject.feature.paper.exchangeshop.COMMAND_EXCHANGE_SHOP_TRANSACTIONS_SHOP_USER_NOT_FOUND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.coroutine.PluginScope
-import plutoproject.framework.common.util.data.convertToUuidOrNull
+import plutoproject.framework.common.util.data.uuidOrNull
 import plutoproject.framework.paper.util.server
 import java.util.concurrent.CompletableFuture
 import kotlin.jvm.optionals.getOrNull
@@ -30,7 +30,7 @@ object ShopUserParser : FutureArgumentParser<CommandSender, ShopUser>, BlockingS
     ): CompletableFuture<ArgumentParseResult<ShopUser>> = PluginScope.async {
         val input = stringParser.parse(commandContext, commandInput).parsedValue().getOrNull()
             ?: error("Unable to get input")
-        val uniqueId = input.convertToUuidOrNull()
+        val uniqueId = input.uuidOrNull()
         val player = if (uniqueId != null) server.getOfflinePlayer(uniqueId) else server.getOfflinePlayer(input)
         val shopUser = ExchangeShop.getUser(player)
         if (shopUser != null) ArgumentParseResult.success(shopUser) else throw ShopUserNotFoundException(input)

@@ -13,7 +13,7 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
 import plutoproject.feature.paper.itemFrameProtection.ITEMFRAME_PROTECTION_UNKNOWN_PLAYER
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.data.convertToUuidOrNull
+import plutoproject.framework.common.util.data.uuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 
@@ -28,7 +28,7 @@ internal val Lectern.protect: Boolean
 internal val Lectern.protector: OfflinePlayer?
     get() {
         val uuid = persistentDataContainer.get(protectorKey, PersistentDataType.STRING)
-            ?.convertToUuidOrNull() ?: return null
+            ?.uuidOrNull() ?: return null
         return Bukkit.getOfflinePlayer(uuid)
     }
 

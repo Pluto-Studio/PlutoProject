@@ -16,7 +16,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaText
 import plutoproject.framework.common.util.chat.palettes.mochaYellow
 import plutoproject.framework.common.util.config.loadConfig
 import plutoproject.framework.common.util.coroutine.PluginScope
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.api.statistic.MeasuringTime
 import plutoproject.framework.paper.api.statistic.StatisticProvider
@@ -36,7 +36,7 @@ class OverloadWarningFeature : PaperFeature(), KoinComponent {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         start()

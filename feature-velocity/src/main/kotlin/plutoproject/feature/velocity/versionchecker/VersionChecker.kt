@@ -7,7 +7,7 @@ import org.koin.dsl.module
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
 import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.plugin
@@ -30,7 +30,7 @@ class VersionChecker : VelocityFeature(), KoinComponent {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         server.eventManager.registerSuspend(plugin, PingListener)

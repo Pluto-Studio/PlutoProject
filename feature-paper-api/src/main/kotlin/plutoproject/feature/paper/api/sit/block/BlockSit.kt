@@ -5,11 +5,11 @@ import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.sit.SitOptions
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import kotlin.reflect.KClass
 
 interface BlockSit {
-    companion object : BlockSit by Koin.get()
+    companion object : BlockSit by globalKoin.get()
 
     val allStrategies: Collection<BlockSitStrategy>
     val sitters: Collection<Player>

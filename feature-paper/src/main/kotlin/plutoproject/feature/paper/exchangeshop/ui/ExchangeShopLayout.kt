@@ -16,7 +16,7 @@ import plutoproject.framework.common.api.databasepersist.adapters.BooleanTypeAda
 import plutoproject.framework.common.util.chat.UI_TOGGLE_OFF_SOUND
 import plutoproject.framework.common.util.chat.UI_TOGGLE_ON_SOUND
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.databasepersist.persistContainer
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import plutoproject.framework.paper.api.interactive.animations.spinnerAnimation
@@ -25,7 +25,7 @@ import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
 import plutoproject.framework.paper.util.hook.vaultHook
 
-private val config by Koin.inject<ExchangeShopConfig>()
+private val config by globalKoin.inject<ExchangeShopConfig>()
 
 @Composable
 fun Availability(changeCallback: (Boolean) -> Unit = {}) {

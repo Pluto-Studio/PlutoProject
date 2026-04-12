@@ -6,7 +6,7 @@ import plutoproject.framework.common.api.connection.MongoConnection
 import plutoproject.framework.common.api.connection.getCollection
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.velocity.api.feature.VelocityFeature
 import plutoproject.framework.velocity.util.command.AnnotationParser
 import plutoproject.framework.velocity.util.plugin
@@ -23,7 +23,7 @@ class Whitelist : VelocityFeature() {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         AnnotationParser.parse(WhitelistCommand)

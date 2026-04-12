@@ -8,11 +8,11 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.java.KoinJavaComponent.getKoin
 import org.koin.mp.KoinPlatformTools
 
-fun configureKoin(declaration: KoinAppDeclaration): KoinApplication {
+fun globalKoin(declaration: KoinAppDeclaration): KoinApplication {
     val context = KoinPlatformTools.defaultContext() as GlobalContext
     val application = context.getKoinApplicationOrNull() ?: return startKoin(declaration)
     return application.apply(declaration)
 }
 
-val Koin: Koin
+val globalKoin: Koin
     get() = getKoin()

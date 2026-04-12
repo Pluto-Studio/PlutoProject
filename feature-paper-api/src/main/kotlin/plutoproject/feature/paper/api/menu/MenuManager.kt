@@ -2,11 +2,11 @@ package plutoproject.feature.paper.api.menu
 
 import plutoproject.feature.paper.api.menu.descriptor.ButtonDescriptor
 import plutoproject.feature.paper.api.menu.descriptor.PageDescriptor
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.interactive.ComposableFunction
 
 interface MenuManager {
-    companion object : MenuManager by Koin.get()
+    companion object : MenuManager by globalKoin.get()
 
     val pages: List<PageDescriptor>
 

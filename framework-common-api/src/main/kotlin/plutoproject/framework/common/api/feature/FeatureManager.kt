@@ -1,7 +1,6 @@
 package plutoproject.framework.common.api.feature
 
-import plutoproject.framework.common.api.feature.FeatureManager.Companion.isEnabledInConfig
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 /**
  * 用于管理环境中 Feature 的类，仅会存在一个实例。
@@ -10,7 +9,7 @@ interface FeatureManager {
     /**
      * [FeatureManager] 实例访问入口。
      */
-    companion object : FeatureManager by Koin.get()
+    companion object : FeatureManager by globalKoin.get()
 
     /**
      * 所有已加载的模块。

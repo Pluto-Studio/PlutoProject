@@ -4,12 +4,12 @@ import com.google.common.collect.ListMultimap
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
 import org.bukkit.World
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import java.util.*
 
 @Suppress("UNUSED")
 interface HomeManager {
-    companion object : HomeManager by Koin.get()
+    companion object : HomeManager by globalKoin.get()
 
     val maxHomes: Int
     val nameLengthLimit: Int

@@ -6,14 +6,14 @@ import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import kotlin.reflect.KClass
 
 /**
  * MongoDB 数据库外部连接。
  */
 interface MongoConnection {
-    companion object : MongoConnection by Koin.get()
+    companion object : MongoConnection by globalKoin.get()
 
     /**
      * 连接的 [MongoClient]。

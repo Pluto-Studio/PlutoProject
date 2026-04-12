@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.feature.paper.exchangeshop.*
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item
 import plutoproject.framework.paper.api.interactive.modifiers.Modifier
@@ -22,7 +22,7 @@ val ExchangeShopButtonDescriptor = ButtonDescriptor {
     id = "exchangeshop:shop"
 }
 
-private val config by Koin.inject<ExchangeShopConfig>()
+private val config by globalKoin.inject<ExchangeShopConfig>()
 
 @Composable
 @Suppress("UnstableApiUsage")

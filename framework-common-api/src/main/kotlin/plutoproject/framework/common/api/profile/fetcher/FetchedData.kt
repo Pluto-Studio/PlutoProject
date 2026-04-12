@@ -3,7 +3,7 @@ package plutoproject.framework.common.api.profile.fetcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plutoproject.framework.common.util.data.convertShortUuidToLong
-import plutoproject.framework.common.util.data.convertToUuid
+import plutoproject.framework.common.util.data.uuid
 import java.util.*
 
 @Serializable
@@ -12,5 +12,5 @@ data class FetchedData(
     val name: String,
 ) {
     val uuid: UUID
-        get() = shortUuid.convertShortUuidToLong().convertToUuid()
+        get() = shortUuid.convertShortUuidToLong().uuid()
 }

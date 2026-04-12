@@ -13,7 +13,7 @@ import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Dependency
 import plutoproject.framework.common.api.feature.annotation.Feature
 import plutoproject.framework.common.util.config.ConfigLoaderBuilder
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.command.AnnotationParser
 import plutoproject.framework.paper.util.command.CommandManager
@@ -43,7 +43,7 @@ class RandomTeleportFeature : PaperFeature() {
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         CommandManager.parserRegistry().apply {

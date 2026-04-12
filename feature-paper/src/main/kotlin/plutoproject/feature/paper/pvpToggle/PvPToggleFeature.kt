@@ -8,8 +8,7 @@ import plutoproject.feature.paper.api.menu.isMenuAvailable
 import plutoproject.feature.paper.api.pvpToggle.PvPToggle
 import plutoproject.framework.common.api.feature.Platform
 import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.inject.Koin
-import plutoproject.framework.common.util.inject.configureKoin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.feature.PaperFeature
 import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
@@ -20,13 +19,13 @@ import plutoproject.framework.paper.util.server
 )
 @Suppress("UNUSED")
 class PvPToggleFeature : PaperFeature() {
-    private val internalPvPToggle by Koin.inject<InternalPvPToggle>()
+    private val internalPvPToggle by globalKoin.inject<InternalPvPToggle>()
     private val featureModule = module {
         single { PvPToggleImpl() } binds arrayOf(PvPToggle::class, InternalPvPToggle::class)
     }
 
     override fun onEnable() {
-        configureKoin {
+        globalKoin {
             modules(featureModule)
         }
         server.pluginManager.registerSuspendingEvents(PvPToggleListener, plugin)

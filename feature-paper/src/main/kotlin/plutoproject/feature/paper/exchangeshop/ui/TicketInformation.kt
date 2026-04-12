@@ -10,13 +10,13 @@ import plutoproject.feature.paper.api.exchangeshop.ExchangeShop
 import plutoproject.feature.paper.api.exchangeshop.ShopItem
 import plutoproject.feature.paper.exchangeshop.*
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.interactive.LocalPlayer
 import java.time.Duration
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
 
-private val config by Koin.inject<ExchangeShopConfig>()
+private val config by globalKoin.inject<ExchangeShopConfig>()
 
 @Composable
 fun ticketAmount(): Long {

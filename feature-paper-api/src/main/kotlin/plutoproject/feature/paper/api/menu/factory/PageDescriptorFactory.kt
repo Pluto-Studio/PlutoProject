@@ -3,10 +3,10 @@ package plutoproject.feature.paper.api.menu.factory
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import plutoproject.feature.paper.api.menu.descriptor.PageDescriptor
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 interface PageDescriptorFactory {
-    companion object : PageDescriptorFactory by Koin.get()
+    companion object : PageDescriptorFactory by globalKoin.get()
 
     fun create(
         id: String,

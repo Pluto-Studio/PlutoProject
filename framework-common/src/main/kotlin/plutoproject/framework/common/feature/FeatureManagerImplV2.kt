@@ -1,14 +1,10 @@
 package plutoproject.framework.common.feature
 
+import kotlinx.coroutines.cancel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import plutoproject.framework.common.PlutoConfig
-import plutoproject.framework.common.api.feature.Feature
-import plutoproject.framework.common.api.feature.FeatureManager
-import plutoproject.framework.common.api.feature.FeatureMetadata
-import plutoproject.framework.common.api.feature.FeatureProcessResult
-import plutoproject.framework.common.api.feature.Load
-import plutoproject.framework.common.api.feature.State
+import plutoproject.framework.common.api.feature.*
 import plutoproject.framework.common.api.feature.metadata.AbstractFeature
 import plutoproject.framework.common.api.feature.metadata.DependencyMetadata
 import plutoproject.framework.common.feature.dependency.FeatureDependencyGraph
@@ -16,7 +12,6 @@ import plutoproject.framework.common.util.featureDataFolder
 import plutoproject.framework.common.util.jvm.findClass
 import plutoproject.framework.common.util.platformType
 import java.io.File
-import java.util.LinkedHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.reflect.full.createInstance
@@ -163,7 +158,12 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
         )
     }
 
-    private fun dependencySkippedResult(id: String, dependencyId: String, action: Action, dependencyResult: DetailedResult): DetailedResult {
+    private fun dependencySkippedResult(
+        id: String,
+        dependencyId: String,
+        action: Action,
+        dependencyResult: DetailedResult
+    ): DetailedResult {
         val actionName = when (action) {
             Action.LOAD -> "加载"
             Action.ENABLE -> "启用"
@@ -322,10 +322,12 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
             }
 
             try {
+                feature.ensureCoroutineScopeActive()
                 feature.onLoad()
                 feature.updateState(State.LOADED)
                 _loadedFeatures[id] = feature
             } catch (t: Throwable) {
+                feature.coroutineScope.cancel(FeatureCancellationException(feature.id))
                 return cacheResult(
                     Action.LOAD,
                     id,
@@ -426,7 +428,11 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
                     enableDependency(meta, dependency, Load.BEFORE)
                 }
             } catch (e: DependencyNotReadyException) {
-                return cacheResult(Action.ENABLE, id, dependencySkippedResult(id, e.dependencyId, Action.ENABLE, e.result))
+                return cacheResult(
+                    Action.ENABLE,
+                    id,
+                    dependencySkippedResult(id, e.dependencyId, Action.ENABLE, e.result)
+                )
             }
 
             val instance = getFeature(id) as? AbstractFeature
@@ -441,9 +447,11 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
                 )
 
             try {
+                instance.ensureCoroutineScopeActive()
                 instance.onEnable()
                 instance.updateState(State.ENABLED)
             } catch (t: Throwable) {
+                instance.coroutineScope.cancel(FeatureCancellationException(instance.id))
                 return cacheResult(
                     Action.ENABLE,
                     id,
@@ -574,6 +582,8 @@ class FeatureManagerImplV2 : FeatureManager, KoinComponent {
 
         return try {
             instance.onDisable()
+            instance.cancelCoroutineScope()
+            instance.closeKoinApplication()
             instance.updateState(State.DISABLED)
             cacheResult(Action.DISABLE, id, successResult(Action.DISABLE, id))
         } catch (t: Throwable) {

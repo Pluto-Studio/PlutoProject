@@ -5,14 +5,14 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
 import plutoproject.feature.paper.api.teleport.ManagerState
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.util.world.location.Position2D
 import java.util.*
 import kotlin.time.Duration
 
 @Suppress("UNUSED")
 interface RandomTeleportManager {
-    companion object : RandomTeleportManager by Koin.get()
+    companion object : RandomTeleportManager by globalKoin.get()
 
     val cacheTasks: Queue<CacheTask>
     val caches: Multimap<World, RandomTeleportCache>

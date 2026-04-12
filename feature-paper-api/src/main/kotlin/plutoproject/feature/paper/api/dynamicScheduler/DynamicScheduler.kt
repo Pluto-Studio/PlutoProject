@@ -4,10 +4,10 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.entity.SpawnCategory
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 
 interface DynamicScheduler {
-    companion object : DynamicScheduler by Koin.get()
+    companion object : DynamicScheduler by globalKoin.get()
 
     val viewDistanceEnabled: Boolean
     val simulateDistanceEnabled: Boolean

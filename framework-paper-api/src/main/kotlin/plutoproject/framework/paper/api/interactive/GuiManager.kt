@@ -1,13 +1,13 @@
 package plutoproject.framework.paper.api.interactive
 
 import org.bukkit.entity.Player
-import plutoproject.framework.common.util.inject.Koin
+import plutoproject.framework.common.util.inject.globalKoin
 import plutoproject.framework.paper.api.interactive.node.InventoryNode
 
 typealias GuiInventoryScope = GuiScope<InventoryNode>
 
 interface GuiManager {
-    companion object : GuiManager by Koin.get()
+    companion object : GuiManager by globalKoin.get()
 
     fun get(player: Player): GuiScope<*>?
 

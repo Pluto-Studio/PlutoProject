@@ -1,0 +1,69 @@
+package plutoproject.feature.gallery.adapter.paper
+
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
+import kotlinx.coroutines.CoroutineScope
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
+import plutoproject.feature.gallery.adapter.common.*
+import plutoproject.feature.gallery.adapter.paper.listener.ChunkListener
+import plutoproject.feature.gallery.adapter.paper.listener.CraftListener
+import plutoproject.feature.gallery.adapter.paper.listener.ItemFrameListener
+import plutoproject.feature.gallery.adapter.paper.listener.PlayerListener
+import plutoproject.feature.gallery.core.display.MapUpdatePort
+import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.paper.api.menu.MenuManager
+import plutoproject.feature.paper.api.menu.isMenuAvailable
+import plutoproject.framework.common.api.feature.Load
+import plutoproject.framework.common.api.feature.Platform
+import plutoproject.framework.common.api.feature.annotation.Dependency
+import plutoproject.framework.common.api.feature.annotation.Feature
+import plutoproject.framework.common.util.config.loadConfig
+import plutoproject.framework.paper.api.feature.PaperFeature
+import plutoproject.framework.paper.util.command.AnnotationParser
+import plutoproject.framework.paper.util.plugin
+import plutoproject.framework.paper.util.server
+import java.util.logging.Logger
+import kotlin.coroutines.CoroutineContext
+
+@Feature(
+    id = "gallery",
+    platform = Platform.PAPER,
+    dependencies = [Dependency(id = "menu", load = Load.BEFORE, required = false)]
+)
+class GalleryFeature : PaperFeature() {
+    private val module = module {
+        single<GalleryConfig>(createdAtStart = true) { loadConfig(saveConfig("feature/common/gallery")) }
+        single<Logger> { this@GalleryFeature.logger }
+        single<CoroutineScope> { coroutineScope }
+        single<CoroutineContext> { coroutineScope.coroutineContext }
+        singleOf(::PaperViewPort) bind ViewPort::class
+        singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
+        singleOf(::PaperDisplayInstanceIndex) bind DisplayInstanceIndex::class
+    }
+
+    override fun onEnable() {
+        koin = featureKoin
+
+        featureKoin {
+            modules(commonModule, module)
+        }
+
+        onFeatureEnable()
+        if (isMenuAvailable) {
+            MenuManager.registerButton(ImageListMenuButtonDescriptor) { ImageListMenuButton() }
+        }
+        AnnotationParser.parse(
+            GalleyDebugCommand,
+            GalleryCancelUploadCommand,
+        )
+        server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
+        server.pluginManager.registerSuspendingEvents(ChunkListener, plugin)
+        server.pluginManager.registerSuspendingEvents(ItemFrameListener, plugin)
+        server.pluginManager.registerSuspendingEvents(CraftListener, plugin)
+    }
+
+    override fun onDisable() {
+        onFeatureDisable()
+    }
+}
