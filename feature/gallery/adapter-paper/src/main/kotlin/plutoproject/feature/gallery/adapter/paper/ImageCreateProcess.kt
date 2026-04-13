@@ -1,15 +1,8 @@
 package plutoproject.feature.gallery.adapter.paper
 
-import ink.pmc.advkt.component.component
-import ink.pmc.advkt.component.newline
-import ink.pmc.advkt.component.openUrl
-import ink.pmc.advkt.component.raw
-import ink.pmc.advkt.component.showText
-import ink.pmc.advkt.component.text
-import ink.pmc.advkt.component.underlined
+import ink.pmc.advkt.component.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,35 +11,19 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import plutoproject.feature.gallery.adapter.common.FileProcessingSettings
-import plutoproject.feature.gallery.adapter.common.GalleryConfig
-import plutoproject.feature.gallery.adapter.common.DitherMode
-import plutoproject.feature.gallery.adapter.common.RepositionMode
-import plutoproject.feature.gallery.adapter.common.QuantizeMode
-import plutoproject.feature.gallery.adapter.common.ScaleMode
-import plutoproject.feature.gallery.adapter.common.koin
-import plutoproject.feature.gallery.adapter.common.upload.UploadService
-import plutoproject.feature.gallery.adapter.common.upload.UploadSession
-import plutoproject.feature.gallery.adapter.common.upload.UploadSessionCreateResult
-import plutoproject.feature.gallery.adapter.common.upload.UploadState
-import plutoproject.feature.gallery.adapter.common.upload.VerificationResult
+import plutoproject.feature.gallery.adapter.common.*
+import plutoproject.feature.gallery.adapter.common.upload.*
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.UnifiedImageDecoder
+import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import plutoproject.feature.gallery.core.display.DisplayInstanceStore
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
-import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
-import plutoproject.feature.gallery.core.render.AnimatedImageRenderSettings
-import plutoproject.feature.gallery.core.render.AnimatedImageRenderer
-import plutoproject.feature.gallery.core.render.BasicRenderSettings
-import plutoproject.feature.gallery.core.render.PixelBuffer
-import plutoproject.feature.gallery.core.render.RenderComponents
-import plutoproject.feature.gallery.core.render.RenderResult
-import plutoproject.feature.gallery.core.render.StaticImageRenderer
+import plutoproject.feature.gallery.core.render.*
 import plutoproject.framework.common.util.chat.MESSAGE_SOUND
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
@@ -55,8 +32,9 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.util.coroutine.coroutineContext
+import plutoproject.framework.paper.util.server
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
 
@@ -193,64 +171,89 @@ private suspend fun monitorUploadSession(
     session: UploadSession,
     request: ImageCreateRequest,
 ) {
-    session.state.drop(1).first { state ->
-        when (state) {
-            UploadState.Waiting -> false
+    session.state.first { state ->
+        handleUploadSessionState(
+            playerId = playerId,
+            ownerId = ownerId,
+            ownerName = ownerName,
+            request = request,
+            state = state,
+        )
+    }
+}
 
-            UploadState.Processing -> {
-                sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_PROCESSING, MESSAGE_SOUND)
-                false
+private suspend fun handleUploadSessionState(
+    playerId: UUID,
+    ownerId: UUID,
+    ownerName: String,
+    request: ImageCreateRequest,
+    state: UploadState,
+): Boolean {
+    return when (state) {
+        UploadState.Waiting -> false
+
+        UploadState.Processing -> {
+            sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_PROCESSING, MESSAGE_SOUND)
+            false
+        }
+
+        UploadState.Expired -> {
+            sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_EXPIRED, UI_FAILED_SOUND)
+            true
+        }
+
+        is UploadState.VerificationFailed -> {
+            sendPlayerMessage(playerId, getImageCreateVerificationFailedMessage(state.result), UI_FAILED_SOUND)
+            true
+        }
+
+        is UploadState.Completed -> {
+            sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_CREATING, MESSAGE_SOUND)
+
+            if (!isPlayerOnline(playerId)) {
+                return true
             }
 
-            UploadState.Expired -> {
-                sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_EXPIRED, UI_FAILED_SOUND)
-                true
-            }
-
-            is UploadState.VerificationFailed -> {
-                sendPlayerMessage(playerId, getImageCreateVerificationFailedMessage(state.result), UI_FAILED_SOUND)
-                true
-            }
-
-            is UploadState.Completed -> {
-                sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_CREATING, MESSAGE_SOUND)
-
-                val createResult = withContext(Dispatchers.Loom) {
-                    state.file.usePath { tempFile ->
-                        createImageFromPath(
-                            ownerId = ownerId,
-                            ownerName = ownerName,
-                            request = request,
-                            path = tempFile,
-                        )
-                    }
+            val createResult = withContext(Dispatchers.Loom) {
+                state.file.usePath { tempFile ->
+                    createImageFromPath(
+                        ownerId = ownerId,
+                        ownerName = ownerName,
+                        request = request,
+                        path = tempFile,
+                    )
                 }
-                val result = createResult.getOrElse {
-                    sendPlayerMessage(playerId, IMAGE_CREATE_FAILED_SERVER, UI_FAILED_SOUND)
-                    return@first true
+            }
+            val result = createResult.getOrElse {
+                sendPlayerMessage(playerId, IMAGE_CREATE_FAILED_SERVER, UI_FAILED_SOUND)
+                return true
+            }
+
+            when (result) {
+                is ImageCreateResult.Failure -> {
+                    sendPlayerMessage(playerId, result.message, UI_FAILED_SOUND)
                 }
 
-                when (result) {
-                    is ImageCreateResult.Failure -> {
-                        sendPlayerMessage(playerId, result.message, UI_FAILED_SOUND)
+                is ImageCreateResult.Success -> {
+                    if (!isPlayerOnline(playerId)) {
+                        deleteCreatedImage(result.image.id)
+                        return true
                     }
 
-                    is ImageCreateResult.Success -> {
-                        sendCreateSuccessMessage(playerId, result.image)
-                    }
+                    sendCreateSuccessMessage(playerId, result.image)
                 }
-                true
             }
+            true
+        }
 
-            UploadState.Cancelled -> {
-                sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_CANCELLED, MESSAGE_SOUND)
-                true
-            }
+        UploadState.Cancelled -> {
+            sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_CANCELLED, MESSAGE_SOUND)
+            true
+        }
 
-            is UploadState.Failed -> {
-                sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_FAILED, UI_FAILED_SOUND)
-                true
-            }
+        is UploadState.Failed -> {
+            sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_FAILED, UI_FAILED_SOUND)
+            true
         }
     }
 }
@@ -334,6 +337,20 @@ private suspend fun sendCreateSuccessMessage(playerId: UUID, image: Image) {
     }
 }
 
+private suspend fun isPlayerOnline(playerId: UUID): Boolean {
+    return withContext(server.coroutineContext) {
+        val player = Bukkit.getPlayer(playerId) ?: return@withContext false
+        player.isOnline && player.isConnected
+    }
+}
+
+private suspend fun deleteCreatedImage(imageId: UUID) {
+    withContext(Dispatchers.Loom) {
+        imageDataStore.delete(imageId)
+        imageStore.delete(imageId)
+    }
+}
+
 private suspend fun sendPlayerMessage(playerId: UUID, message: Component, sound: Sound? = null) {
     withContext(Bukkit.getServer().coroutineContext) {
         val player = Bukkit.getPlayer(playerId) ?: return@withContext
@@ -350,10 +367,13 @@ private fun getImageCreateVerificationFailedMessage(result: VerificationResult.R
         is VerificationResult.ImageTooLarge -> IMAGE_CREATE_VERIFICATION_FAILED_IMAGE_TOO_LARGE
             .replace(IMAGE_PLACEHOLDER_IMAGE_WIDTH, result.width)
             .replace(IMAGE_PLACEHOLDER_IMAGE_HEIGHT, result.height)
+
         is VerificationResult.TooManyFrames -> IMAGE_CREATE_VERIFICATION_FAILED_TOO_MANY_FRAMES
             .replace(IMAGE_PLACEHOLDER_FRAME_COUNT, result.frameCount)
+
         is VerificationResult.UnallowedExtension -> IMAGE_CREATE_VERIFICATION_FAILED_UNALLOWED_EXTENSION
             .replace(IMAGE_PLACEHOLDER_FILE_NAME, result.fileName)
+
         VerificationResult.UnsupportedFormat -> IMAGE_CREATE_VERIFICATION_FAILED_UNSUPPORTED_FORMAT
         VerificationResult.Corrupted -> IMAGE_CREATE_VERIFICATION_FAILED_CORRUPTED
         is VerificationResult.Failed -> IMAGE_CREATE_VERIFICATION_FAILED_UNKNOWN

@@ -375,8 +375,33 @@ class UploadService(
             is VerificationResult.Rejected -> UploadState.VerificationFailed(verificationResult)
         }
 
-        session.state.value = nextState
+        if (!session.state.compareAndSet(UploadState.Processing, nextState)) {
+            discardSubmittedFile(msg.tempFile, nextState)
+
+            val reply = when (session.state.value) {
+                is UploadState.Expired -> UploadSubmissionResult.Expired
+                else -> UploadSubmissionResult.Conflict
+            }
+            msg.reply.complete(reply)
+            return
+        }
+
+        // 如果后续状态不是 Completed（例如被拒绝），则 UploadedFile 没有被创建，需要手动删掉临时文件
+        if (nextState !is UploadState.Completed) {
+            discardSubmittedFile(msg.tempFile, nextState)
+        }
+
         msg.reply.complete(UploadSubmissionResult.Accepted)
+    }
+
+    private fun discardSubmittedFile(tempFile: Path, state: UploadState) {
+        when (state) {
+            is UploadState.Completed -> state.file.discard()
+            else -> runCatching { tempFile.deleteIfExists() }
+                .onFailure {
+                    logger.log(Level.SEVERE, "An error occurred while deleting uploaded temp file", it)
+                }
+        }
     }
 
     private fun handleStop(uploadSessionsById: MutableMap<UUID, UploadSession>) {
