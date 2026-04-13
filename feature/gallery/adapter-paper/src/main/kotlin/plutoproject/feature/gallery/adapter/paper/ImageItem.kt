@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.item.ItemLore
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.Recipe
 import org.bukkit.inventory.RecipeChoice
@@ -25,12 +26,7 @@ val IMAGE_ITEM_MATERIAL = Material.PAPER
 
 private val IMAGE_ITEM_DATA_KEY = NamespacedKey(GALLERY_KEY, "image_item_data")
 private val IMAGE_ITEM_COPY_RECIPE_KEY = NamespacedKey(plugin, GALLERY_KEY)
-private val IMAGE_ITEM_COPY_RECIPE_INK_CHOICE = RecipeChoice.MaterialChoice(Material.INK_SAC, Material.GLOW_INK_SAC)
-private val IMAGE_ITEM_COPY_RECIPE = ShapelessRecipe(IMAGE_ITEM_COPY_RECIPE_KEY, createImageItemCopyRecipeResult()).apply {
-    addIngredient(IMAGE_ITEM_COPY_RECIPE_INK_CHOICE)
-    addIngredient(Material.FEATHER)
-    addIngredient(IMAGE_ITEM_MATERIAL)
-}
+
 private const val DATA_VERSION = 1
 
 class ImageItemData(
@@ -125,9 +121,24 @@ fun createImageItem(image: Image): ItemStack {
     return itemStack
 }
 
+private fun buildImageItemCopyRecipe(): Recipe {
+    val inkChoice = RecipeChoice.MaterialChoice(Material.INK_SAC, Material.GLOW_INK_SAC)
+    return ShapelessRecipe(IMAGE_ITEM_COPY_RECIPE_KEY, createImageItemCopyRecipeResult()).apply {
+        addIngredient(inkChoice)
+        addIngredient(Material.FEATHER)
+        addIngredient(IMAGE_ITEM_MATERIAL)
+    }
+}
+
 fun registerImageItemCopyRecipe() {
-    server.removeRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
-    server.addRecipe(IMAGE_ITEM_COPY_RECIPE)
+    server.addRecipe(buildImageItemCopyRecipe())
+}
+
+fun unlockImageItemCopyRecipeFor(player: Player) {
+    if (player.hasDiscoveredRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)) {
+        return
+    }
+    player.discoverRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
 }
 
 fun isImageItemCopyRecipe(recipe: Recipe?): Boolean {

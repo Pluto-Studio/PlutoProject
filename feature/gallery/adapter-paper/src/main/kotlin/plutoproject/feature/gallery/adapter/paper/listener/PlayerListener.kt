@@ -6,6 +6,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import plutoproject.feature.gallery.adapter.common.koin
 import plutoproject.feature.gallery.adapter.common.upload.UploadService
+import plutoproject.feature.gallery.adapter.paper.unlockImageItemCopyRecipeFor
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
 
@@ -18,6 +19,7 @@ object PlayerListener : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         sendJobRegistry.start(event.player.uniqueId)
+        unlockImageItemCopyRecipeFor(event.player)
     }
 
     @EventHandler
