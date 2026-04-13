@@ -57,6 +57,7 @@ class GalleryFeature : PaperFeature() {
             GalleyDebugCommand,
             GalleryCancelUploadCommand,
         )
+        registerImageItemCopyRecipe()
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
         server.pluginManager.registerSuspendingEvents(ChunkListener, plugin)
         server.pluginManager.registerSuspendingEvents(ItemFrameListener, plugin)

@@ -248,6 +248,10 @@ val IMAGE_ITEM_NAME = component {
     text("($IMAGE_PLACEHOLDER_WIDTH × $IMAGE_PLACEHOLDER_HEIGHT)") with mochaLavender
 }
 
+val IMAGE_ITEM_COPY_RECIPE_RESULT_NAME = component {
+    text("复制地图画") with mochaText
+}
+
 val IMAGE_ITEM_LORE = listOf(
     component { text("由 $IMAGE_PLACEHOLDER_CREATOR") with mochaSubtext0 without italic() },
     component { text("创建于 $IMAGE_PLACEHOLDER_TIME") with mochaSubtext0 without italic() },

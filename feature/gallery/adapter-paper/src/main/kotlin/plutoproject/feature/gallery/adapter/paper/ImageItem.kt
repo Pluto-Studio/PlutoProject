@@ -6,17 +6,31 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.Recipe
+import org.bukkit.inventory.RecipeChoice
+import org.bukkit.inventory.ShapelessRecipe
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.framework.common.util.chat.component.replace
+import plutoproject.framework.paper.util.plugin
+import plutoproject.framework.paper.util.server
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 
+const val GALLERY_KEY = "plutoproject_gallery"
+
 val IMAGE_ITEM_MATERIAL = Material.PAPER
 
-private val IMAGE_ITEM_DATA_KEY = NamespacedKey("plutoproject_gallery", "image_item_data")
+private val IMAGE_ITEM_DATA_KEY = NamespacedKey(GALLERY_KEY, "image_item_data")
+private val IMAGE_ITEM_COPY_RECIPE_KEY = NamespacedKey(plugin, GALLERY_KEY)
+private val IMAGE_ITEM_COPY_RECIPE_INK_CHOICE = RecipeChoice.MaterialChoice(Material.INK_SAC, Material.GLOW_INK_SAC)
+private val IMAGE_ITEM_COPY_RECIPE = ShapelessRecipe(IMAGE_ITEM_COPY_RECIPE_KEY, createImageItemCopyRecipeResult()).apply {
+    addIngredient(IMAGE_ITEM_COPY_RECIPE_INK_CHOICE)
+    addIngredient(Material.FEATHER)
+    addIngredient(IMAGE_ITEM_MATERIAL)
+}
 private const val DATA_VERSION = 1
 
 class ImageItemData(
@@ -109,6 +123,23 @@ fun createImageItem(image: Image): ItemStack {
     itemStack.itemMeta = itemStack.itemMeta.apply { setImageItemData(image) } // getItemMeta 怎么拿的是 copy。。
 
     return itemStack
+}
+
+fun registerImageItemCopyRecipe() {
+    server.removeRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
+    server.addRecipe(IMAGE_ITEM_COPY_RECIPE)
+}
+
+fun isImageItemCopyRecipe(recipe: Recipe?): Boolean {
+    return (recipe as? ShapelessRecipe)?.key == IMAGE_ITEM_COPY_RECIPE_KEY
+}
+
+@Suppress("UnstableApiUsage")
+private fun createImageItemCopyRecipeResult(): ItemStack {
+    return ItemStack(IMAGE_ITEM_MATERIAL).apply {
+        setData(DataComponentTypes.ITEM_NAME, IMAGE_ITEM_COPY_RECIPE_RESULT_NAME)
+        setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
+    }
 }
 
 private fun Component.resolveImagePlaceholders(image: Image): Component {
