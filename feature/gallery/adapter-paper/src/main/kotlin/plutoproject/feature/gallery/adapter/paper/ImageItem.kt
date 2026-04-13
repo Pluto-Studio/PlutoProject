@@ -14,18 +14,17 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.paper.util.plugin
 import plutoproject.framework.paper.util.server
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 
-const val GALLERY_KEY = "plutoproject_gallery"
+const val GALLERY_NAMESPACE = "plutoproject_gallery"
 
 val IMAGE_ITEM_MATERIAL = Material.PAPER
 
-private val IMAGE_ITEM_DATA_KEY = NamespacedKey(GALLERY_KEY, "image_item_data")
-private val IMAGE_ITEM_COPY_RECIPE_KEY = NamespacedKey(plugin, GALLERY_KEY)
+private val IMAGE_ITEM_DATA_KEY = NamespacedKey(GALLERY_NAMESPACE, "image_item_data")
+private val IMAGE_ITEM_COPY_RECIPE_KEY = NamespacedKey(GALLERY_NAMESPACE, "image_item_copy")
 
 private const val DATA_VERSION = 1
 
