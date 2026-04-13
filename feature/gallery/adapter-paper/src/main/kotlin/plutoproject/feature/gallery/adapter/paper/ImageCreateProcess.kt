@@ -101,6 +101,8 @@ suspend fun submitImageCreate(
     name: String,
     width: Int,
     height: Int,
+    repositionMode: RepositionMode,
+    ditherMode: DitherMode,
 ): ImageCreateSubmissionResult {
     val mapCount = runCatching { Math.multiplyExact(width, height) }
         .getOrElse { return ImageCreateSubmissionResult.TooManyMapBlocks }
@@ -116,11 +118,16 @@ suspend fun submitImageCreate(
         width = width,
         height = height,
         mapCount = mapCount,
-        repositionMode = config.render.repositionMode,
+        repositionMode = repositionMode,
         scaleMode = config.render.scaleMode,
         quantizeMode = config.render.quantizeMode,
-        ditherMode = config.render.ditherMode,
-        renderComponents = config.render.renderComponents,
+        ditherMode = ditherMode,
+        renderComponents = RenderComponents(
+            repositioner = repositionMode.repositioner,
+            scaler = config.render.scaleMode.scaler,
+            quantizer = config.render.quantizeMode.quantizer,
+            ditherer = ditherMode.ditherer,
+        ),
     )
 
     return when (val result = uploadService.createSessionIfAbsent(player.uniqueId)) {

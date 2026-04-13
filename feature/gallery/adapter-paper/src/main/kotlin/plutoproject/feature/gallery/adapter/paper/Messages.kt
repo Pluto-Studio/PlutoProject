@@ -1,6 +1,7 @@
 package plutoproject.feature.gallery.adapter.paper
 
 import ink.pmc.advkt.component.*
+import net.kyori.adventure.text.Component
 import plutoproject.framework.common.util.chat.palettes.*
 
 const val IMAGE_PLACEHOLDER_NAME = "<name>"
@@ -97,7 +98,7 @@ val IMAGE_CREATE_DESCRIPTION = component {
 }
 
 val IMAGE_CREATE_NAME_INPUT_LABEL = component {
-    text("名称")
+    text("名称") with mochaText
 }
 
 val IMAGE_CREATE_WIDTH_INPUT_LABEL = component {
@@ -106,6 +107,62 @@ val IMAGE_CREATE_WIDTH_INPUT_LABEL = component {
 
 val IMAGE_CREATE_HEIGHT_INPUT_LABEL = component {
     text("高方块数")
+}
+
+val IMAGE_CREATE_DITHER_INPUT_LABEL = component {
+    text("抖动")
+}
+
+val IMAGE_CREATE_DITHER_OPTION_DEFAULT_DISPLAY = Component.text("默认")
+
+val IMAGE_CREATE_DITHER_OPTION_NONE_DISPLAY = Component.text("无")
+
+val IMAGE_CREATE_DITHER_OPTION_FLOYD_STEINBERG_DISPLAY = Component.text("Floyd-Steinberg 误差扩散")
+
+val IMAGE_CREATE_DITHER_OPTION_ORDERED_BAYER_DISPLAY = Component.text("有序抖动（Bayer）")
+
+val IMAGE_CREATE_DITHER_INPUT_LABEL_HOVER = component {
+    text("控制图像颜色如何转换到地图颜色。") with mochaText
+    newline()
+    text("默认：使用系统默认策略。") with mochaSubtext0
+    newline()
+    text("无：直接转换为最接近的颜色，可能出现明显色带。") with mochaSubtext0
+    newline()
+    text("Floyd-Steinberg 误差扩散：通过误差扩散平滑颜色过渡，通常效果最佳。") with mochaSubtext0
+    newline()
+    text("有序抖动（Bayer）：使用 Bayer 矩阵进行有序抖动，产生规则纹理以模拟中间色。") with mochaSubtext0
+}
+
+val IMAGE_CREATE_DITHER_ABOUT = component {
+    text("关于「抖动」") with mochaText with showText {
+        raw(IMAGE_CREATE_DITHER_INPUT_LABEL_HOVER)
+    }
+}
+
+val IMAGE_CREATE_FILL_INPUT_LABEL = component {
+    text("填充")
+}
+
+val IMAGE_CREATE_FILL_OPTION_CONTAIN_DISPLAY = Component.text("完整显示")
+
+val IMAGE_CREATE_FILL_OPTION_COVER_DISPLAY = Component.text("缩放裁剪")
+
+val IMAGE_CREATE_FILL_OPTION_STRETCH_DISPLAY = Component.text("拉伸填充")
+
+val IMAGE_CREATE_FILL_INPUT_LABEL_HOVER = component {
+    text("控制图像如何填充到地图画区域。") with mochaText
+    newline()
+    text("完整显示：按比例缩放图像，使其完整显示在目标区域内，可能出现留边。") with mochaSubtext0
+    newline()
+    text("缩放裁剪：按比例缩放图像以填满目标区域，超出部分会被裁剪。") with mochaSubtext0
+    newline()
+    text("拉伸填充：拉伸图像以填满目标区域，不保持比例，可能导致变形。") with mochaSubtext0
+}
+
+val IMAGE_CREATE_FILL_ABOUT = component {
+    text("关于「填充」") with mochaText with showText {
+        raw(IMAGE_CREATE_FILL_INPUT_LABEL_HOVER)
+    }
 }
 
 val IMAGE_CREATE_SUBMIT = component {
