@@ -55,6 +55,7 @@ import plutoproject.framework.common.util.chat.palettes.mochaLavender
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.common.util.time.toFormattedComponent
 import plutoproject.framework.paper.util.coroutine.coroutineContext
+import java.nio.file.Path
 import java.util.UUID
 
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
@@ -214,30 +215,28 @@ private suspend fun monitorUploadSession(
             is UploadState.Completed -> {
                 sendPlayerMessage(playerId, IMAGE_CREATE_SESSION_CREATING, MESSAGE_SOUND)
 
-                val uploadedBytes = withContext(Dispatchers.Loom) {
-                    state.file.use { inputStream -> inputStream.readBytes() }
+                val createResult = withContext(Dispatchers.Loom) {
+                    state.file.usePath { tempFile ->
+                        createImageFromPath(
+                            ownerId = ownerId,
+                            ownerName = ownerName,
+                            request = request,
+                            path = tempFile,
+                        )
+                    }
                 }
-                val bytes = uploadedBytes.getOrElse {
+                val result = createResult.getOrElse {
                     sendPlayerMessage(playerId, IMAGE_CREATE_FAILED_SERVER, UI_FAILED_SOUND)
                     return@first true
                 }
 
-                val createResult = withContext(Dispatchers.Loom) {
-                    createImageFromBytes(
-                        ownerId = ownerId,
-                        ownerName = ownerName,
-                        request = request,
-                        bytes = bytes,
-                    )
-                }
-
-                when (createResult) {
+                when (result) {
                     is ImageCreateResult.Failure -> {
-                        sendPlayerMessage(playerId, createResult.message, UI_FAILED_SOUND)
+                        sendPlayerMessage(playerId, result.message, UI_FAILED_SOUND)
                     }
 
                     is ImageCreateResult.Success -> {
-                        sendCreateSuccessMessage(playerId, createResult.image)
+                        sendCreateSuccessMessage(playerId, result.image)
                     }
                 }
                 true
@@ -256,13 +255,13 @@ private suspend fun monitorUploadSession(
     }
 }
 
-private suspend fun createImageFromBytes(
+private suspend fun createImageFromPath(
     ownerId: UUID,
     ownerName: String,
     request: ImageCreateRequest,
-    bytes: ByteArray,
+    path: Path,
 ): ImageCreateResult {
-    val decodeResult = UnifiedImageDecoder.decode(bytes, config.fileProcessing.decodeConstraints())
+    val decodeResult = UnifiedImageDecoder.decode(path, config.fileProcessing.decodeConstraints())
 
     val imageData = when (decodeResult) {
         is UnifiedImageDecoder.Result.Failure -> {

@@ -16,10 +16,12 @@ class StaticImageDecoderTest {
             setRGB(1, 0, 0xFF00FF00.toInt())
         }
 
-        val result = StaticImageDecoder.decode(
-            bytes = encode(source, "png"),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile(encode(source, "png")) { path ->
+            StaticImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertTrue(result is DecodeResult.Success)
         val image = (result as DecodeResult.Success).data
@@ -36,10 +38,12 @@ class StaticImageDecoderTest {
             setRGB(1, 0, 0x003355CC)
         }
 
-        val result = StaticImageDecoder.decode(
-            bytes = encode(source, "jpg"),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile(encode(source, "jpg")) { path ->
+            StaticImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertTrue(result is DecodeResult.Success)
         val image = (result as DecodeResult.Success).data
@@ -55,8 +59,12 @@ class StaticImageDecoderTest {
         val jpgSource = BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB)
         val constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 3, maxFrames = 500)
 
-        val pngResult = StaticImageDecoder.decode(encode(pngSource, "png"), constraints)
-        val jpgResult = StaticImageDecoder.decode(encode(jpgSource, "jpg"), constraints)
+        val pngResult = withTempImageFile(encode(pngSource, "png")) { path ->
+            StaticImageDecoder.decode(path, constraints)
+        }
+        val jpgResult = withTempImageFile(encode(jpgSource, "jpg")) { path ->
+            StaticImageDecoder.decode(path, constraints)
+        }
 
         assertEquals(DecodeResult.ImageTooLarge, pngResult)
         assertEquals(DecodeResult.ImageTooLarge, jpgResult)
@@ -64,10 +72,12 @@ class StaticImageDecoderTest {
 
     @Test
     fun `jpeg decoder should return invalid-image for malformed bytes`() = runTest {
-        val result = StaticImageDecoder.decode(
-            bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2, 3),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1, 2, 3)) { path ->
+            StaticImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertEquals(DecodeResult.InvalidImage, result)
     }

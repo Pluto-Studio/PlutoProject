@@ -12,8 +12,6 @@ import plutoproject.feature.gallery.adapter.common.GalleryConfig
 import plutoproject.feature.gallery.adapter.common.koin
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
-import java.io.BufferedInputStream
-import java.io.InputStream
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.channels.OverlappingFileLockException
@@ -204,24 +202,16 @@ class UploadedFile(private val tempFile: Path) {
 
     var isDiscarded = false
         private set
-    private var inputStream: InputStream? = null
 
-    fun <T> use(block: (InputStream) -> T): Result<T> {
-        val inputStream = inputStream().getOrElse { return Result.failure(it) }
+    suspend fun <T> usePath(block: suspend (Path) -> T): Result<T> {
         return try {
-            Result.success(block(inputStream))
+            Result.success(block(tempFile))
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "An error occurred while using uploaded file", e)
             Result.failure(e)
         } finally {
             discard()
         }
-    }
-
-    private fun inputStream(): Result<InputStream> = runCatching {
-        BufferedInputStream(tempFile.inputStream()).also { inputStream = it }
-    }.onFailure { exception ->
-        logger.log(Level.SEVERE, "An error occurred while opening input stream for temp file", exception)
     }
 
     fun discard() {
@@ -231,10 +221,7 @@ class UploadedFile(private val tempFile: Path) {
 
         isDiscarded = true
 
-        listOf(
-            runCatching { inputStream?.close() } to "closing input stream for temp file",
-            runCatching { tempFile.deleteIfExists() } to "deleting temp file"
-        ).forEach { (result, action) ->
+        listOf(runCatching { tempFile.deleteIfExists() } to "deleting temp file").forEach { (result, action) ->
             result.onFailure {
                 logger.log(Level.SEVERE, "An error occurred while $action", it)
             }
@@ -568,7 +555,7 @@ private fun String.extension(): String {
 }
 
 private fun openImage(tempFile: Path, format: SupportedImageFormat): ImageInputStream? {
-    return format.inputStreamSpi?.createInputStreamInstance(tempFile.toFile())
+    return format.inputStreamSpi?.createInputStreamInstance(tempFile.toFile(), false, null)
         ?: ImageIO.createImageInputStream(tempFile.toFile())
 }
 

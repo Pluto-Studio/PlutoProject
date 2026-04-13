@@ -3,6 +3,7 @@ package plutoproject.feature.gallery.core.decode
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import plutoproject.feature.gallery.core.decode.animated.gif.GifDecoder
 import plutoproject.feature.gallery.core.render.PixelBuffer
+import java.nio.file.Path
 
 object UnifiedImageDecoder {
     sealed interface Result {
@@ -13,14 +14,14 @@ object UnifiedImageDecoder {
         data class Failure(override val result: DecodeResult<*>) : Result
     }
 
-    suspend fun decode(bytes: ByteArray, constraints: DecodeConstraints): Result {
-        val format = ImageFormatSniffer.sniff(bytes)
+    suspend fun decode(path: Path, constraints: DecodeConstraints): Result {
+        val format = ImageFormatSniffer.sniff(path)
             ?: return Result.Failure(DecodeResult.UnsupportedFormat)
 
         return when (format) {
-            SupportedImageFormat.Gif -> GifDecoder.decode(bytes, constraints).wrapAnimated()
+            SupportedImageFormat.Gif -> GifDecoder.decode(path, constraints).wrapAnimated()
             else -> StaticImageDecoder.decode(
-                bytes = bytes,
+                path = path,
                 constraints = constraints,
                 inputStreamSpi = format.inputStreamSpi,
                 readerSpi = format.readerSpi,

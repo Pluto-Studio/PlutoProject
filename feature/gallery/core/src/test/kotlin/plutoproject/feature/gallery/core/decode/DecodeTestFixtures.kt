@@ -1,6 +1,10 @@
 package plutoproject.feature.gallery.core.decode
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.Base64
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.writeBytes
 
 const val WEBP_1X1_TRANSPARENT_BASE64: String =
     // 1x1 transparent WebP sample used for decode smoke test.
@@ -41,3 +45,13 @@ const val GIF_TRANSPARENT_PATCH_OVERLAY_BASE64: String =
     "R0lGODlhAgABAPAAAP8AAP8AACH5BAABAAAALAAAAAACAAEAQAgFAAEACAgAIfkEAQEAAAAsAQAAAAEAAQDAAAAAAAAACAQAAQQEADs="
 
 fun decodeBase64(value: String): ByteArray = Base64.getDecoder().decode(value)
+
+suspend inline fun <T> withTempImageFile(bytes: ByteArray, crossinline block: suspend (Path) -> T): T {
+    val path = Files.createTempFile("gallery-decode-", ".img")
+    path.writeBytes(bytes)
+    return try {
+        block(path)
+    } finally {
+        path.deleteIfExists()
+    }
+}

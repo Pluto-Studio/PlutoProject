@@ -7,27 +7,28 @@ import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageMetadata
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
-import java.io.ByteArrayInputStream
 import java.io.EOFException
+import java.nio.file.Path
 import javax.imageio.IIOException
 import javax.imageio.ImageIO
 import javax.imageio.stream.ImageInputStream
+import kotlin.io.path.fileSize
 
 object GifDecoder {
     suspend fun decode(
-        bytes: ByteArray,
+        path: Path,
         constraints: DecodeConstraints,
     ): DecodeResult<AnimatedImageSource> = try {
-        if (bytes.size > constraints.maxBytes) {
+        if (path.fileSize() > constraints.maxBytes) {
             return DecodeResult.ImageTooLarge
         }
 
         val imageInput = withContext(Dispatchers.IO) {
-            ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+            ImageIO.createImageInputStream(path.toFile())
         } ?: return DecodeResult.UnsupportedFormat
 
         imageInput.use { input ->
-            decodeImageInput(bytes, input, constraints)
+            decodeImageInput(path, input, constraints)
         }
     } catch (e: CancellationException) {
         throw e
@@ -41,7 +42,7 @@ object GifDecoder {
 }
 
 private suspend fun decodeImageInput(
-    bytes: ByteArray,
+    path: Path,
     input: ImageInputStream,
     constraints: DecodeConstraints,
 ): DecodeResult<AnimatedImageSource> {
@@ -84,7 +85,7 @@ private suspend fun decodeImageInput(
         return DecodeResult.Success(
             AnimatedImageSource(
                 metadata = metadata,
-                frameStreamOpener = { openFrameStream(bytes, metadata) },
+                frameStreamOpener = { openFrameStream(path, metadata) },
             )
         )
     } finally {
@@ -93,11 +94,11 @@ private suspend fun decodeImageInput(
 }
 
 private suspend fun openFrameStream(
-    bytes: ByteArray,
+    path: Path,
     metadata: AnimatedImageMetadata,
 ): GifFrameStream {
     val imageInput = withContext(Dispatchers.IO) {
-        ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+        ImageIO.createImageInputStream(path.toFile())
     } ?: error("Failed to create GIF image input stream")
 
     val reader = runCatching {

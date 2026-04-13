@@ -1,82 +1,71 @@
 package plutoproject.feature.gallery.core.decode
 
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class ImageFormatSnifferTest {
     @Test
-    fun `should detect png by magic bytes`() {
-        val bytes = byteArrayOf(
+    fun `should detect png by magic bytes`() = runTest {
+        val format = withTempImageFile(byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47,
             0x0D, 0x0A, 0x1A, 0x0A,
-        )
+        )) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
-        val format = ImageFormatSniffer.sniff(bytes, fileNameHint = null)
-
-        assertEquals(DecodableImageFormat.PNG, format)
+        assertEquals(SupportedImageFormat.Png, format)
     }
 
     @Test
-    fun `should detect jpeg by magic bytes`() {
-        val bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
+    fun `should detect jpeg by magic bytes`() = runTest {
+        val format = withTempImageFile(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
-        val format = ImageFormatSniffer.sniff(bytes, fileNameHint = null)
-
-        assertEquals(DecodableImageFormat.JPEG, format)
+        assertEquals(SupportedImageFormat.Jpeg, format)
     }
 
     @Test
-    fun `should detect gif by magic bytes`() {
-        val bytes = "GIF89a".encodeToByteArray()
+    fun `should detect gif by magic bytes`() = runTest {
+        val format = withTempImageFile("GIF89a".encodeToByteArray()) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
-        val format = ImageFormatSniffer.sniff(bytes, fileNameHint = null)
-
-        assertEquals(DecodableImageFormat.GIF, format)
+        assertEquals(SupportedImageFormat.Gif, format)
     }
 
     @Test
-    fun `should detect webp by riff and webp signature`() {
-        val bytes = byteArrayOf(
+    fun `should detect webp by riff and webp signature`() = runTest {
+        val format = withTempImageFile(byteArrayOf(
             'R'.code.toByte(), 'I'.code.toByte(), 'F'.code.toByte(), 'F'.code.toByte(),
             0, 0, 0, 0,
             'W'.code.toByte(), 'E'.code.toByte(), 'B'.code.toByte(), 'P'.code.toByte(),
-        )
+        )) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
-        val format = ImageFormatSniffer.sniff(bytes, fileNameHint = null)
-
-        assertEquals(DecodableImageFormat.WEBP, format)
+        assertEquals(SupportedImageFormat.Webp, format)
     }
 
     @Test
-    fun `should fallback to jpg file extension when magic bytes are unknown`() {
-        val format = ImageFormatSniffer.sniff(byteArrayOf(1, 2, 3), fileNameHint = "poster.jpg")
-
-        assertEquals(DecodableImageFormat.JPEG, format)
-    }
-
-    @Test
-    fun `should fallback to jpeg file extension when magic bytes are unknown`() {
-        val format = ImageFormatSniffer.sniff(byteArrayOf(1, 2, 3), fileNameHint = "poster.jpeg")
-
-        assertEquals(DecodableImageFormat.JPEG, format)
-    }
-
-    @Test
-    fun `should prefer magic bytes over file extension`() {
-        val pngBytes = byteArrayOf(
+    fun `should detect png when enough header bytes are available in file`() = runTest {
+        val format = withTempImageFile(byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47,
             0x0D, 0x0A, 0x1A, 0x0A,
-        )
+        )) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
-        val format = ImageFormatSniffer.sniff(pngBytes, fileNameHint = "wrong.gif")
-
-        assertEquals(DecodableImageFormat.PNG, format)
+        assertEquals(SupportedImageFormat.Png, format)
     }
 
     @Test
-    fun `should return null when no format can be detected`() {
-        val format = ImageFormatSniffer.sniff(byteArrayOf(1, 2, 3), fileNameHint = "unknown.bin")
+    fun `should return null when no format can be detected`() = runTest {
+        val format = withTempImageFile(byteArrayOf(1, 2, 3)) { path ->
+            ImageFormatSniffer.sniff(path)
+        }
 
         assertNull(format)
     }

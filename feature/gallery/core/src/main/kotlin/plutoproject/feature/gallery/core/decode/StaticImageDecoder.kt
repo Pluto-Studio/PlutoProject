@@ -4,26 +4,27 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import plutoproject.feature.gallery.core.render.PixelBuffer
-import java.io.ByteArrayInputStream
 import java.io.EOFException
+import java.nio.file.Path
 import javax.imageio.IIOException
 import javax.imageio.ImageIO
 import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
 import javax.imageio.stream.ImageInputStream
+import kotlin.io.path.fileSize
 
 object StaticImageDecoder {
     suspend fun decode(
-        bytes: ByteArray,
+        path: Path,
         constraints: DecodeConstraints,
         inputStreamSpi: ImageInputStreamSpi? = null,
         readerSpi: ImageReaderSpi? = null,
     ): DecodeResult<PixelBuffer> = try {
-        if (bytes.size > constraints.maxBytes) {
+        if (path.fileSize() > constraints.maxBytes) {
             return DecodeResult.ImageTooLarge
         }
 
-        val imageInput = createImageInput(bytes, inputStreamSpi) ?: return DecodeResult.UnsupportedFormat
+        val imageInput = createImageInput(path, inputStreamSpi) ?: return DecodeResult.UnsupportedFormat
 
         imageInput.use { input ->
             decodeImageInput(input, constraints, readerSpi)
@@ -74,11 +75,11 @@ private suspend fun decodeImageInput(
 }
 
 private suspend fun createImageInput(
-    bytes: ByteArray,
+    path: Path,
     inputStreamSpi: ImageInputStreamSpi?,
 ): ImageInputStream? = withContext(Dispatchers.IO) {
-    inputStreamSpi?.createInputStreamInstance(bytes, false, null)
-        ?: ImageIO.createImageInputStream(ByteArrayInputStream(bytes))
+    inputStreamSpi?.createInputStreamInstance(path.toFile(), false, null)
+        ?: ImageIO.createImageInputStream(path.toFile())
 }
 
 private suspend fun createReader(

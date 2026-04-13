@@ -13,19 +13,22 @@ import plutoproject.feature.gallery.core.decode.GIF_TRANSPARENT_PATCH_OVERLAY_BA
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageFrame
 import plutoproject.feature.gallery.core.decode.animated.AnimatedImageSource
 import plutoproject.feature.gallery.core.decode.decodeBase64
+import plutoproject.feature.gallery.core.decode.withTempImageFile
 import kotlin.time.Duration.Companion.milliseconds
 
 class GifDecoderTest {
     @Test
     fun `gif decoder should compose partial patches into full timeline frames`() = runTest {
-        val result = GifDecoder.decode(
-            decodeBase64(GIF_PATCH_TIMELINE_BASE64),
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val (data, frames) = withTempImageFile(decodeBase64(GIF_PATCH_TIMELINE_BASE64)) { path ->
+            val result = GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+            assertTrue(result is DecodeResult.Success)
+            val data = (result as DecodeResult.Success).data
+            data to readAllFrames(data)
+        }
 
-        assertTrue(result is DecodeResult.Success)
-        val data = (result as DecodeResult.Success).data
-        val frames = readAllFrames(data)
         assertEquals(2, frames.size)
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].pixelBuffer.pixels.toList())
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].pixelBuffer.pixels.toList())
@@ -35,14 +38,16 @@ class GifDecoderTest {
 
     @Test
     fun `gif decoder should apply restore-to-background disposal with clipping`() = runTest {
-        val result = GifDecoder.decode(
-            decodeBase64(GIF_RESTORE_BACKGROUND_CLIPPED_BASE64),
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val (data, frames) = withTempImageFile(decodeBase64(GIF_RESTORE_BACKGROUND_CLIPPED_BASE64)) { path ->
+            val result = GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+            assertTrue(result is DecodeResult.Success)
+            val data = (result as DecodeResult.Success).data
+            data to readAllFrames(data)
+        }
 
-        assertTrue(result is DecodeResult.Success)
-        val data = (result as DecodeResult.Success).data
-        val frames = readAllFrames(data)
         assertEquals(3, frames.size)
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].pixelBuffer.pixels.toList())
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].pixelBuffer.pixels.toList())
@@ -52,14 +57,16 @@ class GifDecoderTest {
 
     @Test
     fun `gif decoder should apply restore-to-previous disposal`() = runTest {
-        val result = GifDecoder.decode(
-            decodeBase64(GIF_RESTORE_PREVIOUS_BASE64),
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val (data, frames) = withTempImageFile(decodeBase64(GIF_RESTORE_PREVIOUS_BASE64)) { path ->
+            val result = GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+            assertTrue(result is DecodeResult.Success)
+            val data = (result as DecodeResult.Success).data
+            data to readAllFrames(data)
+        }
 
-        assertTrue(result is DecodeResult.Success)
-        val data = (result as DecodeResult.Success).data
-        val frames = readAllFrames(data)
         assertEquals(3, frames.size)
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].pixelBuffer.pixels.toList())
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFF00FF00.toInt()), frames[1].pixelBuffer.pixels.toList())
@@ -68,14 +75,15 @@ class GifDecoderTest {
 
     @Test
     fun `gif decoder should keep canvas pixels when patch pixel is transparent`() = runTest {
-        val result = GifDecoder.decode(
-            decodeBase64(GIF_TRANSPARENT_PATCH_OVERLAY_BASE64),
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val frames = withTempImageFile(decodeBase64(GIF_TRANSPARENT_PATCH_OVERLAY_BASE64)) { path ->
+            val result = GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+            assertTrue(result is DecodeResult.Success)
+            readAllFrames((result as DecodeResult.Success).data)
+        }
 
-        assertTrue(result is DecodeResult.Success)
-        val data = (result as DecodeResult.Success).data
-        val frames = readAllFrames(data)
         assertEquals(2, frames.size)
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[0].pixelBuffer.pixels.toList())
         assertEquals(listOf(0xFFFF0000.toInt(), 0xFFFF0000.toInt()), frames[1].pixelBuffer.pixels.toList())
@@ -85,14 +93,15 @@ class GifDecoderTest {
     fun `gif decoder should enforce max-frames and max-pixels constraints`() = runTest {
         val sample = decodeBase64(GIF_RESTORE_BACKGROUND_CLIPPED_BASE64)
 
-        val tooManyFrames = GifDecoder.decode(
-            sample,
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 2),
-        )
-        val tooManyPixels = GifDecoder.decode(
-            sample,
-            DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 1, maxFrames = 10),
-        )
+        val (tooManyFrames, tooManyPixels) = withTempImageFile(sample) { path ->
+            GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 2),
+            ) to GifDecoder.decode(
+                path,
+                DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 1, maxFrames = 10),
+            )
+        }
 
         assertEquals(DecodeResult.TooManyFrames, tooManyFrames)
         assertEquals(DecodeResult.ImageTooLarge, tooManyPixels)
@@ -100,10 +109,12 @@ class GifDecoderTest {
 
     @Test
     fun `gif decoder should return invalid-image for malformed bytes`() = runTest {
-        val result = GifDecoder.decode(
-            bytes = "GIF89a".encodeToByteArray(),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile("GIF89a".encodeToByteArray()) { path ->
+            GifDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertEquals(DecodeResult.InvalidImage, result)
     }

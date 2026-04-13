@@ -36,7 +36,12 @@ import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.feature.gallery.core.render.*
 import plutoproject.framework.common.util.coroutine.Loom
 import plutoproject.framework.paper.util.coroutine.coroutineContext
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.fileSize
+import kotlin.io.path.outputStream
 import kotlin.time.Duration
 
 private const val PERMISSION_GALLERY_DEBUG = "plutoproject.gallery.command.gallery.debug"
@@ -231,28 +236,31 @@ object GalleyDebugCommand {
                 )
             }
 
-        return createImageFromBytes(
-            ownerId = ownerId,
-            ownerName = ownerName,
-            request = request,
-            bytes = downloadedFile.bytes,
-            fileNameHint = downloadedFile.fileNameHint,
-        )
+        try {
+            return createImageFromPath(
+                ownerId = ownerId,
+                ownerName = ownerName,
+                request = request,
+                path = downloadedFile.path,
+            )
+        } finally {
+            downloadedFile.path.deleteIfExists()
+        }
     }
 
-    private suspend fun createImageFromBytes(
+    private suspend fun createImageFromPath(
         ownerId: UUID,
         ownerName: String,
         request: CreateRequest,
-        bytes: ByteArray,
-        fileNameHint: String?,
+        path: Path,
     ): CreateImageDebugResult {
-        val decodeResult = UnifiedImageDecoder.decode(bytes, galleryConfig.fileProcessing.decodeConstraints())
+        val sourceBytes = path.fileSize()
+        val decodeResult = UnifiedImageDecoder.decode(path, galleryConfig.fileProcessing.decodeConstraints())
 
         val imageData = when (decodeResult) {
             is UnifiedImageDecoder.Result.Failure -> {
                 return CreateImageDebugResult.Failure(
-                    "Create failed: decoder returned ${describeDecodeResult(decodeResult.result)}. sourceBytes=${bytes.size}, fileNameHint=${quote(fileNameHint)}"
+                    "Create failed: decoder returned ${describeDecodeResult(decodeResult.result)}. sourceBytes=$sourceBytes"
                 )
             }
 
@@ -329,7 +337,7 @@ object GalleyDebugCommand {
         return CreateImageDebugResult.Success(
             image = image,
             imageData = imageData,
-            sourceBytes = bytes.size,
+            sourceBytes = sourceBytes,
         )
     }
 
@@ -429,10 +437,17 @@ object GalleyDebugCommand {
                         "Create-upload session update: state=Success, sessionId=${session.id}. The file upload succeeded and image creation is starting."
                     )
 
-                    val uploadedBytes = withContext(Dispatchers.Loom) {
-                        state.file.use { inputStream -> inputStream.readBytes() }
+                    val createResult = withContext(Dispatchers.Loom) {
+                        state.file.usePath { tempFile ->
+                            createImageFromPath(
+                                ownerId = ownerId,
+                                ownerName = ownerName,
+                                request = request,
+                                path = tempFile,
+                            )
+                        }
                     }
-                    val bytes = uploadedBytes.getOrElse {
+                    val result = createResult.getOrElse {
                         sendPlayerMessage(
                             playerId,
                             "Create-upload failed after upload success: unable to read uploaded temp file for sessionId=${session.id}. cause=${it.message ?: it::class.qualifiedName}"
@@ -440,21 +455,11 @@ object GalleyDebugCommand {
                         return@first true
                     }
 
-                    val createResult = withContext(Dispatchers.Loom) {
-                        createImageFromBytes(
-                            ownerId = ownerId,
-                            ownerName = ownerName,
-                            request = request,
-                            bytes = bytes,
-                            fileNameHint = null,
-                        )
-                    }
-
-                    when (createResult) {
+                    when (result) {
                         is CreateImageDebugResult.Failure -> {
                             sendPlayerMessage(
                                 playerId,
-                                "Create-upload failed after upload success. sessionId=${session.id}. ${createResult.message}"
+                                "Create-upload failed after upload success. sessionId=${session.id}. ${result.message}"
                             )
                         }
 
@@ -462,7 +467,7 @@ object GalleyDebugCommand {
                             sendCreateSuccessMessage(
                                 playerId = playerId,
                                 prefix = "Create-upload succeeded",
-                                result = createResult,
+                                result = result,
                                 request = request,
                                 sourceDescription = "uploadSessionId=${session.id}, uploadUrl=${quote(session.uploadUrl)}",
                             )
@@ -571,9 +576,14 @@ object GalleyDebugCommand {
             }
 
             val body = response.body
+            val tempFile = Files.createTempFile("plutoproject_gallery_debug_", ".img")
+            body.byteStream().use { input ->
+                tempFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
             return DownloadedFile(
-                bytes = body.bytes(),
-                fileNameHint = response.request.url.pathSegments.lastOrNull()?.takeIf { it.isNotBlank() },
+                path = tempFile,
             )
         }
     }
@@ -633,7 +643,7 @@ private sealed interface CreateImageDebugResult {
     data class Success(
         val image: Image,
         val imageData: ImageData,
-        val sourceBytes: Int,
+        val sourceBytes: Long,
     ) : CreateImageDebugResult
 
     data class Failure(val message: String) : CreateImageDebugResult
@@ -652,8 +662,7 @@ private data class CreateRequest(
 )
 
 private data class DownloadedFile(
-    val bytes: ByteArray,
-    val fileNameHint: String?,
+    val path: Path,
 )
 
 private data class DisplayCleanupSummary(

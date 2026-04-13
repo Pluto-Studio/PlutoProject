@@ -1,15 +1,11 @@
 package plutoproject.feature.gallery.core.decode
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi
-import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStreamSpi
+import com.twelvemonkeys.imageio.stream.BufferedFileImageInputStreamSpi
 import java.nio.file.Path
 import javax.imageio.spi.ImageInputStreamSpi
 import javax.imageio.spi.ImageReaderSpi
 import kotlin.io.path.inputStream
-
-class A {
-
-}
 
 sealed interface SupportedImageFormat {
     val inputStreamSpi: ImageInputStreamSpi?
@@ -37,7 +33,7 @@ sealed interface SupportedImageFormat {
     }
 
     data object Webp : SupportedImageFormat {
-        override val inputStreamSpi: ImageInputStreamSpi = ByteArrayImageInputStreamSpi()
+        override val inputStreamSpi: ImageInputStreamSpi = BufferedFileImageInputStreamSpi()
         override val readerSpi: ImageReaderSpi = WebPImageReaderSpi()
     }
 
@@ -62,19 +58,15 @@ private val SNIFFER_HEADER_SIZE = maxOf(PNG_MAGIC_SIZE, JPEG_MAGIC_SIZE, WEBP_MA
 
 
 object ImageFormatSniffer {
-    fun sniff(bytes: ByteArray): SupportedImageFormat? {
-        return when {
-            isPng(bytes) -> SupportedImageFormat.Png
-            isJpeg(bytes) -> SupportedImageFormat.Jpeg
-            isGif(bytes) -> SupportedImageFormat.Gif
-            isWebp(bytes) -> SupportedImageFormat.Webp
-            else -> null
-        }
-    }
-
     fun sniff(filePath: Path): SupportedImageFormat? {
         val header = readHeader(filePath) ?: return null
-        return sniff(header)
+        return when {
+            isPng(header) -> SupportedImageFormat.Png
+            isJpeg(header) -> SupportedImageFormat.Jpeg
+            isGif(header) -> SupportedImageFormat.Gif
+            isWebp(header) -> SupportedImageFormat.Webp
+            else -> null
+        }
     }
 }
 

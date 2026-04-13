@@ -11,10 +11,12 @@ import javax.imageio.ImageIO
 class UnifiedImageDecoderTest {
     @Test
     fun `should wrap static decode success for webp`() = runTest {
-        val result = UnifiedImageDecoder.decode(
-            bytes = decodeBase64(WEBP_1X1_TRANSPARENT_BASE64),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile(decodeBase64(WEBP_1X1_TRANSPARENT_BASE64)) { path ->
+            UnifiedImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertTrue(result is UnifiedImageDecoder.Result.StaticSuccess)
         val decodeResult = (result as UnifiedImageDecoder.Result.StaticSuccess).result
@@ -26,10 +28,12 @@ class UnifiedImageDecoderTest {
 
     @Test
     fun `should wrap animated decode success for gif`() = runTest {
-        val result = UnifiedImageDecoder.decode(
-            bytes = decodeBase64(GIF_PATCH_TIMELINE_BASE64),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-        )
+        val result = withTempImageFile(decodeBase64(GIF_PATCH_TIMELINE_BASE64)) { path ->
+            UnifiedImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertTrue(result is UnifiedImageDecoder.Result.AnimatedSuccess)
         val decodeResult = (result as UnifiedImageDecoder.Result.AnimatedSuccess).result
@@ -42,11 +46,12 @@ class UnifiedImageDecoderTest {
 
     @Test
     fun `should return failure wrapping unsupported format when sniffer cannot identify image`() = runTest {
-        val result = UnifiedImageDecoder.decode(
-            bytes = encodePng(BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)).drop(8).toByteArray(),
-            constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
-            fileNameHint = "unknown.bin",
-        )
+        val result = withTempImageFile(encodePng(BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)).drop(8).toByteArray()) { path ->
+            UnifiedImageDecoder.decode(
+                path = path,
+                constraints = DecodeConstraints(maxBytes = 1024 * 1024, maxPixels = 16_777_216, maxFrames = 500),
+            )
+        }
 
         assertEquals(
             UnifiedImageDecoder.Result.Failure(DecodeResult.UnsupportedFormat),
