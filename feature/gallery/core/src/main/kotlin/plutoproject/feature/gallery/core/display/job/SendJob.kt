@@ -88,12 +88,12 @@ class SendJob(
 
         while (state != State.Stopped) {
             val event = waitEvent(state, clock.instant())
-            state = reduce(state, event, clock.instant(), context)
+            state = handleEvent(state, event, clock.instant(), context)
 
             // 处理一下积压的事件，让 Pause/Resume/Stop 更快生效
             while (state != State.Stopped) {
                 val nextEvent = channel.tryReceive().getOrNull() ?: break
-                state = reduce(state, nextEvent, clock.instant(), context)
+                state = handleEvent(state, nextEvent, clock.instant(), context)
             }
         }
     }
@@ -121,21 +121,21 @@ class SendJob(
         }
     }
 
-    private fun reduce(
+    private fun handleEvent(
         state: State,
         event: Event,
         now: Instant,
         context: Context,
     ): State {
         return when (state) {
-            State.Idle -> reduceIdle(event, context)
-            is State.Active -> reduceActive(state, event, now, context)
-            State.Paused -> reducePaused(event, context)
+            State.Idle -> handleEventIdle(event, context)
+            is State.Active -> handleEventActive(state, event, now, context)
+            State.Paused -> handleEventPaused(event, context)
             State.Stopped -> State.Stopped
         }
     }
 
-    private fun reduceIdle(event: Event, context: Context): State {
+    private fun handleEventIdle(event: Event, context: Context): State {
         return when (event) {
             is Event.Enqueue -> {
                 enqueuePending(context, event.request)
@@ -148,7 +148,7 @@ class SendJob(
         }
     }
 
-    private fun reduceActive(state: State.Active, event: Event, now: Instant, context: Context): State {
+    private fun handleEventActive(state: State.Active, event: Event, now: Instant, context: Context): State {
         return when (event) {
             is Event.Enqueue -> {
                 enqueuePending(context, event.request)
@@ -170,7 +170,7 @@ class SendJob(
         }
     }
 
-    private fun reducePaused(event: Event, context: Context): State {
+    private fun handleEventPaused(event: Event, context: Context): State {
         return when (event) {
             is Event.Enqueue -> {
                 enqueuePending(context, event.request)
