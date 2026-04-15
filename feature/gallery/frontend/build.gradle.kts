@@ -18,6 +18,7 @@ val npmBuild by tasks.registering(NpmTask::class) {
     inputs.files(
         file("package.json"),
         file("package-lock.json"),
+        file("tsconfig.json"),
         file("vite.config.js"),
         file("index.html"),
         file("eslint.config.js")

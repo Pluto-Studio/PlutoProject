@@ -20,11 +20,11 @@ export const texts = {
   },
   dropzone: {
     title: '拖拽到此处或点击选择',
-    supportedFormats: (formats) => `支持上传 ${formats}。`,
+    supportedFormats: (formats: string) => `支持上传 ${formats}。`,
   },
   preview: {
     alt: '待上传图片预览',
-    fileSize: (size) => `文件大小：${size}`,
+    fileSize: (size: string) => `文件大小：${size}`,
   },
   uploadButton: {
     idle: '开始上传',
@@ -46,11 +46,12 @@ export const texts = {
   },
   dialog: {
     unsupportedTypeTitle: '不支持的格式',
-    unsupportedTypeDescription: (formats) => `请选择 ${formats} 格式的图片。`,
+    unsupportedTypeDescription: (formats: string) => `请选择 ${formats} 格式的图片。`,
     fileTooLargeTitle: '文件过大',
-    fileTooLargeDescription: (maxSize) => `请选择不超过 ${maxSize} 的图片。`,
+    fileTooLargeDescription: (maxSize: string) => `请选择不超过 ${maxSize} 的图片。`,
     tooManyPixelsTitle: '图片尺寸过大',
-    tooManyPixelsDescription: (width, height) => `建议大小不超过 ${width} x ${height}，请换一张更小的图片。`,
+    tooManyPixelsDescription: (width: number, height: number) =>
+      `建议大小不超过 ${width} x ${height}，请换一张更小的图片。`,
     unreadableImageTitle: '无法读取图片',
     unreadableImageDescription: '请确认文件没有损坏，并使用受支持的图片格式。',
   },

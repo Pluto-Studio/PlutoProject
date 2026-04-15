@@ -1,5 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react'
+import { motion, type Transition } from 'framer-motion'
 import {
   IconCheck,
   IconChevronDown,
@@ -9,7 +17,7 @@ import {
   IconSun,
   IconUpload,
 } from '@tabler/icons-react'
-import { Button } from './components/ui/button.jsx'
+import { Button } from './components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -17,9 +25,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './components/ui/dialog.jsx'
-import { cn, formatBinarySize, formatFormatList, getFileExtension } from './lib/utils.js'
-import { texts } from './texts.js'
+} from './components/ui/dialog'
+import { cn, formatBinarySize, formatFormatList, getFileExtension } from './lib/utils'
+import { texts } from './texts'
 
 const THEME_STORAGE_KEY = 'gallery-upload-theme'
 
@@ -27,21 +35,52 @@ const themeModes = {
   system: 'system',
   light: 'light',
   dark: 'dark',
-}
+} as const
+
+type ThemeMode = (typeof themeModes)[keyof typeof themeModes]
+type ResolvedTheme = Exclude<ThemeMode, typeof themeModes.system>
 
 const uploadStates = {
   idle: 'idle',
   uploading: 'uploading',
   success: 'success',
+} as const
+
+type UploadState = (typeof uploadStates)[keyof typeof uploadStates]
+
+type UploadConfig = {
+  supportedFileExtensions: string[]
+  supportedMimeTypes: string[]
+  supportedFormatNames: string[]
+  maxBytes: number
+  maxPixels: number
+  suggestedMaxWidth: number
+  suggestedMaxHeight: number
 }
 
-const uploadButtonStyles = {
+type ConfigState =
+  | { status: 'loading'; data: null; error: null }
+  | { status: 'ready'; data: UploadConfig; error: null }
+  | { status: 'error'; data: null; error: string }
+
+type DialogContentState = {
+  open: boolean
+  title: string
+  description: string
+}
+
+type ValidationMessage = {
+  title: string
+  description: string
+}
+
+const uploadButtonStyles: Record<UploadState, string> = {
   [uploadStates.idle]: 'hover:bg-ctp-sapphire hover:border-ctp-sapphire',
   [uploadStates.uploading]: '',
   [uploadStates.success]: '',
 }
 
-const uploadButtonMotionStyles = {
+const uploadButtonMotionStyles: Record<UploadState, { backgroundColor: string; borderColor: string; color: string }> = {
   [uploadStates.idle]: {
     backgroundColor: 'var(--color-ctp-blue)',
     borderColor: 'var(--color-ctp-blue)',
@@ -60,30 +99,36 @@ const uploadButtonMotionStyles = {
 }
 
 const tapAnimation = { scale: 0.985 }
-const tapTransition = { type: 'spring', stiffness: 540, damping: 34, mass: 0.7 }
-const uploadButtonTransition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] }
+const tapTransition: Transition = { type: 'spring', stiffness: 540, damping: 34, mass: 0.7 }
+const uploadButtonTransition: Transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const }
+const initialConfigState: ConfigState = { status: 'loading', data: null, error: null }
+const initialDialogContent: DialogContentState = { open: false, title: '', description: '' }
 
 const themeModeButtons = [
   { value: themeModes.system, icon: IconDeviceDesktop },
   { value: themeModes.light, icon: IconSun },
   { value: themeModes.dark, icon: IconMoon },
-]
+] satisfies Array<{ value: ThemeMode; icon: typeof IconSun }>
 
-function extractSessionId(pathname) {
+function isThemeMode(value: string | null): value is ThemeMode {
+  return value === themeModes.system || value === themeModes.light || value === themeModes.dark
+}
+
+function extractSessionId(pathname: string): string | null {
   const match = pathname.match(/^\/upload\/([^/]+)\/?$/)
   return match?.[1] ?? null
 }
 
-function getStoredThemeMode() {
+function getStoredThemeMode(): ThemeMode {
   if (typeof window === 'undefined') {
     return themeModes.system
   }
 
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
-  return Object.values(themeModes).includes(stored) ? stored : themeModes.system
+  return isThemeMode(stored) ? stored : themeModes.system
 }
 
-function resolveTheme(mode, prefersDark) {
+function resolveTheme(mode: ThemeMode, prefersDark: boolean): ResolvedTheme {
   if (mode === themeModes.system) {
     return prefersDark ? themeModes.dark : themeModes.light
   }
@@ -91,18 +136,18 @@ function resolveTheme(mode, prefersDark) {
   return mode
 }
 
-function applyResolvedTheme(theme) {
+function applyResolvedTheme(theme: ResolvedTheme): void {
   const root = document.documentElement
   root.classList.remove('latte', 'mocha')
   root.classList.add(theme === themeModes.dark ? 'mocha' : 'latte')
   root.style.colorScheme = theme === themeModes.dark ? 'dark' : 'light'
 }
 
-async function readImageDimensions(file) {
+async function readImageDimensions(file: File): Promise<{ width: number; height: number }> {
   const objectUrl = URL.createObjectURL(file)
 
   try {
-    return await new Promise((resolve, reject) => {
+    return await new Promise<{ width: number; height: number }>((resolve, reject) => {
       const image = new Image()
       image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight })
       image.onerror = () => reject(new Error('image-load-failed'))
@@ -113,7 +158,7 @@ async function readImageDimensions(file) {
   }
 }
 
-async function validateFile(file, config) {
+async function validateFile(file: File, config: UploadConfig): Promise<ValidationMessage | null> {
   const extension = getFileExtension(file.name)
   const normalizedMime = file.type.toLowerCase()
   const supportsExtension = extension !== '' && config.supportedFileExtensions.includes(extension)
@@ -154,7 +199,7 @@ async function validateFile(file, config) {
   return null
 }
 
-function getUploadErrorMessage(status) {
+function getUploadErrorMessage(status: number): string {
   switch (status) {
     case 404:
       return texts.uploadErrors.notFound
@@ -169,17 +214,23 @@ function getUploadErrorMessage(status) {
   }
 }
 
-function ThemeModePicker({ currentMode, onChange }) {
+type ThemeModePickerProps = {
+  currentMode: ThemeMode
+  onChange: (nextMode: ThemeMode) => void
+}
+
+function ThemeModePicker({ currentMode, onChange }: ThemeModePickerProps) {
   const [open, setOpen] = useState(false)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) {
       return undefined
     }
 
-    function handlePointerDown(event) {
-      if (!containerRef.current?.contains(event.target)) {
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target
+      if (!(target instanceof Node) || !containerRef.current?.contains(target)) {
         setOpen(false)
       }
     }
@@ -250,7 +301,12 @@ function LoadingState() {
   )
 }
 
-function ErrorState({ message, onRetry }) {
+type ErrorStateProps = {
+  message: string
+  onRetry?: (() => void) | null
+}
+
+function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <div className="space-y-4 rounded-[1.75rem] border border-ctp-red bg-ctp-mantle p-6">
       <div className="space-y-2">
@@ -271,15 +327,15 @@ export default function App() {
   const sessionId = useMemo(() => extractSessionId(window.location.pathname), [])
   const [configReloadToken, setConfigReloadToken] = useState(0)
   const [themeMode, setThemeMode] = useState(getStoredThemeMode)
-  const [configState, setConfigState] = useState({ status: 'loading', data: null, error: null })
+  const [configState, setConfigState] = useState<ConfigState>(initialConfigState)
   const fileValidationTokenRef = useRef(0)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
-  const [uploadState, setUploadState] = useState(uploadStates.idle)
-  const [statusText, setStatusText] = useState(texts.uploadStatus.idle)
+  const [uploadState, setUploadState] = useState<UploadState>(uploadStates.idle)
+  const [statusText, setStatusText] = useState<string>(texts.uploadStatus.idle)
   const [uploadError, setUploadError] = useState('')
-  const [dialogContent, setDialogContent] = useState({ open: false, title: '', description: '' })
+  const [dialogContent, setDialogContent] = useState<DialogContentState>(initialDialogContent)
 
   useEffect(() => {
     document.title = texts.documentTitle
@@ -332,7 +388,7 @@ export default function App() {
           throw new Error('config-response-not-ok')
         }
 
-        const config = await response.json()
+        const config = (await response.json()) as UploadConfig
         if (!cancelled) {
           setConfigState({ status: 'ready', data: config, error: null })
         }
@@ -354,22 +410,34 @@ export default function App() {
     }
   }, [configReloadToken, sessionId])
 
-  const config = configState.data
-  const canSelectFile = configState.status === 'ready' && uploadState !== uploadStates.uploading && uploadState !== uploadStates.success
+  const config = configState.status === 'ready' ? configState.data : null
+  const canSelectFile =
+    configState.status === 'ready' &&
+    uploadState !== uploadStates.uploading &&
+    uploadState !== uploadStates.success
   const canUpload = Boolean(selectedFile) && canSelectFile
-  const supportText = config ? texts.dropzone.supportedFormats(formatFormatList(config.supportedFormatNames)) : texts.config.loadingHint
+  const supportText = config
+    ? texts.dropzone.supportedFormats(formatFormatList(config.supportedFormatNames))
+    : texts.config.loadingHint
   const accept = config
-    ? [...config.supportedMimeTypes, ...config.supportedFileExtensions.map((extension) => `.${extension}`)].join(',')
+    ? [
+        ...config.supportedMimeTypes,
+        ...config.supportedFileExtensions.map((extension) => `.${extension}`),
+      ].join(',')
     : undefined
 
-  function updateSelectedFile(file) {
-    setSelectedFile(file)
+  function resetUploadFeedback(): void {
     setUploadState(uploadStates.idle)
     setStatusText(texts.uploadStatus.idle)
     setUploadError('')
   }
 
-  async function trySelectFile(file) {
+  function updateSelectedFile(file: File): void {
+    setSelectedFile(file)
+    resetUploadFeedback()
+  }
+
+  async function trySelectFile(file: File): Promise<void> {
     if (!config) {
       return
     }
@@ -390,7 +458,7 @@ export default function App() {
     updateSelectedFile(file)
   }
 
-  function handleFileChange(event) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
     const nextFile = event.target.files?.[0]
     event.target.value = ''
 
@@ -401,11 +469,11 @@ export default function App() {
     void trySelectFile(nextFile)
   }
 
-  function openValidationDialog(title, description) {
+  function openValidationDialog(title: string, description: string): void {
     setDialogContent({ open: true, title, description })
   }
 
-  function handleDrop(event) {
+  function handleDrop(event: DragEvent<HTMLLabelElement>): void {
     event.preventDefault()
     setDragActive(false)
 
@@ -421,7 +489,29 @@ export default function App() {
     void trySelectFile(nextFile)
   }
 
-  async function handleUpload() {
+  function handleDragActive(event: DragEvent<HTMLLabelElement>): void {
+    event.preventDefault()
+    if (canSelectFile) {
+      setDragActive(true)
+    }
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLLabelElement>): void {
+    event.preventDefault()
+
+    const relatedTarget = event.relatedTarget
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
+      return
+    }
+
+    setDragActive(false)
+  }
+
+  function closeDialog(): void {
+    setDialogContent((current) => ({ ...current, open: false }))
+  }
+
+  async function handleUpload(): Promise<void> {
     if (!config || !selectedFile || !sessionId || !canUpload) {
       return
     }
@@ -446,11 +536,15 @@ export default function App() {
       setUploadState(uploadStates.success)
       setStatusText(texts.uploadStatus.success)
     } catch (error) {
-      const status = Number(error.message)
-      setUploadState(uploadStates.idle)
+      const status = error instanceof Error ? Number(error.message) : 0
+      resetUploadFeedback()
       setStatusText(texts.uploadStatus.failed)
       setUploadError(getUploadErrorMessage(Number.isNaN(status) ? 0 : status))
     }
+  }
+
+  function retryLoadConfig(): void {
+    setConfigReloadToken((current) => current + 1)
   }
 
   const UploadIcon =
@@ -475,7 +569,7 @@ export default function App() {
               ) : configState.status === 'error' ? (
                 <ErrorState
                   message={configState.error ?? texts.config.errorDescription}
-                  onRetry={sessionId ? () => setConfigReloadToken((current) => current + 1) : null}
+                  onRetry={sessionId ? retryLoadConfig : null}
                 />
               ) : (
                 <div className="space-y-6">
@@ -485,26 +579,9 @@ export default function App() {
 
                   <label
                     htmlFor={fileInputId}
-                    onDragOver={(event) => {
-                      event.preventDefault()
-                      if (canSelectFile) {
-                        setDragActive(true)
-                      }
-                    }}
-                    onDragEnter={(event) => {
-                      event.preventDefault()
-                      if (canSelectFile) {
-                        setDragActive(true)
-                      }
-                    }}
-                    onDragLeave={(event) => {
-                      event.preventDefault()
-                      if (event.currentTarget.contains(event.relatedTarget)) {
-                        return
-                      }
-
-                      setDragActive(false)
-                    }}
+                    onDragOver={handleDragActive}
+                    onDragEnter={handleDragActive}
+                    onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={cn(
                       'group flex min-h-[22rem] cursor-pointer flex-col items-center justify-center rounded-[1.75rem] border border-dashed p-4 text-center transition-colors sm:p-5',
@@ -523,7 +600,7 @@ export default function App() {
                       onChange={handleFileChange}
                     />
 
-                    {previewUrl ? (
+                    {previewUrl && selectedFile ? (
                       <div className="flex w-full max-w-md flex-col items-center space-y-4 text-center">
                         <div className="overflow-hidden rounded-[1.5rem] border border-ctp-surface1 bg-ctp-crust">
                           <img
@@ -595,7 +672,7 @@ export default function App() {
             <Button
               type="button"
               className="hover:bg-ctp-blue hover:border-ctp-blue hover:brightness-110"
-              onClick={() => setDialogContent((current) => ({ ...current, open: false }))}
+              onClick={closeDialog}
             >
               {texts.actions.confirm}
             </Button>
