@@ -19,6 +19,13 @@ const val IMAGE_PLACEHOLDER_FRAME_COUNT = "<frameCount>"
 const val IMAGE_PLACEHOLDER_IMAGE_WIDTH = "<imageWidth>"
 const val IMAGE_PLACEHOLDER_IMAGE_HEIGHT = "<imageHeight>"
 
+// Migrator
+const val IMAGE_PLACEHOLDER_PROCESSED = "<processed>"
+const val IMAGE_PLACEHOLDER_SUCCESS = "<success>"
+const val IMAGE_PLACEHOLDER_FAILED = "<failed>"
+const val IMAGE_PLACEHOLDER_IMAGE_ID = "<imageId>"
+const val IMAGE_PLACEHOLDER_REASON = "<reason>"
+
 val IMAGE_LIST_MENU_BUTTON = component {
     text("地图画") with mochaYellow
 }
@@ -338,4 +345,25 @@ val IMAGE_ITEM_PLACEMENT_FAILED_NO_SPACE_SUBTITLE = component {
     text("空间不足，需要一面 ") with mochaMaroon
     text("$IMAGE_PLACEHOLDER_WIDTH × $IMAGE_PLACEHOLDER_HEIGHT ") with mochaText
     text("的展示框") with mochaMaroon
+}
+
+val IMAGE_DATA_MIGRATION_START = component {
+    text("开始迁移旧版 ImageData 存储...") with mochaText
+}
+
+val IMAGE_DATA_MIGRATION_FINISHED = component {
+    text("ImageData 迁移完成：已处理 ") with mochaText
+    text("$IMAGE_PLACEHOLDER_PROCESSED ") with mochaLavender
+    text("条，成功 ") with mochaText
+    text("$IMAGE_PLACEHOLDER_SUCCESS ") with mochaGreen
+    text("条，失败 ") with mochaText
+    text(IMAGE_PLACEHOLDER_FAILED) with mochaMaroon
+    text("条") with mochaText
+}
+
+fun getImageDataMigrationFailedMessage(imageId: String, reason: String) = component {
+    text("迁移失败：imageId=") with mochaMaroon
+    text(imageId) with mochaText
+    text("，原因=") with mochaMaroon
+    text(reason) with mochaText
 }

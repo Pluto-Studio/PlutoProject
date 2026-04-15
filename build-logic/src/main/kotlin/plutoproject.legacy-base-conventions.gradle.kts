@@ -33,6 +33,7 @@ dependencies {
         downloadIfRequired(libs.okio)
         downloadIfRequired(libs.hash4j)
         downloadIfRequired(libs.imageioWebp)
+        downloadIfRequired(libs.zstdJni)
         downloadIfRequired(libs.charonflow)
     }
 }

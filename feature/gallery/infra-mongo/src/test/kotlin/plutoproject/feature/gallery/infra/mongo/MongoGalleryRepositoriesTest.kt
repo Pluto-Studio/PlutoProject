@@ -2,9 +2,12 @@ package plutoproject.feature.gallery.infra.mongo
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
+import com.mongodb.client.model.Filters.and
+import com.mongodb.client.model.Filters.eq
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.test.runTest
 import org.bson.UuidRepresentation
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -27,10 +30,14 @@ import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.feature.gallery.core.render.tile.TilePool
 import plutoproject.feature.gallery.core.render.tile.TilePoolSnapshot
 import plutoproject.feature.gallery.infra.mongo.model.DisplayInstanceDocument
+import plutoproject.feature.gallery.infra.mongo.model.ImageDataChunkDocument
+import plutoproject.feature.gallery.infra.mongo.model.ImageDataManifestDocument
+import plutoproject.feature.gallery.infra.mongo.model.ImageDataManifestStateDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDocument
 import plutoproject.feature.gallery.infra.mongo.model.MapIdSystemInformationDocument
 import java.util.UUID
+import java.util.logging.Logger
 import kotlin.time.Duration.Companion.milliseconds
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -94,8 +101,17 @@ class MongoGalleryRepositoriesTest {
         assumeTrue(DockerClientFactory.instance().isDockerAvailable)
 
         val client = newClient()
-        val collection = client.getDatabase("test").getCollection<ImageDataDocument>("gallery_image_data_entries")
-        val repo = MongoImageDataRepository(collection)
+        val manifestCollection = client.getDatabase("test")
+            .getCollection<ImageDataManifestDocument>("gallery_image_data_manifests")
+        val chunkCollection = client.getDatabase("test")
+            .getCollection<ImageDataChunkDocument>("gallery_image_data_chunks")
+        val repo = MongoImageDataRepository(
+            manifestCollection = manifestCollection,
+            chunkCollection = chunkCollection,
+            logger = Logger.getAnonymousLogger(),
+            maxChunkBlobBytes = 4,
+        )
+        repo.ensureIndexes()
 
         val staticBelongsTo = UUID.fromString("00000000-0000-0000-0000-000000000311")
         val staticData = ImageData.Static(
@@ -158,9 +174,104 @@ class MongoGalleryRepositoriesTest {
         )
         assertEquals(setOf(staticBelongsTo, animatedBelongsTo), byBelongsToIn.keys)
 
+        val updatedStaticData = ImageData.Static(
+            tilePool = TilePool.fromSnapshot(
+                TilePoolSnapshot(
+                    offsets = intArrayOf(0, 3),
+                    blob = byteArrayOf(8, 9, 10),
+                )
+            ),
+            tileIndexes = shortArrayOf(0, 0, 0),
+        )
+        assertTrue(repo.update(staticBelongsTo, updatedStaticData))
+        val reloadedStatic = repo.findByImageId(staticBelongsTo) as ImageData.Static
+        assertTilePoolEquals(
+            expectedOffsets = intArrayOf(0, 3),
+            expectedBlob = byteArrayOf(8, 9, 10),
+            tilePool = reloadedStatic.tilePool,
+        )
+        assertTrue(reloadedStatic.tileIndexes.contentEquals(shortArrayOf(0, 0, 0)))
+        assertEquals(false, repo.update(UUID.fromString("00000000-0000-0000-0000-000000000398"), updatedStaticData))
+
         repo.deleteByImageId(animatedBelongsTo)
         assertNull(repo.findByImageId(animatedBelongsTo))
         assertNotNull(repo.findByImageId(staticBelongsTo))
+    }
+
+    @Test
+    fun `image data entry repository should hide writing and incomplete data`() = runTest {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable)
+
+        val client = newClient()
+        val manifestCollection = client.getDatabase("test")
+            .getCollection<ImageDataManifestDocument>("gallery_image_data_manifests_integrity")
+        val chunkCollection = client.getDatabase("test")
+            .getCollection<ImageDataChunkDocument>("gallery_image_data_chunks_integrity")
+        val repo = MongoImageDataRepository(
+            manifestCollection = manifestCollection,
+            chunkCollection = chunkCollection,
+            logger = Logger.getAnonymousLogger(),
+            maxChunkBlobBytes = 4,
+        )
+
+        val imageId = UUID.fromString("00000000-0000-0000-0000-000000000321")
+        val data = ImageData.Static(
+            tilePool = TilePool.fromSnapshot(
+                TilePoolSnapshot(
+                    offsets = intArrayOf(0, 2),
+                    blob = byteArrayOf(1, 2),
+                )
+            ),
+            tileIndexes = shortArrayOf(0, 1),
+        )
+        repo.save(imageId, data)
+
+        val readyManifest = manifestCollection.find(eq("_id", imageId)).firstOrNull()
+        assertNotNull(readyManifest)
+        manifestCollection.replaceOne(
+            eq("_id", imageId),
+            readyManifest!!.copy(state = ImageDataManifestStateDocument.WRITING),
+        )
+        assertNull(repo.findByImageId(imageId))
+
+        manifestCollection.replaceOne(eq("_id", imageId), readyManifest)
+        chunkCollection.deleteOne(and(eq(ImageDataChunkDocument::imageId.name, imageId), eq(ImageDataChunkDocument::order.name, 0)))
+        assertNull(repo.findByImageId(imageId))
+        assertTrue(repo.findByImageIds(listOf(imageId)).isEmpty())
+    }
+
+    @Test
+    fun `image data migration path should convert legacy document into chunked storage`() = runTest {
+        assumeTrue(DockerClientFactory.instance().isDockerAvailable)
+
+        val client = newClient()
+        val manifestCollection = client.getDatabase("test")
+            .getCollection<ImageDataManifestDocument>("gallery_image_data_manifests_migration")
+        val chunkCollection = client.getDatabase("test")
+            .getCollection<ImageDataChunkDocument>("gallery_image_data_chunks_migration")
+        val repo = MongoImageDataRepository(
+            manifestCollection = manifestCollection,
+            chunkCollection = chunkCollection,
+            logger = Logger.getAnonymousLogger(),
+            maxChunkBlobBytes = 4,
+        )
+
+        val legacyDocument = ImageDataDocument(
+            imageId = UUID.fromString("00000000-0000-0000-0000-000000000331"),
+            type = plutoproject.feature.gallery.infra.mongo.model.ImageTypeDocument.ANIMATED,
+            tilePool = plutoproject.feature.gallery.infra.mongo.model.TilePoolDocument(
+                offset = intArrayOf(0, 2, 5),
+                blob = org.bson.BsonBinary(byteArrayOf(3, 4, 5, 6, 7)),
+            ),
+            tileIndexes = shortArrayOf(0, 1, 1, 0),
+            frameCount = 2,
+            duration = 90.milliseconds,
+        )
+
+        val expected = legacyDocument.toDomain()
+        repo.save(legacyDocument.imageId, expected)
+
+        assertEquals(expected, repo.findByImageId(legacyDocument.imageId))
     }
 
     @Test

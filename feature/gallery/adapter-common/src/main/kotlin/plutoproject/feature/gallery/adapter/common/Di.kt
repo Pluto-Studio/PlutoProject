@@ -36,7 +36,8 @@ import java.time.Clock
 
 private const val GALLERY_PREFIX = "gallery_"
 private const val IMAGE_COLLECTION = "image"
-private const val IMAGE_DATA_ENTRY_COLLECTION = "image_data"
+private const val IMAGE_DATA_MANIFEST_COLLECTION = "image_data_manifest"
+private const val IMAGE_DATA_CHUNK_COLLECTION = "image_data_chunk"
 private const val DISPLAY_INSTANCE_COLLECTION = "display_instance"
 private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
 
@@ -63,7 +64,11 @@ val commonModule = module {
         }
     }
     single<ImageDataRepository> {
-        MongoImageDataRepository(getCollection(IMAGE_DATA_ENTRY_COLLECTION)).also { repo ->
+        MongoImageDataRepository(
+            manifestCollection = getCollection(IMAGE_DATA_MANIFEST_COLLECTION),
+            chunkCollection = getCollection(IMAGE_DATA_CHUNK_COLLECTION),
+            logger = get(),
+        ).also { repo ->
             get<CoroutineScope>().launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }

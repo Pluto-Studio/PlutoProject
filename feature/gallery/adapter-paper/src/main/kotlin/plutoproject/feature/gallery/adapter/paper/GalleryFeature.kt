@@ -56,6 +56,7 @@ class GalleryFeature : PaperFeature() {
         AnnotationParser.parse(
             GalleyDebugCommand,
             GalleryCancelUploadCommand,
+            GalleryMigrateImageDataCommand,
         )
         registerImageItemCopyRecipe()
         server.pluginManager.registerSuspendingEvents(PlayerListener, plugin)
