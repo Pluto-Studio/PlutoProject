@@ -47,6 +47,7 @@ class StaticDisplayJob(
 
     private var stopped = false
     private var resource: StaticDisplayResource = initialResource
+    private var resourceRevision: Long = 0
 
     init {
         require(image.id == imageId) {
@@ -91,6 +92,7 @@ class StaticDisplayJob(
         synchronized(lock) {
             check(!stopped) { "DisplayJob is stopped" }
             this.resource = resource
+            resourceRevision++
             sentMapIdsByPlayer.clear()
             if (attachedInstances.isNotEmpty()) {
                 displayScheduler.scheduleAwakeAt(this, clock.instant())
@@ -219,7 +221,17 @@ class StaticDisplayJob(
             }
 
             val tilePoolIndex = resource.tileIndexes[tileId].toInt() and 0xFFFF
-            sendJob.enqueue(MapUpdate(mapId, resource.decodedTilePool.getTile(tilePoolIndex)))
+            sendJob.enqueue(
+                SendRequest(
+                    sourceId = imageId,
+                    priority = SendPriority.STATIC,
+                    update = MapUpdate(mapId, resource.decodedTilePool.getTile(tilePoolIndex)),
+                    fingerprint = MapContentFingerprint(
+                        resourceRevision = resourceRevision,
+                        tileToken = tilePoolIndex,
+                    ),
+                )
+            )
         }
     }
 }

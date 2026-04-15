@@ -49,6 +49,7 @@ class AnimatedDisplayJob(
     private var resource: AnimatedDisplayResource = initialResource
     private var animationStartedAtMillis: Long? = null
     private var lastSentPoolIndexes: IntArray? = null
+    private var resourceRevision: Long = 0
 
     init {
         require(image.id == imageId) {
@@ -95,6 +96,7 @@ class AnimatedDisplayJob(
         synchronized(lock) {
             check(!stopped) { "DisplayJob is stopped" }
             this.resource = resource
+            resourceRevision++
             animationStartedAtMillis = null
             lastSentPoolIndexes = null
             if (attachedInstances.isNotEmpty()) {
@@ -293,7 +295,17 @@ class AnimatedDisplayJob(
             }
 
             val tilePoolIndex = framePoolIndexes[tileId]
-            sendJob.enqueue(MapUpdate(image.tileMapIds[tileId], resource.decodedTilePool.getTile(tilePoolIndex)))
+            sendJob.enqueue(
+                SendRequest(
+                    sourceId = imageId,
+                    priority = SendPriority.ANIMATED,
+                    update = MapUpdate(image.tileMapIds[tileId], resource.decodedTilePool.getTile(tilePoolIndex)),
+                    fingerprint = MapContentFingerprint(
+                        resourceRevision = resourceRevision,
+                        tileToken = tilePoolIndex,
+                    ),
+                )
+            )
         }
     }
 }
