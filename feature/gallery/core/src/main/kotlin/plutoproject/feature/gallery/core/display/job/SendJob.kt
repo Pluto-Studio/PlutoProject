@@ -90,6 +90,7 @@ class SendJob(
             val event = waitEvent(state, clock.instant())
             state = reduce(state, event, clock.instant(), context)
 
+            // 处理一下积压的事件，让 Pause/Resume/Stop 更快生效
             while (state != State.Stopped) {
                 val nextEvent = channel.tryReceive().getOrNull() ?: break
                 state = reduce(state, nextEvent, clock.instant(), context)
