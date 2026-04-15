@@ -1,9 +1,7 @@
 package plutoproject.feature.gallery.infra.mongo
 
 import com.github.luben.zstd.Zstd
-import com.mongodb.client.model.Filters.and
-import com.mongodb.client.model.Filters.eq
-import com.mongodb.client.model.Filters.`in`
+import com.mongodb.client.model.Filters.*
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.ReplaceOptions
@@ -17,7 +15,7 @@ import plutoproject.feature.gallery.infra.mongo.model.ImageDataChunkDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataCompressionDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataManifestDocument
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataManifestStateDocument
-import java.util.UUID
+import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -71,10 +69,11 @@ class MongoImageDataRepository(
             return emptyMap()
         }
 
-        val chunksByImageId = chunkCollection.find(`in`(ImageDataChunkDocument::imageId.name, manifests.map { it.imageId }))
-            .sort(Sorts.ascending(ImageDataChunkDocument::imageId.name, ImageDataChunkDocument::order.name))
-            .toList()
-            .groupBy(ImageDataChunkDocument::imageId)
+        val chunksByImageId =
+            chunkCollection.find(`in`(ImageDataChunkDocument::imageId.name, manifests.map { it.imageId }))
+                .sort(Sorts.ascending(ImageDataChunkDocument::imageId.name, ImageDataChunkDocument::order.name))
+                .toList()
+                .groupBy(ImageDataChunkDocument::imageId)
 
         return manifests.mapNotNull { manifest ->
             decodeReadyImageData(manifest, chunksByImageId[manifest.imageId].orEmpty())?.let {
