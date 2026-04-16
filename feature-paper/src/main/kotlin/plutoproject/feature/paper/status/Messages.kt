@@ -50,6 +50,17 @@ fun getStatusMessage() = component {
     text(server.onlinePlayers.size) with mochaLavender
 }
 
+val COMMAND_STATUS_CHUNK = component {
+    text("世界 ") with mochaText
+    text("<world> ") with mochaLavender
+    text("的区块 ") with mochaText
+    text("<chunkX>, <chunkZ> ") with mochaLavender
+    text("的加载等级为 ") with mochaText
+    text("<level>") with mochaLavender
+    text("，加载状态为 ") with mochaText
+    text("<status>") with mochaLavender
+}
+
 private fun getTicksPerSecond(): Component {
     return StatisticProvider.getTicksPerSecond(MeasuringTime.SECONDS_10)!!.let {
         component {
