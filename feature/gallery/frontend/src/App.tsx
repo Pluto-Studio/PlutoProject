@@ -98,8 +98,8 @@ const uploadButtonMotionStyles: Record<UploadState, { backgroundColor: string; b
   },
 }
 
-const tapAnimation = { scale: 0.985 }
-const tapTransition: Transition = { type: 'spring', stiffness: 540, damping: 34, mass: 0.7 }
+const tapAnimation = { scale: 0.97 }
+const tapTransition: Transition = { type: 'spring', stiffness: 540, damping: 28, mass: 0.6 }
 const uploadButtonTransition: Transition = { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const }
 const initialConfigState: ConfigState = { status: 'loading', data: null, error: null }
 const initialDialogContent: DialogContentState = { open: false, title: '', description: '' }
@@ -262,7 +262,7 @@ function ThemeModePicker({ currentMode, onChange }: ThemeModePickerProps) {
           const active = currentMode === value
 
           return (
-            <button
+            <motion.button
               key={value}
               type="button"
               onClick={() => {
@@ -270,8 +270,11 @@ function ThemeModePicker({ currentMode, onChange }: ThemeModePickerProps) {
                 setOpen(false)
               }}
               aria-label={texts.theme.options[value]}
+              whileTap={tapAnimation}
+              transition={tapTransition}
+              style={{ transformOrigin: 'center center' }}
               className={cn(
-                'inline-flex h-10 w-full items-center gap-2 rounded-[1rem] px-3 text-left text-sm font-medium transition-[transform,background-color,color] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] active:translate-y-px active:scale-[0.985]',
+                'inline-flex h-10 w-full items-center gap-2 rounded-[1rem] px-3 text-left text-sm font-medium transition-[background-color,color] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)]',
                 active
                   ? 'bg-ctp-surface1 text-ctp-text'
                   : 'text-ctp-subtext0 hover:bg-ctp-surface0 hover:text-ctp-text',
@@ -280,7 +283,7 @@ function ThemeModePicker({ currentMode, onChange }: ThemeModePickerProps) {
             >
               <Icon className="size-4" stroke={1.8} />
               <span>{texts.theme.options[value]}</span>
-            </button>
+            </motion.button>
           )
         })}
         </div>

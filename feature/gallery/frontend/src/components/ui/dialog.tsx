@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { motion } from 'framer-motion'
 import { IconX } from '@tabler/icons-react'
 import { cn } from '../../lib/utils'
 
@@ -49,12 +50,18 @@ const DialogContent = React.forwardRef<
         >
           {children}
           {showClose ? (
-            <DialogPrimitive.Close
-              aria-label={closeLabel}
-              className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full text-ctp-subtext0 transition-[transform,background-color,color] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-ctp-surface0 hover:text-ctp-text active:translate-y-px active:scale-[0.97]"
+            <motion.div
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 540, damping: 28, mass: 0.6 }}
+              className="absolute right-4 top-4 inline-flex"
             >
-              <IconX className="size-4" stroke={1.8} />
-            </DialogPrimitive.Close>
+              <DialogPrimitive.Close
+                aria-label={closeLabel}
+                className="inline-flex size-10 items-center justify-center rounded-full text-ctp-subtext0 transition-[background-color,color] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-ctp-surface0 hover:text-ctp-text"
+              >
+                <IconX className="size-4" stroke={1.8} />
+              </DialogPrimitive.Close>
+            </motion.div>
           ) : null}
         </div>
       </DialogPrimitive.Content>

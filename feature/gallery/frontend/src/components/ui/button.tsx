@@ -25,8 +25,8 @@ export const buttonVariants = cva(
   },
 )
 
-const defaultTapAnimation = { scale: 0.985 }
-const defaultTapTransition: Transition = { type: 'spring', stiffness: 540, damping: 34, mass: 0.7 }
+const defaultTapAnimation = { scale: 0.97 }
+const defaultTapTransition: Transition = { type: 'spring', stiffness: 540, damping: 28, mass: 0.6 }
 
 type ButtonProps = HTMLMotionProps<'button'> & VariantProps<typeof buttonVariants>
 
