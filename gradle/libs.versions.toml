@@ -53,7 +53,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.2.3
 catppuccin = { module = "com.catppuccin:catppuccin-palette", version = "1.0.0" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines", version.ref = "koin" }
-classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
+classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.184" }
 voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager-screenmodel = { module = "cafe.adriel.voyager:voyager-screenmodel", version.ref = "voyager" }
 hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
