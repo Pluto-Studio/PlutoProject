@@ -22,13 +22,18 @@ import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemFrame
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.hanging.HangingBreakByEntityEvent
 import org.bukkit.event.hanging.HangingBreakEvent
 import org.bukkit.inventory.ItemStack
+import plutoproject.feature.gallery.api.GalleryEvent
 import plutoproject.feature.gallery.adapter.common.DisplayInstanceIndex
+import plutoproject.feature.gallery.adapter.common.GalleryServiceImpl
 import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.adapter.common.toApi
 import plutoproject.feature.gallery.adapter.paper.*
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayInstanceStore
@@ -62,6 +67,7 @@ object ItemFrameListener : Listener {
     private val displayInstanceStore = koin.get<DisplayInstanceStore>()
     private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
     private val displayIndex = koin.get<DisplayInstanceIndex>()
+    private val galleryService = koin.get<GalleryServiceImpl>()
     private val coroutineScope = koin.get<CoroutineScope>()
 
     @EventHandler
@@ -203,6 +209,7 @@ object ItemFrameListener : Listener {
         }
 
         displayRuntime.attach(image, imageData, displayInstance)
+        publishImagePlacement(displayInstance, player.uniqueId)
     }
 
     private suspend fun rollbackPlacement(itemFrames: List<PlacedItemFrame>, displayInstance: DisplayInstance) {
@@ -239,10 +246,13 @@ object ItemFrameListener : Listener {
         event.setItemStack(ItemStack.empty())
 
         if (originFrame !is ItemFrame) {
-            val imageItem = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
-            itemFrame.dropItem(imageItem, event.player)
+            val removal = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
+            publishImageRemoval(removal.displayInstance, removal.itemFrameIds, event.player.uniqueId)
+            itemFrame.dropItem(removal.imageItem, event.player)
             return
         }
+
+        val itemFrameIds = collectDisplayFrameIds(originFrame, itemFrame.world)
 
         deleteDisplayInstance(imageItemFrameData.displayInstanceId)
 
@@ -257,6 +267,7 @@ object ItemFrameListener : Listener {
         val image = imageDeferred.await()
         val imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty()
 
+        publishImageRemoval(displayInstance, itemFrameIds, event.player.uniqueId)
         itemFrame.dropItem(imageItem, event.player)
     }
 
@@ -264,7 +275,7 @@ object ItemFrameListener : Listener {
         itemFrame: ItemFrame,
         imageDeferred: Deferred<Image?>,
         displayInstance: DisplayInstance?
-    ): ItemStack? {
+    ): RemovedDisplay? {
         val imageItemFrameData = itemFrame.imageItemFrameData() ?: return null
         val displayInstance = resolveDisplayInstanceForRemoval(imageItemFrameData.displayInstanceId, displayInstance)
         if (displayInstance == null) {
@@ -281,15 +292,39 @@ object ItemFrameListener : Listener {
         clearDisplayFrames(displayInstance, itemFrame.world)
 
         val image = imageDeferred.await()
-        return image?.let { createImageItem(it) } ?: ItemStack.empty()
+        return RemovedDisplay(
+            displayInstance = displayInstance,
+            itemFrameIds = displayInstance.itemFrameIds,
+            imageItem = image?.let { createImageItem(it) } ?: ItemStack.empty(),
+        )
+    }
+
+    private suspend fun publishImagePlacement(displayInstance: DisplayInstance, player: UUID) {
+        galleryService.publish(
+            GalleryEvent.ImagePlacement(
+                imageDisplay = displayInstance.toApi(),
+                player = player,
+                itemFrames = displayInstance.itemFrameIds,
+            )
+        )
+    }
+
+    private suspend fun publishImageRemoval(displayInstance: DisplayInstance?, itemFrameIds: List<UUID>, player: UUID?) {
+        galleryService.publish(
+            GalleryEvent.ImageRemoval(
+                imageDisplay = displayInstance?.toApi(),
+                player = player,
+                itemFrames = itemFrameIds,
+            )
+        )
+    }
+
+    private fun breakerUniqueId(event: HangingBreakEvent): UUID? {
+        return ((event as? HangingBreakByEntityEvent)?.remover as? Player)?.uniqueId
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     suspend fun onItemFrameBreak(event: HangingBreakEvent) {
-        if (event.cause == HangingBreakEvent.RemoveCause.ENTITY) {
-            return
-        }
-
         val itemFrame = event.entity as? ItemFrame ?: return
 
         val imageItemFrameData = itemFrame.imageItemFrameData() ?: return
@@ -305,18 +340,21 @@ object ItemFrameListener : Listener {
         event.isCancelled = true
 
         if (originFrame !is ItemFrame) {
-            val imageItem = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
+            val removal = removeWithDisplayInstance(itemFrame, imageDeferred, displayInstance) ?: return
             val itemFrameItem = createItemFrameItem(itemFrame)
 
             itemFrame.remove()
             playBreakSound(itemFrame)
+            publishImageRemoval(removal.displayInstance, removal.itemFrameIds, breakerUniqueId(event))
 
             if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
                 itemFrame.dropItem(itemFrameItem, null)
-                itemFrame.dropItem(imageItem, null)
+                itemFrame.dropItem(removal.imageItem, null)
             }
             return
         }
+
+        val itemFrameIds = collectDisplayFrameIds(originFrame, itemFrame.world)
 
         deleteDisplayInstance(imageItemFrameData.displayInstanceId)
 
@@ -334,6 +372,7 @@ object ItemFrameListener : Listener {
 
         itemFrame.remove()
         playBreakSound(itemFrame)
+        publishImageRemoval(displayInstance, itemFrameIds, breakerUniqueId(event))
 
         if (event.cause != HangingBreakEvent.RemoveCause.EXPLOSION) {
             itemFrame.dropItem(itemFrameItem, null)
@@ -375,6 +414,19 @@ object ItemFrameListener : Listener {
             clearDisplayFrame(currentFrame)
             currentFrame = frameData?.nextItemFrame?.let { world.getEntity(it) as? ItemFrame }
         }
+    }
+
+    private fun collectDisplayFrameIds(originFrame: ItemFrame, world: org.bukkit.World): List<UUID> {
+        val result = mutableListOf<UUID>()
+        var currentFrame: ItemFrame? = originFrame
+
+        while (currentFrame != null) {
+            result += currentFrame.uniqueId
+            val frameData = currentFrame.imageItemFrameData()
+            currentFrame = frameData?.nextItemFrame?.let { world.getEntity(it) as? ItemFrame }
+        }
+
+        return result
     }
 
     private fun clearDisplayFrame(itemFrame: ItemFrame) {
@@ -423,6 +475,12 @@ private data class PlacedItemFrame(
     val tileX: Int,
     val tileY: Int,
     val itemFrame: ItemFrame,
+)
+
+private data class RemovedDisplay(
+    val displayInstance: DisplayInstance,
+    val itemFrameIds: List<UUID>,
+    val imageItem: ItemStack,
 )
 
 private fun BlockFace.itemFrameFacing(): ItemFrameFacing {

@@ -11,6 +11,7 @@ import org.bukkit.entity.Player
 import org.bukkit.persistence.PersistentDataType
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
+import plutoproject.feature.gallery.adapter.paper.imageItemFrameData
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.common.util.data.uuidOrNull
 import plutoproject.framework.paper.util.command.ensurePlayer
@@ -49,12 +50,17 @@ internal val ItemFrame.isProtected: Boolean
 internal val ItemFrame.protectorName: String
     get() = protector?.name ?: ITEMFRAME_PROTECTION_UNKNOWN_PLAYER
 
-private fun ItemFrame.setProtect(value: Boolean, player: Player) {
+internal fun ItemFrame.setProtect(value: Boolean, player: Player) {
     persistentDataContainer.set(protectKey, PersistentDataType.BOOLEAN, value)
     if (value) {
         persistentDataContainer.set(protectorKey, PersistentDataType.STRING, player.uniqueId.toString())
         return
     }
+    persistentDataContainer.remove(protectorKey)
+}
+
+internal fun ItemFrame.clearProtect() {
+    persistentDataContainer.remove(protectKey)
     persistentDataContainer.remove(protectorKey)
 }
 
@@ -77,7 +83,7 @@ object ItemFrameCommand {
     }
 }
 
-private fun Player.handleOperation(operation: Operation) {
+private suspend fun Player.handleOperation(operation: Operation) {
     val range = getAttribute(Attribute.ENTITY_INTERACTION_RANGE)!!.value
     val entity = getTargetEntity(range.toInt())
 
@@ -86,39 +92,69 @@ private fun Player.handleOperation(operation: Operation) {
         return
     }
 
-    val player = this
-
-    fun ItemFrame.handleInvisible() {
-        if (isProtected && protector != player && !player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) {
-            player.sendMessage(ITEMFRAME_PROTECTED.replace("<player>", protectorName))
-            return
-        }
-        if (!inv) {
-            inv = true
-            player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_ON_INVISBLE)
-            return
-        }
-        inv = false
-        player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_OFF_INVISBLE)
-    }
-
-    fun ItemFrame.handleProtect() {
-        if (isProtected && protector != player && !player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)) {
-            player.sendMessage(ITEMFRAME_PROTECTED.replace("<player>", protectorName))
-            return
-        }
-        if (!protect) {
-            setProtect(true, player)
-            player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_ON_PROTECTION)
-            return
-        }
-        setProtect(false, player)
-        player.sendMessage(COMMAND_ITEMFRAME_TOGGLE_OFF_PROTECTION)
+    val itemFrames = resolveOperationFrames(entity)
+    val isGalleryOperation = GalleryIntegration.isGalleryItemFrame(entity)
+    val protectedFrame = itemFrames.firstOrNull { !it.canOperate(this) }
+    if (protectedFrame != null) {
+        sendMessage(ITEMFRAME_PROTECTED.replace("<player>", protectedFrame.protectorName))
         return
     }
 
     when (operation) {
-        Operation.INVISIBLE -> entity.handleInvisible()
-        Operation.PROTECT -> entity.handleProtect()
+        Operation.INVISIBLE -> handleInvisible(itemFrames, entity, isGalleryOperation)
+        Operation.PROTECT -> handleProtect(itemFrames, entity, isGalleryOperation)
     }
+}
+
+private fun ItemFrame.canOperate(player: Player): Boolean {
+    return !isProtected || protector == player || player.hasPermission(ITEMFRAME_PROTECTION_BYPASS_PERMISSION)
+}
+
+private fun Player.handleInvisible(itemFrames: List<ItemFrame>, target: ItemFrame, isGalleryOperation: Boolean) {
+    if (!target.inv) {
+        itemFrames.forEach { it.inv = true }
+        sendMessage(if (isGalleryOperation) COMMAND_ITEMFRAME_TOGGLE_ON_GALLERY_INVISBLE else COMMAND_ITEMFRAME_TOGGLE_ON_INVISBLE)
+        return
+    }
+    itemFrames.forEach { it.inv = false }
+    sendMessage(if (isGalleryOperation) COMMAND_ITEMFRAME_TOGGLE_OFF_GALLERY_INVISBLE else COMMAND_ITEMFRAME_TOGGLE_OFF_INVISBLE)
+}
+
+private fun Player.handleProtect(itemFrames: List<ItemFrame>, target: ItemFrame, isGalleryOperation: Boolean) {
+    if (!target.protect) {
+        itemFrames.forEach { it.setProtect(true, this) }
+        sendMessage(if (isGalleryOperation) COMMAND_ITEMFRAME_TOGGLE_ON_GALLERY_PROTECTION else COMMAND_ITEMFRAME_TOGGLE_ON_PROTECTION)
+        return
+    }
+    itemFrames.forEach { it.setProtect(false, this) }
+    sendMessage(if (isGalleryOperation) COMMAND_ITEMFRAME_TOGGLE_OFF_GALLERY_PROTECTION else COMMAND_ITEMFRAME_TOGGLE_OFF_PROTECTION)
+}
+
+internal suspend fun resolveOperationFrames(itemFrame: ItemFrame): List<ItemFrame> {
+    if (!GalleryIntegration.isAvailable) return listOf(itemFrame)
+
+    val frameData = itemFrame.imageItemFrameData() ?: return listOf(itemFrame)
+    val originFrame = itemFrame.world.getEntity(frameData.originItemFrame) as? ItemFrame
+    if (originFrame != null) {
+        val frames = collectGalleryFrames(originFrame)
+        if (frames.isNotEmpty()) return frames
+    }
+
+    val displayInstance = GalleryIntegration.displayInstanceStore?.get(frameData.displayInstanceId) ?: return listOf(itemFrame)
+    return displayInstance.itemFrameIds
+        .mapNotNull { itemFrame.world.getEntity(it) as? ItemFrame }
+        .ifEmpty { listOf(itemFrame) }
+}
+
+private fun collectGalleryFrames(originFrame: ItemFrame): List<ItemFrame> {
+    val result = mutableListOf<ItemFrame>()
+    var currentFrame: ItemFrame? = originFrame
+
+    while (currentFrame != null) {
+        result += currentFrame
+        val frameData = currentFrame.imageItemFrameData()
+        currentFrame = frameData?.nextItemFrame?.let { originFrame.world.getEntity(it) as? ItemFrame }
+    }
+
+    return result
 }

@@ -39,7 +39,7 @@ sealed interface GalleryEvent {
         /**
          * 触发这次事件的玩家。
          */
-        val player: UUID,
+        val player: UUID?,
 
         /**
          * 原本用于展出本地图画的展示框实体 ID。
