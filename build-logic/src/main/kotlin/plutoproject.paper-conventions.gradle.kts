@@ -19,7 +19,7 @@ afterEvaluate {
 
 dependencies {
     with(extensions.getByType<PaperweightUserDependenciesExtension>()) {
-        paperDevBundle("1.21.11-R0.1-SNAPSHOT")
+        paperDevBundle("26.2.build.38-alpha")
     }
     compileOnly(libs.sparkApi) {
         isTransitive = false

@@ -28,7 +28,7 @@ private suspend fun Player.hand(item: ItemStack) {
 
 private suspend fun Player.hat(item: ItemStack) {
     withContext(coroutineContext) {
-        inventory.helmet = item
+        inventory.setHelmet(item)
     }
 }
 
