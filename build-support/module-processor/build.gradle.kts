@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     id("plutoproject.kotlin-test")
 }
@@ -5,6 +7,7 @@ plugins {
 dependencies {
     implementation(project(":kernel:api"))
     implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.serialization)
     implementation(libs.ksp.api)
     testImplementation(gradleTestKit())
 }
@@ -12,9 +15,12 @@ dependencies {
 tasks.test {
     val processorJar = tasks.jar
     val kernelApiJar = project(":kernel:api").tasks.named("jar")
+    val processorRuntimeClasspath = configurations.runtimeClasspath
     dependsOn(processorJar, kernelApiJar)
     doFirst {
-        systemProperty("moduleProcessor.jar", processorJar.get().archiveFile.get().asFile.absolutePath)
+        val processorClasspath = listOf(processorJar.get().archiveFile.get().asFile) +
+            processorRuntimeClasspath.get().files
+        systemProperty("moduleProcessor.classpath", processorClasspath.joinToString(File.pathSeparator))
         systemProperty(
             "kernelApi.jar",
             kernelApiJar.get().outputs.files.singleFile.absolutePath,

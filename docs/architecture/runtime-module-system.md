@@ -247,6 +247,7 @@ Capability declarations use the same runtime model but may only require capabili
 Both annotations generate a unified descriptor:
 
 ```kotlin
+@Serializable
 data class ModuleDescriptor(
     val schemaVersion: Int,
     val id: String,
@@ -258,6 +259,13 @@ data class ModuleDescriptor(
     val requiredCapabilities: List<String> = emptyList(),
 )
 ```
+
+`ModuleDescriptor`, `ModuleType`, and `Platform` are the single serialization
+schema for runtime descriptor resources. The processor encodes descriptors with
+Kotlinx Serialization and `encodeDefaults = true`, so all dependency arrays are
+written even when empty. Discovery decodes the same type with
+`ignoreUnknownKeys = true`, then validates `schemaVersion` explicitly. No
+processor-local DTO or hand-written JSON encoder/decoder duplicates the schema.
 
 The processor and descriptor validator enforce:
 
@@ -342,6 +350,40 @@ enum class ModuleOperation {
 Lifecycle operations are serialized by the manager. `LOAD` and `ENABLE` occur only during platform startup. Runtime commands may only disable enabled features, and two disable commands must not mutate the active graph concurrently. Lifecycle hooks have no Kernel-enforced timeout; implementations are responsible for returning.
 
 `LOADED` is stable only across the boundary between the platform load and enable stages; it is not a runtime recovery state. `BLOCKED` has no live instance and indicates that the module could not complete startup because a required dependency failed.
+
+### Lifecycle Cancellation
+
+`CancellationException` is control flow, not a module failure. Lifecycle code
+never converts it to `ModuleOperationResult.Failed`, including when a module
+hook throws it directly while the caller's job is still active. The manager
+finishes the required cleanup in a `NonCancellable` context and then rethrows
+the original cancellation.
+
+Cancellation of `loadStartup` or `enableStartup` is terminal for that manager
+instance. The manager rejects further startup or runtime operations and cleans
+up every module instance created by the interrupted startup in reverse
+activation order. Modules whose `onLoad` completed receive `onDisable`; the
+module whose `onLoad` was interrupted does not receive `onDisable`, matching
+ordinary load-failure semantics, but its Kernel-owned scope is still cancelled
+and joined. Created modules end in `DISABLED`, modules that were never created
+remain `DISCOVERED`, and every `runningOperation` is cleared. Startup is not
+retryable after cancellation.
+
+Cancellation of runtime `disable` does not interrupt resource release. The
+manager completes scope cleanup, removes active optional edges, records the
+module as `DISABLED`, and then rethrows the cancellation. Once `shutdown` has
+started, caller cancellation likewise cannot stop the reverse shutdown pass;
+all remaining modules are attempted before cancellation is rethrown.
+
+If cleanup produces ordinary failures while cancellation is already in
+progress, the original `CancellationException` remains the primary exception.
+Cleanup failures are reported through the registry and operation reporter,
+attached to the cancellation as suppressed exceptions, and do not prevent
+cleanup of later modules.
+
+Every `ModuleContext.coroutineScope` is owned by that module's lifecycle. Its
+job is distinct from the job invoking manager lifecycle functions, is created
+with the module, and is cancelled and joined when the module is cleaned up.
 
 ## Kernel Startup
 

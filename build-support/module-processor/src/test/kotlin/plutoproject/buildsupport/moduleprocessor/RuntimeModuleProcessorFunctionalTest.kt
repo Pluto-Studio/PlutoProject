@@ -78,6 +78,8 @@ class RuntimeModuleProcessorFunctionalTest {
         projectDir.resolve("settings.gradle.kts").writeText("rootProject.name = \"processor-fixture\"")
         projectDir.resolve("build.gradle.kts").writeText(
             """
+            import java.io.File
+
             plugins {
                 kotlin("jvm") version "2.3.21"
                 id("com.google.devtools.ksp") version "2.3.8"
@@ -87,7 +89,7 @@ class RuntimeModuleProcessorFunctionalTest {
 
             dependencies {
                 implementation(files("${escapedProperty("kernelApi.jar")}"))
-                ksp(files("${escapedProperty("moduleProcessor.jar")}", "${escapedProperty("kernelApi.jar")}"))
+                ksp(files("${escapedProperty("moduleProcessor.classpath")}".split(File.pathSeparator)))
             }
 
             ksp { arg("runtimeModule.projectPath", project.path) }

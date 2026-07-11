@@ -19,7 +19,7 @@ class ModuleDiscoveryTest {
     fun `discovers platform descriptors and retains malformed source errors`() {
         val directory = resources.resolve("META-INF/plutoproject/modules/paper").apply { createDirectories() }
         directory.resolve("home.json").writeText(
-            """{"schemaVersion":1,"id":"home","type":"FEATURE","platform":"PAPER","entrypoint":"fixture.Home","requiredFeatures":[],"optionalFeatures":["menu"],"requiredCapabilities":["mongo"]}""",
+            """{"schemaVersion":1,"id":"home","type":"FEATURE","platform":"PAPER","entrypoint":"fixture.Home","requiredFeatures":[],"optionalFeatures":["menu"],"requiredCapabilities":["mongo"],"futureField":true}""",
         )
         directory.resolve("broken.json").writeText("{not-json")
         directory.resolve("future.json").writeText(

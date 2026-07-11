@@ -1,9 +1,14 @@
 package plutoproject.kernel.common
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import plutoproject.kernel.api.FeatureController
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.ModuleDescriptor
@@ -26,7 +31,12 @@ class RuntimeModuleManager(
     private val contextFactory: ModuleContextFactory,
     private val reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
 ) : FeatureController {
-    private data class LiveModule(val module: RuntimeModule, val context: ModuleContext)
+    private data class LiveModule(
+        val module: RuntimeModule,
+        val context: ModuleContext,
+        var loadCompleted: Boolean = false,
+        var disableStarted: Boolean = false,
+    )
 
     private val validatedDescriptors = ModuleDescriptorValidator.validateForPlatform(platform, descriptors)
     private val graph = ModuleGraph(validatedDescriptors)
@@ -45,10 +55,14 @@ class RuntimeModuleManager(
         if (loadStarted) return@withLock rejectPlan(ModuleOperation.LOAD, "Startup load already executed")
         check(!shutdownStarted) { "Runtime module manager is shutting down" }
         loadStarted = true
-        buildMap {
-            plan.orderedModules.forEach { descriptor ->
-                put(descriptor.id, loadOne(descriptor))
+        try {
+            buildMap {
+                plan.orderedModules.forEach { descriptor ->
+                    put(descriptor.id, loadOne(descriptor))
+                }
             }
+        } catch (cause: CancellationException) {
+            terminateStartup(cause)
         }
     }
 
@@ -57,16 +71,20 @@ class RuntimeModuleManager(
         if (enableStarted) return@withLock rejectPlan(ModuleOperation.ENABLE, "Startup enable already executed")
         check(!shutdownStarted) { "Runtime module manager is shutting down" }
         enableStarted = true
-        val results = buildMap {
-            plan.orderedModules.forEach { descriptor ->
-                val result = enableOne(descriptor)
-                if (result != null) put(descriptor.id, result)
+        try {
+            val results = buildMap {
+                plan.orderedModules.forEach { descriptor ->
+                    val result = enableOne(descriptor)
+                    if (result != null) put(descriptor.id, result)
+                }
             }
+            activeOptionalEdges = plan.proposedOptionalEdges.filterTo(linkedSetOf()) {
+                registry.isEnabled(it.dependent) && registry.isEnabled(it.dependency)
+            }
+            results
+        } catch (cause: CancellationException) {
+            terminateStartup(cause)
         }
-        activeOptionalEdges = plan.proposedOptionalEdges.filterTo(linkedSetOf()) {
-            registry.isEnabled(it.dependent) && registry.isEnabled(it.dependency)
-        }
-        results
     }
 
     override suspend fun disable(id: String): ModuleOperationResult = lifecycleMutex.withLock {
@@ -99,15 +117,22 @@ class RuntimeModuleManager(
     suspend fun shutdown() = lifecycleMutex.withLock {
         if (shutdownStarted) return@withLock
         shutdownStarted = true
-        featureShutdownOrder().forEach { id ->
-            if (registry.state(id) == ModuleState.ENABLED) disableOne(id, ModuleState.DISABLED)
-        }
-        plan.capabilities.asReversed().forEach { descriptor ->
-            if (registry.state(descriptor.id) == ModuleState.ENABLED) {
-                disableOne(descriptor.id, ModuleState.DISABLED)
+        var hookCancellation: CancellationException? = null
+        withContext(NonCancellable) {
+            featureShutdownOrder().forEach { id ->
+                if (registry.state(id) == ModuleState.ENABLED) {
+                    hookCancellation = disableDuringShutdown(id, hookCancellation)
+                }
             }
+            plan.capabilities.asReversed().forEach { descriptor ->
+                if (registry.state(descriptor.id) == ModuleState.ENABLED) {
+                    hookCancellation = disableDuringShutdown(descriptor.id, hookCancellation)
+                }
+            }
+            activeOptionalEdges = emptySet()
         }
-        activeOptionalEdges = emptySet()
+        hookCancellation?.let { throw it }
+        currentCoroutineContext().ensureActive()
     }
 
     fun activeOptionalDependencies(): Set<ModuleEdge> = activeOptionalEdges
@@ -121,12 +146,24 @@ class RuntimeModuleManager(
         return try {
             context = contextFactory.create(descriptor)
             val module = moduleFactory.create(descriptor)
-            liveModules[descriptor.id] = LiveModule(module, context)
+            val live = LiveModule(module, context)
+            liveModules[descriptor.id] = live
             module.onLoad(context)
+            live.loadCompleted = true
             succeeded(descriptor.id, ModuleOperation.LOAD, ModuleState.DISCOVERED, ModuleState.LOADED)
+        } catch (cause: CancellationException) {
+            if (liveModules[descriptor.id] == null) {
+                withContext(NonCancellable) { context?.cancelScope() }
+                val state = if (context == null) ModuleState.DISCOVERED else ModuleState.DISABLED
+                registry.terminate(descriptor.id, state)
+            }
+            throw cause
         } catch (cause: Throwable) {
-            liveModules.remove(descriptor.id)
-            context?.cancelScope()
+            if (liveModules[descriptor.id] == null) {
+                context?.cancelScope()
+            } else {
+                cleanup(descriptor.id)
+            }
             failed(descriptor.id, ModuleOperation.LOAD, "onLoad", cause, ModuleState.FAILED)
         }
     }
@@ -135,7 +172,14 @@ class RuntimeModuleManager(
         if (registry.state(descriptor.id) != ModuleState.LOADED) return null
         dependencyFailurePath(descriptor.id, ModuleState.ENABLED)?.let { path ->
             val live = liveModules[descriptor.id]
-            runCatching { live?.module?.onDisable(live.context) }
+            try {
+                live?.disableStarted = true
+                live?.module?.onDisable(live.context)
+            } catch (cause: CancellationException) {
+                throw cause
+            } catch (_: Throwable) {
+                // Dependency failure remains the primary result on this path.
+            }
             cleanup(descriptor.id)
             return blocked(descriptor, ModuleOperation.ENABLE, path)
         }
@@ -145,8 +189,22 @@ class RuntimeModuleManager(
             live.module.onEnable(live.context)
             succeeded(descriptor.id, ModuleOperation.ENABLE, ModuleState.LOADED, ModuleState.ENABLED)
         } catch (cause: Throwable) {
-            runCatching { live.module.onDisable(live.context) }
-            cleanup(descriptor.id)
+            if (cause is CancellationException) throw cause
+            try {
+                live.disableStarted = true
+                live.module.onDisable(live.context)
+            } catch (cleanupCancellation: CancellationException) {
+                cleanupCancellation.addSuppressed(cause)
+                throw cleanupCancellation
+            } catch (cleanupFailure: Throwable) {
+                cause.addSuppressed(cleanupFailure)
+            }
+            try {
+                cleanup(descriptor.id)
+            } catch (cleanupCancellation: CancellationException) {
+                cleanupCancellation.addSuppressed(cause)
+                throw cleanupCancellation
+            }
             failed(descriptor.id, ModuleOperation.ENABLE, "onEnable", cause, ModuleState.FAILED)
         }
     }
@@ -155,24 +213,121 @@ class RuntimeModuleManager(
         registry.begin(id, ModuleOperation.DISABLE)
         val previousState = registry.state(id) ?: ModuleState.DISCOVERED
         val live = liveModules[id]
-        val hookFailure = runCatching { live?.module?.onDisable(live.context) }.exceptionOrNull()
-        cleanup(id)
-        activeOptionalEdges = activeOptionalEdges.filterNotTo(linkedSetOf()) {
-            it.dependent == id || it.dependency == id
-        }
-        return if (hookFailure == null) {
-            succeeded(id, ModuleOperation.DISABLE, previousState, finalState)
-        } else {
-            failed(id, ModuleOperation.DISABLE, "onDisable", hookFailure, finalState)
+        try {
+            val hookFailure = try {
+                live?.disableStarted = true
+                live?.module?.onDisable(live.context)
+                null
+            } catch (cause: CancellationException) {
+                throw cause
+            } catch (cause: Throwable) {
+                cause
+            }
+            cleanup(id)
+            removeOptionalEdges(id)
+            return if (hookFailure == null) {
+                succeeded(id, ModuleOperation.DISABLE, previousState, finalState)
+            } else {
+                failed(id, ModuleOperation.DISABLE, "onDisable", hookFailure, finalState)
+            }
+        } catch (cause: CancellationException) {
+            withContext(NonCancellable) {
+                val cleanupFailure = runCleanup(id)
+                removeOptionalEdges(id)
+                val reportableFailure = cleanupFailure?.reportableFailure()
+                if (reportableFailure == null) {
+                    registry.terminate(id, finalState)
+                } else {
+                    failed(id, ModuleOperation.DISABLE, "cleanup", reportableFailure, finalState)
+                }
+                if (cleanupFailure != null) cause.addSuppressed(cleanupFailure)
+            }
+            throw cause
         }
     }
 
     private suspend fun cleanup(id: String) {
-        liveModules.remove(id)?.context?.cancelScope()
+        val live = liveModules[id] ?: return
+        live.context.cancelScope()
+        liveModules.remove(id, live)
     }
 
     private suspend fun ModuleContext.cancelScope() {
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
+    }
+
+    private suspend fun terminateStartup(cause: CancellationException): Nothing {
+        shutdownStarted = true
+        withContext(NonCancellable) {
+            plan.orderedModules.asReversed().forEach { descriptor ->
+                val live = liveModules[descriptor.id] ?: return@forEach
+                val cleanupFailure = terminateLiveModule(descriptor.id, live)
+                if (cleanupFailure != null) cause.addSuppressed(cleanupFailure)
+            }
+            activeOptionalEdges = emptySet()
+        }
+        throw cause
+    }
+
+    private suspend fun terminateLiveModule(id: String, live: LiveModule): Throwable? {
+        registry.begin(id, ModuleOperation.DISABLE)
+        var failure: Throwable? = null
+        if (live.loadCompleted && !live.disableStarted) {
+            live.disableStarted = true
+            failure = try {
+                live.module.onDisable(live.context)
+                null
+            } catch (cause: Throwable) {
+                cause
+            }
+        }
+        failure = combineFailures(failure, runCleanup(id))
+        removeOptionalEdges(id)
+        completeTermination(id, failure)
+        return failure
+    }
+
+    private suspend fun runCleanup(id: String): Throwable? = try {
+        cleanup(id)
+        null
+    } catch (cause: Throwable) {
+        cause
+    }
+
+    private fun completeTermination(id: String, failure: Throwable?) {
+        val reportableFailure = failure?.reportableFailure()
+        if (reportableFailure == null) {
+            registry.terminate(id, ModuleState.DISABLED)
+        } else {
+            failed(id, ModuleOperation.DISABLE, "onDisable", reportableFailure, ModuleState.DISABLED)
+        }
+    }
+
+    private fun Throwable.reportableFailure(): Throwable? = when {
+        this !is CancellationException -> this
+        else -> suppressed.firstNotNullOfOrNull { it.reportableFailure() }
+    }
+
+    private fun combineFailures(primary: Throwable?, secondary: Throwable?): Throwable? {
+        if (primary == null) return secondary
+        if (secondary != null && secondary !== primary) primary.addSuppressed(secondary)
+        return primary
+    }
+
+    private fun removeOptionalEdges(id: String) {
+        activeOptionalEdges = activeOptionalEdges.filterNotTo(linkedSetOf()) {
+            it.dependent == id || it.dependency == id
+        }
+    }
+
+    private suspend fun disableDuringShutdown(
+        id: String,
+        previousCancellation: CancellationException?,
+    ): CancellationException? = try {
+        disableOne(id, ModuleState.DISABLED)
+        previousCancellation
+    } catch (cause: CancellationException) {
+        previousCancellation?.apply { addSuppressed(cause) } ?: cause
     }
 
     private fun dependencyFailurePath(id: String, expected: ModuleState): List<String>? {

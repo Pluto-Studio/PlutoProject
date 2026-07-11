@@ -6,11 +6,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.jar.JarFile
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.int
 import plutoproject.kernel.api.MODULE_DESCRIPTOR_SCHEMA_VERSION
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleType
@@ -35,6 +32,8 @@ data class ModuleDiscoveryError(
 class ModuleDiscovery(
     private val classLoader: ClassLoader = ModuleDiscovery::class.java.classLoader,
 ) {
+    private val descriptorJson = Json { ignoreUnknownKeys = true }
+
     fun discover(platform: Platform): ModuleDiscoveryResult {
         val prefix = "META-INF/plutoproject/modules/${platform.resourceDirectory}"
         val resources = linkedMapOf<String, String>()
@@ -92,26 +91,6 @@ class ModuleDiscovery(
     }
 
     private fun parseDescriptor(content: String): ModuleDescriptor {
-        val json = Json.parseToJsonElement(content) as? JsonObject ?: error("Descriptor must be a JSON object")
-        return ModuleDescriptor(
-            schemaVersion = json.requiredPrimitive("schemaVersion").int,
-            id = json.requiredPrimitive("id").content,
-            type = ModuleType.valueOf(json.requiredPrimitive("type").content),
-            platform = Platform.valueOf(json.requiredPrimitive("platform").content),
-            entrypoint = json.requiredPrimitive("entrypoint").content,
-            requiredFeatures = json.stringList("requiredFeatures"),
-            optionalFeatures = json.stringList("optionalFeatures"),
-            requiredCapabilities = json.stringList("requiredCapabilities"),
-        )
-    }
-
-    private fun JsonObject.requiredPrimitive(name: String) =
-        this[name] as? JsonPrimitive ?: error("Missing or invalid '$name'")
-
-    private fun JsonObject.stringList(name: String): List<String> {
-        val value = this[name] ?: return emptyList()
-        return (value as? JsonArray)?.map {
-            (it as? JsonPrimitive)?.content ?: error("'$name' must contain only strings")
-        } ?: error("'$name' must be an array")
+        return descriptorJson.decodeFromString(content)
     }
 }

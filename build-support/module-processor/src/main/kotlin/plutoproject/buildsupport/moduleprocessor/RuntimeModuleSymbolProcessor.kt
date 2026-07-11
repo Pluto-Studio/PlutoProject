@@ -15,6 +15,8 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.Modifier
 import com.google.devtools.ksp.validate
 import java.io.OutputStreamWriter
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import plutoproject.kernel.api.MODULE_DESCRIPTOR_SCHEMA_VERSION
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleType
@@ -24,6 +26,8 @@ private const val FEATURE_ANNOTATION = "plutoproject.kernel.api.Feature"
 private const val CAPABILITY_ANNOTATION = "plutoproject.kernel.api.Capability"
 private const val RUNTIME_MODULE = "plutoproject.kernel.api.RuntimeModule"
 private const val PROJECT_PATH_OPTION = "runtimeModule.projectPath"
+
+internal val moduleDescriptorJson = Json { encodeDefaults = true }
 
 internal class RuntimeModuleSymbolProcessor(
     private val codeGenerator: CodeGenerator,
@@ -110,7 +114,7 @@ internal class RuntimeModuleSymbolProcessor(
         val dependencies = source?.let { Dependencies(false, it) } ?: Dependencies.ALL_FILES
         codeGenerator.createNewFileByPath(dependencies, path, "").use { output ->
             OutputStreamWriter(output, Charsets.UTF_8).use {
-                it.write(ModuleDescriptorJson.encode(descriptor))
+                it.write(moduleDescriptorJson.encodeToString(descriptor))
             }
         }
     }

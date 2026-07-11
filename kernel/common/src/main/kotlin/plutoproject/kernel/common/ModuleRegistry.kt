@@ -54,4 +54,13 @@ class ModuleRegistry internal constructor(descriptors: Collection<ModuleDescript
             )
         }
     }
+
+    internal fun terminate(id: String, state: ModuleState) {
+        snapshots.compute(id) { _, snapshot ->
+            snapshot?.copy(
+                state = state,
+                runningOperation = null,
+            )
+        }
+    }
 }
