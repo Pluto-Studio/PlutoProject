@@ -7,6 +7,7 @@ plugins {
 dependencies {
     api(projects.frameworkVelocity)
     api(projects.featureVelocity)
+    implementation(project(":kernel:velocity"))
 }
 
 velocityPluginJson {

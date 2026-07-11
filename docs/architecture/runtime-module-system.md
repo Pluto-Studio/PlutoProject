@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 3 complete)
+- Status: Implementation in progress (Phase 4 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -900,6 +900,14 @@ feat(kernel): 实现运行时模块管理器
 ```
 
 ### Phase 4: Implement Platform Kernel Bootstrap
+
+Status: Complete (2026-07-12). `kernel/paper` and `kernel/velocity` now discover
+and manage runtime descriptors from the real platform lifecycle. Paper runs the
+load stage from plugin `onLoad`; Velocity runs it during plugin construction;
+both run enable and shutdown from their corresponding platform events. The
+legacy manager remains active for legacy manifests, while platform bootstrap
+tests verify descriptor discovery, lifecycle execution, and cancellation of
+Kernel-owned module jobs on both platforms.
 
 Tasks:
 

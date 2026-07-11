@@ -45,7 +45,7 @@ public class PlutoVelocityBootstrap {
         plutoproject.framework.common.util.EnvironmentKt.setPlatformType(PlatformType.VELOCITY);
         plutoproject.framework.common.util.EnvironmentKt.setServerThread(Thread.currentThread());
         plutoproject.framework.common.util.EnvironmentKt.initPluginDataFolder(dataDirectoryPath.toFile());
-        platform = new PlutoVelocityPlatform();
+        platform = new PlutoVelocityPlatform(plugin, server, logger, dataDirectoryPath);
         platform.load();
     }
 

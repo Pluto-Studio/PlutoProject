@@ -9,6 +9,7 @@ plugins {
 dependencies {
     api(projects.frameworkPaper)
     api(projects.featurePaper)
+    implementation(project(":kernel:paper"))
 }
 
 paperPluginYaml {

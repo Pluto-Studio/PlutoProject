@@ -68,6 +68,8 @@ includeProject(":kernel:api")
 includeProject(":kernel:api:paper")
 includeProject(":kernel:api:velocity")
 includeProject(":kernel:common")
+includeProject(":kernel:paper")
+includeProject(":kernel:velocity")
 includeProject(":build-support:module-processor")
 
 include("platform-paper")

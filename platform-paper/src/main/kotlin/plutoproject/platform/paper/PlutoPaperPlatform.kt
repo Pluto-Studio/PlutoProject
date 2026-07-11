@@ -2,7 +2,9 @@ package plutoproject.platform.paper
 
 import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
+import kotlinx.coroutines.runBlocking
 import plutoproject.framework.common.FrameworkCommonModule
+import plutoproject.framework.common.PlutoConfig
 import plutoproject.framework.common.api.feature.FeatureManager
 import plutoproject.framework.common.util.PlatformType
 import plutoproject.framework.common.util.coroutine.shutdownCoroutineEnvironment
@@ -16,6 +18,7 @@ import plutoproject.framework.paper.disableFrameworkModules
 import plutoproject.framework.paper.enableFrameworkModules
 import plutoproject.framework.paper.loadFrameworkModules
 import plutoproject.framework.paper.util.plugin
+import plutoproject.kernel.paper.PaperKernel
 import java.net.URLClassLoader
 import kotlin.system.measureTimeMillis
 import plutoproject.framework.common.util.logger as utilLogger
@@ -23,6 +26,8 @@ import plutoproject.framework.paper.util.server as utilServer
 
 @Suppress("UNUSED")
 class PlutoPaperPlatform : SuspendingJavaPlugin() {
+    private lateinit var kernel: PaperKernel
+
     override fun onLoad() {
         plugin = this
         utilServer = server
@@ -35,6 +40,12 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
         globalKoin {
             modules(FrameworkCommonModule, FrameworkPaperModule)
         }
+        kernel = PaperKernel(
+            plugin = this,
+            dataFolder = dataFolder.toPath(),
+            featureRoots = globalKoin.get<PlutoConfig>().feature.autoLoad,
+        )
+        runBlocking { kernel.load() }
         loadFrameworkModules()
         FeatureManager.loadAll()
     }
@@ -66,11 +77,13 @@ class PlutoPaperPlatform : SuspendingJavaPlugin() {
     }
 
     override fun onEnable() {
+        runBlocking { kernel.enable() }
         enableFrameworkModules()
         FeatureManager.enableAll()
     }
 
     override fun onDisable() {
+        runBlocking { kernel.shutdown() }
         FeatureManager.disableAll()
         disableFrameworkModules()
         shutdownCoroutineEnvironment()
