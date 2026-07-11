@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 0 complete)
+- Status: Implementation in progress (Phase 1 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -736,6 +736,14 @@ docs: 添加运行时模块系统重构规范
 ```
 
 ### Phase 1: Replace Gradle Conventions
+
+Status: Complete (2026-07-11). The orthogonal Kotlin, test, Paper, Velocity,
+and distribution conventions are available. Gallery and whitelist-v2 core/API
+projects are the first migrated projects; legacy conventions remain only for
+projects scheduled for later migration phases. Repository declarations are
+centralized in `settings.gradle.kts`, and `verifyArchitecture` establishes the
+initial project path, coordinate, plugin isolation, and dependency direction
+checks. Runtime-module processor wiring remains deferred to Phase 2.
 
 Tasks:
 

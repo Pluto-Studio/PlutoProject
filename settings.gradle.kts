@@ -14,6 +14,33 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        mavenCentral()
+        google()
+        maven("https://jitpack.io")
+        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://maven.nostal.ink/repository/maven-public")
+        maven("https://repo.lucko.me/")
+        maven("https://maven.playpro.com/")
+        maven("https://repo.opencollab.dev/main/")
+        maven("https://repo.codemc.org/repository/maven-public")
+        ivy("https://nodejs.org/dist") {
+            name = "Node.js distributions"
+            patternLayout {
+                artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]")
+            }
+            metadataSources {
+                artifact()
+            }
+            content {
+                includeModule("org.nodejs", "node")
+            }
+        }
+    }
+}
+
 rootProject.name = "plutoproject"
 
 includeBuild("build-logic")

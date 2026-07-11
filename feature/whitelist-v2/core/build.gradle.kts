@@ -1,3 +1,7 @@
 plugins {
-    id("plutoproject.test-conventions")
+    id("plutoproject.kotlin-test")
+}
+
+dependencies {
+    implementation(libs.kotlin.stdlib)
 }
