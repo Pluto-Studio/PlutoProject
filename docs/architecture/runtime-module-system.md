@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Approved for implementation
+- Status: Implementation in progress (Phase 0 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -709,6 +709,10 @@ ProjectExts module-type inference
 Intermediate migration phases and commits are not required to leave the complete repository buildable or preserve all gameplay behavior. Targeted modules and tests should still be verified when useful, but only the final acceptance requires the full build, complete test suite, and gameplay verification to pass. New and old conventions may coexist temporarily during migration, but no compatibility layer remains in the final architecture.
 
 ### Phase 0: Baseline and Documentation
+
+Status: Complete (2026-07-11). The build results, packaged legacy manifests,
+and dependency graph are recorded in
+[`runtime-module-system-baseline.md`](runtime-module-system-baseline.md).
 
 Tasks:
 
