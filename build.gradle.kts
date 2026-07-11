@@ -7,6 +7,20 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+allprojects {
+    repositories {
+        mavenCentral()
+        google()
+        maven("https://jitpack.io")
+        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://maven.nostal.ink/repository/maven-public")
+        maven("https://repo.lucko.me/")
+        maven("https://maven.playpro.com/")
+        maven("https://repo.opencollab.dev/main/")
+        maven("https://repo.codemc.org/repository/maven-public")
+    }
+}
+
 dependencies {
     api(projects.platformPaper)
     api(projects.platformVelocity)
