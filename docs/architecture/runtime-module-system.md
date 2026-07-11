@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 2 complete)
+- Status: Implementation in progress (Phase 3 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -803,6 +803,14 @@ feat(kernel): 定义统一运行时模块协议
 ```
 
 ### Phase 3: Implement Module Graph and Runtime Manager
+
+Status: Complete (2026-07-11). `kernel/common` now provides descriptor
+discovery and validation, immutable activation planning, required and active
+optional dependency graphs, reflective module creation, registry/reporting,
+and a serialized runtime manager. Seventeen focused tests cover lifecycle
+ordering, failure propagation and cleanup, blocker paths, optional-plan cycles,
+sticky capabilities, permanent feature disable, discovery errors, platform ID
+isolation, and static validation before instance creation.
 
 Tasks:
 

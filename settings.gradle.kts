@@ -90,6 +90,7 @@ includeProject(":feature:gallery:frontend")
 includeProject(":kernel:api")
 includeProject(":kernel:api:paper")
 includeProject(":kernel:api:velocity")
+includeProject(":kernel:common")
 includeProject(":build-support:module-processor")
 
 include("platform-paper")
