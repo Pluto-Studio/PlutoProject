@@ -2,6 +2,8 @@ package plutoproject.kernel.velocity
 
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
+import com.velocitypowered.api.command.CommandSource
+import com.velocitypowered.api.command.BrigadierCommand
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.logging.Level
@@ -24,6 +26,7 @@ class VelocityKernel(
     private val logger: Logger,
     dataFolder: Path,
     featureRoots: Collection<String>,
+    registerCommands: Boolean = true,
     classLoader: ClassLoader = pluginContainer.javaClass.classLoader,
 ) {
     private val kernel = RuntimeKernel(
@@ -36,6 +39,13 @@ class VelocityKernel(
 
     init {
         kernel.warnings.forEach(logger::warning)
+        if (registerCommands) {
+            val command = BrigadierCommand(createManagementCommand(kernel.management).build())
+            proxyServer.commandManager.register(
+                proxyServer.commandManager.metaBuilder(command).plugin(pluginContainer).build(),
+                command,
+            )
+        }
     }
 
     suspend fun load(): Map<String, ModuleOperationResult> = kernel.load()

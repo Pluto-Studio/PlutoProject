@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 4 complete)
+- Status: Implementation in progress (Phase 5 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -936,6 +936,13 @@ feat(kernel): 实现平台模块启动生命周期
 ```
 
 ### Phase 5: Add Administrative Commands
+
+Status: Complete (2026-07-12). Paper registers a native Brigadier command tree
+through `LifecycleEvents.COMMANDS`, and Velocity registers the equivalent tree
+through its native `BrigadierCommand` API. The commands expose feature and
+capability listing and inspection, permanent feature disable, dependency graph
+paths, per-command permissions, dynamic module ID suggestions, blocker paths,
+and latest lifecycle failure summaries without modifying configuration.
 
 Tasks:
 

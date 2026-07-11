@@ -33,6 +33,8 @@ class RuntimeKernel(
     val registry: ModuleRegistry
         get() = manager.registry
 
+    val management = ModuleManagementService(manager)
+
     val warnings: List<String>
         get() = manager.plan.warnings
 

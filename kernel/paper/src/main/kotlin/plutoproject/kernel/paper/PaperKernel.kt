@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.bukkit.plugin.Plugin
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleOperationResult
 import plutoproject.kernel.api.Platform
@@ -19,8 +20,10 @@ class PaperKernel(
     private val plugin: Plugin,
     dataFolder: Path,
     featureRoots: Collection<String>,
+    registerCommands: Boolean = true,
     classLoader: ClassLoader = plugin.javaClass.classLoader,
 ) {
+    private val registerCommands = registerCommands
     private val kernel = RuntimeKernel(
         platform = Platform.PAPER,
         featureRoots = featureRoots,
@@ -28,6 +31,7 @@ class PaperKernel(
         contextFactory = ModuleContextFactory { descriptor -> createContext(descriptor, dataFolder) },
         reporter = ModuleOperationReporter(::report),
     )
+    private var commandsRegistered = false
 
     init {
         kernel.warnings.forEach(plugin.logger::warning)
@@ -35,9 +39,23 @@ class PaperKernel(
 
     suspend fun load(): Map<String, ModuleOperationResult> = kernel.load()
 
-    suspend fun enable(): Map<String, ModuleOperationResult> = kernel.enable()
+    suspend fun enable(): Map<String, ModuleOperationResult> {
+        registerCommands()
+        return kernel.enable()
+    }
 
     suspend fun shutdown() = kernel.shutdown()
+
+    private fun registerCommands() {
+        if (!registerCommands || commandsRegistered) return
+        plugin.lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) { event ->
+            event.registrar().register(
+                createManagementCommand(kernel.management).build(),
+                "Inspect and manage PlutoProject runtime modules",
+            )
+        }
+        commandsRegistered = true
+    }
 
     private fun createContext(descriptor: ModuleDescriptor, dataFolder: Path): PaperModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)

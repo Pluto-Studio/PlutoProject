@@ -26,6 +26,7 @@ class VelocityKernelTest {
             logger = Logger.getLogger("VelocityKernelTest"),
             dataFolder = Path.of("build/test-data/velocity-kernel"),
             featureRoots = listOf("velocity_test"),
+            registerCommands = false,
             classLoader = javaClass.classLoader,
         )
 
