@@ -87,5 +87,10 @@ includeProject(":feature:gallery:infra-mongo")
 includeProject(":feature:gallery:adapter-paper")
 includeProject(":feature:gallery:frontend")
 
+includeProject(":kernel:api")
+includeProject(":kernel:api:paper")
+includeProject(":kernel:api:velocity")
+includeProject(":build-support:module-processor")
+
 include("platform-paper")
 include("platform-velocity")

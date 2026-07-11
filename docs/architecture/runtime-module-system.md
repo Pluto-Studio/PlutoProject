@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 1 complete)
+- Status: Implementation in progress (Phase 2 complete)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -769,6 +769,14 @@ build: 重构 Gradle conventions
 ```
 
 ### Phase 2: Introduce Kernel API and Module Processor
+
+Status: Complete (2026-07-11). `kernel/api`, its Paper and Velocity extensions,
+and `build-support/module-processor` now define and generate the unified runtime
+module protocol. The `plutoproject.runtime-module` convention wires KSP with
+project identity. Processor unit and Gradle TestKit functional tests cover valid
+descriptor generation and invalid metadata/entrypoint shapes, including object
+declarations. Legacy feature descriptors remain active until the migration and
+platform cutover phases.
 
 Tasks:
 
