@@ -13,8 +13,8 @@
 - Give the Kernel a fixed and explicit startup path.
 - Manage features and capabilities through the same lifecycle and dependency graph.
 - Start capabilities only when required, then keep them running until server shutdown.
-- Support loading, disabling, and reloading individual features at runtime.
-- Support explicit retry of failed capabilities.
+- Load and enable modules only during the platform startup lifecycle.
+- Support disabling individual features at runtime as a one-way emergency operation.
 - Migrate all flat `framework-*` and `feature-*` projects into the new directory layout.
 - Preserve the existing DDD rules used by features under `feature/`.
 - Avoid forcing simple legacy features into empty DDD layers.
@@ -26,6 +26,9 @@
 - Splitting the current unified Paper and Velocity distribution into platform-specific JARs.
 - Providing a separate classloader for each feature.
 - Persisting runtime management commands back into configuration.
+- Loading, enabling, or retrying modules after platform startup.
+- Providing Kernel-level feature reload; feature-specific configuration refresh remains a business concern.
+- Guaranteeing complete cleanup of side effects created by feature or capability code.
 - Rewriting all legacy business logic during the structural migration.
 - Adding unit tests to legacy feature implementations.
 - Upgrading Gradle, Kotlin, or third-party dependencies as part of this refactor.
@@ -42,7 +45,7 @@ A discoverable object managed by the Kernel. Runtime modules have descriptors, d
 
 ### Feature
 
-A player-facing or administrator-facing behavior that may be selected directly through configuration or runtime commands.
+A player-facing or administrator-facing behavior selected as a startup root through configuration. An enabled feature may be disabled at runtime, but it cannot be selected or started after platform startup.
 
 ### Capability
 
@@ -72,12 +75,18 @@ capability/
   mongo/
     api/
     common/
+    paper/
+    velocity/
   charonflow/
     api/
     common/
+    paper/
+    velocity/
   geoip/
     api/
     common/
+    paper/
+    velocity/
   database-persist/
     api/
     common/
@@ -186,7 +195,7 @@ Gradle dependency rules:
 | Foundation common | Foundation and platform-independent libraries |
 | Foundation paper | Foundation common, other Foundation projects, and the Paper API |
 | Foundation velocity | Foundation common, other Foundation projects, and the Velocity API |
-| Kernel API | Foundation and the Koin API exposed by `ModuleContext` |
+| Kernel API | Foundation and platform-independent coroutine and logging contracts exposed by `ModuleContext` |
 | Kernel common | Kernel API and Foundation |
 | Kernel `api/paper` | Kernel API and `foundation/paper` |
 | Kernel `api/velocity` | Kernel API and `foundation/velocity` |
@@ -254,7 +263,7 @@ The processor and descriptor validator enforce:
 
 - Entrypoints implement `RuntimeModule`.
 - Entrypoints are public, non-abstract, non-inner classes with a public zero-argument constructor.
-- Kotlin `object` declarations are not valid entrypoints because reload after disable requires a fresh instance.
+- Kotlin `object` declarations are not valid entrypoints because the Kernel owns one explicit instance per startup.
 - The processor validates entrypoint shape and metadata local to one compilation.
 - The assembled descriptor validator enforces ID uniqueness within each platform discovery set, dependency types, missing dependencies, and cycles.
 - A single runtime entry project only emits descriptors for one platform.
@@ -263,23 +272,26 @@ Runtime IDs are lowercase, case-sensitive, and must match `[a-z][a-z0-9_-]*`. ID
 
 `Load.BEFORE` and `Load.AFTER` are removed. Within each lifecycle phase, dependencies always run before their dependents.
 
-`Platform.COMMON` means that a descriptor is compatible with both platforms. Discovery combines COMMON descriptors with the current platform. Feature and capability IDs share one global namespace within that platform discovery set. A COMMON descriptor and a current-platform descriptor with the same ID are an error; there is no override or merge behavior. Platform-specific implementations therefore emit only PAPER or VELOCITY descriptors, while truly cross-platform runtime implementations emit COMMON descriptors.
+Runtime descriptors use only `Platform.PAPER` or `Platform.VELOCITY`. `common` is a Gradle project role for shared implementation code, not a runtime platform. A module used on both platforms has a thin runtime entry project for each platform; each entry project emits its own descriptor and composes any shared logic from `common`.
+
+Paper and Velocity Kernels are process-local and independent. Each Kernel discovers only descriptors for its current platform. The same ID may therefore have separate PAPER and VELOCITY descriptors, but the Kernel does not infer that they form one distributed module and does not coordinate their state or lifecycle. Cross-platform collaboration belongs to the module's own messaging or business protocol.
+
+Feature and capability IDs share one global namespace within each platform discovery set.
 
 Generated manifests live under:
 
 ```text
-META-INF/plutoproject/modules/common/
 META-INF/plutoproject/modules/paper/
 META-INF/plutoproject/modules/velocity/
 ```
 
-Each runtime entry project emits one UTF-8 JSON object with `schemaVersion = 1` at:
+Each runtime entry project emits one UTF-8 JSON object with `schemaVersion = 1` at one of:
 
 ```text
-META-INF/plutoproject/modules/<platform>/<type>-<id>.json
+META-INF/plutoproject/modules/<platform>/<id>.json
 ```
 
-`ModuleDiscovery` reports unknown schema versions and malformed files while retaining source paths. `ModuleDescriptorValidator` rejects duplicate IDs after combining COMMON descriptors with the current platform. The same ID may have separate PAPER and VELOCITY descriptors because those descriptors are never part of the same platform discovery set. The distribution build rejects duplicate descriptor resource paths before packaging. All failures occur before lifecycle execution. The KSP processor is moved out of the framework implementation and into `build-support/module-processor`.
+The descriptor's `type` field distinguishes features from capabilities; it is not part of the resource filename because feature and capability IDs share one namespace within a platform. `ModuleDiscovery` reports unknown schema versions and malformed files while retaining source paths. `ModuleDescriptorValidator` rejects duplicate IDs within the current platform discovery set. The same ID may have separate PAPER and VELOCITY descriptors because each Kernel sees only its own platform set. The distribution build rejects duplicate descriptor resource paths before packaging. Any descriptor or static graph validation error aborts platform plugin startup before lifecycle execution and is reported through logs. The KSP processor is moved out of the framework implementation and into `build-support/module-processor`.
 
 ## Runtime Module Lifecycle
 
@@ -287,7 +299,6 @@ META-INF/plutoproject/modules/<platform>/<type>-<id>.json
 interface RuntimeModule {
     suspend fun onLoad(context: ModuleContext) {}
     suspend fun onEnable(context: ModuleContext) {}
-    suspend fun onReload(context: ModuleContext) {}
     suspend fun onDisable(context: ModuleContext) {}
 }
 ```
@@ -298,12 +309,10 @@ The Kernel, rather than a module base class, owns:
 - Logger creation.
 - Data directory resolution.
 - Coroutine scope creation and cancellation.
-- Dependency injection registration and removal.
-- Platform resource tracking.
 - Instance creation and destruction.
-- Cleanup after lifecycle failures.
+- Cleanup of resources created by the Kernel itself after lifecycle failures.
 
-Modules do not update their own state. Convenience base classes may be provided, but correctness must not depend on subclasses invoking Kernel cleanup methods.
+Modules do not update their own state. Convenience base classes may be provided, but Kernel state correctness must not depend on subclasses invoking Kernel methods. Cleanup of module-created side effects remains the module's responsibility.
 
 The manager creates entrypoints through their validated public zero-argument constructors. Reflection is isolated inside `RuntimeModuleFactory`; feature and capability code does not instantiate other runtime modules.
 
@@ -315,6 +324,7 @@ enum class ModuleState {
     LOADED,
     ENABLED,
     DISABLED,
+    BLOCKED,
     FAILED,
 }
 ```
@@ -325,13 +335,13 @@ The currently running operation is recorded separately:
 enum class ModuleOperation {
     LOAD,
     ENABLE,
-    RELOAD,
     DISABLE,
-    RETRY,
 }
 ```
 
-Lifecycle operations are serialized by the manager. Two commands must not mutate the active graph concurrently.
+Lifecycle operations are serialized by the manager. `LOAD` and `ENABLE` occur only during platform startup. Runtime commands may only disable enabled features, and two disable commands must not mutate the active graph concurrently. Lifecycle hooks have no Kernel-enforced timeout; implementations are responsible for returning.
+
+`LOADED` is stable only across the boundary between the platform load and enable stages; it is not a runtime recovery state. `BLOCKED` has no live instance and indicates that the module could not complete startup because a required dependency failed.
 
 ## Kernel Startup
 
@@ -349,19 +359,17 @@ There is no separate `enabled` and `autoLoad` distinction.
 Startup follows a fixed path:
 
 1. Initialize the Kernel.
-2. Discover common and current-platform descriptors.
+2. Discover descriptors for the current platform.
 3. Validate the complete static dependency graph.
 4. Treat `enable-features` as feature roots.
 5. Calculate required feature and capability closures.
-6. Run capability `onLoad` hooks in capability topological order.
-7. Run capability `onEnable` hooks in capability topological order.
-8. Run feature `onLoad` hooks in feature topological order.
-9. Run feature `onEnable` hooks in feature topological order.
-10. Report activated modules, blocked modules, and complete failure paths.
+6. During the platform load phase, run capability `onLoad` hooks and then feature `onLoad` hooks in their respective topological orders.
+7. During the platform enable phase, run capability `onEnable` hooks and then feature `onEnable` hooks in their respective topological orders.
+8. Report activated modules, blocked modules, and complete failure paths.
 
 A capability does not read its own configuration or allocate resources until it is part of an activation plan.
 
-Capabilities are fully enabled before any dependent feature enters `onLoad`. Capability-to-capability edges use capability load and enable phases in topological order. Feature-to-feature edges use a separate two-phase execution. For feature A -> feature B, the ordering is:
+Capability-to-capability and feature-to-feature edges use separate load and enable phases. Dependencies run before their dependents within each phase. For feature A -> feature B, the ordering is:
 
 ```text
 B.onLoad
@@ -370,55 +378,32 @@ B.onEnable
 A.onEnable
 ```
 
-`onLoad` prepares module-local configuration, definitions, and resources that do not require feature dependencies to be enabled. Required capabilities are already enabled at this point. Runtime behavior that consumes an enabled feature dependency starts in `onEnable`. Dynamic feature loading follows the same four-stage capability-load, capability-enable, feature-load, feature-enable ordering for the newly activated plan.
+`onLoad` runs at the platform's own load stage. On Paper this is plugin `onLoad`; on Velocity this is plugin construction after the platform environment is initialized. `onEnable` runs during Paper plugin `onEnable` or the Velocity proxy initialization event. A feature may use services prepared by a required feature after that dependency's `onLoad` has completed; it does not need to wait for the dependency to become `ENABLED`.
+
+The activation plan is immutable for the process lifetime. Modules outside the configured root closures remain `DISCOVERED`; the Kernel does not activate them later. Unknown feature roots, capability IDs used as roots, and IDs unavailable on the current platform are skipped with warnings while valid roots continue. A descriptor or static graph validation error instead aborts the platform plugin startup.
 
 Two-phase failure handling is deterministic:
 
-1. The load phase continues for independent nodes and skips nodes whose required dependency failed to load.
+1. The load phase continues for independent nodes and marks nodes whose required dependency failed to load as `BLOCKED` without creating their instances.
 2. A dependency that loaded successfully remains eligible for enable even when one of its dependents fails to load.
 3. The enable phase runs in topological order and enables every successfully loaded node whose required dependencies are enabled.
-4. If a required dependency fails to enable, a dependent that already completed `onLoad` is cleaned without calling its normal `onDisable`, its instance is discarded, and it returns to `DISCOVERED` with a blocked result.
+4. If a required dependency fails to enable, a dependent that already completed `onLoad` receives a best-effort `onDisable`, then the Kernel cancels its module scope, discards its instance, and marks it `BLOCKED`.
 5. If an optional dependency fails, the proposed optional edge is discarded and does not block the consumer from enabling.
 6. A proposed optional edge becomes active only after both feature instances reach `ENABLED`.
 
-Therefore, if A fails after B loaded successfully, B still proceeds to `onEnable` and remains enabled. If B fails during `onEnable`, a preloaded A is cleaned and remains blocked without a live instance.
-
-## Dynamic Feature Loading
-
-```text
-/plutoproject feature load <id>
-```
-
-At runtime, `load` means complete activation. It executes both `onLoad` and `onEnable`.
-
-Loading a feature:
-
-- Automatically activates required feature dependencies.
-- Automatically activates required capabilities and their transitive capability dependencies.
-- Does not automatically activate optional features.
-- Captures an optional edge only when that feature is already enabled or independently included in the same activation plan.
-- Creates a fresh feature instance.
-- Does not modify `enable-features` or any other persisted configuration.
-
-The manager calculates an activation plan before executing lifecycle hooks. It does not recursively invoke lifecycle methods while traversing dependencies.
-
-If loading A starts required feature B successfully and A later fails, B remains enabled. Successful feature activation is not rolled back implicitly.
-
-If a disabled or failed feature is loaded again, the manager creates a new instance and a new `ModuleContext`.
+Therefore, if A fails after B loaded successfully, B still proceeds to `onEnable` and remains enabled. If B fails during `onEnable`, a preloaded A receives `onDisable` and becomes `BLOCKED` without a live instance. Lifecycle failures are isolated to the failed module and its dependency descendants; independent modules continue and the platform plugin remains running.
 
 ## Active Optional Dependencies
 
-Optional dependencies are captured for the lifetime of a feature instance.
+Optional dependencies are captured once from the startup activation plan for the lifetime of a feature instance.
 
-If A declares B as optional, the planner creates an active edge when B was enabled before the operation or B is included as a configured root or required dependency in the same immutable activation plan:
+If A declares B as optional, the planner creates a proposed active edge when B is included as a configured root or required dependency in the same immutable startup activation plan:
 
 ```text
 A -> B
 ```
 
-That edge blocks B from being disabled until A is disabled. If B is neither already enabled nor part of the same plan, no active edge is created. Loading B later does not modify A and does not invoke an integration callback. Proposed active optional edges are included in cycle validation for that activation plan; inactive optional metadata does not participate in static cycle validation.
-
-Disabling and loading A again recalculates its optional edges.
+That edge blocks B from being disabled until A is disabled. If B is not part of the startup plan, no active edge is created. Proposed active optional edges are included in cycle validation for that activation plan; if they form a cycle, platform plugin startup is aborted before any lifecycle hook executes. Inactive optional metadata does not participate in static cycle validation. A proposed edge becomes active only after both feature instances reach `ENABLED` and is never recalculated at runtime.
 
 ## Dynamic Feature Disable
 
@@ -444,7 +429,9 @@ Interactive disable rules:
 - The user must disable dependents manually, from the outermost node inward.
 - Disabling a feature does not disable feature dependencies.
 - Disabling a feature never disables capabilities.
-- A successful disable destroys the feature instance and its `ModuleContext`.
+- A successful disable is permanent for the current process. Re-enabling the feature requires a server restart.
+- After `onDisable`, the Kernel cancels and joins the module coroutine scope, destroys the feature instance and its `ModuleContext`, and records `DISABLED` even if the hook failed.
+- The Kernel does not guarantee that feature-created side effects were removed.
 
 A rejected operation reports direct blockers and dependency paths, for example:
 
@@ -454,25 +441,7 @@ Cannot disable B because enabled modules still reference it:
 A -> B
 ```
 
-## Feature Reload
-
-```text
-/plutoproject feature reload <id>
-```
-
-Reload semantics:
-
-- Reload is available only for an `ENABLED` feature.
-- Reload invokes only `onReload`.
-- Reload does not invoke disable, load, or enable.
-- Reload is not a full re-enable operation.
-- Reload does not replace the feature instance.
-- Reload does not recalculate required or optional dependencies.
-- A reload failure leaves the feature in the `ENABLED` state.
-- The latest reload failure is retained for the feature information command.
-- The Kernel does not provide a transactional reload scope, automatically replace registrations, or roll back work performed by `onReload`.
-
-Feature implementations are responsible for performing a safe reload inside `onReload`. This includes loading and validating replacement configuration before committing it, safely replacing any module-owned services or registrations that the feature chooses to change, and retaining a viable enabled instance when reload fails.
+The Kernel has no load, enable, or reload operation after platform startup. A feature that needs runtime configuration refresh provides its own business command and owns that operation's consistency and failure handling.
 
 ## Capability Lifecycle
 
@@ -482,47 +451,29 @@ Capabilities use the same stable states and lifecycle hooks as features:
 DISCOVERED --onLoad--> LOADED --onEnable--> ENABLED
      |                    |                     |
      +--------------------+---------------------+--> FAILED
+
+DISCOVERED or LOADED --required dependency failure--> BLOCKED
 ```
 
-`STARTING` is an operation status, not a stable state. Capability activation runs `onLoad` and then `onEnable` in dependency order. Capability `onDisable` runs only during server shutdown, except that a partially initialized failed instance is cleaned immediately and discarded.
+Capability activation runs `onLoad` during platform load and `onEnable` during platform enable. Capability `onDisable` runs only during server shutdown. If a capability hook fails, the Kernel only releases resources that it created; capability-created side effects remain the capability's responsibility.
 
 Rules:
 
 - A capability cannot be disabled interactively.
-- A capability does not expose a normal reload operation.
 - Once enabled, it remains enabled until server shutdown.
 - Disabling every consuming feature does not stop it.
-- A failed capability is not retried by later feature load commands.
-- Retry is always an explicit administrator action.
-
-```text
-/plutoproject capability retry <id>
-```
-
-An explicit retry of a target capability authorizes retries across that target's required capability closure. Retry behavior:
-
-1. Calculate the target capability's required capability closure.
-2. Activate `FAILED` and `DISCOVERED` dependencies in topological order.
-3. Skip already enabled capabilities.
-4. Create fresh instances for failed capabilities.
-5. Start the target capability.
-6. Do not automatically reload features that previously failed.
-
-Partially initialized capability resources must be cleaned up before a retry instance is created.
-
-Retry is accepted only when the selected target capability is `FAILED`. Already enabled targets return a rejected no-op result; normal first activation remains feature-driven.
+- A failed or blocked capability cannot be retried without restarting the server.
 
 ## Lifecycle Failure Outcomes
 
 | Failure | Cleanup and final state |
 | --- | --- |
-| Descriptor or dependency validation | No instance is created; module remains `DISCOVERED` with a rejected result |
-| Dependency activation before dependent load | Dependent instance is not created; module remains `DISCOVERED` with a blocked result and dependency path |
-| Dependency enable after dependent load | Close the dependent context, cancel its scope, unload DI, discard its preloaded instance, and return it to `DISCOVERED` with a blocked result |
-| `onLoad` | Close the context, cancel the scope, unload DI, discard the instance, and set `FAILED` |
-| `onEnable` | Invoke best-effort `onDisable`, then close context, cancel scope, unload DI, discard the instance, and set `FAILED` |
-| `onReload` | Do not perform generic teardown; retain the instance and `ENABLED` state, and record the failed reload result |
-| `onDisable` | Continue all Kernel cleanup, discard the instance, end in `DISABLED`, and return a failed operation result |
+| Descriptor or static dependency validation | Abort platform plugin startup before any instance is created |
+| Dependency failure before dependent load | Do not create the dependent instance; set `BLOCKED` and retain the dependency path |
+| Dependency enable failure after dependent load | Invoke dependent `onDisable` best-effort, cancel and join its Kernel-created scope, discard the instance, and set `BLOCKED` |
+| `onLoad` | Do not invoke `onDisable`; cancel and join the Kernel-created scope, discard the instance, and set `FAILED` |
+| `onEnable` | Invoke best-effort `onDisable`, cancel and join the Kernel-created scope, discard the instance, and set `FAILED` |
+| `onDisable` | Cancel and join the Kernel-created scope, discard the instance, end in `DISABLED`, and return a failed operation result |
 
 Successfully activated dependencies remain enabled when a dependent feature fails.
 
@@ -533,16 +484,16 @@ Server shutdown does not use the interactive blocker policy.
 Shutdown order:
 
 1. Disable active features in reverse active-graph order.
-2. Destroy feature contexts and instances.
+2. Cancel feature scopes and destroy feature contexts and instances.
 3. Disable enabled capabilities in reverse capability order.
 4. Close platform Kernel resources.
-5. Cancel the Kernel root scope and close dependency injection.
+5. Cancel the Kernel root scope and close Kernel-owned infrastructure.
 
-An `onDisable` exception is reported but must not prevent Kernel cleanup or the shutdown of other modules.
+An `onDisable` exception is reported but must not prevent cleanup of Kernel-created resources or the shutdown of other modules.
 
-## Module Resource Ownership
+## Module Resource Responsibility
 
-Reliable runtime disable requires all registrations to be associated with their owning module.
+The Kernel does not track or clean resources created by feature or capability code.
 
 ```kotlin
 interface ModuleContext {
@@ -550,81 +501,25 @@ interface ModuleContext {
     val logger: Logger
     val dataFolder: Path
     val coroutineScope: CoroutineScope
-
-    fun own(resource: AutoCloseable)
-    fun onClose(action: () -> Unit)
-    fun installDi(module: Module)
 }
 ```
 
-The public `ModuleContext` deliberately has no `close()` operation. The Kernel implementation wraps it in an internal `ManagedModuleContext : ModuleContext, AutoCloseable`; only `RuntimeModuleManager` can close that managed context.
+The Kernel creates the module coroutine scope and therefore always cancels and joins it when the module ends. The Kernel also clears its own state and instance references. Listeners, commands, scheduler tasks, recipes, GUI state, subscriptions, service hooks, Koin definitions, database clients, and all other side effects created by module code remain the module's responsibility.
 
-Platform contexts extend the common contract:
+Feature and capability implementations should clean their side effects in `onDisable`, but the Kernel does not enforce or verify complete cleanup. Existing features may be structurally migrated without adding missing cleanup behavior. A module may therefore leave registrations or other effects behind after reaching `DISABLED`; conflicts and residue are defects or limitations of that module rather than Kernel state inconsistencies.
 
-```kotlin
-interface PaperModuleContext : ModuleContext {
-    fun registerListener(listener: Listener)
-    fun registerCommands(roots: Set<String>, command: Any)
-    fun registerRecipe(key: NamespacedKey, recipe: Recipe)
-    fun ownTask(task: BukkitTask)
-    fun ownGuiScope(scope: AutoCloseable)
-}
-```
-
-```kotlin
-interface VelocityModuleContext : ModuleContext {
-    fun registerListener(listener: Any)
-    fun registerCommands(roots: Set<String>, command: Any)
-    fun ownTask(task: ScheduledTask)
-}
-```
-
-Feature-owned registrations are released in last-in-first-out order. Jobs launched in `coroutineScope` are owned automatically; platform scheduler tasks must be registered explicitly. The resource registry must cover:
-
-- Paper and Velocity listeners.
-- Cloud root commands.
-- CharonFlow subscriptions.
-- Service hooks.
-- Menu buttons and pages.
-- Bukkit recipes.
-- GUI scopes.
-- Scheduler tasks.
-
-Registration-oriented APIs return a closeable handle:
-
-```kotlin
-interface Registration : AutoCloseable
-```
-
-Feature code registers those handles with its context:
-
-```kotlin
-context.own(menu.registerButton(...))
-context.own(messaging.subscribe(...))
-context.own(service.registerHook(...))
-```
-
-The coroutine scope and feature-owned Koin modules are Kernel-owned lifecycle resources rather than generic LIFO registrations. Calling the internal managed context's `close()` prevents further registration and drains all feature-owned registration handles exactly once.
+Features access Koin directly for now and are responsible for loading and unloading their definitions. DI isolation is deferred to a separate design.
 
 The disable cleanup sequence is:
 
-1. Invoke feature `onDisable`.
-2. Close the internal managed context even if the hook failed, draining tracked registrations in reverse order.
-3. Cancel the feature coroutine scope.
-4. Unload feature-owned dependency injection definitions.
-5. Remove the feature instance.
-6. Store and report the complete operation result.
+1. Invoke feature `onDisable` best-effort.
+2. Cancel and join the Kernel-created feature coroutine scope even if the hook failed.
+3. Remove the feature context and instance from the Kernel.
+4. Store and report the complete operation result.
 
-## Cloud Command Ownership
+## Cloud Commands
 
-Cloud supports deleting root commands through `deleteRootCommand`. Dynamic command ownership follows these rules:
-
-- Every feature declares the root commands it owns.
-- Two dynamic features must not own the same root command.
-- The fixed `/plutoproject` command belongs to the Kernel.
-- Feature disable removes every root owned by that feature.
-- Feature-specific parsers and suggestions should be attached directly to feature commands where possible.
-- Global named parsers must not retain references to a feature instance that can be disabled.
+The fixed `/plutoproject` command belongs to the Kernel and remains available independently of feature state. Feature commands are registered and removed by their owning features. Features should use Cloud's `deleteRootCommand` from `onDisable` when they support command cleanup, but the Kernel neither tracks command ownership nor guarantees that disabled feature commands disappear. Command root conflicts and global parsers retaining feature instances are feature-level concerns.
 
 ## Runtime Manager Components
 
@@ -643,7 +538,7 @@ ModuleOperationReporter
 
 ### ModuleDiscovery
 
-Loads common and current-platform manifests, preserves descriptor source information, and reports malformed resources or unsupported schemas.
+Loads manifests for the current platform, preserves descriptor source information, and reports malformed resources or unsupported schemas.
 
 ### ModuleDescriptorValidator
 
@@ -665,7 +560,7 @@ A pure Kotlin component responsible for:
 
 ### ModulePlanner
 
-Creates immutable plans before lifecycle execution:
+Creates one immutable startup plan before lifecycle execution:
 
 ```kotlin
 data class ActivationPlan(
@@ -676,7 +571,7 @@ data class ActivationPlan(
 
 ### RuntimeModuleManager
 
-Serializes lifecycle operations, executes plans, owns states and contexts, and applies failure propagation.
+Executes the startup plan, serializes runtime disable operations, owns states and contexts, and applies failure propagation.
 
 ### ModuleRegistry
 
@@ -699,15 +594,7 @@ Administrative commands use dedicated controllers:
 
 ```kotlin
 interface FeatureController {
-    suspend fun load(id: String): ModuleOperationResult
     suspend fun disable(id: String): ModuleOperationResult
-    suspend fun reload(id: String): ModuleOperationResult
-}
-```
-
-```kotlin
-interface CapabilityController {
-    suspend fun retry(id: String): ModuleOperationResult
 }
 ```
 
@@ -729,22 +616,17 @@ FeatureManager.isEnabled(...)
 MongoConnection.getCollection(...)
 ```
 
-Cross-feature integrations depend on the provider's API project and obtain services through normal dependency injection.
-
-Migrated runtime modules must not call raw platform listener, command, scheduler, recipe, global Koin, or subscription registration APIs. Architecture checks and migration reviews enforce use of approved Kernel ownership wrappers; the context can only clean resources registered through those wrappers.
+Cross-feature integrations depend on the provider's API project and obtain services through normal dependency injection. Features access Koin directly until DI isolation receives a separate design.
 
 ## Administrative Commands
 
 ```text
 /plutoproject feature list
 /plutoproject feature info <id>
-/plutoproject feature load <id>
 /plutoproject feature disable <id>
-/plutoproject feature reload <id>
 
 /plutoproject capability list
 /plutoproject capability info <id>
-/plutoproject capability retry <id>
 
 /plutoproject module graph <id>
 ```
@@ -766,12 +648,9 @@ Suggested permissions:
 ```text
 plutoproject.command.feature.list
 plutoproject.command.feature.info
-plutoproject.command.feature.load
 plutoproject.command.feature.disable
-plutoproject.command.feature.reload
 plutoproject.command.capability.list
 plutoproject.command.capability.info
-plutoproject.command.capability.retry
 plutoproject.command.module.graph
 ```
 
@@ -887,7 +766,7 @@ Tasks:
 - Define `@Feature` and `@Capability`.
 - Create `build-support/module-processor`.
 - Add `plutoproject.runtime-module` after the processor project exists.
-- Generate common, Paper, and Velocity manifests.
+- Generate Paper and Velocity manifests.
 - Add processor tests for valid and invalid declarations.
 - Stop generating `Load.BEFORE` and `Load.AFTER` metadata.
 
@@ -914,28 +793,29 @@ Tasks:
 - Implement active optional dependency edges.
 - Implement reverse dependency blockers and path reporting.
 - Implement sticky enabled capability state.
-- Implement explicit capability retry.
-- Implement fresh feature instances after disable or failed load.
-- Implement the standalone reload hook.
+- Implement startup-only load and enable phases.
+- Implement permanent runtime feature disable.
+- Implement `BLOCKED` state and dependency failure paths.
 - Serialize lifecycle operations.
 - Validate duplicate IDs within each platform discovery set, missing dependencies, platform compatibility, illegal dependency types, and required-edge cycles.
 
 Required tests:
 
 - A -> B -> C runs `C.load, B.load, A.load, C.enable, B.enable, A.enable`.
-- A preloaded before a required dependency enable failure is cleaned and returned to `DISCOVERED` with a blocked result.
+- A dependent preloaded before a required dependency enable failure receives `onDisable`, has its Kernel-created scope cancelled, and enters `BLOCKED`.
 - A, B, C can only be disabled in A, B, C order.
 - Disabling B while A is enabled returns the A -> B blocker path.
-- An optional B that is already enabled creates an active edge.
-- An optional B that is disabled is not loaded automatically.
+- An optional B in the startup plan creates an active edge after both modules enable.
+- An optional B outside the startup plan is not loaded.
+- A startup plan whose proposed optional edges form a cycle is rejected before lifecycle execution.
 - If A fails after starting B, B remains enabled.
 - Capability disable is unavailable during runtime.
 - A capability remains enabled after every consumer is disabled.
-- A failed capability retries only through explicit retry.
-- Reload invokes no other lifecycle hooks.
-- Reload failure leaves the feature enabled.
-- Loading a disabled feature creates a new instance.
-- The same ID in separate PAPER and VELOCITY descriptors is accepted, while a duplicate within COMMON plus the current platform is rejected.
+- A failed capability cannot be retried at runtime.
+- A disabled feature cannot be loaded or enabled again at runtime.
+- The same ID in separate PAPER and VELOCITY descriptors is accepted, while a duplicate within one platform set is rejected.
+- Descriptor or static graph validation failure aborts platform plugin startup.
+- Independent modules continue when a lifecycle hook fails.
 
 Acceptance criteria:
 
@@ -949,39 +829,32 @@ Suggested commit:
 feat(kernel): 实现运行时模块管理器
 ```
 
-### Phase 4: Implement Platform Resource Contexts
+### Phase 4: Implement Platform Kernel Bootstrap
 
 Tasks:
 
 - Create `kernel/paper` and `kernel/velocity`.
 - Wire the new Kernel into Paper and Velocity platform lifecycle entrypoints.
+- Run module `onLoad` from Paper plugin `onLoad` and Velocity plugin construction.
+- Run module `onEnable` from Paper plugin `onEnable` and the Velocity proxy initialization event.
 - Keep the old FeatureManager temporarily for unmigrated legacy features, but route newly migrated runtime modules only through the new Kernel.
-- Keep `/plutoproject` management operations hidden until their target modules satisfy resource ownership requirements.
-- Implement platform-specific `ModuleContext` types.
-- Track and unregister Paper and Velocity listeners.
-- Wrap Cloud command registration and root command deletion.
-- Track Koin module installation and unloading.
-- Automatically own jobs launched in the module coroutine scope.
-- Add ownership wrappers for Paper and Velocity scheduler tasks.
-- Add ownership handles for GUI scopes, menu registrations, recipes, subscriptions, and service hooks.
-- Generalize registration handles for subscriptions and hooks.
-- Add ownership support to menu registration APIs.
-- Track and remove Bukkit recipes.
-- Guarantee Kernel cleanup after `onDisable` failure.
+- Create the minimal platform module contexts required to expose platform APIs without resource ownership wrappers.
+- Create and cancel one Kernel-owned coroutine scope per module.
+- Keep module-created listeners, commands, tasks, recipes, subscriptions, GUI state, hooks, and Koin definitions outside Kernel ownership.
+- Guarantee cleanup of Kernel-created resources after `onDisable` failure.
 
 Acceptance criteria:
 
-- Disabled features no longer receive events.
-- Disabled feature command roots are removed.
-- Loading a feature again does not duplicate commands or Koin definitions.
-- Coroutine jobs and subscriptions are cancelled.
-- One cleanup failure does not prevent remaining cleanup actions.
+- Module jobs launched in the Kernel-created coroutine scope are cancelled and joined.
+- Feature-created side effects are not required to disappear after disable.
+- A disabled feature cannot be started again without restarting the server.
+- One `onDisable` failure does not prevent Kernel scope cleanup or shutdown of other modules.
 - A test runtime module can be discovered and managed through the real Paper and Velocity Kernel bootstrap.
 
 Suggested commit:
 
 ```text
-feat(kernel): 实现模块资源生命周期管理
+feat(kernel): 实现平台模块启动生命周期
 ```
 
 ### Phase 5: Add Administrative Commands
@@ -989,8 +862,8 @@ feat(kernel): 实现模块资源生命周期管理
 Tasks:
 
 - Register the fixed `/plutoproject` command in each platform Kernel.
-- Implement feature list, info, load, disable, and reload.
-- Implement capability list, info, and retry.
+- Implement feature list, info, and disable.
+- Implement capability list and info.
 - Implement module graph inspection.
 - Add command permissions.
 - Add command messages to platform `Message.kt` files.
@@ -1001,7 +874,6 @@ Acceptance criteria:
 - Commands do not modify configuration files.
 - Concurrent lifecycle commands are serialized.
 - Disable rejection reports accurate dependency paths.
-- Capability retry reports each dependency retry result.
 - The Kernel command remains available regardless of feature state.
 
 Suggested commit:
@@ -1040,9 +912,10 @@ Tasks for each capability:
 - Move contracts out of the old framework API.
 - Move implementations and configuration into the capability.
 - Add `@Capability` to the runtime entrypoint.
+- Add thin Paper and Velocity runtime entry projects when a capability uses the same common implementation on both platforms.
 - Declare transitive capability dependencies.
 - Replace global companion service lookup with dependency injection.
-- Register owned resources with `ModuleContext`.
+- Keep capability-created resources under the capability's own lifecycle responsibility.
 - Add new-structure unit tests where applicable.
 - Remove the corresponding unconditional legacy initialization path as soon as the replacement capability is wired.
 
@@ -1054,7 +927,8 @@ Acceptance criteria:
 - Interactive listeners are not registered without a consumer.
 - Server statistics is not initialized without a consumer.
 - World alias configuration is not read without a consumer.
-- Successfully enabled capabilities close only during server shutdown; failed partial instances are cleaned immediately.
+- Successfully enabled capabilities receive `onDisable` only during server shutdown.
+- Failed capabilities have only their Kernel-created resources reclaimed; capability code owns any partial side effects.
 - Capability failures identify all blocked features.
 
 Capabilities should be committed separately to keep reviews and regressions focused.
@@ -1084,15 +958,13 @@ Tasks:
 - Update project dependencies and conventions.
 - Preserve package names unless changing them materially improves consistency.
 - Declare `requiredCapabilities` explicitly.
-- Replace global MongoConnection and global Koin access.
-- Move registrations into `ModuleContext`.
+- Replace global MongoConnection access; features may continue to access Koin directly until DI isolation is designed separately.
 - Record the existing core, API, and gameplay behavior that must be preserved or restored by final acceptance.
 
 Migration checkpoint:
 
 - Existing unit tests remain available as final-regression coverage; run relevant subsets during migration when useful.
 - Paper and Velocity descriptors are generated correctly.
-- Track any remaining resource-ownership work required before the features can be disabled and loaded again without duplicates.
 - Track any temporary Gallery frontend assembly breakage that must be restored before final acceptance.
 
 Suggested commit:
@@ -1182,13 +1054,12 @@ Migration rules:
 - Legacy features are not forced into DDD layers.
 - The legacy Velocity whitelist is removed in favor of whitelist-v2.
 - No unit tests are added to legacy feature implementations.
-- A feature is not considered migrated until all listeners, commands, Koin definitions, menu registrations, recipes, subscriptions, and jobs can be removed on disable.
+- Existing features do not need new `onDisable` resource cleanup to qualify as structurally migrated.
 
 Migration tracking for every wave:
 
 - Record runtime ID and dependency changes so final compatibility can be verified.
 - Record any temporarily broken cross-system integration or gameplay behavior that must be restored before final acceptance.
-- Record remaining unowned runtime resources that must be moved behind `ModuleContext` before final acceptance.
 
 ### Phase 9: Cut Over Platform Bootstrap
 
@@ -1228,7 +1099,6 @@ Tasks:
 - Prevent capabilities from depending on features.
 - Prevent Foundation from depending on Kernel or runtime modules.
 - Require runtime entry projects to apply the runtime module convention.
-- Add a source audit check that rejects direct listener, command, scheduler, recipe, global Koin, and subscription registration calls from migrated runtime modules outside approved Kernel wrapper packages.
 - Update `AGENTS.md` with the simplified feature naming.
 - Add examples for simple, cross-platform, and DDD features.
 - Reconcile this specification with the final implementation.
@@ -1252,19 +1122,18 @@ The final refactor must pass both commands from a clean checkout:
 
 ## Manual Verification Scenarios
 
-1. Start with `enable-features = []` and no database configuration.
-2. Load a feature without database requirements and verify MongoDB and Redis remain inactive.
-3. Load a MongoDB-dependent feature and verify Mongo starts on demand.
-4. Make Mongo initialization fail and verify only dependent features are blocked.
-5. Fix Mongo and recover it through `/plutoproject capability retry mongo`.
-6. Load A where A -> B -> C and verify C, B, A activation order.
+1. Start with `enable-features = []` and no database configuration; verify no capability reads external connection configuration.
+2. Configure a feature without database requirements, restart, and verify MongoDB and Redis remain inactive.
+3. Configure a MongoDB-dependent feature, restart, and verify Mongo starts during the platform startup lifecycle.
+4. Make Mongo initialization fail and verify only dependent modules become `BLOCKED` while independent modules enable.
+5. Verify the failed capability and its blocked dependents cannot be retried or enabled without restarting.
+6. Configure A where A -> B -> C and verify `C.load, B.load, A.load, C.enable, B.enable, A.enable` across the two platform phases.
 7. Attempt to disable B while A is enabled and verify the A -> B blocker path.
 8. Disable A, B, and C in that order.
 9. Verify capabilities remain enabled after every consumer is disabled.
-10. Reload a feature and verify only its reload hook executes.
-11. Disable a feature and verify its commands, listeners, menus, recipes, subscriptions, and jobs disappear.
-12. Load the feature again and verify a fresh instance starts without duplicate registrations.
-13. Shut down the server and verify features close before capabilities.
+10. Verify a disabled feature cannot be loaded or enabled again until server restart.
+11. Verify disabling a feature cancels and joins its Kernel-created coroutine scope; feature-created registrations are best-effort and may remain.
+12. Shut down the server and verify features receive `onDisable` before capabilities.
 
 ## Completion Criteria
 
@@ -1273,8 +1142,9 @@ The refactor is complete when:
 - The fixed Kernel is the only unconditional runtime layer.
 - Feature and capability lifecycle is managed by one runtime manager.
 - Capabilities activate from static requirements and remain active until shutdown.
-- Runtime feature management follows the dependency and reload semantics in this specification.
-- Every dynamic feature resource has explicit ownership and cleanup.
+- Module load and enable occur only during platform startup.
+- Runtime feature management is limited to one-way disable; recovery requires server restart.
+- The Kernel reclaims its own module scopes and internal state without claiming ownership of module-created side effects.
 - All legacy flat projects and old conventions have been removed.
 - Existing DDD features use the simplified project names.
 - One unified distribution JAR contains the Paper and Velocity platforms, dependency manifests, and runtime descriptors.
