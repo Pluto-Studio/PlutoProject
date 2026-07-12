@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 6 capability extraction in progress; Phase 7 module isolation planned)
+- Status: Implementation in progress (Phase 6 capability extraction in progress, `mongo` and `charonflow` extracted; Phase 7 module isolation planned)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -1161,11 +1161,12 @@ feat(kernel): 添加运行时模块管理命令
 
 ### Phase 6: Extract Capabilities
 
-Status: In progress (2026-07-12). The `mongo` capability API, shared lifecycle
-implementation, and thin Paper and Velocity runtime entrypoints have been
-extracted. Legacy consumers remain on the old connection until their runtime
-feature descriptors declare `mongo`; this avoids activating MongoDB when the
-Kernel has no capability consumer.
+Status: In progress (2026-07-12). The `mongo` and `charonflow` capabilities
+have been extracted with shared lifecycle implementations and thin Paper and
+Velocity runtime entrypoints. Legacy consumers remain on the old connection
+or global Koin until their runtime feature descriptors declare the required
+capability; this avoids activating MongoDB or CharonFlow when the Kernel has
+no capability consumer.
 
 Extract capabilities in dependency order:
 
