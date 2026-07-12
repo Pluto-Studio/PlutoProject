@@ -99,5 +99,10 @@ includeProject(":capability:database-persist:common")
 includeProject(":capability:database-persist:paper")
 includeProject(":capability:database-persist:velocity")
 
+includeProject(":capability:profile:api")
+includeProject(":capability:profile:common")
+includeProject(":capability:profile:paper")
+includeProject(":capability:profile:velocity")
+
 include("platform-paper")
 include("platform-velocity")

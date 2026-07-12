@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 6 capability extraction in progress, `mongo`, `charonflow`, and `geoip` extracted; Phase 7 module isolation planned)
+- Status: Implementation in progress (Phase 6 capability extraction in progress through `profile`; Phase 7 module isolation completed)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -1163,9 +1163,10 @@ feat(kernel): 添加运行时模块管理命令
 
 ### Phase 6: Extract Capabilities
 
-Status: In progress (2026-07-13). The `mongo`, `charonflow`, `geoip`, and
-`server-identifier` capabilities have been extracted with shared lifecycle implementations and thin Paper and
-Velocity runtime entrypoints. Legacy consumers remain on the old connection
+Status: In progress (2026-07-13). The `mongo`, `charonflow`, `geoip`,
+`server-identifier`, `database-persist`, and `profile` capabilities have been extracted
+with shared lifecycle implementations and thin Paper and Velocity runtime
+entrypoints. Legacy consumers remain on the old connection
 or global Koin until their runtime feature descriptors declare the required
 capability; this avoids activating MongoDB or CharonFlow when the Kernel has
 no capability consumer.
@@ -1250,9 +1251,9 @@ Capabilities should be committed separately to keep reviews and regressions focu
 
 ### Phase 7: Isolate Module DI and Add the Service Registry
 
-Status: Planned. This phase implements the module-local Koin, current-context,
-Service Registry, cleanup, and process-ownership contracts defined above before
-feature migrations depend on cross-module service exports.
+Status: Completed (2026-07-13). Module-local Koin, current-context propagation,
+the Service Registry, cleanup, and process-ownership contracts are implemented;
+Mongo exports its connection through the module service registry.
 
 Kernel API tasks:
 

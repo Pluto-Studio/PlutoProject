@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":capability:mongo:velocity"))
     implementation(project(":capability:server-identifier:velocity"))
     implementation(project(":capability:database-persist:velocity"))
+    implementation(project(":capability:profile:velocity"))
 }
 
 velocityPluginJson {

@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":capability:mongo:paper"))
     implementation(project(":capability:server-identifier:paper"))
     implementation(project(":capability:database-persist:paper"))
+    implementation(project(":capability:profile:paper"))
 }
 
 paperPluginYaml {
