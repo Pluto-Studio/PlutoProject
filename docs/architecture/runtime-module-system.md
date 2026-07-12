@@ -1163,8 +1163,8 @@ feat(kernel): 添加运行时模块管理命令
 
 ### Phase 6: Extract Capabilities
 
-Status: In progress (2026-07-12). The `mongo` and `charonflow` capabilities
-have been extracted with shared lifecycle implementations and thin Paper and
+Status: In progress (2026-07-13). The `mongo`, `charonflow`, `geoip`, and
+`server-identifier` capabilities have been extracted with shared lifecycle implementations and thin Paper and
 Velocity runtime entrypoints. Legacy consumers remain on the old connection
 or global Koin until their runtime feature descriptors declare the required
 capability; this avoids activating MongoDB or CharonFlow when the Kernel has
@@ -1191,6 +1191,35 @@ Classification decisions:
 - Toast and stateless Paper DSL code move to `foundation/paper`.
 - BuildInfo belongs to the Kernel.
 - Stateless configuration loading code moves to `foundation/common`.
+
+Database-persist migration decisions:
+
+- `database-persist` requires both `mongo` and `server_identifier`
+  capabilities (`server_identifier` is the runtime ID for the server-identity
+  capability).
+- The server identifier is required to be non-null. The capability must fail to
+  load rather than silently change cross-server change filtering when no
+  identifier is configured.
+- Long-lived jobs must use the owning `ModuleContext.coroutineScope`. The
+  capability must not use the legacy global `PluginScope`, create a new
+  top-level `SupervisorJob`, or depend on the legacy virtual-thread dispatcher.
+- Database-persist implementations receive their scope, logger, Mongo service,
+  server identifier, and platform conditions through explicit construction or
+  module-local Koin bindings. The Kernel does not pre-bind these values.
+- Database-persist must close its change stream, subscriptions, containers, and
+  child jobs during capability shutdown before Kernel scope cleanup.
+- `BsonSerializer` and `UuidAsBsonBinarySerializer` are shared by multiple
+  Mongo-backed modules and move to `foundation/common`.
+- BSON dot-path helpers remain private to database-persist until another module
+  demonstrates a concrete need for them. Concurrent collection wrappers and
+  trivial time conversion helpers are inlined instead of becoming Foundation
+  APIs. Resource-owning dispatchers, global loggers, `globalKoin`, and server
+  identity configuration do not belong in Foundation.
+- The legacy global `DatabasePersist` API and implementation remain in place
+  during this migration. New consumers use the capability service export and
+  declare their capability dependency; the old path is removed only after
+  consumers have been cut over. A player/data owner must not be served by both
+  implementations during the transition.
 
 Tasks for each capability:
 

@@ -8,7 +8,7 @@ import org.bson.BsonBinary
 import org.bson.codecs.kotlinx.BsonDecoder
 import org.bson.codecs.kotlinx.BsonEncoder
 import org.bukkit.inventory.ItemStack
-import plutoproject.framework.common.util.data.serializers.bson.BsonSerializer
+import plutoproject.foundation.common.bson.BsonSerializer
 
 @OptIn(ExperimentalSerializationApi::class)
 object ItemStackAsBsonBinarySerializer : BsonSerializer<ItemStack> {

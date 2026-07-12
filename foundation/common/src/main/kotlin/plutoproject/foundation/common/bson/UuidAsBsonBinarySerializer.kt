@@ -1,5 +1,6 @@
-package plutoproject.framework.common.util.data.serializers.bson
+package plutoproject.foundation.common.bson
 
+import java.util.UUID
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -7,7 +8,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import org.bson.BsonBinary
 import org.bson.codecs.kotlinx.BsonDecoder
 import org.bson.codecs.kotlinx.BsonEncoder
-import java.util.*
 
 @OptIn(ExperimentalSerializationApi::class)
 object UuidAsBsonBinarySerializer : BsonSerializer<UUID> {
@@ -18,7 +18,5 @@ object UuidAsBsonBinarySerializer : BsonSerializer<UUID> {
         encoder.encodeBsonValue(BsonBinary(value))
     }
 
-    override fun deserialize(decoder: BsonDecoder): UUID {
-        return decoder.decodeBsonValue().asBinary().asUuid()
-    }
+    override fun deserialize(decoder: BsonDecoder): UUID = decoder.decodeBsonValue().asBinary().asUuid()
 }

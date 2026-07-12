@@ -1,4 +1,4 @@
-package plutoproject.framework.common.util.data.serializers.bson
+package plutoproject.foundation.common.bson
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -21,10 +21,8 @@ interface BsonSerializer<T> : KSerializer<T> {
         }
     }
 
-    override fun deserialize(decoder: Decoder): T {
-        return when (decoder) {
-            is BsonDecoder -> deserialize(decoder)
-            else -> throw SerializationException("Bson values are not supported by ${this::class}")
-        }
+    override fun deserialize(decoder: Decoder): T = when (decoder) {
+        is BsonDecoder -> deserialize(decoder)
+        else -> throw SerializationException("Bson values are not supported by ${this::class}")
     }
 }

@@ -8,7 +8,9 @@ dependencies {
     api(projects.frameworkVelocity)
     api(projects.featureVelocity)
     implementation(project(":kernel:velocity"))
+    implementation(project(":capability:mongo:velocity"))
     implementation(project(":capability:server-identifier:velocity"))
+    implementation(project(":capability:database-persist:velocity"))
 }
 
 velocityPluginJson {

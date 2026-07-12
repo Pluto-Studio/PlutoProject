@@ -3,7 +3,7 @@ package plutoproject.feature.paper.exchangeshop.models
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import plutoproject.framework.common.util.data.serializers.bson.InstantAsBsonDateTimeSerializer
-import plutoproject.framework.common.util.data.serializers.bson.UuidAsBsonBinarySerializer
+import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
 import java.time.Instant
 import java.util.*
 

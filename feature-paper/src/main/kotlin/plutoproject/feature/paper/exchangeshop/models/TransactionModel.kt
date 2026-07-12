@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
 import plutoproject.framework.common.util.data.serializers.bson.BigDecimalAsBsonDecimal128Serializer
 import plutoproject.framework.common.util.data.serializers.bson.InstantAsBsonDateTimeSerializer
-import plutoproject.framework.common.util.data.serializers.bson.UuidAsBsonBinarySerializer
+import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*

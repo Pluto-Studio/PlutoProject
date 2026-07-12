@@ -50,6 +50,8 @@ fun includeProject(path: String, projectDir: String? = null) {
 }
 
 // 新版 Feature 结构部分
+includeProject(":foundation:common")
+
 includeProject(":feature:whitelist-v2:api")
 includeProject(":feature:whitelist-v2:core")
 includeProject(":feature:whitelist-v2:adapter-common")
@@ -91,6 +93,11 @@ includeProject(":capability:server-identifier:api")
 includeProject(":capability:server-identifier:common")
 includeProject(":capability:server-identifier:paper")
 includeProject(":capability:server-identifier:velocity")
+
+includeProject(":capability:database-persist:api")
+includeProject(":capability:database-persist:common")
+includeProject(":capability:database-persist:paper")
+includeProject(":capability:database-persist:velocity")
 
 include("platform-paper")
 include("platform-velocity")

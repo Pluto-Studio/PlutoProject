@@ -10,7 +10,9 @@ dependencies {
     api(projects.frameworkPaper)
     api(projects.featurePaper)
     implementation(project(":kernel:paper"))
+    implementation(project(":capability:mongo:paper"))
     implementation(project(":capability:server-identifier:paper"))
+    implementation(project(":capability:database-persist:paper"))
 }
 
 paperPluginYaml {

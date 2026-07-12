@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import org.bson.BsonDateTime
 import org.bson.codecs.kotlinx.BsonDecoder
 import org.bson.codecs.kotlinx.BsonEncoder
+import plutoproject.foundation.common.bson.BsonSerializer
 import java.time.Instant
 
 @OptIn(ExperimentalSerializationApi::class)

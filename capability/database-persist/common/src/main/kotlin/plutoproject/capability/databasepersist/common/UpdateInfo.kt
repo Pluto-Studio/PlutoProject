@@ -1,0 +1,12 @@
+package plutoproject.capability.databasepersist.common
+
+import kotlinx.serialization.Serializable
+import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
+import java.util.*
+
+@Serializable
+data class UpdateInfo(
+    val playerId: @Serializable(UuidAsBsonBinarySerializer::class) UUID,
+    val server: String,
+    val timestamp: Long,
+)

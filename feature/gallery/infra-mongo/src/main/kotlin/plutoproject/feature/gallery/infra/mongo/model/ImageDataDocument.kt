@@ -1,7 +1,7 @@
 package plutoproject.feature.gallery.infra.mongo.model
 
 import kotlinx.serialization.Serializable
-import plutoproject.framework.common.util.data.serializers.bson.UuidAsBsonBinarySerializer
+import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
 import java.util.*
 import kotlin.time.Duration
 

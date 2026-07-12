@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import org.bson.BsonDecimal128
 import org.bson.codecs.kotlinx.BsonDecoder
 import org.bson.codecs.kotlinx.BsonEncoder
+import plutoproject.foundation.common.bson.BsonSerializer
 import org.bson.types.Decimal128
 import java.math.BigDecimal
 
