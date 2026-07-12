@@ -6,6 +6,13 @@
 - Languages: Java + Kotlin; prefer Kotlin unless necessary.
 - Stack: Gradle, Paper API, Velocity API, Kotlin Compose, MongoDB, etc.
 
+## Large-Scale Refactoring
+
+- A large-scale refactoring is currently in progress. See `docs/architecture/runtime-module-system.md` for the architecture and migration details.
+- Migrations do not require deleting legacy implementations or changing existing consumers to use the new implementations. For example, when migrating `interactive` from `framework` to `capability/interactive`, keep the original `framework` implementation and do not rewrite code already using it.
+- Most migrations are copy-based. Use Bash `cp` commands to copy files to their intended destinations instead of reproducing unchanged file contents with `apply_patch` or another editing tool; this avoids exhausting context and wasting tokens. After copying, edit only the necessary parts, such as package declarations.
+- The refactoring substantially changes the project structure, so the project-structure guidance below may be outdated. Use the user's instructions to determine when to verify the current state instead of assuming that guidance is current.
+
 ## Workflow Rules
 
 - Parallelize tasks when appropriate.
