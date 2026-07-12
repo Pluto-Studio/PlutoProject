@@ -6,7 +6,7 @@ dependencies {
     api(project(":feature:whitelist-v2:core"))
 
     compileOnly(project(":framework-common-api"))
-    compileOnly(libs.bundles.mongodb)
+    implementation(libs.bundles.mongodb)
 
     testImplementation(project(":framework-common-api"))
     testImplementation(libs.bundles.mongodb)

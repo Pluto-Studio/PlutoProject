@@ -33,8 +33,9 @@ META-INF/plutoproject/features/velocity/_feature-velocity.json
 META-INF/plutoproject/features/velocity/_feature_whitelist-v2_adapter-velocity.json
 ```
 
-It also contains `paper-plugin.yml`, `velocity-plugin.json`,
-`paper-dependencies.txt`, and `velocity-dependencies.txt`.
+It also contains `paper-plugin.yml`, `velocity-plugin.json`, and the legacy runtime
+dependency manifests. The current build no longer generates those manifests;
+runtime dependencies are embedded in the unified Shadow JAR instead.
 
 ## Paper feature manifest
 

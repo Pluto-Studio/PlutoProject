@@ -1,4 +1,5 @@
 import java.time.Instant
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("plutoproject.build-logic")
@@ -29,6 +30,24 @@ dependencies {
 tasks.shadowJar {
     archiveClassifier.set(null as String?)
     mergeServiceFiles()
+}
+
+val jarIdentityFile = layout.buildDirectory.file("generated-resources/jar-identity/plutoproject_jar_identity")
+val generateJarIdentity = tasks.register("generateJarIdentity") {
+    outputs.file(jarIdentityFile)
+    doLast {
+        jarIdentityFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText("")
+        }
+    }
+}
+
+tasks.withType<Jar>().configureEach {
+    dependsOn(generateJarIdentity)
+    from(jarIdentityFile) {
+        into("/")
+    }
 }
 
 

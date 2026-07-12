@@ -10,7 +10,6 @@ repositories {
 dependencies {
     implementation(libs.kotlin)
     implementation(libs.kotlin.serialization)
-    implementation(libs.gremlin.gradle)
     implementation(libs.paperweight.userdev)
     // implementation(libs.resourceFactory)
     implementation(libs.compose)

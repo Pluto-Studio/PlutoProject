@@ -131,7 +131,7 @@ catalog/
 
 Only projects that contain real code are created. Ancillary build or publication projects such as `catalog`, and feature-owned projects such as `frontend`, are outside the runtime module hierarchy but remain part of the build.
 
-The root build project is the single distribution project. It applies `plutoproject.distribution`, aggregates `platform/paper` and `platform/velocity`, and produces one JAR containing both platform entrypoints, dependency manifests, and runtime module descriptors. The two platform projects are composition roots inside that unified artifact; they are not separate published distributions.
+The root build project is the single distribution project. It aggregates `platform/paper` and `platform/velocity`, and produces one JAR containing both platform entrypoints, embedded runtime dependencies, and runtime module descriptors. The two platform projects are composition roots inside that unified artifact; they are not separate published distributions.
 
 A simple platform-specific feature may consist of one project:
 
@@ -912,7 +912,7 @@ Responsibilities:
 | `paper` | Paper API and Paper compilation settings |
 | `velocity` | Velocity API and Velocity compilation settings |
 | `runtime-module` | KSP processor wiring and manifest project identity |
-| `distribution` | Unified Paper and Velocity Shadow JAR, build manifest, and both platform runtime dependency lists |
+| `distribution` | Unified Paper and Velocity Shadow JAR and build manifest |
 
 Conventions configure build behavior. They do not add MongoDB, Koin, Ktor, CharonFlow, LuckPerms, or other business dependencies implicitly.
 
@@ -923,7 +923,9 @@ Additional rules:
 - Every project declares its direct dependencies explicitly.
 - Gradle coordinates are derived deterministically from the complete project path.
 - `:feature:home:paper` uses a coordinate equivalent to `club.plutoproject.feature.home:paper`.
-- The root distribution project owns both platform runtime dependency manifests and packages both platform composition roots into one JAR.
+- Runtime dependencies are declared with `implementation` and embedded in the unified Shadow JAR. The build does not generate dependency lists, download libraries at runtime, or add downloaded paths to a platform classloader.
+- Embedded third-party dependencies are currently not relocated. Paper plugin classloader isolation prevents these classes from entering unrelated Paper plugins unless they explicitly depend on PlutoProject.
+- The root distribution project packages both platform composition roots and their runtime dependencies into one JAR.
 - Project names are never inspected with `contains("paper")`, `contains("feature")`, or similar environment heuristics.
 
 The final migration removes:
@@ -1431,7 +1433,7 @@ Acceptance criteria:
 - No source file calls the old FeatureManager.
 - Feature and capability services are not obtained through global companion delegation.
 - Build logic does not infer environments from project names.
-- The unified distribution contains both platform entrypoints, both runtime dependency manifests, and descriptors for both platforms.
+- The unified distribution contains both platform entrypoints, embedded runtime dependencies, and descriptors for both platforms.
 
 Suggested commit:
 
@@ -1496,5 +1498,5 @@ The refactor is complete when:
 - The Kernel reclaims its own module scopes and internal state without claiming ownership of module-created side effects.
 - All legacy flat projects and old conventions have been removed.
 - Existing DDD features use the simplified project names.
-- One unified distribution JAR contains the Paper and Velocity platforms, dependency manifests, and runtime descriptors.
+- One unified distribution JAR contains the Paper and Velocity platforms, embedded runtime dependencies, and runtime descriptors.
 - The complete test and Shadow JAR builds pass.

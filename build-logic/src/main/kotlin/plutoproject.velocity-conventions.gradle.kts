@@ -4,8 +4,6 @@ plugins {
 
 dependencies {
     compileOnly(libs.velocity.api)
-    with(extensions.getByType<PlutoDependencyHandlerExtension>()) {
-        downloadIfRequired(libs.cloud.velocity)
-        downloadIfRequired(libs.bundles.mccoroutine.velocity)
-    }
+    implementation(libs.cloud.velocity)
+    implementation(libs.bundles.mccoroutine.velocity)
 }

@@ -5,8 +5,8 @@ plugins {
 dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutine.core)
-    compileOnly(libs.hash4j)
-    compileOnly(libs.imageioWebp)
+    implementation(libs.hash4j)
+    implementation(libs.imageioWebp)
 
     testImplementation(libs.hash4j)
     testImplementation(libs.imageioWebp)

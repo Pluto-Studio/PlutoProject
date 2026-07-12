@@ -6,8 +6,8 @@ dependencies {
     api(project(":feature:gallery:core"))
 
     compileOnly(project(":framework-common-api"))
-    compileOnly(libs.bundles.mongodb)
-    compileOnly(libs.zstdJni)
+    implementation(libs.bundles.mongodb)
+    implementation(libs.zstdJni)
 
     testImplementation(project(":framework-common-api"))
     testImplementation(libs.bundles.mongodb)

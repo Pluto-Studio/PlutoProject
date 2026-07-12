@@ -30,11 +30,9 @@ dependencies {
     compileOnly(libs.coreprotect) {
         isTransitive = false
     }
-    with(extensions.getByType<PlutoDependencyHandlerExtension>()) {
-        downloadIfRequired(libs.cloud.paper)
-        downloadIfRequired(libs.bundles.mccoroutine.paper)
-        downloadIfRequired(provider { compose.runtime })
-        downloadIfRequired(provider { compose.runtimeSaveable })
-        downloadIfRequired(libs.bundles.voyager)
-    }
+    implementation(libs.cloud.paper)
+    implementation(libs.bundles.mccoroutine.paper)
+    implementation(provider { compose.runtime })
+    implementation(provider { compose.runtimeSaveable })
+    implementation(libs.bundles.voyager)
 }

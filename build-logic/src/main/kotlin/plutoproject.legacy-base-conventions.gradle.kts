@@ -4,36 +4,28 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val dependencyExtension =
-    dependencies.extensions.create<PlutoDependencyHandlerExtension>(
-        "plutoDependency",
-        project,
-    )
-
 tasks.findByName("kspKotlin")?.apply {
     outputs.cacheIf { false }
 }
 
 dependencies {
-    with(dependencyExtension) {
-        downloadIfRequired(libs.bundles.language)
-        downloadIfRequired(libs.bundles.mongodb)
-        downloadIfRequired(libs.bundles.koin)
-        downloadIfRequired(libs.bundles.hoplite)
-        downloadIfRequired(libs.bundles.commons)
-        downloadIfRequired(libs.bundles.ktor.server)
-        downloadIfRequired(libs.okhttp)
-        downloadIfRequired(libs.gson)
-        downloadIfRequired(libs.caffeine)
-        downloadIfRequired(libs.catppuccin)
-        downloadIfRequired(libs.classgraph)
-        downloadIfRequired(libs.geoip2)
-        downloadIfRequired(libs.aedile)
-        downloadIfRequired(libs.guava)
-        downloadIfRequired(libs.okio)
-        downloadIfRequired(libs.hash4j)
-        downloadIfRequired(libs.imageioWebp)
-        downloadIfRequired(libs.zstdJni)
-        downloadIfRequired(libs.charonflow)
-    }
+    implementation(libs.bundles.language)
+    implementation(libs.bundles.mongodb)
+    implementation(libs.bundles.koin)
+    implementation(libs.bundles.hoplite)
+    implementation(libs.bundles.commons)
+    implementation(libs.bundles.ktor.server)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
+    implementation(libs.caffeine)
+    implementation(libs.catppuccin)
+    implementation(libs.classgraph)
+    implementation(libs.geoip2)
+    implementation(libs.aedile)
+    implementation(libs.guava)
+    implementation(libs.okio)
+    implementation(libs.hash4j)
+    implementation(libs.imageioWebp)
+    implementation(libs.zstdJni)
+    implementation(libs.charonflow)
 }
