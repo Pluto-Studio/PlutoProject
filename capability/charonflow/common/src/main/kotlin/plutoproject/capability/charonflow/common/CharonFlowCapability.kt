@@ -10,7 +10,8 @@ import org.koin.dsl.onClose
 import plutoproject.capability.charonflow.api.CharonFlowConnection
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.RuntimeModule
-import plutoproject.kernel.api.exportService
+import plutoproject.kernel.api.exportServiceFromKoin
+import plutoproject.kernel.api.importServiceToKoin
 import plutoproject.kernel.api.loadKoinModuleDefinitions
 
 class CharonFlowCapability : RuntimeModule {
@@ -26,7 +27,7 @@ class CharonFlowCapability : RuntimeModule {
             single { DefaultCharonFlowConnection(config) }.onClose { it?.close() }
             single<CharonFlowConnection> { get<DefaultCharonFlowConnection>() }
         })
-        context.services.exportService<CharonFlowConnection>()
+        context.services.exportServiceFromKoin<CharonFlowConnection>()
     }
 }
 

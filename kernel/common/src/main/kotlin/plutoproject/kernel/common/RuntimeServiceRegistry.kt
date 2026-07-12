@@ -47,7 +47,7 @@ internal class RuntimeServiceRegistry {
             Registration(type, token)
         }
 
-        override fun <T : Any> exportService(
+        override fun <T : Any> exportServiceFromKoin(
             type: KClass<T>,
             qualifier: Qualifier?,
             parameters: ParametersDefinition?,

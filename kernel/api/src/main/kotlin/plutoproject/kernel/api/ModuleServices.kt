@@ -16,7 +16,7 @@ interface ServiceRegistration {
 interface ModuleServices {
     fun <T : Any> exportService(type: KClass<T>, instance: T): ServiceRegistration
 
-    fun <T : Any> exportService(
+    fun <T : Any> exportServiceFromKoin(
         type: KClass<T>,
         qualifier: Qualifier? = null,
         parameters: ParametersDefinition? = null,
@@ -30,16 +30,16 @@ interface ModuleServices {
 inline fun <reified T : Any> ModuleServices.exportService(instance: T): ServiceRegistration =
     exportService(T::class, instance)
 
-inline fun <reified T : Any> ModuleServices.exportService(
+inline fun <reified T : Any> ModuleServices.exportServiceFromKoin(
     qualifier: Qualifier? = null,
     noinline parameters: ParametersDefinition? = null,
-): ServiceRegistration = exportService(T::class, qualifier, parameters)
+): ServiceRegistration = exportServiceFromKoin(T::class, qualifier, parameters)
 
 inline fun <reified T : Any> ModuleServices.getService(): T = getService(T::class)
 
 inline fun <reified T : Any> ModuleServices.getServiceOrNull(): T? = getServiceOrNull(T::class)
 
-inline fun <reified T : Any> ModuleContext.importService(qualifier: Qualifier? = null): Module {
+inline fun <reified T : Any> ModuleContext.importServiceToKoin(qualifier: Qualifier? = null): Module {
     val definitions = module { factory(qualifier) { services.getService<T>() } }
     loadKoinModuleDefinitions(definitions)
     return definitions

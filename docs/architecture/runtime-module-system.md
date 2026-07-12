@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 6 capability extraction in progress, `mongo` and `charonflow` extracted; Phase 7 module isolation planned)
+- Status: Implementation in progress (Phase 6 capability extraction in progress, `mongo`, `charonflow`, and `geoip` extracted; Phase 7 module isolation planned)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 

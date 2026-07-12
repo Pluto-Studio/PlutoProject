@@ -82,5 +82,10 @@ includeProject(":capability:charonflow:common")
 includeProject(":capability:charonflow:paper")
 includeProject(":capability:charonflow:velocity")
 
+includeProject(":capability:geoip:api")
+includeProject(":capability:geoip:common")
+includeProject(":capability:geoip:paper")
+includeProject(":capability:geoip:velocity")
+
 include("platform-paper")
 include("platform-velocity")
