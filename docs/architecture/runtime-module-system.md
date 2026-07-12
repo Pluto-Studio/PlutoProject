@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 6 capability extraction in progress through `profile`; Phase 7 module isolation completed)
+- Status: Phase 6 capability extraction and Phase 7 module isolation completed
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -104,7 +104,6 @@ capability/
     paper/
   world-alias/
     api/
-      paper/
     paper/
 
 feature/
@@ -1163,13 +1162,14 @@ feat(kernel): 添加运行时模块管理命令
 
 ### Phase 6: Extract Capabilities
 
-Status: In progress (2026-07-13). The `mongo`, `charonflow`, `geoip`,
-`server-identifier`, `database-persist`, and `profile` capabilities have been extracted
-with shared lifecycle implementations and thin Paper and Velocity runtime
-entrypoints. Legacy consumers remain on the old connection
-or global Koin until their runtime feature descriptors declare the required
-capability; this avoids activating MongoDB or CharonFlow when the Kernel has
-no capability consumer.
+Status: Completed (2026-07-13). All eight Phase 6 capabilities have been extracted
+with lifecycle-owned implementations and runtime descriptors. Paper-only
+capabilities now include `interactive`, `server-statistics`, and `world-alias`;
+the latter two export their explicit API services through ModuleServices. Legacy
+consumers and their old framework paths remain during the transition until new
+runtime feature descriptors declare the required capabilities. This preserves
+legacy compatibility without activating a capability when the Kernel has no
+runtime consumer.
 
 Extract capabilities in dependency order:
 
@@ -1233,7 +1233,7 @@ Tasks for each capability:
 - Prepare explicit capability API contracts; module-local DI and service export cutover are tracked in Phase 7.
 - Keep capability-created resources under the capability's own lifecycle responsibility.
 - Add new-structure unit tests where applicable.
-- Remove the corresponding unconditional legacy initialization path as soon as the replacement capability is wired.
+- Remove the corresponding unconditional legacy initialization path as soon as the replacement capability is wired; retain legacy compatibility paths until their consumers are cut over.
 
 Acceptance criteria:
 
@@ -1247,7 +1247,7 @@ Acceptance criteria:
 - Failed capabilities have only their Kernel-created resources reclaimed; capability code owns any partial side effects.
 - Capability failures identify all blocked features.
 
-Capabilities should be committed separately to keep reviews and regressions focused.
+Capabilities may be committed separately to keep reviews and regressions focused; related final migrations may also be grouped when their verification is shared.
 
 ### Phase 7: Isolate Module DI and Add the Service Registry
 

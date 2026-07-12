@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":capability:database-persist:paper"))
     implementation(project(":capability:profile:paper"))
     implementation(project(":capability:interactive:paper"))
+    implementation(project(":capability:server-statistics:paper"))
+    implementation(project(":capability:world-alias:paper"))
 }
 
 paperPluginYaml {

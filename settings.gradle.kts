@@ -107,5 +107,11 @@ includeProject(":capability:profile:velocity")
 includeProject(":capability:interactive:paper")
 includeProject(":capability:interactive:api")
 
+includeProject(":capability:server-statistics:api")
+includeProject(":capability:server-statistics:paper")
+
+includeProject(":capability:world-alias:api")
+includeProject(":capability:world-alias:paper")
+
 include("platform-paper")
 include("platform-velocity")
