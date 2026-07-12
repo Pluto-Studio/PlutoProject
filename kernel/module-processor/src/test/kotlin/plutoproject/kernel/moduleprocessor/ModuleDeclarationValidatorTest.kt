@@ -1,4 +1,4 @@
-package plutoproject.buildsupport.moduleprocessor
+package plutoproject.kernel.moduleprocessor
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

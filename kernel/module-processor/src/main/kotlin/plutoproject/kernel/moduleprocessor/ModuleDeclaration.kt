@@ -1,4 +1,4 @@
-package plutoproject.buildsupport.moduleprocessor
+package plutoproject.kernel.moduleprocessor
 
 import plutoproject.kernel.api.ModuleDescriptor
 

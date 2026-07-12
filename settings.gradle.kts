@@ -72,7 +72,7 @@ includeProject(":kernel:api:velocity")
 includeProject(":kernel:common")
 includeProject(":kernel:paper")
 includeProject(":kernel:velocity")
-includeProject(":build-support:module-processor")
+includeProject(":kernel:module-processor")
 
 includeProject(":capability:mongo:api")
 includeProject(":capability:mongo:common")

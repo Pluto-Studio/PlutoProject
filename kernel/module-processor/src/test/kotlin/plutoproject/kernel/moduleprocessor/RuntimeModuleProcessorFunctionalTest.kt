@@ -1,4 +1,4 @@
-package plutoproject.buildsupport.moduleprocessor
+package plutoproject.kernel.moduleprocessor
 
 import java.nio.file.Path
 import kotlin.io.path.createDirectories

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    ksp(project(":build-support:module-processor"))
+    ksp(project(":kernel:module-processor"))
 }
 
 ksp {

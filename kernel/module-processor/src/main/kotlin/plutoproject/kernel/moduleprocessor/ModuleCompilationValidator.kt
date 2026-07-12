@@ -1,4 +1,4 @@
-package plutoproject.buildsupport.moduleprocessor
+package plutoproject.kernel.moduleprocessor
 
 internal object ModuleCompilationValidator {
     fun validate(declarations: Collection<ModuleDeclaration>): List<String> = buildList {

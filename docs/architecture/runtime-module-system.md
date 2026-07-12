@@ -123,7 +123,7 @@ platform/
   paper/
   velocity/
 
-build-support/
+kernel/
   module-processor/
 
 catalog/
@@ -299,7 +299,7 @@ Each runtime entry project emits one UTF-8 JSON object with `schemaVersion = 1` 
 META-INF/plutoproject/modules/<platform>/<id>.json
 ```
 
-The descriptor's `type` field distinguishes features from capabilities; it is not part of the resource filename because feature and capability IDs share one namespace within a platform. `ModuleDiscovery` reports unknown schema versions and malformed files while retaining source paths. `ModuleDescriptorValidator` rejects duplicate IDs within the current platform discovery set. The same ID may have separate PAPER and VELOCITY descriptors because each Kernel sees only its own platform set. The distribution build rejects duplicate descriptor resource paths before packaging. Any descriptor or static graph validation error aborts platform plugin startup before lifecycle execution and is reported through logs. The KSP processor is moved out of the framework implementation and into `build-support/module-processor`.
+The descriptor's `type` field distinguishes features from capabilities; it is not part of the resource filename because feature and capability IDs share one namespace within a platform. `ModuleDiscovery` reports unknown schema versions and malformed files while retaining source paths. `ModuleDescriptorValidator` rejects duplicate IDs within the current platform discovery set. The same ID may have separate PAPER and VELOCITY descriptors because each Kernel sees only its own platform set. The distribution build rejects duplicate descriptor resource paths before packaging. Any descriptor or static graph validation error aborts platform plugin startup before lifecycle execution and is reported through logs. The KSP processor is moved out of the framework implementation and into `kernel/module-processor`.
 
 ## Runtime Module Lifecycle
 
@@ -1007,7 +1007,7 @@ build: 重构 Gradle conventions
 ### Phase 2: Introduce Kernel API and Module Processor
 
 Status: Complete (2026-07-11). `kernel/api`, its Paper and Velocity extensions,
-and `build-support/module-processor` now define and generate the unified runtime
+and `kernel/module-processor` now define and generate the unified runtime
 module protocol. The `plutoproject.runtime-module` convention wires KSP with
 project identity. Processor unit and Gradle TestKit functional tests cover valid
 descriptor generation and invalid metadata/entrypoint shapes, including object
@@ -1020,7 +1020,7 @@ Tasks:
 - Create `kernel/api/paper` and `kernel/api/velocity`.
 - Define `RuntimeModule`, module contexts, descriptors, states, and operation results.
 - Define `@Feature` and `@Capability`.
-- Create `build-support/module-processor`.
+- Create `kernel/module-processor`.
 - Add `plutoproject.runtime-module` after the processor project exists.
 - Generate Paper and Velocity manifests.
 - Add processor tests for valid and invalid declarations.

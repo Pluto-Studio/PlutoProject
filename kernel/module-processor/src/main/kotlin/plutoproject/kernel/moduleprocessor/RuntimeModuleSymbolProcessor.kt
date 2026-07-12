@@ -1,4 +1,4 @@
-package plutoproject.buildsupport.moduleprocessor
+package plutoproject.kernel.moduleprocessor
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
