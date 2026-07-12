@@ -10,6 +10,7 @@ dependencies {
     api(projects.frameworkPaper)
     api(projects.featurePaper)
     implementation(project(":kernel:paper"))
+    implementation(project(":capability:server-identifier:paper"))
 }
 
 paperPluginYaml {

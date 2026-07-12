@@ -87,5 +87,10 @@ includeProject(":capability:geoip:common")
 includeProject(":capability:geoip:paper")
 includeProject(":capability:geoip:velocity")
 
+includeProject(":capability:server-identifier:api")
+includeProject(":capability:server-identifier:common")
+includeProject(":capability:server-identifier:paper")
+includeProject(":capability:server-identifier:velocity")
+
 include("platform-paper")
 include("platform-velocity")
