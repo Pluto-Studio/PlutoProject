@@ -44,10 +44,10 @@ class ModuleContextElement(
     companion object Key : CoroutineContext.Key<ModuleContextElement>
 
     override fun updateThreadContext(context: CoroutineContext): ModuleContext? =
-        ModuleContextBinding.swap(this.context)
+        ModuleContextBinding.replace(this.context)
 
     override fun restoreThreadContext(context: CoroutineContext, oldState: ModuleContext?) {
-        ModuleContextBinding.restore(oldState)
+        ModuleContextBinding.replace(oldState)
     }
 }
 
@@ -62,18 +62,17 @@ object ModuleContextBinding {
     }
 
     fun <T> withContext(context: ModuleContext, block: () -> T): T {
-        val previous = swap(context)
+        val previous = replace(context)
         return try {
             block()
         } finally {
-            restore(previous)
+            replace(previous)
         }
     }
 
-    internal fun swap(context: ModuleContext): ModuleContext? =
-        ModuleContextStorage.current.get().also { ModuleContextStorage.current.set(context) }
-
-    internal fun restore(context: ModuleContext?) {
+    internal fun replace(context: ModuleContext?): ModuleContext? {
+        val previous = ModuleContextStorage.current.get()
         if (context == null) ModuleContextStorage.current.remove() else ModuleContextStorage.current.set(context)
+        return previous
     }
 }
