@@ -77,5 +77,10 @@ includeProject(":capability:mongo:common")
 includeProject(":capability:mongo:paper")
 includeProject(":capability:mongo:velocity")
 
+includeProject(":capability:charonflow:api")
+includeProject(":capability:charonflow:common")
+includeProject(":capability:charonflow:paper")
+includeProject(":capability:charonflow:velocity")
+
 include("platform-paper")
 include("platform-velocity")
