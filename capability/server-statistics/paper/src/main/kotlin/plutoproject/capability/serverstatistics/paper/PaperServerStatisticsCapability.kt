@@ -13,7 +13,7 @@ import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.exportServiceFromKoin
 import plutoproject.kernel.api.loadKoinModuleDefinitions
 
-@Capability(id = "server-statistics", platform = Platform.PAPER)
+@Capability(id = "server_statistics", platform = Platform.PAPER)
 class PaperServerStatisticsCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
         val provider = if (Bukkit.getPluginManager().getPlugin("spark") == null) {

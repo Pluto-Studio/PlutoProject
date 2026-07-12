@@ -14,7 +14,7 @@ import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.exportServiceFromKoin
 import plutoproject.kernel.api.loadKoinModuleDefinitions
 
-@Capability(id = "world-alias", platform = Platform.PAPER)
+@Capability(id = "world_alias", platform = Platform.PAPER)
 class PaperWorldAliasCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
         val configFile = context.saveResource("config.conf")

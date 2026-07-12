@@ -11,7 +11,7 @@ import plutoproject.kernel.api.velocity.VelocityModuleContext
 import java.util.*
 
 @Capability(
-    id = "database-persist",
+    id = "database_persist",
     platform = Platform.VELOCITY,
     requiredCapabilities = ["mongo", "server_identifier"],
 )

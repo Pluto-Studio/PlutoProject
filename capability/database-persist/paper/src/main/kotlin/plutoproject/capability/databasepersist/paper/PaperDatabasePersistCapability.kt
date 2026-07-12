@@ -11,7 +11,7 @@ import plutoproject.kernel.api.paper.PaperModuleContext
 import java.util.*
 
 @Capability(
-    id = "database-persist",
+    id = "database_persist",
     platform = Platform.PAPER,
     requiredCapabilities = ["mongo", "server_identifier"],
 )

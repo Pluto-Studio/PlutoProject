@@ -237,7 +237,7 @@ Capability declarations use the same runtime model but may only require capabili
 
 ```kotlin
 @Capability(
-    id = "database-persist",
+    id = "database_persist",
     platform = Platform.PAPER,
     requiredCapabilities = ["mongo"],
 )
@@ -1164,7 +1164,7 @@ feat(kernel): 添加运行时模块管理命令
 
 Status: Completed (2026-07-13). All eight Phase 6 capabilities have been extracted
 with lifecycle-owned implementations and runtime descriptors. Paper-only
-capabilities now include `interactive`, `server-statistics`, and `world-alias`;
+capabilities now include `interactive`, `server_statistics`, and `world_alias`;
 the latter two export their explicit API services through ModuleServices. Legacy
 consumers and their old framework paths remain during the transition until new
 runtime feature descriptors declare the required capabilities. This preserves
@@ -1178,24 +1178,24 @@ Extract capabilities in dependency order:
 | 1 | `mongo` | `framework-common/connection` |
 | 2 | `charonflow` | `framework-common/connection` |
 | 3 | `geoip` | `framework-common/connection` |
-| 4 | `database-persist` | `framework-common/databasepersist` |
+| 4 | `database_persist` | `framework-common/databasepersist` |
 | 5 | `profile` | `framework-common/profile` and the Velocity profile listener |
 | 6 | `interactive` | `framework-paper/interactive` |
-| 7 | `server-statistics` | `framework-paper/statistic` and its API contracts |
-| 8 | `world-alias` | `framework-paper/worldalias`, its API contracts, and configuration |
+| 7 | `server_statistics` | `framework-paper/statistic` and its API contracts |
+| 8 | `world_alias` | `framework-paper/worldalias`, its API contracts, and configuration |
 
 Classification decisions:
 
 - The platform command manager belongs to the Kernel because `/plutoproject` always requires it.
-- Server statistics is the Paper `server-statistics` capability. Its consumers are `status`, `dynamic-scheduler`, and `overload-warning`.
-- WorldAlias is the Paper `world-alias` capability. Its consumers are `teleport`, `home`, and `warp`.
+- Server statistics is the Paper `server_statistics` capability. Its consumers are `status`, `dynamic-scheduler`, and `overload-warning`.
+- WorldAlias is the Paper `world_alias` capability. Its consumers are `teleport`, `home`, and `warp`.
 - Toast and stateless Paper DSL code move to `foundation/paper`.
 - BuildInfo belongs to the Kernel.
 - Stateless configuration loading code moves to `foundation/common`.
 
 Database-persist migration decisions:
 
-- `database-persist` requires both `mongo` and `server_identifier`
+- `database_persist` requires both `mongo` and `server_identifier`
   capabilities (`server_identifier` is the runtime ID for the server-identity
   capability).
 - The server identifier is required to be non-null. The capability must fail to
@@ -1211,7 +1211,7 @@ Database-persist migration decisions:
   child jobs during capability shutdown before Kernel scope cleanup.
 - `BsonSerializer` and `UuidAsBsonBinarySerializer` are shared by multiple
   Mongo-backed modules and move to `foundation/common`.
-- BSON dot-path helpers remain private to database-persist until another module
+- BSON dot-path helpers remain private to database_persist until another module
   demonstrates a concrete need for them. Concurrent collection wrappers and
   trivial time conversion helpers are inlined instead of becoming Foundation
   APIs. Resource-owning dispatchers, global loggers, `globalKoin`, and server
