@@ -12,20 +12,19 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.bson.UuidRepresentation
-import org.koin.core.context.GlobalContext
-import org.koin.core.module.Module
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.RuntimeModule
+import plutoproject.kernel.api.exportService
+import plutoproject.kernel.api.getModule
+import plutoproject.kernel.api.loadModuleDefinitions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 
 class MongoCapability : RuntimeModule {
-    private var connection: DefaultMongoConnection? = null
-    private var koinModule: Module? = null
-
     override suspend fun onLoad(context: ModuleContext) {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
@@ -34,23 +33,11 @@ class MongoCapability : RuntimeModule {
             .addPropertySource(PropertySource.file(configFile.toFile()))
             .build()
             .loadConfigOrThrow<MongoConfig>()
-        val created = DefaultMongoConnection(config)
-        val definitions = module { single<MongoConnection> { created } }
-        try {
-            GlobalContext.loadKoinModules(definitions)
-            connection = created
-            koinModule = definitions
-        } catch (cause: Throwable) {
-            created.close()
-            throw cause
-        }
-    }
-
-    override suspend fun onDisable(context: ModuleContext) {
-        koinModule?.let(GlobalContext::unloadKoinModules)
-        koinModule = null
-        connection?.close()
-        connection = null
+        context.loadModuleDefinitions(module {
+            single { DefaultMongoConnection(config) }.onClose { it?.close() }
+            single<MongoConnection> { get<DefaultMongoConnection>() }
+        })
+        context.services.exportService<MongoConnection>()
     }
 }
 
