@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: Implementation in progress (Phase 5 complete)
+- Status: Implementation in progress (Phase 6 capability extraction in progress; Phase 7 module isolation planned)
 - Branch: `refactor/runtime-module-system`
 - Scope: Gradle conventions, module layout, runtime module lifecycle, legacy module migration
 
@@ -195,7 +195,7 @@ Gradle dependency rules:
 | Foundation common | Foundation and platform-independent libraries |
 | Foundation paper | Foundation common, other Foundation projects, and the Paper API |
 | Foundation velocity | Foundation common, other Foundation projects, and the Velocity API |
-| Kernel API | Foundation and platform-independent coroutine and logging contracts exposed by `ModuleContext` |
+| Kernel API | Foundation, Koin core, and platform-independent coroutine, logging, DI, and service contracts exposed by `ModuleContext` |
 | Kernel common | Kernel API and Foundation |
 | Kernel `api/paper` | Kernel API and `foundation/paper` |
 | Kernel `api/velocity` | Kernel API and `foundation/velocity` |
@@ -317,6 +317,8 @@ The Kernel, rather than a module base class, owns:
 - Logger creation.
 - Data directory resolution.
 - Coroutine scope creation and cancellation.
+- Module-local dependency injection container creation and closure.
+- Cross-module service registration ownership and revocation.
 - Instance creation and destruction.
 - Cleanup of resources created by the Kernel itself after lifecycle failures.
 
@@ -384,6 +386,11 @@ cleanup of later modules.
 Every `ModuleContext.coroutineScope` is owned by that module's lifecycle. Its
 job is distinct from the job invoking manager lifecycle functions, is created
 with the module, and is cancelled and joined when the module is cleaned up.
+
+The default scope carries the module context across coroutine suspension and
+thread switches. A separately created scope, `CompletableFuture`, scheduler,
+thread-pool callback, listener, or command does not inherit that identity and
+must retain an explicit `ModuleContext`.
 
 ## Kernel Startup
 
@@ -512,10 +519,10 @@ Rules:
 | --- | --- |
 | Descriptor or static dependency validation | Abort platform plugin startup before any instance is created |
 | Dependency failure before dependent load | Do not create the dependent instance; set `BLOCKED` and retain the dependency path |
-| Dependency enable failure after dependent load | Invoke dependent `onDisable` best-effort, cancel and join its Kernel-created scope, discard the instance, and set `BLOCKED` |
-| `onLoad` | Do not invoke `onDisable`; cancel and join the Kernel-created scope, discard the instance, and set `FAILED` |
-| `onEnable` | Invoke best-effort `onDisable`, cancel and join the Kernel-created scope, discard the instance, and set `FAILED` |
-| `onDisable` | Cancel and join the Kernel-created scope, discard the instance, end in `DISABLED`, and return a failed operation result |
+| Dependency enable failure after dependent load | Revoke exports, invoke dependent `onDisable` best-effort, close its scope and Koin container, discard the instance, and set `BLOCKED` |
+| `onLoad` | Do not invoke `onDisable`; revoke exports, close the Kernel-owned scope and Koin container, discard the instance, and set `FAILED` |
+| `onEnable` | Revoke exports, invoke best-effort `onDisable`, close the scope and Koin container, discard the instance, and set `FAILED` |
+| `onDisable` | Revoke exports, close the scope and Koin container, discard the instance, end in `DISABLED`, and return a failed operation result |
 
 Successfully activated dependencies remain enabled when a dependent feature fails.
 
@@ -526,7 +533,7 @@ Server shutdown does not use the interactive blocker policy.
 Shutdown order:
 
 1. Disable active features in reverse active-graph order.
-2. Cancel feature scopes and destroy feature contexts and instances.
+2. Revoke feature services, cancel feature scopes, close feature Koin containers, and destroy feature contexts and instances.
 3. Disable enabled capabilities in reverse capability order.
 4. Close platform Kernel resources.
 5. Cancel the Kernel root scope and close Kernel-owned infrastructure.
@@ -543,6 +550,8 @@ interface ModuleContext {
     val logger: Logger
     val dataFolder: Path
     val coroutineScope: CoroutineScope
+    val koin: Koin
+    val services: ModuleServices
 
     fun saveResource(
         path: String,
@@ -567,18 +576,176 @@ identifies the module and complete resource path. This helper does not transfer
 ownership of the resulting file to the Kernel: modules remain responsible for
 any cleanup their behavior requires.
 
-The Kernel creates the module coroutine scope and therefore always cancels and joins it when the module ends. The Kernel also clears its own state and instance references. Listeners, commands, scheduler tasks, recipes, GUI state, subscriptions, service hooks, Koin definitions, database clients, and all other side effects created by module code remain the module's responsibility.
+The Kernel creates the module coroutine scope and module-local Koin application,
+and therefore always cancels and joins the scope and closes the Koin application
+when the module ends. The Kernel also revokes services exported through
+`ModuleServices` and clears its own state and instance references. Listeners,
+commands, scheduler tasks, recipes, GUI state, subscriptions, platform service
+hooks, database clients not owned by Koin definitions, and all other side
+effects created directly by module code remain the module's responsibility.
 
 Feature and capability implementations should clean their side effects in `onDisable`, but the Kernel does not enforce or verify complete cleanup. Existing features may be structurally migrated without adding missing cleanup behavior. A module may therefore leave registrations or other effects behind after reaching `DISABLED`; conflicts and residue are defects or limitations of that module rather than Kernel state inconsistencies.
 
-Features access Koin directly for now and are responsible for loading and unloading their definitions. DI isolation is deferred to a separate design.
-
 The disable cleanup sequence is:
 
-1. Invoke feature `onDisable` best-effort.
-2. Cancel and join the Kernel-created feature coroutine scope even if the hook failed.
-3. Remove the feature context and instance from the Kernel.
-4. Store and report the complete operation result.
+1. Mark the owner-bound service view as closing and atomically revoke every service exported by the module.
+2. Invoke module `onDisable` best-effort while service queries and the module Koin container remain available.
+3. Cancel and join the Kernel-created module coroutine scope even if the hook failed.
+4. Close the module-local Koin application.
+5. Close the service view and unregister current-context and entrypoint mappings.
+6. Remove the context and instance, then store and report the complete operation result.
+
+Every stage is attempted. The first ordinary cleanup failure remains primary
+and later failures are suppressed. When cancellation is in progress, the
+original `CancellationException` remains primary and cleanup failures are
+suppressed. Shutdown continues with other modules. Scope shutdown has no
+timeout; a module that remains forever in `NonCancellable` can block cleanup and
+is considered defective module behavior.
+
+## Module-Local Dependency Injection
+
+Koin is part of the Runtime Module public API. `kernel/api` exposes Koin types
+and has an API dependency on Koin core. Each live runtime module receives one
+isolated `KoinApplication`; the Kernel owns that application and modules receive
+only its `Koin` through `ModuleContext.koin`.
+
+The container is created before the runtime entrypoint is constructed, starts
+empty, and remains the same through construction, `onLoad`, `onEnable`, and
+`onDisable`. The Kernel does not prebind `ModuleContext`, logger, path, scope,
+clock, or platform context. A module may bind captured values itself. Calling
+`injectModule<ModuleContext>()` therefore fails unless the module defines that
+binding. Koin logging is bridged to the module logger.
+
+The public convenience API is in `plutoproject.kernel.api`:
+
+```kotlin
+context.injectModule<T>(qualifier, mode, parameters)
+injectModule<T>(qualifier, mode, parameters)
+context.getModule<T>(qualifier, parameters)
+getModule<T>(qualifier, parameters)
+
+context.loadModuleDefinitions(modules, allowOverride, createEagerInstances)
+loadModuleDefinitions(modules, allowOverride, createEagerInstances)
+context.unloadModuleDefinitions(modules)
+unloadModuleDefinitions(modules)
+```
+
+The injection helpers forward Koin qualifiers and parameters.
+`injectModule` also exposes `LazyThreadSafetyMode`, defaulting to
+`SYNCHRONIZED`. Definition loading does not perform additional conflict checks:
+`allowOverride` defaults to true. The helper creates `createdAtStart` instances
+immediately by default, while direct `context.koin` calls retain native Koin
+semantics. Definition loading is allowed during entrypoint construction and all
+lifecycle phases while the container is open.
+
+The Kernel owns container closure. Modules must not close the Koin instance,
+take over its lifecycle, or unload definitions owned by the Kernel. This is an
+API contract rather than a restricted proxy. Koin-owned resources should use
+definition close callbacks so container closure releases them.
+
+### Current Module Context
+
+The same root API package provides strict and nullable context lookup:
+
+```kotlin
+currentModuleContext()
+currentModuleContextOrNull()
+```
+
+Explicit `ModuleContext` usage is preferred. No-receiver helpers are a
+convenience for entrypoint construction and lifecycle code. Resolution order is:
+
+1. The dynamically bound current module context.
+2. A `StackWalker` match for the nearest registered `RuntimeModule` entrypoint.
+3. A descriptive failure, or null for `currentModuleContextOrNull`.
+
+Resolution never infers ownership from package names, the shared class loader,
+or the most recently active module. If the nearest entrypoint belongs to a
+closed module, resolution stops there instead of selecting an outer active
+module. Runtime descriptors are internal and are expected to use distinct
+entrypoint classes; the Kernel adds no duplicate-entrypoint validation.
+
+Dynamic binding is nested, exception-safe, and restores the previous context in
+LIFO order. The Kernel binds it around entrypoint class initialization,
+construction, and every lifecycle callback. A `ModuleContextElement` propagates
+the binding through Kernel lifecycle calls, the default module scope, and
+inherited coroutine contexts such as `withContext(Dispatchers.IO)`.
+
+An `@InternalKernelApi` opt-in SPI, with `RequiresOptIn` error level, allows
+`kernel/common` to register and bind contexts for helpers implemented in
+`kernel/api`. It stores only active context and entrypoint mappings, never
+business services.
+
+## Cross-Module Service Registry
+
+Each `RuntimeKernel` owns one thread-safe Service Registry. It is not a JVM
+global and is not Koin `GlobalContext`. `ModuleContext.services` is an
+owner-bound `ModuleServices` view; modules cannot obtain the raw Registry or
+forge an owner ID.
+
+The Registry is intentionally for singleton, non-generic service interfaces.
+Its only key is `KClass<T>`, with exactly one active provider per type. It has no
+qualifiers, generic type tokens, or multi-provider support. Generic service
+interfaces must instead be expressed as distinct contracts such as
+`UserRepository` and `OrderRepository`; this is a documented authoring rule,
+not a runtime reflection check.
+
+The core API accepts `KClass<T>` and provides reified Kotlin extensions:
+
+```kotlin
+services.exportService(type, instance)
+services.exportService(type, qualifier, parameters)
+services.getService(type)
+services.getServiceOrNull(type)
+```
+
+The Koin-backed export resolves the local definition exactly once, even for a
+factory, and registers that concrete instance. Both export forms return a
+minimal `ServiceRegistration` exposing `serviceType`, `isRegistered`, and an
+idempotent `unregister()`. A duplicate active type always fails, including a
+duplicate from the same owner. After unregistering, an active owner may export
+the type again; an old registration cannot unregister its replacement.
+
+The Registry never closes exported instances, including `AutoCloseable`
+objects. Resource ownership remains with the provider module. It automatically
+revokes all registrations when the provider begins cleanup. A retained service
+reference after removal remains the consumer's responsibility.
+
+Any active module may discover any currently registered service. Registry use
+does not create dependency edges, change blocker paths, or replace descriptor
+dependencies. Service publication is dynamic and immediately visible whenever
+the owner is active. The Kernel does not require providers to publish in a
+specific phase; consumers must handle a service that has not yet been
+published.
+
+Owner-bound service states are:
+
+- `INITIALIZING`: queries are allowed during entrypoint construction, but exports are forbidden.
+- `ACTIVE`: queries, exports, unregister, and re-export are allowed.
+- `CLOSING`: new exports are forbidden; queries remain available during `onDisable` and scope cleanup.
+- `CLOSED`: every operation fails, including nullable queries.
+
+Missing `getService` calls and invalid owner states use descriptive standard
+exceptions rather than public custom exception types. Modules cannot enumerate
+the Registry. Kernel internals retain read-only snapshots for tests and future
+management diagnostics.
+
+An optional `importService<T>(localQualifier)` helper creates and loads a local
+Koin factory whose resolution queries the owner-bound service view. It returns
+the generated Koin `Module` for symmetric unloading. The local qualifier only
+identifies the consumer's Koin definition; the Registry remains keyed by service
+type. Import conflicts follow definition loading's default override behavior.
+Direct Registry queries never add definitions to Koin.
+
+## Runtime Kernel Process Ownership
+
+At most one `RuntimeKernel` may be active in a JVM. Construction does not claim
+the process slot; the first `load()` claims it atomically. A second active
+Kernel fails immediately. Result-valued module failures leave the Kernel active
+for management and shutdown. Normal shutdown releases the slot after all live
+contexts are gone. An exception or cancellation escaping startup first performs
+complete reverse cleanup and releases the slot only after no live context
+remains.
 
 ## Cloud Commands
 
@@ -679,7 +846,11 @@ FeatureManager.isEnabled(...)
 MongoConnection.getCollection(...)
 ```
 
-Cross-feature integrations depend on the provider's API project and obtain services through normal dependency injection. Features access Koin directly until DI isolation receives a separate design.
+Cross-module integrations depend on the provider's API project and obtain
+singleton contracts through `ModuleServices`. A consumer may optionally import
+such a service into its isolated module-local Koin container. Neither mechanism
+creates runtime dependency edges; descriptors remain the source of dependency
+ordering and disable blockers.
 
 ## Administrative Commands
 
@@ -939,7 +1110,7 @@ Tasks:
 - Keep the old FeatureManager temporarily for unmigrated legacy features, but route newly migrated runtime modules only through the new Kernel.
 - Create the minimal platform module contexts required to expose platform APIs without resource ownership wrappers.
 - Create and cancel one Kernel-owned coroutine scope per module.
-- Keep module-created listeners, commands, tasks, recipes, subscriptions, GUI state, hooks, and Koin definitions outside Kernel ownership.
+- Keep module-created listeners, commands, tasks, recipes, subscriptions, GUI state, hooks, and direct resources outside Kernel ownership; Kernel owns only the module Koin application and definitions through container closure.
 - Guarantee cleanup of Kernel-created resources after `onDisable` failure.
 
 Acceptance criteria:
@@ -1026,7 +1197,7 @@ Tasks for each capability:
 - Add `@Capability` to the runtime entrypoint.
 - Add thin Paper and Velocity runtime entry projects when a capability uses the same common implementation on both platforms.
 - Declare transitive capability dependencies.
-- Replace global companion service lookup with dependency injection.
+- Prepare explicit capability API contracts; module-local DI and service export cutover are tracked in Phase 7.
 - Keep capability-created resources under the capability's own lifecycle responsibility.
 - Add new-structure unit tests where applicable.
 - Remove the corresponding unconditional legacy initialization path as soon as the replacement capability is wired.
@@ -1045,7 +1216,72 @@ Acceptance criteria:
 
 Capabilities should be committed separately to keep reviews and regressions focused.
 
-### Phase 7: Rename Existing DDD Feature Projects
+### Phase 7: Isolate Module DI and Add the Service Registry
+
+Status: Planned. This phase implements the module-local Koin, current-context,
+Service Registry, cleanup, and process-ownership contracts defined above before
+feature migrations depend on cross-module service exports.
+
+Kernel API tasks:
+
+- Make Koin core an API dependency of `kernel/api` and expose `koin` and owner-bound `services` from `ModuleContext`.
+- Add explicit-context and no-receiver `injectModule`, `getModule`, `loadModuleDefinitions`, and `unloadModuleDefinitions` helpers.
+- Add `currentModuleContext`, `currentModuleContextOrNull`, and coroutine context propagation.
+- Add the error-level `@InternalKernelApi` SPI used by Kernel common to register and bind active contexts.
+- Add `ModuleServices`, `ServiceRegistration`, KClass-based operations, and reified Kotlin conveniences in the root API package.
+- Add optional `importService` support without coupling the Registry key space to Koin qualifiers.
+
+Kernel implementation tasks:
+
+- Create one empty isolated `KoinApplication` per live module before entrypoint construction and bridge its logging to the module logger.
+- Keep the same application available through construction and every lifecycle hook, then close it on every cleanup path.
+- Implement nested dynamic context binding, nearest-entrypoint StackWalker fallback, and `ModuleContextElement` propagation.
+- Create one thread-safe Service Registry per RuntimeKernel and expose only owner-bound views to modules.
+- Enforce `INITIALIZING`, `ACTIVE`, `CLOSING`, and `CLOSED` service-view states.
+- Make export, duplicate detection, unregister, owner close, and unregister/re-export races atomic.
+- Revoke owner exports before `onDisable`, keep queries and Koin available through scope cleanup, then close Koin and unregister context mappings.
+- Preserve cancellation as the primary exception and aggregate later cleanup failures as suppressed while continuing shutdown.
+- Fix context-created-before-live-instance failure paths so cleanup failures never replace the original cancellation.
+- Enforce one active RuntimeKernel per JVM from first `load()` until complete shutdown or failed-startup cleanup.
+
+Mongo migration tasks:
+
+- Remove `GlobalContext` loading and unloading from `MongoCapability`.
+- Define `MongoConnection` in the module-local Koin container with an `onClose` callback that closes the connection.
+- Export the resolved singleton through `ModuleServices` during capability load.
+- Remove the capability's connection field and manual disable cleanup.
+
+Required tests:
+
+- Module Koin containers are isolated, start empty, forward qualifiers and parameters, apply definition override/eager defaults, and always close.
+- Dynamic current-context binding nests and restores correctly across success, failure, cancellation, suspension, and dispatcher switches.
+- StackWalker resolves only the nearest registered entrypoint and never skips a closed entrypoint.
+- Independent callbacks and scopes require an explicit context, and closed modules are no longer discoverable.
+- A second RuntimeKernel cannot load while another holds the process slot; sequential Kernels work after complete shutdown.
+- Service export, query, nullable query, duplicate rejection, unregister, re-export, and registration identity behave deterministically.
+- Constructor-time queries work while exports fail; closing permits queries but forbids exports; closed views reject every operation.
+- Concurrent export-versus-close and duplicate-export races cannot leak registrations.
+- Lifecycle failures and cancellation revoke exports, stop the scope, close Koin, unregister context identity, and retain correct primary/suppressed failures.
+- `importService` resolves the current Registry service and can be unloaded symmetrically.
+- Mongo exports one `MongoConnection`, does not touch GlobalContext, and closes it through Koin application shutdown.
+
+Acceptance criteria:
+
+- No Runtime Module adds definitions to Koin GlobalContext.
+- Every live module has exactly one Kernel-owned Koin application and owner-bound service view.
+- Cross-module services are explicit singleton exports rather than access to another module's Koin container.
+- Registry use does not mutate descriptor dependency edges or runtime disable blockers.
+- Module cleanup leaves no active service registrations, Koin application, default-scope job, or current-context mapping.
+- All failure and cancellation paths attempt every Kernel-owned cleanup stage.
+
+Commit boundaries:
+
+```text
+feat(kernel): 添加模块隔离依赖注入与服务注册表
+refactor(mongo): 使用模块服务注册表导出连接
+```
+
+### Phase 8: Rename Existing DDD Feature Projects
 
 Apply the simplified naming scheme:
 
@@ -1070,7 +1306,7 @@ Tasks:
 - Update project dependencies and conventions.
 - Preserve package names unless changing them materially improves consistency.
 - Declare `requiredCapabilities` explicitly.
-- Replace global MongoConnection access; features may continue to access Koin directly until DI isolation is designed separately.
+- Replace global MongoConnection access with the `mongo` capability service export and module-local dependency injection.
 - Record the existing core, API, and gameplay behavior that must be preserved or restored by final acceptance.
 
 Migration checkpoint:
@@ -1085,7 +1321,7 @@ Suggested commit:
 refactor(feature): 简化新版功能模块命名
 ```
 
-### Phase 8: Migrate Legacy Features
+### Phase 9: Migrate Legacy Features
 
 Move one feature at a time and remove it from the old aggregate immediately after cutover. Do not package old and new entrypoints with the same ID.
 
@@ -1173,7 +1409,7 @@ Migration tracking for every wave:
 - Record runtime ID and dependency changes so final compatibility can be verified.
 - Record any temporarily broken cross-system integration or gameplay behavior that must be restored before final acceptance.
 
-### Phase 9: Cut Over Platform Bootstrap
+### Phase 10: Cut Over Platform Bootstrap
 
 Tasks:
 
@@ -1202,7 +1438,7 @@ Suggested commit:
 refactor: 切换到统一运行时模块系统
 ```
 
-### Phase 10: Enforce Architecture and Update Documentation
+### Phase 11: Enforce Architecture and Update Documentation
 
 Tasks:
 
