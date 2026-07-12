@@ -1,5 +1,8 @@
 package plutoproject.kernel.common
 
+import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.ModuleOperationResult
 import plutoproject.kernel.api.Platform
@@ -11,6 +14,10 @@ class RuntimeKernel(
     classLoader: ClassLoader,
     reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
 ) {
+    companion object {
+        private val activeKernel = AtomicReference<RuntimeKernel?>()
+    }
+
     private val manager: RuntimeModuleManager
 
     init {
@@ -38,9 +45,44 @@ class RuntimeKernel(
     val warnings: List<String>
         get() = manager.plan.warnings
 
-    suspend fun load(): Map<String, ModuleOperationResult> = manager.loadStartup()
+    suspend fun load(): Map<String, ModuleOperationResult> {
+        check(activeKernel.get() === this || activeKernel.compareAndSet(null, this)) {
+            "Another RuntimeKernel is already active in this JVM"
+        }
+        return try {
+            manager.loadStartup()
+        } catch (cause: Throwable) {
+            terminateAfterStartupFailure(cause)
+            throw cause
+        }
+    }
 
-    suspend fun enable(): Map<String, ModuleOperationResult> = manager.enableStartup()
+    suspend fun enable(): Map<String, ModuleOperationResult> = try {
+        manager.enableStartup()
+    } catch (cause: Throwable) {
+        terminateAfterStartupFailure(cause)
+        throw cause
+    }
 
-    suspend fun shutdown() = manager.shutdown()
+    suspend fun shutdown() {
+        try {
+            manager.shutdown()
+        } finally {
+            releaseProcessSlot()
+        }
+    }
+
+    private fun releaseProcessSlot() {
+        activeKernel.compareAndSet(this, null)
+    }
+
+    private suspend fun terminateAfterStartupFailure(primary: Throwable) {
+        try {
+            withContext(NonCancellable) { manager.shutdown() }
+        } catch (cleanupFailure: Throwable) {
+            if (cleanupFailure !== primary) primary.addSuppressed(cleanupFailure)
+        } finally {
+            releaseProcessSlot()
+        }
+    }
 }

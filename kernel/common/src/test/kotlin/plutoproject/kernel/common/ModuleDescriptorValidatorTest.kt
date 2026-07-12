@@ -79,7 +79,9 @@ class ModuleDescriptorValidatorTest {
                     factoryInvocations++
                     error("must not run")
                 },
-                contextFactory = ModuleContextFactory { TestContext(it.id) },
+                contextFactory = ModuleContextFactory { descriptor, koin, services ->
+                    TestContext(descriptor.id, koin, services)
+                },
             )
         }
         assertEquals(0, factoryInvocations)

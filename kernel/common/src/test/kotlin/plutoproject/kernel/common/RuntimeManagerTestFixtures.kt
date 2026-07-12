@@ -4,8 +4,11 @@ import java.nio.file.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import org.koin.core.Koin
 import plutoproject.kernel.api.ModuleContext
+import plutoproject.kernel.api.ModuleContextElement
 import plutoproject.kernel.api.ModuleDescriptor
+import plutoproject.kernel.api.ModuleServices
 import plutoproject.kernel.api.ModuleType
 import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.RuntimeModule
@@ -63,10 +66,12 @@ internal class TestModule(
 
 internal class TestContext(
     override val id: String,
+    override val koin: Koin,
+    override val services: ModuleServices,
 ) : ModuleContext {
     override val logger: System.Logger = System.getLogger("test.$id")
     override val dataFolder: Path = Path.of("build/test-data", id)
-    override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob())
+    override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + ModuleContextElement(this))
 
     override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
         error("Resource saving is not available in lifecycle test contexts")
@@ -96,8 +101,8 @@ internal class ManagerFixture(
                 failDisable = failures[descriptor.id] == "disable",
             )
         },
-        contextFactory = ModuleContextFactory { descriptor ->
-            TestContext(descriptor.id).also { contexts[descriptor.id] = it }
+        contextFactory = ModuleContextFactory { descriptor, koin, services ->
+            TestContext(descriptor.id, koin, services).also { contexts[descriptor.id] = it }
         },
     )
 

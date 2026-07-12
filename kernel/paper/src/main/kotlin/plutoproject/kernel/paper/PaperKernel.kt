@@ -6,10 +6,13 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.koin.core.Koin
 import org.bukkit.plugin.Plugin
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import plutoproject.kernel.api.ModuleDescriptor
+import plutoproject.kernel.api.ModuleContextElement
 import plutoproject.kernel.api.ModuleOperationResult
+import plutoproject.kernel.api.ModuleServices
 import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.paper.PaperModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
@@ -29,7 +32,9 @@ class PaperKernel(
         platform = Platform.PAPER,
         featureRoots = featureRoots,
         classLoader = classLoader,
-        contextFactory = ModuleContextFactory { descriptor -> createContext(descriptor, dataFolder) },
+        contextFactory = ModuleContextFactory { descriptor, koin, services ->
+            createContext(descriptor, dataFolder, koin, services)
+        },
         reporter = ModuleOperationReporter(::report),
     )
     private var commandsRegistered = false
@@ -58,10 +63,15 @@ class PaperKernel(
         commandsRegistered = true
     }
 
-    private fun createContext(descriptor: ModuleDescriptor, dataFolder: Path): PaperModuleContext {
+    private fun createContext(
+        descriptor: ModuleDescriptor,
+        dataFolder: Path,
+        koin: Koin,
+        services: ModuleServices,
+    ): PaperModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)
         Files.createDirectories(moduleDataFolder)
-        return PaperContext(plugin, descriptor.id, moduleDataFolder, classLoader)
+        return PaperContext(plugin, descriptor.id, moduleDataFolder, classLoader, koin, services)
     }
 
     private fun report(result: ModuleOperationResult) {
@@ -86,12 +96,16 @@ private class PaperContext(
     override val id: String,
     override val dataFolder: Path,
     classLoader: ClassLoader,
+    override val koin: Koin,
+    override val services: ModuleServices,
 ) : PaperModuleContext {
     private val resources = ModuleResourceSaver(id, dataFolder, classLoader)
     override val logger: System.Logger = System.getLogger("PlutoProject/$id")
-    override val coroutineScope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id"),
-    )
+    override val coroutineScope: CoroutineScope by lazy {
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id") + ModuleContextElement(this),
+        )
+    }
 
     override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
         resources.save(path, output, resourcePrefix, replace)

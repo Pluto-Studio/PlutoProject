@@ -178,8 +178,8 @@ private fun cancellationFixture(
         descriptors = descriptors,
         featureRoots = roots,
         moduleFactory = RuntimeModuleFactory { modules.getValue(it.id) },
-        contextFactory = ModuleContextFactory { descriptor ->
-            TestContext(descriptor.id).also { contexts[descriptor.id] = it }
+        contextFactory = ModuleContextFactory { descriptor, koin, services ->
+            TestContext(descriptor.id, koin, services).also { contexts[descriptor.id] = it }
         },
     )
     return CancellationFixture(manager, contexts)

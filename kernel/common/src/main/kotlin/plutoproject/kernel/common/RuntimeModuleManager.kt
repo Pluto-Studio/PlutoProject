@@ -9,8 +9,15 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.koin.core.Koin
+import org.koin.core.KoinApplication
+import org.koin.dsl.koinApplication
 import plutoproject.kernel.api.FeatureController
+import plutoproject.kernel.api.InternalKernelApi
 import plutoproject.kernel.api.ModuleContext
+import plutoproject.kernel.api.ModuleContextBinding
+import plutoproject.kernel.api.ModuleContextElement
+import plutoproject.kernel.api.ModuleServices
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleOperation
 import plutoproject.kernel.api.ModuleOperationResult
@@ -20,7 +27,7 @@ import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.RuntimeModule
 
 fun interface ModuleContextFactory {
-    fun create(descriptor: ModuleDescriptor): ModuleContext
+    fun create(descriptor: ModuleDescriptor, koin: Koin, services: ModuleServices): ModuleContext
 }
 
 class RuntimeModuleManager(
@@ -34,8 +41,17 @@ class RuntimeModuleManager(
     private data class LiveModule(
         val module: RuntimeModule,
         val context: ModuleContext,
+        val koinApplication: KoinApplication,
+        val services: RuntimeServiceRegistry.OwnerServices,
         var loadCompleted: Boolean = false,
         var disableStarted: Boolean = false,
+    )
+
+    private data class ModuleResources(
+        val context: ModuleContext?,
+        val koinApplication: KoinApplication?,
+        val services: RuntimeServiceRegistry.OwnerServices?,
+        val entrypoint: String?,
     )
 
     private val validatedDescriptors = ModuleDescriptorValidator.validateForPlatform(platform, descriptors)
@@ -44,6 +60,7 @@ class RuntimeModuleManager(
     val registry = ModuleRegistry(validatedDescriptors)
 
     private val lifecycleMutex = Mutex()
+    private val serviceRegistry = RuntimeServiceRegistry()
     private val liveModules = mutableMapOf<String, LiveModule>()
     @Volatile
     private var activeOptionalEdges: Set<ModuleEdge> = emptySet()
@@ -129,6 +146,13 @@ class RuntimeModuleManager(
                     hookCancellation = disableDuringShutdown(descriptor.id, hookCancellation)
                 }
             }
+            plan.orderedModules.asReversed().forEach { descriptor ->
+                val live = liveModules[descriptor.id] ?: return@forEach
+                val failure = terminateLiveModule(descriptor.id, live)
+                if (failure is CancellationException) {
+                    hookCancellation = hookCancellation?.apply { addSuppressed(failure) } ?: failure
+                }
+            }
             activeOptionalEdges = emptySet()
         }
         hookCancellation?.let { throw it }
@@ -137,76 +161,112 @@ class RuntimeModuleManager(
 
     fun activeOptionalDependencies(): Set<ModuleEdge> = activeOptionalEdges
 
+    @OptIn(plutoproject.kernel.api.InternalKernelApi::class)
     private suspend fun loadOne(descriptor: ModuleDescriptor): ModuleOperationResult {
         dependencyFailurePath(descriptor.id, ModuleState.LOADED)?.let { path ->
             return blocked(descriptor, ModuleOperation.LOAD, path)
         }
         registry.begin(descriptor.id, ModuleOperation.LOAD)
         var context: ModuleContext? = null
+        var koinApplication: KoinApplication? = null
+        var services: RuntimeServiceRegistry.OwnerServices? = null
+        var contextRegistered = false
         return try {
-            context = contextFactory.create(descriptor)
-            val module = moduleFactory.create(descriptor)
-            val live = LiveModule(module, context)
+            koinApplication = koinApplication()
+            services = serviceRegistry.owner(descriptor.id, koinApplication.koin)
+            context = contextFactory.create(descriptor, koinApplication.koin, services)
+            koinApplication.logger(ModuleKoinLogger(context.logger))
+            ModuleContextBinding.register(context, descriptor.entrypoint)
+            contextRegistered = true
+            val module = ModuleContextBinding.withContext(context) { moduleFactory.create(descriptor) }
+            services.activate()
+            val live = LiveModule(module, context, koinApplication, services)
             liveModules[descriptor.id] = live
-            module.onLoad(context)
+            invokeInContext(context) { module.onLoad(context) }
             live.loadCompleted = true
             succeeded(descriptor.id, ModuleOperation.LOAD, ModuleState.DISCOVERED, ModuleState.LOADED)
         } catch (cause: CancellationException) {
             if (liveModules[descriptor.id] == null) {
-                withContext(NonCancellable) { context?.cancelScope() }
+                withContext(NonCancellable) {
+                    cleanupBeforeLive(descriptor, context, koinApplication, services, contextRegistered)
+                        ?.let(cause::addSuppressed)
+                }
                 val state = if (context == null) ModuleState.DISCOVERED else ModuleState.DISABLED
                 registry.terminate(descriptor.id, state)
             }
             throw cause
         } catch (cause: Throwable) {
-            if (liveModules[descriptor.id] == null) {
-                context?.cancelScope()
+            val cleanupFailure = if (liveModules[descriptor.id] == null) {
+                cleanupBeforeLive(descriptor, context, koinApplication, services, contextRegistered)
             } else {
-                cleanup(descriptor.id)
+                runCleanup(descriptor.id)
             }
+            if (cleanupFailure != null) cause.addSuppressed(cleanupFailure)
             failed(descriptor.id, ModuleOperation.LOAD, "onLoad", cause, ModuleState.FAILED)
         }
     }
+
+    @OptIn(plutoproject.kernel.api.InternalKernelApi::class)
+    private suspend fun cleanupBeforeLive(
+        descriptor: ModuleDescriptor,
+        context: ModuleContext?,
+        koinApplication: KoinApplication?,
+        services: RuntimeServiceRegistry.OwnerServices?,
+        contextRegistered: Boolean,
+    ): Throwable? = cleanupResources(
+        ModuleResources(
+            context = context,
+            koinApplication = koinApplication,
+            services = services,
+            entrypoint = descriptor.entrypoint.takeIf { contextRegistered },
+        ),
+    )
 
     private suspend fun enableOne(descriptor: ModuleDescriptor): ModuleOperationResult? {
         if (registry.state(descriptor.id) != ModuleState.LOADED) return null
         dependencyFailurePath(descriptor.id, ModuleState.ENABLED)?.let { path ->
             val live = liveModules[descriptor.id]
             try {
-                live?.disableStarted = true
-                live?.module?.onDisable(live.context)
+                live?.let { disableLive(it) }
             } catch (cause: CancellationException) {
                 throw cause
             } catch (_: Throwable) {
                 // Dependency failure remains the primary result on this path.
             }
-            cleanup(descriptor.id)
+            runCleanup(descriptor.id)
             return blocked(descriptor, ModuleOperation.ENABLE, path)
         }
         registry.begin(descriptor.id, ModuleOperation.ENABLE)
         val live = liveModules.getValue(descriptor.id)
         return try {
-            live.module.onEnable(live.context)
+            invokeInContext(live.context) { live.module.onEnable(live.context) }
             succeeded(descriptor.id, ModuleOperation.ENABLE, ModuleState.LOADED, ModuleState.ENABLED)
         } catch (cause: Throwable) {
             if (cause is CancellationException) throw cause
-            try {
-                live.disableStarted = true
-                live.module.onDisable(live.context)
-            } catch (cleanupCancellation: CancellationException) {
-                cleanupCancellation.addSuppressed(cause)
-                throw cleanupCancellation
-            } catch (cleanupFailure: Throwable) {
-                cause.addSuppressed(cleanupFailure)
-            }
-            try {
-                cleanup(descriptor.id)
-            } catch (cleanupCancellation: CancellationException) {
-                cleanupCancellation.addSuppressed(cause)
-                throw cleanupCancellation
-            }
-            failed(descriptor.id, ModuleOperation.ENABLE, "onEnable", cause, ModuleState.FAILED)
+            rollbackEnable(descriptor.id, live, cause)
         }
+    }
+
+    private suspend fun rollbackEnable(
+        id: String,
+        live: LiveModule,
+        enableFailure: Throwable,
+    ): ModuleOperationResult.Failed {
+        try {
+            disableLive(live)
+        } catch (cause: CancellationException) {
+            cause.addSuppressed(enableFailure)
+            throw cause
+        } catch (cause: Throwable) {
+            enableFailure.addSuppressed(cause)
+        }
+        val cleanupFailure = runCleanup(id)
+        if (cleanupFailure is CancellationException) {
+            cleanupFailure.addSuppressed(enableFailure)
+            throw cleanupFailure
+        }
+        if (cleanupFailure != null) enableFailure.addSuppressed(cleanupFailure)
+        return failed(id, ModuleOperation.ENABLE, "onEnable", enableFailure, ModuleState.FAILED)
     }
 
     private suspend fun disableOne(id: String, finalState: ModuleState): ModuleOperationResult {
@@ -215,45 +275,103 @@ class RuntimeModuleManager(
         val live = liveModules[id]
         try {
             val hookFailure = try {
-                live?.disableStarted = true
-                live?.module?.onDisable(live.context)
+                live?.let { disableLive(it) }
                 null
             } catch (cause: CancellationException) {
                 throw cause
             } catch (cause: Throwable) {
                 cause
             }
-            cleanup(id)
+            val cleanupFailure = runCleanup(id)
             removeOptionalEdges(id)
-            return if (hookFailure == null) {
+            val failure = combineFailures(hookFailure, cleanupFailure)
+            return if (failure == null) {
                 succeeded(id, ModuleOperation.DISABLE, previousState, finalState)
             } else {
-                failed(id, ModuleOperation.DISABLE, "onDisable", hookFailure, finalState)
+                failed(
+                    id,
+                    ModuleOperation.DISABLE,
+                    if (hookFailure == null) "cleanup" else "onDisable",
+                    failure,
+                    finalState,
+                )
             }
         } catch (cause: CancellationException) {
-            withContext(NonCancellable) {
-                val cleanupFailure = runCleanup(id)
-                removeOptionalEdges(id)
-                val reportableFailure = cleanupFailure?.reportableFailure()
-                if (reportableFailure == null) {
-                    registry.terminate(id, finalState)
-                } else {
-                    failed(id, ModuleOperation.DISABLE, "cleanup", reportableFailure, finalState)
-                }
-                if (cleanupFailure != null) cause.addSuppressed(cleanupFailure)
-            }
-            throw cause
+            completeCancelledDisable(id, finalState, cause)
         }
     }
 
+    private suspend fun completeCancelledDisable(
+        id: String,
+        finalState: ModuleState,
+        cancellation: CancellationException,
+    ): Nothing {
+        withContext(NonCancellable) {
+            val cleanupFailure = runCleanup(id)
+            removeOptionalEdges(id)
+            val reportableFailure = cleanupFailure?.reportableFailure()
+            if (reportableFailure == null) {
+                registry.terminate(id, finalState)
+            } else {
+                failed(id, ModuleOperation.DISABLE, "cleanup", reportableFailure, finalState)
+            }
+            if (cleanupFailure != null) cancellation.addSuppressed(cleanupFailure)
+        }
+        throw cancellation
+    }
+
+    @OptIn(InternalKernelApi::class)
     private suspend fun cleanup(id: String) {
         val live = liveModules[id] ?: return
-        live.context.cancelScope()
+        val failure = cleanupResources(
+            ModuleResources(
+                context = live.context,
+                koinApplication = live.koinApplication,
+                services = live.services,
+                entrypoint = registry.descriptor(id)!!.entrypoint,
+            ),
+        )
         liveModules.remove(id, live)
+        if (failure != null) throw failure
+    }
+
+    @OptIn(InternalKernelApi::class)
+    private suspend fun cleanupResources(resources: ModuleResources): Throwable? {
+        var failure: Throwable? = null
+        suspend fun runStep(block: suspend () -> Unit) {
+            try {
+                block()
+            } catch (cause: Throwable) {
+                failure = combineFailures(failure, cause)
+            }
+        }
+
+        runStep { resources.services?.beginClosing() }
+        runStep { resources.context?.cancelScope() }
+        runStep { resources.koinApplication?.close() }
+        runStep { resources.services?.close() }
+        runStep { resources.entrypoint?.let(ModuleContextBinding::close) }
+        return failure
     }
 
     private suspend fun ModuleContext.cancelScope() {
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
+    }
+
+    private suspend fun <T> invokeInContext(context: ModuleContext, block: suspend () -> T): T {
+        var hookCancellation: CancellationException? = null
+        return try {
+            withContext(ModuleContextElement(context)) {
+                try {
+                    block()
+                } catch (cause: CancellationException) {
+                    hookCancellation = cause
+                    throw cause
+                }
+            }
+        } catch (cause: CancellationException) {
+            throw hookCancellation ?: cause
+        }
     }
 
     private suspend fun terminateStartup(cause: CancellationException): Nothing {
@@ -273,9 +391,8 @@ class RuntimeModuleManager(
         registry.begin(id, ModuleOperation.DISABLE)
         var failure: Throwable? = null
         if (live.loadCompleted && !live.disableStarted) {
-            live.disableStarted = true
             failure = try {
-                live.module.onDisable(live.context)
+                disableLive(live)
                 null
             } catch (cause: Throwable) {
                 cause
@@ -285,6 +402,12 @@ class RuntimeModuleManager(
         removeOptionalEdges(id)
         completeTermination(id, failure)
         return failure
+    }
+
+    private suspend fun disableLive(live: LiveModule) {
+        live.disableStarted = true
+        live.services.beginClosing()
+        invokeInContext(live.context) { live.module.onDisable(live.context) }
     }
 
     private suspend fun runCleanup(id: String): Throwable? = try {
