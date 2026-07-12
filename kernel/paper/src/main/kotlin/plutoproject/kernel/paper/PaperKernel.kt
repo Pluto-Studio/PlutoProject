@@ -14,6 +14,7 @@ import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.paper.PaperModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
+import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
 
 class PaperKernel(
@@ -21,7 +22,7 @@ class PaperKernel(
     dataFolder: Path,
     featureRoots: Collection<String>,
     registerCommands: Boolean = true,
-    classLoader: ClassLoader = plugin.javaClass.classLoader,
+    private val classLoader: ClassLoader = plugin.javaClass.classLoader,
 ) {
     private val registerCommands = registerCommands
     private val kernel = RuntimeKernel(
@@ -60,7 +61,7 @@ class PaperKernel(
     private fun createContext(descriptor: ModuleDescriptor, dataFolder: Path): PaperModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)
         Files.createDirectories(moduleDataFolder)
-        return PaperContext(plugin, descriptor.id, moduleDataFolder)
+        return PaperContext(plugin, descriptor.id, moduleDataFolder, classLoader)
     }
 
     private fun report(result: ModuleOperationResult) {
@@ -84,9 +85,14 @@ private class PaperContext(
     override val plugin: Plugin,
     override val id: String,
     override val dataFolder: Path,
+    classLoader: ClassLoader,
 ) : PaperModuleContext {
+    private val resources = ModuleResourceSaver(id, dataFolder, classLoader)
     override val logger: System.Logger = System.getLogger("PlutoProject/$id")
     override val coroutineScope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id"),
     )
+
+    override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
+        resources.save(path, output, resourcePrefix, replace)
 }

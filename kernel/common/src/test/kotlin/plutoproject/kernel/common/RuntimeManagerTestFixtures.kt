@@ -68,6 +68,9 @@ internal class TestContext(
     override val dataFolder: Path = Path.of("build/test-data", id)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob())
 
+    override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
+        error("Resource saving is not available in lifecycle test contexts")
+
     val job: Job get() = coroutineScope.coroutineContext[Job]!!
 }
 

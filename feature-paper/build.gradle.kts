@@ -7,6 +7,7 @@ dependencies {
     api(projects.featureCommon)
     api(project(":feature:whitelist-v2:adapter-paper"))
     api(project(":feature:gallery:adapter-paper"))
+    api(project(":capability:mongo:paper"))
     ksp(projects.frameworkCommon)
     // KSP Processor 需要
     ksp(libs.kotlinx.serialization)

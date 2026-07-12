@@ -18,6 +18,7 @@ import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.velocity.VelocityModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
+import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
 
 class VelocityKernel(
@@ -27,7 +28,7 @@ class VelocityKernel(
     dataFolder: Path,
     featureRoots: Collection<String>,
     registerCommands: Boolean = true,
-    classLoader: ClassLoader = pluginContainer.javaClass.classLoader,
+    private val classLoader: ClassLoader = pluginContainer.javaClass.classLoader,
 ) {
     private val kernel = RuntimeKernel(
         platform = Platform.VELOCITY,
@@ -57,7 +58,7 @@ class VelocityKernel(
     private fun createContext(descriptor: ModuleDescriptor, dataFolder: Path): VelocityModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)
         Files.createDirectories(moduleDataFolder)
-        return VelocityContext(proxyServer, pluginContainer, descriptor.id, moduleDataFolder)
+        return VelocityContext(proxyServer, pluginContainer, descriptor.id, moduleDataFolder, classLoader)
     }
 
     private fun report(result: ModuleOperationResult) {
@@ -82,9 +83,14 @@ private class VelocityContext(
     override val pluginContainer: PluginContainer,
     override val id: String,
     override val dataFolder: Path,
+    classLoader: ClassLoader,
 ) : VelocityModuleContext {
+    private val resources = ModuleResourceSaver(id, dataFolder, classLoader)
     override val logger: System.Logger = System.getLogger("PlutoProject/$id")
     override val coroutineScope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id"),
     )
+
+    override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
+        resources.save(path, output, resourcePrefix, replace)
 }

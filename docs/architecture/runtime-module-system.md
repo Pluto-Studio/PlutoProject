@@ -543,8 +543,29 @@ interface ModuleContext {
     val logger: Logger
     val dataFolder: Path
     val coroutineScope: CoroutineScope
+
+    fun saveResource(
+        path: String,
+        output: Path = Path.of(path),
+        resourcePrefix: String? = null,
+        replace: Boolean = false,
+    ): Path
 }
 ```
+
+`saveResource` resolves resources from `module/<module-id>/<path>` by default.
+A non-null `resourcePrefix` replaces `module/<module-id>`. Resource paths and
+prefixes are normalized relative paths and reject empty values and `..`
+segments. Relative output paths resolve under `dataFolder`; absolute output
+paths are used unchanged. The Kernel creates output parent directories and
+uses the same class loader as module discovery and runtime construction.
+
+Existing output files are returned unchanged unless `replace` is true. Writes
+use `Files.copy` directly; concurrent creation conflicts propagate to the
+caller. Missing packaged resources fail immediately with an exception that
+identifies the module and complete resource path. This helper does not transfer
+ownership of the resulting file to the Kernel: modules remain responsible for
+any cleanup their behavior requires.
 
 The Kernel creates the module coroutine scope and therefore always cancels and joins it when the module ends. The Kernel also clears its own state and instance references. Listeners, commands, scheduler tasks, recipes, GUI state, subscriptions, service hooks, Koin definitions, database clients, and all other side effects created by module code remain the module's responsibility.
 
@@ -968,6 +989,12 @@ feat(kernel): 添加运行时模块管理命令
 ```
 
 ### Phase 6: Extract Capabilities
+
+Status: In progress (2026-07-12). The `mongo` capability API, shared lifecycle
+implementation, and thin Paper and Velocity runtime entrypoints have been
+extracted. Legacy consumers remain on the old connection until their runtime
+feature descriptors declare `mongo`; this avoids activating MongoDB when the
+Kernel has no capability consumer.
 
 Extract capabilities in dependency order:
 
