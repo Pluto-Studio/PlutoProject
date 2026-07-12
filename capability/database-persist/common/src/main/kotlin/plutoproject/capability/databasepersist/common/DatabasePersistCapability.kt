@@ -4,7 +4,7 @@ import org.koin.dsl.module
 import plutoproject.capability.databasepersist.api.DatabasePersist
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.capability.mongo.api.getCollection
-import plutoproject.capability.server_identifier.api.ServerIdentifier
+import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import plutoproject.kernel.api.*
 
 class DatabasePersistCapability(

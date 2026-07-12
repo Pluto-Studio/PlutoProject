@@ -1,4 +1,4 @@
-package plutoproject.capability.server_identifier.api
+package plutoproject.capability.serveridentifier.api
 
 interface ServerIdentifier {
     val identifier: String?

@@ -1,6 +1,6 @@
-package plutoproject.capability.server_identifier.velocity
+package plutoproject.capability.serveridentifier.velocity
 
-import plutoproject.capability.server_identifier.common.ServerIdentifierCapability
+import plutoproject.capability.serveridentifier.common.ServerIdentifierCapability
 import plutoproject.kernel.api.Capability
 import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.RuntimeModule

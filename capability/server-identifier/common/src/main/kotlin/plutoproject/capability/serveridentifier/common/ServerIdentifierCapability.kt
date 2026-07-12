@@ -1,11 +1,11 @@
-package plutoproject.capability.server_identifier.common
+package plutoproject.capability.serveridentifier.common
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import java.nio.file.Files
 import java.nio.file.Path
-import plutoproject.capability.server_identifier.api.ServerIdentifier
+import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.exportService

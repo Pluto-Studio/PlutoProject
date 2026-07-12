@@ -1,4 +1,4 @@
-package plutoproject.capability.server_identifier.common
+package plutoproject.capability.serveridentifier.common
 
 import java.nio.file.Path
 import kotlin.io.path.createTempFile
