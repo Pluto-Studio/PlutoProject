@@ -18,8 +18,7 @@ import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.exportService
-import plutoproject.kernel.api.getModule
-import plutoproject.kernel.api.loadModuleDefinitions
+import plutoproject.kernel.api.loadKoinModuleDefinitions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
@@ -33,7 +32,7 @@ class MongoCapability : RuntimeModule {
             .addPropertySource(PropertySource.file(configFile.toFile()))
             .build()
             .loadConfigOrThrow<MongoConfig>()
-        context.loadModuleDefinitions(module {
+        context.loadKoinModuleDefinitions(module {
             single { DefaultMongoConnection(config) }.onClose { it?.close() }
             single<MongoConnection> { get<DefaultMongoConnection>() }
         })

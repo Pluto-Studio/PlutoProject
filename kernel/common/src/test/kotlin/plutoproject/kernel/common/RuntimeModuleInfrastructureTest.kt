@@ -24,9 +24,9 @@ import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.currentModuleContext
 import plutoproject.kernel.api.currentModuleContextOrNull
 import plutoproject.kernel.api.exportService
-import plutoproject.kernel.api.getModule
+import plutoproject.kernel.api.koinGet
 import plutoproject.kernel.api.getService
-import plutoproject.kernel.api.loadModuleDefinitions
+import plutoproject.kernel.api.loadKoinModuleDefinitions
 
 class RuntimeModuleInfrastructureTest {
     @Test
@@ -42,17 +42,17 @@ class RuntimeModuleInfrastructureTest {
                     closed[id] = marker
                     val eagerCreated = AtomicBoolean()
                     eager[id] = eagerCreated
-                    context.loadModuleDefinitions(module {
+                    context.loadKoinModuleDefinitions(module {
                         single { "$id-value" }
                         single { CloseMarker(marker) }.onClose { it?.close() }
                         factory(named("parameterized")) { parameters -> "${parameters.get<String>()}-$id" }
                     })
-                    context.loadModuleDefinitions(module(createdAtStart = true) {
+                    context.loadKoinModuleDefinitions(module(createdAtStart = true) {
                         single(named("eager")) { eagerCreated.apply { set(true) } }
                     })
-                    context.getModule<CloseMarker>()
-                    values[id] = context.getModule()
-                    parameterized[id] = context.getModule(named("parameterized")) { parametersOf("input") }
+                    context.koinGet<CloseMarker>()
+                    values[id] = context.koinGet()
+                    parameterized[id] = context.koinGet(named("parameterized")) { parametersOf("input") }
                 }
             }
         }

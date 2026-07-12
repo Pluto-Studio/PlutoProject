@@ -1,33 +1,40 @@
 package plutoproject.kernel.api
 
-import org.koin.core.Koin
+import org.koin.core.module.Module
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
-import org.koin.core.module.Module
 
-inline fun <reified T : Any> ModuleContext.injectModule(
+inline fun <reified T : Any> ModuleContext.koinInject(
     qualifier: Qualifier? = null,
     mode: LazyThreadSafetyMode = LazyThreadSafetyMode.SYNCHRONIZED,
     noinline parameters: ParametersDefinition? = null,
-): Lazy<T> = lazy(mode) { getModule(qualifier, parameters) }
+): Lazy<T> = lazy(mode) { koinGet(qualifier, parameters) }
 
-inline fun <reified T : Any> injectModule(
+inline fun <reified T : Any> koinInject(
     qualifier: Qualifier? = null,
     mode: LazyThreadSafetyMode = LazyThreadSafetyMode.SYNCHRONIZED,
     noinline parameters: ParametersDefinition? = null,
-): Lazy<T> = currentModuleContext().injectModule(qualifier, mode, parameters)
+): Lazy<T> = currentModuleContext().koinInject(qualifier, mode, parameters)
 
-inline fun <reified T : Any> ModuleContext.getModule(
+inline fun <reified T : Any> ModuleContext.koinGet(
     qualifier: Qualifier? = null,
     noinline parameters: ParametersDefinition? = null,
 ): T = koin.get(qualifier, parameters)
 
-inline fun <reified T : Any> getModule(
+inline fun <reified T : Any> koinGet(
     qualifier: Qualifier? = null,
     noinline parameters: ParametersDefinition? = null,
-): T = currentModuleContext().getModule(qualifier, parameters)
+): T = currentModuleContext().koinGet(qualifier, parameters)
 
-fun ModuleContext.loadModuleDefinitions(
+fun ModuleContext.loadKoinModuleDefinitions(
+    vararg modules: Module,
+    allowOverride: Boolean = true,
+    createEagerInstances: Boolean = true,
+) {
+    loadKoinModuleDefinitions(modules.toList(), allowOverride, createEagerInstances)
+}
+
+fun ModuleContext.loadKoinModuleDefinitions(
     modules: List<Module>,
     allowOverride: Boolean = true,
     createEagerInstances: Boolean = true,
@@ -35,28 +42,22 @@ fun ModuleContext.loadModuleDefinitions(
     koin.loadModules(modules, allowOverride, createEagerInstances)
 }
 
-fun ModuleContext.loadModuleDefinitions(
-    module: Module,
+fun loadKoinModuleDefinitions(
+    vararg modules: Module,
     allowOverride: Boolean = true,
     createEagerInstances: Boolean = true,
-) = loadModuleDefinitions(listOf(module), allowOverride, createEagerInstances)
+) = currentModuleContext().loadKoinModuleDefinitions(modules.toList(), allowOverride, createEagerInstances)
 
-fun loadModuleDefinitions(
+fun loadKoinModuleDefinitions(
     modules: List<Module>,
     allowOverride: Boolean = true,
     createEagerInstances: Boolean = true,
-) = currentModuleContext().loadModuleDefinitions(modules, allowOverride, createEagerInstances)
+) = currentModuleContext().loadKoinModuleDefinitions(modules, allowOverride, createEagerInstances)
 
-fun loadModuleDefinitions(
-    module: Module,
-    allowOverride: Boolean = true,
-    createEagerInstances: Boolean = true,
-) = currentModuleContext().loadModuleDefinitions(module, allowOverride, createEagerInstances)
+fun ModuleContext.unloadKoinModuleDefinitions(modules: List<Module>) = koin.unloadModules(modules)
 
-fun ModuleContext.unloadModuleDefinitions(modules: List<Module>) = koin.unloadModules(modules)
+fun ModuleContext.unloadKoinModuleDefinitions(module: Module) = unloadKoinModuleDefinitions(listOf(module))
 
-fun ModuleContext.unloadModuleDefinitions(module: Module) = unloadModuleDefinitions(listOf(module))
+fun unloadKoinModuleDefinitions(modules: List<Module>) = currentModuleContext().unloadKoinModuleDefinitions(modules)
 
-fun unloadModuleDefinitions(modules: List<Module>) = currentModuleContext().unloadModuleDefinitions(modules)
-
-fun unloadModuleDefinitions(module: Module) = currentModuleContext().unloadModuleDefinitions(module)
+fun unloadKoinModuleDefinitions(module: Module) = currentModuleContext().unloadKoinModuleDefinitions(module)

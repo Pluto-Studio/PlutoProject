@@ -41,6 +41,6 @@ inline fun <reified T : Any> ModuleServices.getServiceOrNull(): T? = getServiceO
 
 inline fun <reified T : Any> ModuleContext.importService(qualifier: Qualifier? = null): Module {
     val definitions = module { factory(qualifier) { services.getService<T>() } }
-    loadModuleDefinitions(definitions)
+    loadKoinModuleDefinitions(definitions)
     return definitions
 }
