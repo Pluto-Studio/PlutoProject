@@ -11,10 +11,11 @@ import org.bson.BsonValue
 import org.bson.Document
 import plutoproject.capability.databasepersist.api.DataTypeAdapter
 import plutoproject.capability.mongo.api.MongoConnection
-import java.lang.System.Logger
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class PersistContainerImpl(
     override val playerId: UUID,
@@ -38,7 +39,7 @@ class PersistContainerImpl(
         changeStream.subscribe(playerId) { event ->
             runCatching { update(event) }
                 .onFailure {
-                    logger.log(Logger.Level.ERROR, "Exception caught while trying to update container $playerId", it)
+                    logger.log(Level.SEVERE, "Exception caught while trying to update container $playerId", it)
                 }
         }
     }

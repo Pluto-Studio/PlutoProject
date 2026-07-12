@@ -9,9 +9,10 @@ import org.bson.BsonDocument
 import org.bson.Document
 import plutoproject.capability.databasepersist.api.adapters.SerializationTypeAdapter
 import plutoproject.capability.mongo.api.MongoConnection
-import java.lang.System.Logger
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Level
+import java.util.logging.Logger
 
 typealias ActionOnChange = (event: ChangeStreamDocument<Document>) -> Unit
 
@@ -54,14 +55,14 @@ class DataChangeStream(
             runCatching {
                 subscribers[playerId]?.invoke(event)
             }.onFailure {
-                logger.log(Logger.Level.ERROR, "Error calling subscriber for $playerId", it)
+                logger.log(Level.SEVERE, "Error calling subscriber for $playerId", it)
             }
         }
     }.also { job ->
         job.invokeOnCompletion { cause ->
             synchronized(stateLock) {
                 if (cause is CancellationException || !isValid) return@synchronized
-                logger.log(Logger.Level.ERROR, "Error occurred while listening to change stream", cause)
+                logger.log(Level.SEVERE, "Error occurred while listening to change stream", cause)
                 changeStreamJob = runChangeStreamJob()
             }
         }

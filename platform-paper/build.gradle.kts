@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":capability:server-identifier:paper"))
     implementation(project(":capability:database-persist:paper"))
     implementation(project(":capability:profile:paper"))
+    implementation(project(":capability:interactive:paper"))
 }
 
 paperPluginYaml {

@@ -98,7 +98,7 @@ private class VelocityContext(
     override val services: ModuleServices,
 ) : VelocityModuleContext {
     private val resources = ModuleResourceSaver(id, dataFolder, classLoader)
-    override val logger: System.Logger = System.getLogger("PlutoProject/$id")
+    override val logger: Logger = Logger.getLogger("PlutoProject/$id")
     override val coroutineScope: CoroutineScope by lazy {
         CoroutineScope(
             SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id") + ModuleContextElement(this),

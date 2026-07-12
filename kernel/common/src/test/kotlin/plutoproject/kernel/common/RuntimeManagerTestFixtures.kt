@@ -1,6 +1,7 @@
 package plutoproject.kernel.common
 
 import java.nio.file.Path
+import java.util.logging.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -69,7 +70,7 @@ internal class TestContext(
     override val koin: Koin,
     override val services: ModuleServices,
 ) : ModuleContext {
-    override val logger: System.Logger = System.getLogger("test.$id")
+    override val logger: Logger = Logger.getLogger("test.$id")
     override val dataFolder: Path = Path.of("build/test-data", id)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + ModuleContextElement(this))
 

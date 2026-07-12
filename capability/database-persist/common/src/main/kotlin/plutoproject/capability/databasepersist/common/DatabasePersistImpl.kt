@@ -3,9 +3,9 @@ package plutoproject.capability.databasepersist.common
 import kotlinx.coroutines.*
 import plutoproject.capability.databasepersist.api.PersistContainer
 import plutoproject.capability.mongo.api.MongoConnection
-import java.lang.System.Logger
 import java.time.Instant
 import java.util.*
+import java.util.logging.Logger
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 

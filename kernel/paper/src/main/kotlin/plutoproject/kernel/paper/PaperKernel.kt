@@ -2,6 +2,7 @@ package plutoproject.kernel.paper
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.logging.Logger
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -100,7 +101,7 @@ private class PaperContext(
     override val services: ModuleServices,
 ) : PaperModuleContext {
     private val resources = ModuleResourceSaver(id, dataFolder, classLoader)
-    override val logger: System.Logger = System.getLogger("PlutoProject/$id")
+    override val logger: Logger = Logger.getLogger("PlutoProject/$id")
     override val coroutineScope: CoroutineScope by lazy {
         CoroutineScope(
             SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id") + ModuleContextElement(this),

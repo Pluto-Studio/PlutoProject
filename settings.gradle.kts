@@ -104,5 +104,8 @@ includeProject(":capability:profile:common")
 includeProject(":capability:profile:paper")
 includeProject(":capability:profile:velocity")
 
+includeProject(":capability:interactive:paper")
+includeProject(":capability:interactive:api")
+
 include("platform-paper")
 include("platform-velocity")
