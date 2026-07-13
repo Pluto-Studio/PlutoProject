@@ -3,6 +3,7 @@ package plutoproject.feature.gallery.paper
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,7 @@ import kotlin.coroutines.CoroutineContext
     requiredCapabilities = ["mongo", "server_identifier", "interactive", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class GalleryFeature : RuntimeModule {
     private var annotationParser: AnnotationParser<CommandSender>? = null
     private val commandRoots = linkedSetOf<String>()
@@ -47,6 +49,8 @@ class GalleryFeature : RuntimeModule {
         context as PaperModuleContext
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(GalleryFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

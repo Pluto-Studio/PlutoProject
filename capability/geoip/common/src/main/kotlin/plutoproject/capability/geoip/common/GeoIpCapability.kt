@@ -2,6 +2,7 @@ package plutoproject.capability.geoip.common
 
 import com.maxmind.geoip2.DatabaseReader
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.koin.dsl.module
@@ -12,10 +13,13 @@ import plutoproject.kernel.api.RuntimeModule
 import plutoproject.kernel.api.exportServiceFromKoin
 import plutoproject.kernel.api.loadKoinModuleDefinitions
 
+@OptIn(ExperimentalHoplite::class)
 class GeoIpCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(GeoIpCapability::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

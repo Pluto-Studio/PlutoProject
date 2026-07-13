@@ -1,6 +1,7 @@
 package plutoproject.feature.whitelist.paper
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ import java.util.logging.Logger
     requiredCapabilities = ["mongo", "charonflow"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class WhitelistFeature : RuntimeModule {
     private var visitorListener: VisitorListener? = null
     private var restrictionListener: VisitorRestrictionListener? = null
@@ -32,6 +34,8 @@ class WhitelistFeature : RuntimeModule {
 
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(WhitelistFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

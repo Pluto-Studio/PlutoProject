@@ -1,6 +1,7 @@
 package plutoproject.capability.serveridentifier.common
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import java.nio.file.Files
@@ -43,9 +44,12 @@ internal fun resolveServerIdentifier(
     return identifier
 }
 
+@OptIn(ExperimentalHoplite::class)
 private fun readIdentifier(configFile: Path): String? {
     if (Files.notExists(configFile)) return null
     return ConfigLoaderBuilder.empty()
+        .withClassLoader(ServerIdentifierCapability::class.java.classLoader)
+        .withExplicitSealedTypes()
         .addDefaults()
         .addParser("conf", HoconParser())
         .addPropertySource(PropertySource.file(configFile.toFile()))

@@ -3,6 +3,7 @@ package plutoproject.capability.charonflow.common
 import club.plutoproject.charonflow.CharonFlow
 import club.plutoproject.charonflow.dsl.serialization
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.koin.dsl.module
@@ -14,10 +15,13 @@ import plutoproject.kernel.api.exportServiceFromKoin
 import plutoproject.kernel.api.importServiceToKoin
 import plutoproject.kernel.api.loadKoinModuleDefinitions
 
+@OptIn(ExperimentalHoplite::class)
 class CharonFlowCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(CharonFlowCapability::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

@@ -2,6 +2,7 @@ package plutoproject.platform.common
 
 import com.typesafe.config.ConfigFactory
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.hocon.Hocon
 import kotlinx.serialization.hocon.decodeFromConfig
@@ -11,7 +12,7 @@ import kotlin.io.path.pathString
 
 @Serializable
 data class PlatformConfig(
-    val enableFeatures: List<String> = listOf()
+    @SerialName("enable-features") val enableFeatures: List<String> = listOf()
 )
 
 @OptIn(ExperimentalSerializationApi::class)

@@ -2,6 +2,7 @@ package plutoproject.feature.whitelist.velocity
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ import java.util.logging.Logger
     requiredCapabilities = ["mongo", "charonflow", "geoip", "profile", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class WhitelistFeature : RuntimeModule {
     private var playerListener: PlayerListener? = null
     private var visitorListener: VisitorListener? = null
@@ -41,6 +43,8 @@ class WhitelistFeature : RuntimeModule {
         context as VelocityModuleContext
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(WhitelistFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

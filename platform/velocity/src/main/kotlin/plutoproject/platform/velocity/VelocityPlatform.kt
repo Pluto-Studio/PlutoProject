@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import plutoproject.kernel.velocity.VelocityKernel
 import plutoproject.platform.common.resolvePlatformConfig
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.logging.Logger
 
@@ -26,6 +27,13 @@ class VelocityPlatform {
         logger: Logger,
         @DataDirectory dataDirectory: Path
     ) {
+        Files.createDirectories(dataDirectory)
+        val configPath = dataDirectory.resolve("config.conf")
+        if (Files.notExists(configPath)) {
+            requireNotNull(javaClass.classLoader.getResourceAsStream("config.conf")) {
+                "Platform configuration resource 'config.conf' doesn't exist"
+            }.use { Files.copy(it, configPath) }
+        }
         SuspendingPluginContainer(plugin, server, LoggerFactory.getLogger("PlutoProject/MCCoroutine"))
             .initialize(this)
         kernel = VelocityKernel(
@@ -33,7 +41,7 @@ class VelocityPlatform {
             pluginContainer = plugin,
             logger = logger,
             dataFolder = dataDirectory,
-            featureRoots = resolvePlatformConfig(dataDirectory.resolve("config.conf")).enableFeatures
+            featureRoots = resolvePlatformConfig(configPath).enableFeatures
         )
         runBlocking { kernel.load() }
     }

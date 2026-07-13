@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     `java-library`
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 val baseGroup = "club.plutoproject"

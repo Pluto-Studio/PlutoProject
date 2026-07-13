@@ -9,6 +9,7 @@ import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.bson.UuidRepresentation
@@ -23,10 +24,13 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 
+@OptIn(ExperimentalHoplite::class)
 class MongoCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(MongoCapability::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))
