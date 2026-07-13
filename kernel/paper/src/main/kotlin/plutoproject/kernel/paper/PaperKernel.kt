@@ -1,34 +1,29 @@
 package plutoproject.kernel.paper
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.logging.Logger
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import org.koin.core.Koin
 import org.bukkit.plugin.Plugin
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
-import plutoproject.kernel.api.ModuleDescriptor
-import plutoproject.kernel.api.ModuleContextElement
-import plutoproject.kernel.api.ModuleOperationResult
-import plutoproject.kernel.api.ModuleServices
-import plutoproject.kernel.api.Platform
+import org.koin.core.Koin
+import plutoproject.kernel.api.*
 import plutoproject.kernel.api.paper.PaperModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.logging.Logger
 
 class PaperKernel(
     private val plugin: Plugin,
     dataFolder: Path,
     featureRoots: Collection<String>,
-    registerCommands: Boolean = true,
-    private val classLoader: ClassLoader = plugin.javaClass.classLoader,
+    private val registerCommands: Boolean = true,
+    private val classLoader: ClassLoader = PaperKernel::class.java.classLoader,
 ) {
-    private val registerCommands = registerCommands
     private val kernel = RuntimeKernel(
         platform = Platform.PAPER,
         featureRoots = featureRoots,
@@ -82,9 +77,11 @@ class PaperKernel(
                 "Runtime module '${result.id}' failed during ${result.phase}",
                 result.cause,
             )
+
             is ModuleOperationResult.Rejected -> plugin.logger.warning(
                 "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
             )
+
             is ModuleOperationResult.Success -> plugin.logger.info(
                 "Runtime module '${result.id}' completed ${result.operation}",
             )

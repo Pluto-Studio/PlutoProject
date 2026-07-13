@@ -5,12 +5,12 @@ plugins {
 }
 
 dependencies {
-    api(project(":capability:profile:api"))
-    api(project(":kernel:api"))
-    implementation(project(":capability:mongo:api"))
-    implementation(project(":foundation:common"))
+    implementation(projects.kernel.api)
+    implementation(projects.foundation.common)
+    implementation(projects.capability.profile.api)
+    implementation(projects.capability.mongo.api)
     implementation(libs.bundles.mongodb)
-    implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.koin.core)
     implementation(libs.okhttp)
 }

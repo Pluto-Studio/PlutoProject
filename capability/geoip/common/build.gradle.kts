@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":capability:geoip:api"))
-    api(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.geoip.api)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
     implementation(libs.koin.core)

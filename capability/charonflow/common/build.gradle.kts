@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":capability:charonflow:api"))
-    api(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.charonflow.api)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
     implementation(libs.koin.core)

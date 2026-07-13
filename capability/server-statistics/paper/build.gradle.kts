@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:server-statistics:api"))
-    implementation(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.serverStatistics.api)
 }

@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    api(libs.kotlinx.serialization)
+    api(libs.kotlinx.serialization.json)
     api(libs.mongodb.kotlin.bson)
 }

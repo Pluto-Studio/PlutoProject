@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    api(project(":foundation:common"))
-    api(libs.mongodb.kotlin.bson)
+    implementation(projects.foundation.common)
+    implementation(libs.mongodb.kotlin.bson)
 }

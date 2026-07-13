@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:world-alias:api"))
-    implementation(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.worldAlias.api)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
 }

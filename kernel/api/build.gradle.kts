@@ -6,6 +6,6 @@ plugins {
 dependencies {
     api(libs.kotlin.stdlib)
     api(libs.kotlinx.coroutine.core)
-    api(libs.kotlinx.serialization)
+    api(libs.kotlinx.serialization.json)
     api(libs.koin.core)
 }

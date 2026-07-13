@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:mongo:common"))
-    implementation(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.mongo.common)
 }

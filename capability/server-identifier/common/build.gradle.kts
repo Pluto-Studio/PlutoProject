@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(project(":capability:server-identifier:api"))
-    api(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.serverIdentifier.api)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
 }

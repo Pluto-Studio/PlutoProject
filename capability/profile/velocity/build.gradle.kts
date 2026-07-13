@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:profile:common"))
-    implementation(project(":kernel:api"))
-    implementation(project(":kernel:api:velocity"))
+    implementation(projects.kernel.api)
+    implementation(projects.kernel.api.velocity)
+    implementation(projects.capability.profile.common)
 }

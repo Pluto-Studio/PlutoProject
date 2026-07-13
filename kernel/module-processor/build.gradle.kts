@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation(project(":kernel:api"))
     implementation(libs.kotlin.stdlib)
-    implementation(libs.kotlinx.serialization)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.ksp.api)
     testImplementation(gradleTestKit())
 }

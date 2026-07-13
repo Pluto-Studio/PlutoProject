@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:geoip:common"))
-    implementation(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.geoip.common)
 }

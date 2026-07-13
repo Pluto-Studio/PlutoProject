@@ -23,8 +23,9 @@ allprojects {
 }
 
 dependencies {
-    api(projects.platformPaper)
-    api(projects.platformVelocity)
+    implementation(projects.platform.common)
+    implementation(projects.platform.paper)
+    implementation(projects.platform.velocity)
 }
 
 tasks.shadowJar {

@@ -6,10 +6,9 @@ dependencies {
     api(project(":capability:mongo:velocity"))
     api(projects.featureVelocityApi)
     api(projects.featureCommon)
-    api(project(":feature:whitelist-v2:adapter-velocity"))
     ksp(projects.frameworkCommon)
     // KSP Processor 需要
-    ksp(libs.kotlinx.serialization)
+    ksp(libs.kotlinx.serialization.json)
 }
 
 ksp {

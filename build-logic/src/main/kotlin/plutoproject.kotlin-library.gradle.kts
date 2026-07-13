@@ -24,6 +24,10 @@ kotlin {
     }
 }
 
+dependencies {
+    implementation(libs.bundles.language)
+}
+
 fun normalizeCoordinateSegment(segment: String) = segment
     .lowercase()
     .replace(Regex("[^a-z0-9]+"), "-")

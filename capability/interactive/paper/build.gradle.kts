@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:interactive:api"))
-    implementation(project(":kernel:api"))
-    implementation(project(":kernel:api:paper"))
-    implementation(project(":framework-common-api"))
+    implementation(projects.kernel.api)
+    implementation(projects.kernel.api.paper)
+    implementation(projects.foundation.common)
+    implementation(projects.capability.interactive.api)
 }

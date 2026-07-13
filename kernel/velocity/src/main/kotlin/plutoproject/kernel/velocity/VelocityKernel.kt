@@ -1,28 +1,23 @@
 package plutoproject.kernel.velocity
 
+import com.velocitypowered.api.command.BrigadierCommand
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
-import com.velocitypowered.api.command.CommandSource
-import com.velocitypowered.api.command.BrigadierCommand
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.Koin
-import plutoproject.kernel.api.ModuleDescriptor
-import plutoproject.kernel.api.ModuleContextElement
-import plutoproject.kernel.api.ModuleOperationResult
-import plutoproject.kernel.api.ModuleServices
-import plutoproject.kernel.api.Platform
+import plutoproject.kernel.api.*
 import plutoproject.kernel.api.velocity.VelocityModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class VelocityKernel(
     private val proxyServer: ProxyServer,
@@ -31,7 +26,7 @@ class VelocityKernel(
     dataFolder: Path,
     featureRoots: Collection<String>,
     registerCommands: Boolean = true,
-    private val classLoader: ClassLoader = pluginContainer.javaClass.classLoader,
+    private val classLoader: ClassLoader = VelocityKernel::class.java.classLoader,
 ) {
     private val kernel = RuntimeKernel(
         platform = Platform.VELOCITY,
@@ -68,7 +63,15 @@ class VelocityKernel(
     ): VelocityModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)
         Files.createDirectories(moduleDataFolder)
-        return VelocityContext(proxyServer, pluginContainer, descriptor.id, moduleDataFolder, classLoader, koin, services)
+        return VelocityContext(
+            proxyServer,
+            pluginContainer,
+            descriptor.id,
+            moduleDataFolder,
+            classLoader,
+            koin,
+            services
+        )
     }
 
     private fun report(result: ModuleOperationResult) {
@@ -78,9 +81,11 @@ class VelocityKernel(
                 "Runtime module '${result.id}' failed during ${result.phase}",
                 result.cause,
             )
+
             is ModuleOperationResult.Rejected -> logger.warning(
                 "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
             )
+
             is ModuleOperationResult.Success -> logger.info(
                 "Runtime module '${result.id}' completed ${result.operation}",
             )

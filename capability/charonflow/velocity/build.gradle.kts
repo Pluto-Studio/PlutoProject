@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":capability:charonflow:common"))
-    implementation(project(":kernel:api"))
+    implementation(projects.kernel.api)
+    implementation(projects.capability.charonflow.common)
 }

@@ -50,20 +50,26 @@ fun includeProject(path: String, projectDir: String? = null) {
 }
 
 // 新版 Feature 结构部分
-includeProject(":foundation:common")
+includeProject(":platform:common")
+includeProject(":platform:paper")
+includeProject(":platform:velocity")
 
-includeProject(":feature:whitelist-v2:api")
-includeProject(":feature:whitelist-v2:core")
-includeProject(":feature:whitelist-v2:adapter-common")
-includeProject(":feature:whitelist-v2:infra-mongo")
-includeProject(":feature:whitelist-v2:adapter-paper")
-includeProject(":feature:whitelist-v2:adapter-velocity")
+includeProject(":foundation:common")
+includeProject(":foundation:paper")
+includeProject(":foundation:velocity")
+
+includeProject(":feature:whitelist:api")
+includeProject(":feature:whitelist:core")
+includeProject(":feature:whitelist:common")
+includeProject(":feature:whitelist:mongo")
+includeProject(":feature:whitelist:paper")
+includeProject(":feature:whitelist:velocity")
 
 includeProject(":feature:gallery:api")
 includeProject(":feature:gallery:core")
-includeProject(":feature:gallery:adapter-common")
-includeProject(":feature:gallery:infra-mongo")
-includeProject(":feature:gallery:adapter-paper")
+includeProject(":feature:gallery:common")
+includeProject(":feature:gallery:mongo")
+includeProject(":feature:gallery:paper")
 includeProject(":feature:gallery:frontend")
 
 includeProject(":kernel:api")
@@ -112,6 +118,3 @@ includeProject(":capability:server-statistics:paper")
 
 includeProject(":capability:world-alias:api")
 includeProject(":capability:world-alias:paper")
-
-include("platform-paper")
-include("platform-velocity")

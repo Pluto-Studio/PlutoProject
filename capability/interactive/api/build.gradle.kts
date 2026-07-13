@@ -4,5 +4,5 @@ plugins {
 }
 
 dependencies {
-    api(project(":framework-common-api"))
+    implementation(projects.foundation.common)
 }

@@ -3,7 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(libs.kotlin.stdlib)
-    api(libs.kotlinx.coroutine.core)
-    api(project(":feature:gallery:core"))
+    implementation(libs.kotlinx.coroutine.core)
 }

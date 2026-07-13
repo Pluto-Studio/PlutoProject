@@ -17,8 +17,4 @@ fun getFrameworkModuleDataFolder(id: String) = frameworkDataFolder.resolve(id).a
 
 fun getFeatureDataFolder(id: String) = featureDataFolder.resolve(id).also { it.mkdirs() }
 
-fun File.initPluginDataFolder() {
-    pluginDataFolder = this.also { it.mkdirs() }
-    featureDataFolder = pluginDataFolder.resolve("feature${File.separator}").also { it.mkdirs() }
-    frameworkDataFolder = pluginDataFolder.resolve("framework${File.separator}").also { it.mkdirs() }
-}
+
