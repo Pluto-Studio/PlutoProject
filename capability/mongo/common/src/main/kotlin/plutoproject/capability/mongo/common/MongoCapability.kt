@@ -27,6 +27,7 @@ import kotlin.reflect.KClass
 @OptIn(ExperimentalHoplite::class)
 class MongoCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
+        context.dataFolder.toFile().mkdirs()
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(MongoCapability::class.java.classLoader)

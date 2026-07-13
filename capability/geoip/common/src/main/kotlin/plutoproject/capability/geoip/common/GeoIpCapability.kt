@@ -16,6 +16,7 @@ import plutoproject.kernel.api.loadKoinModuleDefinitions
 @OptIn(ExperimentalHoplite::class)
 class GeoIpCapability : RuntimeModule {
     override suspend fun onLoad(context: ModuleContext) {
+        context.dataFolder.toFile().mkdirs()
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(GeoIpCapability::class.java.classLoader)

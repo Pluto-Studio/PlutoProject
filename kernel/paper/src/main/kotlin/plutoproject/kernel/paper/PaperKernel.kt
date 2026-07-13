@@ -13,7 +13,6 @@ import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.logging.Logger
 
@@ -66,7 +65,6 @@ class PaperKernel(
         services: ModuleServices,
     ): PaperModuleContext {
         val moduleDataFolder = dataFolder.resolve("modules").resolve(descriptor.id)
-        Files.createDirectories(moduleDataFolder)
         return PaperContext(plugin, descriptor.id, moduleDataFolder, classLoader, koin, services)
     }
 

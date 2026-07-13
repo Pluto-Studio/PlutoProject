@@ -47,6 +47,7 @@ class GalleryFeature : RuntimeModule {
 
     override suspend fun onLoad(context: ModuleContext) {
         context as PaperModuleContext
+        context.dataFolder.toFile().mkdirs()
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(GalleryFeature::class.java.classLoader)

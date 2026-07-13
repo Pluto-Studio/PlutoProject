@@ -41,6 +41,7 @@ class WhitelistFeature : RuntimeModule {
 
     override suspend fun onLoad(context: ModuleContext) {
         context as VelocityModuleContext
+        context.dataFolder.toFile().mkdirs()
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(WhitelistFeature::class.java.classLoader)
