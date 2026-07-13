@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow

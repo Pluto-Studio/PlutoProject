@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common.upload
+package plutoproject.feature.gallery.common.upload
 
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -15,8 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import plutoproject.feature.gallery.adapter.common.GalleryConfig
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.common.GalleryConfig
+import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import plutoproject.framework.common.util.data.uuidOrNull
 import java.io.OutputStream

@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -6,7 +6,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
-import plutoproject.feature.gallery.adapter.paper.screen.ImageListScreen
+import plutoproject.feature.gallery.paper.screen.ImageListScreen
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
 import plutoproject.framework.paper.api.interactive.click.clickable
 import plutoproject.framework.paper.api.interactive.components.Item

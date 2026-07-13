@@ -1,5 +1,5 @@
 plugins {
-    id("plutoproject.test-conventions")
+    id("plutoproject.kotlin-test")
 }
 
 dependencies {
@@ -9,5 +9,6 @@ dependencies {
 
     testImplementation(projects.foundation.common)
     testImplementation(libs.bundles.mongodb)
+    testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.mongodb)
 }

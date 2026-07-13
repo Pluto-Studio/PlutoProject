@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import plutoproject.feature.gallery.api.ImageDisplay
 import plutoproject.feature.gallery.api.ItemFrameFacing

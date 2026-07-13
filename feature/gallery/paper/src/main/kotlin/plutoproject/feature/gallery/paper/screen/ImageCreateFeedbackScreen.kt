@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.screen
+package plutoproject.feature.gallery.paper.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,8 +10,8 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import kotlinx.coroutines.delay
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickCallback
-import plutoproject.feature.gallery.adapter.paper.IMAGE_CREATE_CANCEL
-import plutoproject.feature.gallery.adapter.paper.IMAGE_CREATE_TITLE
+import plutoproject.feature.gallery.paper.IMAGE_CREATE_CANCEL
+import plutoproject.feature.gallery.paper.IMAGE_CREATE_TITLE
 import plutoproject.framework.paper.api.interactive.InteractiveScreen
 import plutoproject.framework.paper.api.interactive.canvas.dialog.Dialog
 import plutoproject.framework.paper.api.interactive.canvas.dialog.body.PlainMessageBody

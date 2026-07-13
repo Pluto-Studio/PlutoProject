@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.listener
+package plutoproject.feature.gallery.paper.listener
 
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.playSound
@@ -30,11 +30,11 @@ import org.bukkit.event.hanging.HangingBreakByEntityEvent
 import org.bukkit.event.hanging.HangingBreakEvent
 import org.bukkit.inventory.ItemStack
 import plutoproject.feature.gallery.api.GalleryEvent
-import plutoproject.feature.gallery.adapter.common.DisplayInstanceIndex
-import plutoproject.feature.gallery.adapter.common.GalleryServiceImpl
-import plutoproject.feature.gallery.adapter.common.koin
-import plutoproject.feature.gallery.adapter.common.toApi
-import plutoproject.feature.gallery.adapter.paper.*
+import plutoproject.feature.gallery.common.DisplayInstanceIndex
+import plutoproject.feature.gallery.common.GalleryServiceImpl
+import plutoproject.feature.gallery.common.koin
+import plutoproject.feature.gallery.common.toApi
+import plutoproject.feature.gallery.paper.*
 import plutoproject.feature.gallery.core.display.DisplayInstance
 import plutoproject.feature.gallery.core.display.DisplayInstanceStore
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry

@@ -1,11 +1,16 @@
-package plutoproject.feature.whitelist.adapter.velocity
+package plutoproject.feature.whitelist.velocity
 
 import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
-import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND
-import plutoproject.framework.common.util.chat.GENERIC_TEXT_SERVER_BRAND_ENGLISH
-import plutoproject.framework.common.util.chat.palettes.*
-import plutoproject.framework.common.util.inject.globalKoin
+import plutoproject.foundation.common.text.*
+
+private val SERVER_BRAND = component {
+    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>星社 Project</gradient>")
+}
+
+private val SERVER_BRAND_ENGLISH = component {
+    miniMessage("<gradient:#c6a0f6:#f5bde6:#f0c6c6:#f4dbd6>PlutoProject</gradient>")
+}
 
 val PLAYER_NOT_WHITELISTED = component {
     text("你的账号未获得白名单") with mochaMaroon
@@ -172,12 +177,10 @@ val COMMAND_WHITELIST_MIGRATE_COMPLETE = component {
     text("条数据") with mochaPink
 }
 
-val PLAYER_VISITOR_WELCOME
-    get() = component {
-        val config = globalKoin.get<WhitelistConfig>()
+fun getPlayerVisitorWelcome(config: WhitelistConfig) = component {
         newline()
         text("你好呀！欢迎来到 ") with mochaGreen
-        raw(GENERIC_TEXT_SERVER_BRAND)
+        raw(SERVER_BRAND)
         text(" (≧▽≦)/") with mochaSubtext0
         newline()
         text("在正式开始游玩前，你需要先完成白名单申请。") with mochaText
@@ -195,7 +198,7 @@ val PLAYER_VISITOR_WELCOME
         newline()
         text("那可能是我们忘记为你添加白名单了，请在「候车厅」联系管理员。") with mochaText
         newline()
-    }
+}
 
 val COMMAND_VISITOR_MODE_TOGGLED_ON = component {
     text("访客功能已开启") with mochaGreen
@@ -209,12 +212,10 @@ val ERROR_OCCURRED_WHILE_HANDLE_VISITOR_CONNECTION = component {
     text("在处理访客连接时出现异常") with mochaMaroon
 }
 
-val PLAYER_VISITOR_WELCOME_ENGLISH
-    get() = component {
-        val config = globalKoin.get<WhitelistConfig>()
+fun getPlayerVisitorWelcomeEnglish(config: WhitelistConfig) = component {
         newline()
         text("Welcome to the ") with mochaGreen
-        raw(GENERIC_TEXT_SERVER_BRAND_ENGLISH)
+        raw(SERVER_BRAND_ENGLISH)
         text(" server!") with mochaGreen
         newline()
         newline()
@@ -227,7 +228,7 @@ val PLAYER_VISITOR_WELCOME_ENGLISH
         newline()
         text("(Chinese reading ability required.)") with mochaSubtext0
         newline()
-    }
+}
 
 val PLAYER_VISITOR_ACTIONBAR = component {
     text("访客探索中 ") with mochaText

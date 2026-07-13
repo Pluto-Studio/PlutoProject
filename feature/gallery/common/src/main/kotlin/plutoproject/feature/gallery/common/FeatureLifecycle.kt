@@ -1,9 +1,9 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import kotlinx.coroutines.runBlocking
-import plutoproject.feature.gallery.adapter.common.upload.UploadService
-import plutoproject.feature.gallery.adapter.common.upload.startWebServer
-import plutoproject.feature.gallery.adapter.common.upload.stopWebServer
+import plutoproject.feature.gallery.common.upload.UploadService
+import plutoproject.feature.gallery.common.upload.startWebServer
+import plutoproject.feature.gallery.common.upload.stopWebServer
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry

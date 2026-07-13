@@ -1,11 +1,11 @@
-package plutoproject.feature.gallery.adapter.paper.listener
+package plutoproject.feature.gallery.paper.listener
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.ChunkUnloadEvent
-import plutoproject.feature.gallery.adapter.common.chunkLoad
-import plutoproject.feature.gallery.adapter.common.chunkUnload
+import plutoproject.feature.gallery.common.chunkLoad
+import plutoproject.feature.gallery.common.chunkUnload
 import plutoproject.feature.gallery.core.util.ChunkKey
 
 @Suppress("UNUSED")

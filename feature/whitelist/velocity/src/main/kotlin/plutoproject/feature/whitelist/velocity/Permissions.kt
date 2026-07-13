@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.velocity
+package plutoproject.feature.whitelist.velocity
 
 // 基础管理命令
 internal const val PERMISSION_COMMAND_WHITELIST_GRANT = "plutoproject.whitelist_v2.command.whitelist.grant"

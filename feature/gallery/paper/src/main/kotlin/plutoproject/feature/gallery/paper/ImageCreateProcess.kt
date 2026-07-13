@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import ink.pmc.advkt.component.*
 import kotlinx.coroutines.CoroutineScope
@@ -11,8 +11,8 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import plutoproject.feature.gallery.adapter.common.*
-import plutoproject.feature.gallery.adapter.common.upload.*
+import plutoproject.feature.gallery.common.*
+import plutoproject.feature.gallery.common.upload.*
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult

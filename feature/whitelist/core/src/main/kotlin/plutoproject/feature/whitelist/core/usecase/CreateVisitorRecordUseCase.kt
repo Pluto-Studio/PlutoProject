@@ -1,8 +1,8 @@
 package plutoproject.feature.whitelist.core.usecase
 
-import plutoproject.feature.whitelist_v2.core.VisitorRecord
-import plutoproject.feature.whitelist_v2.core.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
+import plutoproject.feature.whitelist.core.VisitorRecord
+import plutoproject.feature.whitelist.core.VisitorRecordParams
+import plutoproject.feature.whitelist.core.VisitorRecordRepository
 import java.time.Clock
 import java.util.*
 

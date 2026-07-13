@@ -1,7 +1,7 @@
-package plutoproject.feature.whitelist.adapter.common.impl
+package plutoproject.feature.whitelist.common.impl
 
-import plutoproject.feature.whitelist_v2.api.VisitorRecordInfo
-import plutoproject.feature.whitelist_v2.core.VisitorRecord
+import plutoproject.feature.whitelist.api.VisitorRecordInfo
+import plutoproject.feature.whitelist.core.VisitorRecord
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant

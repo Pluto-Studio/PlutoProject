@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.ItemLore

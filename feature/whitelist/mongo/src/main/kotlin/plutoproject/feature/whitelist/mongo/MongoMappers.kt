@@ -1,14 +1,14 @@
 package plutoproject.feature.whitelist.infra.mongo
 
-import plutoproject.feature.whitelist_v2.core.VisitorRecord
-import plutoproject.feature.whitelist_v2.core.WhitelistRecord
-import plutoproject.feature.whitelist_v2.core.WhitelistOperator
-import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistOperatorDocument
-import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistOperatorDocumentType
-import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
-import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
-import plutoproject.framework.common.util.network.parseInetSocketAddress
-import plutoproject.framework.common.util.network.toHostPortString
+import plutoproject.feature.whitelist.core.VisitorRecord
+import plutoproject.feature.whitelist.core.WhitelistRecord
+import plutoproject.feature.whitelist.core.WhitelistOperator
+import plutoproject.feature.whitelist.mongo.model.WhitelistOperatorDocument
+import plutoproject.feature.whitelist.mongo.model.WhitelistOperatorDocumentType
+import plutoproject.feature.whitelist.mongo.model.WhitelistRecordDocument
+import plutoproject.feature.whitelist.mongo.model.VisitorRecordDocument
+import plutoproject.foundation.common.network.parseInetSocketAddress
+import plutoproject.foundation.common.network.toHostPortString
 import java.net.Inet6Address
 import java.net.InetAddress
 import kotlin.time.Duration.Companion.milliseconds
@@ -61,7 +61,7 @@ internal fun VisitorRecord.toDocument(): VisitorRecordDocument {
 
     return VisitorRecordDocument(
         uniqueId = uniqueId,
-        ipAddress = plutoproject.feature.whitelist_v2.infra.mongo.model.IpAddressDocument(
+        ipAddress = plutoproject.feature.whitelist.mongo.model.IpAddressDocument(
             ip = ipAddress.hostAddress,
             ipBinary = ipAddress.address,
             ipVersion = version,

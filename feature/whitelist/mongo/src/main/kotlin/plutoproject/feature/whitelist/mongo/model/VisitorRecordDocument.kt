@@ -1,8 +1,8 @@
-package plutoproject.feature.whitelist.infra.mongo.model
+package plutoproject.feature.whitelist.mongo.model
 
 import kotlinx.serialization.Serializable
-import plutoproject.framework.common.util.data.serializers.bson.InstantAsBsonDateTimeSerializer
 import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
+import plutoproject.foundation.common.serialization.InstantAsBsonDateTimeSerializer
 import java.time.Instant
 import java.util.UUID
 

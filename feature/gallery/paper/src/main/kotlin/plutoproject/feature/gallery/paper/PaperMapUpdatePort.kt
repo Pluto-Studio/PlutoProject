@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket
 import net.minecraft.world.level.saveddata.maps.MapId

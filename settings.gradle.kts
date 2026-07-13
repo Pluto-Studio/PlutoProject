@@ -118,3 +118,8 @@ includeProject(":capability:server-statistics:paper")
 
 includeProject(":capability:world-alias:api")
 includeProject(":capability:world-alias:paper")
+
+includeProject(":capability:legacy-cloud-commands:api:paper")
+includeProject(":capability:legacy-cloud-commands:api:velocity")
+includeProject(":capability:legacy-cloud-commands:paper")
+includeProject(":capability:legacy-cloud-commands:velocity")

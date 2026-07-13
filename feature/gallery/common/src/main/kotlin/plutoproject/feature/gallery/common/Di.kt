@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.CoroutineScope
@@ -9,8 +9,8 @@ import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.dsl.bind
-import plutoproject.feature.gallery.adapter.common.upload.UploadService
-import plutoproject.feature.gallery.adapter.common.upload.initializeTempFolder
+import plutoproject.feature.gallery.common.upload.UploadService
+import plutoproject.feature.gallery.common.upload.initializeTempFolder
 import plutoproject.feature.gallery.api.GalleryService
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.MapIdRange

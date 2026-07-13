@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component

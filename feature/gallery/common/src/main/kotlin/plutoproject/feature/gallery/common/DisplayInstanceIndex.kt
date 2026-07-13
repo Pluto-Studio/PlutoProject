@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import plutoproject.feature.gallery.core.util.ChunkKey
 import java.util.*

@@ -1,11 +1,11 @@
-package plutoproject.feature.whitelist.adapter.common.impl
+package plutoproject.feature.whitelist.common.impl
 
-import plutoproject.feature.whitelist_v2.api.*
-import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
-import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.feature.whitelist_v2.api.result.WhitelistGrantResult
-import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
-import plutoproject.feature.whitelist_v2.core.usecase.*
+import plutoproject.feature.whitelist.api.*
+import plutoproject.feature.whitelist.api.hook.WhitelistHookParam
+import plutoproject.feature.whitelist.api.hook.WhitelistHookType
+import plutoproject.feature.whitelist.api.result.WhitelistGrantResult
+import plutoproject.feature.whitelist.api.result.WhitelistRevokeResult
+import plutoproject.feature.whitelist.core.usecase.*
 import java.net.InetAddress
 import java.util.*
 

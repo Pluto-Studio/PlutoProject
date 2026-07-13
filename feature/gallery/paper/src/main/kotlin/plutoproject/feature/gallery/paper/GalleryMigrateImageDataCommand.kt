@@ -1,10 +1,10 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import kotlinx.coroutines.flow.toList
 import org.bukkit.command.CommandSender
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.image.ImageDataRepository
 import plutoproject.feature.gallery.infra.mongo.model.ImageDataDocument
 import plutoproject.feature.gallery.infra.mongo.toImageData

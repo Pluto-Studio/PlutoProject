@@ -11,9 +11,12 @@ dependencies {
     implementation(projects.foundation.velocity)
 
     implementation(projects.capability.mongo.velocity)
+    implementation(projects.capability.charonflow.velocity)
+    implementation(projects.capability.geoip.velocity)
     implementation(projects.capability.serverIdentifier.velocity)
     implementation(projects.capability.databasePersist.velocity)
     implementation(projects.capability.profile.velocity)
+    implementation(projects.capability.legacyCloudCommands.velocity)
 
     implementation(projects.feature.whitelist.velocity)
 }

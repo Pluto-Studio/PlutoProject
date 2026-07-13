@@ -1,9 +1,9 @@
-package plutoproject.feature.whitelist.adapter.common.impl
+package plutoproject.feature.whitelist.common.impl
 
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRecordInfo
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
-import plutoproject.feature.whitelist_v2.core.WhitelistRecord
+import plutoproject.feature.whitelist.api.WhitelistOperator
+import plutoproject.feature.whitelist.api.WhitelistRecordInfo
+import plutoproject.feature.whitelist.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist.core.WhitelistRecord
 import java.time.Instant
 import java.util.*
 

@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.velocity.commands
+package plutoproject.feature.whitelist.velocity.commands
 
 import com.velocitypowered.api.command.CommandSource
 import com.velocitypowered.api.proxy.Player
@@ -11,62 +11,61 @@ import net.kyori.adventure.text.Component
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_ADD_ALREADY_EXISTS
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_ADD_FETCHING
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_ADD_SUCCEED
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_BOOL_TRUE
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_CREATED_AT
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_GRANTER
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_HEADER
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_MIGRATED
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_NO_RECORD
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_REVOKED
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_REVOKER
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_REVOKE_REASON
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_REVOKE_TIME
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_USERNAME
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_UUID
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_OPERATOR_ADMIN
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_OPERATOR_CONSOLE
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_REMOVE_NOT_FOUND
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_REMOVE_SUCCEED
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_REVOKE_REASON_OTHER
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_REVOKE_REASON_REQUESTED
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_REVOKE_REASON_VIOLATION
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_STATISTIC_ACTIVE
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_STATISTIC_HEADER
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_WHITELIST_STATISTIC_TOTAL
-import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_GRANT
-import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_LOOKUP
-import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_REVOKE
-import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_STATISTIC
-import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
-import plutoproject.framework.common.api.profile.ProfileLookup
-import plutoproject.framework.common.api.profile.fetcher.FetchedData
-import plutoproject.framework.common.api.profile.fetcher.MojangProfileFetcher
-import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.time.format
+import plutoproject.capability.profile.api.Profile
+import plutoproject.capability.profile.api.ProfileLookup
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_ADD_ALREADY_EXISTS
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_ADD_FETCHING
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_ADD_SUCCEED
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_BOOL_FALSE
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_BOOL_TRUE
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_CREATED_AT
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_GRANTER
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_HEADER
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_MIGRATED
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_NO_RECORD
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_REVOKED
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_REVOKER
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_REVOKE_REASON
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_REVOKE_TIME
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_USERNAME
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_UUID
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_LOOKUP_VISITOR_BEFORE
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_OPERATOR_ADMIN
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_OPERATOR_CONSOLE
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_PROFILE_FETCH_NOT_FOUND
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_PROFILE_FETCH_TIMEOUT
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_REMOVE_NOT_FOUND
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_REMOVE_SUCCEED
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_REVOKE_REASON_OTHER
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_REVOKE_REASON_REQUESTED
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_REVOKE_REASON_VIOLATION
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_STATISTIC_ACTIVE
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_STATISTIC_HEADER
+import plutoproject.feature.whitelist.velocity.COMMAND_WHITELIST_STATISTIC_TOTAL
+import plutoproject.feature.whitelist.velocity.PERMISSION_COMMAND_WHITELIST_GRANT
+import plutoproject.feature.whitelist.velocity.PERMISSION_COMMAND_WHITELIST_LOOKUP
+import plutoproject.feature.whitelist.velocity.PERMISSION_COMMAND_WHITELIST_REVOKE
+import plutoproject.feature.whitelist.velocity.PERMISSION_COMMAND_WHITELIST_STATISTIC
+import plutoproject.feature.whitelist.api.WhitelistService
+import plutoproject.feature.whitelist.api.WhitelistOperator
+import plutoproject.feature.whitelist.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist.core.WhitelistRecordRepository
+import plutoproject.foundation.common.text.replace
+import plutoproject.foundation.common.time.format
+import plutoproject.kernel.api.koinGet
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UNUSED")
-object WhitelistCommand : KoinComponent {
-    private val service by inject<WhitelistService>()
-    private val whitelistRecordRepository by inject<WhitelistRecordRepository>()
+object WhitelistCommand {
+    private val service = koinGet<WhitelistService>()
+    private val whitelistRecordRepository = koinGet<WhitelistRecordRepository>()
+    private val profileLookup = koinGet<ProfileLookup>()
 
     // Pair 里的第一个元素为 true 即为超时导致的未获取
-    private suspend fun fetchProfileWithTimeout(username: String): Pair<Boolean, FetchedData?> {
+    private suspend fun fetchProfileWithTimeout(username: String): Pair<Boolean, Profile?> {
         return try {
             val profile = withTimeout(10.seconds) {
-                MojangProfileFetcher.fetchByName(username)
+                profileLookup.lookupByName(username)
             }
             false to profile
         } catch (e: TimeoutCancellationException) {
@@ -226,7 +225,7 @@ object WhitelistCommand : KoinComponent {
         return when (operator) {
             WhitelistOperator.Console -> COMMAND_WHITELIST_OPERATOR_CONSOLE
             is WhitelistOperator.Administrator -> {
-                val profile = ProfileLookup.lookupByUuid(operator.uniqueId, requestApi = false)
+                val profile = profileLookup.lookupByUuid(operator.uniqueId, requestApi = false)
                 val name = profile?.name ?: operator.uniqueId.toString()
                 COMMAND_WHITELIST_OPERATOR_ADMIN.replace("<name>", name)
             }

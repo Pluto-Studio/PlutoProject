@@ -1,16 +1,15 @@
-package plutoproject.feature.whitelist.adapter.velocity.commands
+package plutoproject.feature.whitelist.velocity.commands
 
 import com.velocitypowered.api.command.CommandSource
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import org.koin.core.component.KoinComponent
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_VISITOR_MODE_TOGGLED_OFF
-import plutoproject.feature.whitelist_v2.adapter.velocity.COMMAND_VISITOR_MODE_TOGGLED_ON
-import plutoproject.feature.whitelist_v2.adapter.velocity.PERMISSION_COMMAND_WHITELIST_VISITOR_TOGGLE
-import plutoproject.feature.whitelist_v2.adapter.velocity.VisitorState
+import plutoproject.feature.whitelist.velocity.COMMAND_VISITOR_MODE_TOGGLED_OFF
+import plutoproject.feature.whitelist.velocity.COMMAND_VISITOR_MODE_TOGGLED_ON
+import plutoproject.feature.whitelist.velocity.PERMISSION_COMMAND_WHITELIST_VISITOR_TOGGLE
+import plutoproject.feature.whitelist.velocity.VisitorState
 
 @Suppress("UNUSED")
-object WhitelistVisitorCommand : KoinComponent {
+object WhitelistVisitorCommand {
     @Command("whitelist visitor toggle")
     @Permission(PERMISSION_COMMAND_WHITELIST_VISITOR_TOGGLE)
     fun CommandSource.toggleVisitorMode() {

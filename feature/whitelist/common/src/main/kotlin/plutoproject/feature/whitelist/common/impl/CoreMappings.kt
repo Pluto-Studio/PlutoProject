@@ -1,15 +1,15 @@
-package plutoproject.feature.whitelist.adapter.common.impl
+package plutoproject.feature.whitelist.common.impl
 
-import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.api.WhitelistOperator
-import plutoproject.feature.whitelist_v2.api.WhitelistRevokeReason
-import plutoproject.feature.whitelist_v2.api.result.WhitelistGrantResult
-import plutoproject.feature.whitelist_v2.api.result.WhitelistRevokeResult
-import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
-import plutoproject.feature.whitelist_v2.core.usecase.RevokeWhitelistUseCase
-import plutoproject.feature.whitelist_v2.core.VisitorRecordParams as CoreVisitorRecordParams
-import plutoproject.feature.whitelist_v2.core.WhitelistOperator as CoreWhitelistOperator
-import plutoproject.feature.whitelist_v2.core.WhitelistRevokeReason as CoreWhitelistRevokeReason
+import plutoproject.feature.whitelist.api.VisitorRecordParams
+import plutoproject.feature.whitelist.api.WhitelistOperator
+import plutoproject.feature.whitelist.api.WhitelistRevokeReason
+import plutoproject.feature.whitelist.api.result.WhitelistGrantResult
+import plutoproject.feature.whitelist.api.result.WhitelistRevokeResult
+import plutoproject.feature.whitelist.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist.core.usecase.RevokeWhitelistUseCase
+import plutoproject.feature.whitelist.core.VisitorRecordParams as CoreVisitorRecordParams
+import plutoproject.feature.whitelist.core.WhitelistOperator as CoreWhitelistOperator
+import plutoproject.feature.whitelist.core.WhitelistRevokeReason as CoreWhitelistRevokeReason
 
 internal fun WhitelistOperator.toCore(): CoreWhitelistOperator {
     return when (this) {

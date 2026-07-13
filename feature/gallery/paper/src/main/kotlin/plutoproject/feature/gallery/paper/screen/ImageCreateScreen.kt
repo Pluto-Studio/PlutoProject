@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.screen
+package plutoproject.feature.gallery.paper.screen
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -11,11 +11,11 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.event.ClickCallback
-import plutoproject.feature.gallery.adapter.common.DitherMode
-import plutoproject.feature.gallery.adapter.common.GalleryConfig
-import plutoproject.feature.gallery.adapter.common.RepositionMode
-import plutoproject.feature.gallery.adapter.common.koin
-import plutoproject.feature.gallery.adapter.paper.*
+import plutoproject.feature.gallery.common.DitherMode
+import plutoproject.feature.gallery.common.GalleryConfig
+import plutoproject.feature.gallery.common.RepositionMode
+import plutoproject.feature.gallery.common.koin
+import plutoproject.feature.gallery.paper.*
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
 import plutoproject.framework.common.util.chat.component.replace
 import plutoproject.framework.paper.api.interactive.InteractiveScreen

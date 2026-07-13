@@ -1,6 +1,6 @@
-package plutoproject.feature.gallery.adapter.paper.screen
+package plutoproject.feature.gallery.paper.screen
 
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.framework.paper.api.interactive.layout.list.ListMenuModel

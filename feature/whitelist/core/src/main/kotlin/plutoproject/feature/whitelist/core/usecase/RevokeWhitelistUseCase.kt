@@ -1,8 +1,8 @@
 package plutoproject.feature.whitelist.core.usecase
 
-import plutoproject.feature.whitelist_v2.core.WhitelistOperator
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
-import plutoproject.feature.whitelist_v2.core.WhitelistRevokeReason
+import plutoproject.feature.whitelist.core.WhitelistOperator
+import plutoproject.feature.whitelist.core.WhitelistRecordRepository
+import plutoproject.feature.whitelist.core.WhitelistRevokeReason
 import java.time.Clock
 import java.util.*
 

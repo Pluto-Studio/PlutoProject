@@ -3,7 +3,7 @@ package plutoproject.feature.whitelist.core
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import plutoproject.feature.whitelist_v2.core.usecase.GrantWhitelistUseCase
+import plutoproject.feature.whitelist.core.usecase.GrantWhitelistUseCase
 import java.time.Instant
 
 class GrantWhitelistUseCaseTest {

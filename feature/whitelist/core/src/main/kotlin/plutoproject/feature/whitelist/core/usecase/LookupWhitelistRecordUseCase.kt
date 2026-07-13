@@ -1,7 +1,7 @@
 package plutoproject.feature.whitelist.core.usecase
 
-import plutoproject.feature.whitelist_v2.core.WhitelistRecord
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
+import plutoproject.feature.whitelist.core.WhitelistRecord
+import plutoproject.feature.whitelist.core.WhitelistRecordRepository
 import java.util.UUID
 
 class LookupWhitelistRecordUseCase(

@@ -748,7 +748,17 @@ remains.
 
 ## Cloud Commands
 
-The fixed `/plutoproject` command belongs to the Kernel and remains available independently of feature state. Feature commands are registered and removed by their owning features. Features should use Cloud's `deleteRootCommand` from `onDisable` when they support command cleanup, but the Kernel neither tracks command ownership nor guarantees that disabled feature commands disappear. Command root conflicts and global parsers retaining feature instances are feature-level concerns.
+The fixed `/plutoproject` command belongs to the Kernel and remains available independently of feature state. New feature commands use each platform's native Brigadier API and do not depend on Cloud.
+
+Migrated runtime modules that still contain legacy Cloud annotation commands may temporarily require the `legacy_cloud_commands` capability. This capability is platform-specific and has separate Paper and Velocity implementations under one process-local runtime ID. Its thin platform API exposes an `AnnotationParser` through a non-generic service contract; it does not belong in Kernel or Foundation, and legacy modules that have not entered the runtime module system continue using the legacy Framework path.
+
+The consuming feature owns every command root that it registers. It records the roots returned by `AnnotationParser.parse`, and its `onDisable` deletes each root through `parser.manager().deleteRootCommand`. Registration must compare the command manager's roots before and after parsing; if parsing fails, the feature deletes every root introduced by that attempt before rethrowing. The capability does not track or unregister consumer commands during its own shutdown.
+
+A Cloud root and all of its aliases may have only one feature owner. Multiple command containers in the same feature may intentionally contribute to the same root and are removed together. Different features must not contribute subcommands to one root because Cloud can only delete the complete root tree. Such commands must move to one owner or be migrated to native Brigadier.
+
+This capability is transitional. It accepts no new commands, and it will be removed after all Cloud command consumers have migrated to native Brigadier.
+
+The migrated whitelist Paper module temporarily falls back to the current world's native spawn when a visitor disconnects. Its previous default-warp lookup remains disabled until the legacy warp feature has a new runtime API; whitelist must not depend on the flat legacy feature API in the interim.
 
 ## Runtime Manager Components
 

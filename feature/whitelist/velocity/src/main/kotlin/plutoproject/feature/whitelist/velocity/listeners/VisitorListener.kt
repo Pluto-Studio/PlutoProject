@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.velocity.listeners
+package plutoproject.feature.whitelist.velocity.listeners
 
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -10,22 +10,20 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.luckperms.api.LuckPermsProvider
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
-import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_ACTIONBAR
-import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_ACTIONBAR_ENGLISH
-import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_WELCOME
-import plutoproject.feature.whitelist_v2.adapter.velocity.PLAYER_VISITOR_WELCOME_ENGLISH
-import plutoproject.feature.whitelist_v2.adapter.velocity.WhitelistConfig
-import plutoproject.feature.whitelist_v2.adapter.velocity.featureLogger
-import plutoproject.feature.whitelist_v2.api.VisitorRecordParams
-import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.feature.whitelist_v2.adapter.common.VISITOR_NOTIFICATION_TOPIC
-import plutoproject.feature.whitelist_v2.adapter.common.VisitorNotification
-import plutoproject.framework.common.api.connection.CharonFlowConnection
-import plutoproject.framework.common.api.connection.GeoIpConnection
-import plutoproject.framework.common.util.coroutine.PluginScope
+import net.luckperms.api.LuckPerms
+import com.maxmind.geoip2.DatabaseReader
+import club.plutoproject.charonflow.CharonFlow
+import plutoproject.feature.whitelist.common.impl.KnownVisitors
+import plutoproject.feature.whitelist.velocity.PLAYER_VISITOR_ACTIONBAR
+import plutoproject.feature.whitelist.velocity.PLAYER_VISITOR_ACTIONBAR_ENGLISH
+import plutoproject.feature.whitelist.velocity.getPlayerVisitorWelcome
+import plutoproject.feature.whitelist.velocity.getPlayerVisitorWelcomeEnglish
+import plutoproject.feature.whitelist.velocity.WhitelistConfig
+import plutoproject.feature.whitelist.api.VisitorRecordParams
+import plutoproject.feature.whitelist.api.WhitelistService
+import plutoproject.feature.whitelist.common.VISITOR_NOTIFICATION_TOPIC
+import plutoproject.feature.whitelist.common.VisitorNotification
+import kotlinx.coroutines.CoroutineScope
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
@@ -33,15 +31,22 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.toKotlinDuration
 import java.time.Duration as JavaDuration
+import java.util.logging.Logger
+import plutoproject.capability.charonflow.api.CharonFlowConnection
+import plutoproject.capability.geoip.api.GeoIpConnection
+import plutoproject.kernel.api.koinGet
 
 @Suppress("UNUSED")
-object VisitorListener : KoinComponent {
-    private val config by inject<WhitelistConfig>()
-    private val service by inject<WhitelistService>()
-    private val knownVisitors by inject<KnownVisitors>()
+object VisitorListener {
+    private val config = koinGet<WhitelistConfig>()
+    private val service = koinGet<WhitelistService>()
+    private val knownVisitors = koinGet<KnownVisitors>()
+    private val charonFlow = koinGet<CharonFlowConnection>().client
+    private val geoIpDatabase = koinGet<GeoIpConnection>().database
+    private val coroutineScope = koinGet<CoroutineScope>()
+    private val logger = koinGet<Logger>()
+    private val luckpermsApi: LuckPerms = LuckPermsProvider.get()
     private val visitorSessions = ConcurrentHashMap<UUID, VisitorSession>()
-    private val luckpermsApi = LuckPermsProvider.get()
-
     data class VisitorSession(
         val joinTime: Instant,
         val visitedServers: MutableSet<String> = mutableSetOf(),
@@ -55,12 +60,12 @@ object VisitorListener : KoinComponent {
         val player = this.player
         if (service.isKnownVisitor(player.uniqueId)) {
             val welcomeMessage = if (shouldSendEnglishMessage(player)) {
-                PLAYER_VISITOR_WELCOME_ENGLISH
+                getPlayerVisitorWelcomeEnglish(config)
             } else {
-                PLAYER_VISITOR_WELCOME
+                getPlayerVisitorWelcome(config)
             }
             player.sendMessage(welcomeMessage)
-            featureLogger.info("访客 ${player.username} (${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
+            logger.info("访客 ${player.username} (${player.uniqueId}) 的客户端语言为 ${player.playerSettings.locale}。")
 
             val session = visitorSessions[player.uniqueId]
             if (session != null) {
@@ -80,15 +85,15 @@ object VisitorListener : KoinComponent {
             username = player.username,
             joinedServer = server,
         )
-        CharonFlowConnection.client.publish(VISITOR_NOTIFICATION_TOPIC, notification)
-        featureLogger.info("通知后端：${player.username} (${player.uniqueId}), 连接至 $server")
+        charonFlow.publish(VISITOR_NOTIFICATION_TOPIC, notification)
+        logger.info("通知后端：${player.username} (${player.uniqueId}), 连接至 $server")
     }
 
     private fun startActionbarTask(player: Player): Job {
         val isEnglish = shouldSendEnglishMessage(player)
         val actionbarMessage = if (isEnglish) PLAYER_VISITOR_ACTIONBAR_ENGLISH else PLAYER_VISITOR_ACTIONBAR
 
-        return PluginScope.launch {
+        return coroutineScope.launch {
             while (service.isKnownVisitor(player.uniqueId)) {
                 player.sendActionBar(actionbarMessage)
                 delay(1000)
@@ -111,7 +116,7 @@ object VisitorListener : KoinComponent {
         return try {
             val session = visitorSessions[player.uniqueId]
             if (session != null) {
-                val response = GeoIpConnection.database.country(session.ip)
+                val response = geoIpDatabase.country(session.ip)
                 val countryIso = response.country.isoCode
                 val isInChina = countryIso == "CN" || countryIso == "HK" || countryIso == "MO" || countryIso == "TW"
                 !isInChina
@@ -149,9 +154,9 @@ object VisitorListener : KoinComponent {
             user.data().clear()
             luckpermsApi.userManager.saveUser(user)
         }
-        featureLogger.info("已清除访客 ${player.username} (${player.uniqueId}) 的 LuckPerms 数据。")
+        logger.info("已清除访客 ${player.username} (${player.uniqueId}) 的 LuckPerms 数据。")
         knownVisitors.remove(player.uniqueId)
-        featureLogger.info("访客退出: ${player.username} (${player.uniqueId})")
+        logger.info("访客退出: ${player.username} (${player.uniqueId})")
     }
 
     fun recordVisitorSession(uuid: UUID, ip: InetAddress, virtualHost: InetSocketAddress?) {
@@ -162,7 +167,7 @@ object VisitorListener : KoinComponent {
         )
     }
 
-    private fun createVisitorRecord(player: Player, session: VisitorSession) = PluginScope.launch {
+    private fun createVisitorRecord(player: Player, session: VisitorSession) = coroutineScope.launch {
         val duration = JavaDuration.between(session.joinTime, Instant.now()).toKotlinDuration()
         service.createVisitorRecord(
             player.uniqueId,

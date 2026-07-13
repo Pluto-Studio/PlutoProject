@@ -9,4 +9,5 @@ dependencies {
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
     implementation(libs.koin.core)
+    implementation(libs.geoip2)
 }

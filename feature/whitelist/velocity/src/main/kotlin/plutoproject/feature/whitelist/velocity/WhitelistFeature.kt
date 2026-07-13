@@ -1,74 +1,132 @@
-package plutoproject.feature.whitelist.adapter.velocity
+package plutoproject.feature.whitelist.velocity
 
 import com.github.shynixn.mccoroutine.velocity.registerSuspend
+import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.PropertySource
+import com.sksamuel.hoplite.hocon.HoconParser
+import kotlinx.coroutines.CoroutineScope
 import net.luckperms.api.LuckPermsProvider
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.dsl.module
-import plutoproject.feature.whitelist_v2.adapter.common.commonModule
-import plutoproject.feature.whitelist_v2.adapter.velocity.commands.MigratorCommand
-import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistCommand
-import plutoproject.feature.whitelist_v2.adapter.velocity.commands.WhitelistVisitorCommand
-import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.PlayerListener
-import plutoproject.feature.whitelist_v2.adapter.velocity.listeners.VisitorListener
-import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookType
-import plutoproject.framework.common.api.feature.Platform
-import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.globalKoin
-import plutoproject.framework.velocity.api.feature.VelocityFeature
-import plutoproject.framework.velocity.util.command.AnnotationParser
-import plutoproject.framework.velocity.util.plugin
-import plutoproject.framework.velocity.util.server
+import plutoproject.capability.charonflow.api.CharonFlowConnection
+import plutoproject.capability.geoip.api.GeoIpConnection
+import plutoproject.capability.legacycloudcommands.api.velocity.LegacyVelocityCloudCommands
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.capability.profile.api.ProfileLookup
+import plutoproject.feature.whitelist.api.WhitelistService
+import plutoproject.feature.whitelist.api.hook.WhitelistHookType
+import plutoproject.feature.whitelist.common.commonModule
+import plutoproject.feature.whitelist.velocity.commands.MigratorCommand
+import plutoproject.feature.whitelist.velocity.commands.WhitelistCommand
+import plutoproject.feature.whitelist.velocity.commands.WhitelistVisitorCommand
+import plutoproject.feature.whitelist.velocity.listeners.PlayerListener
+import plutoproject.feature.whitelist.velocity.listeners.VisitorListener
+import plutoproject.kernel.api.*
+import plutoproject.kernel.api.velocity.VelocityModuleContext
 import java.util.logging.Logger
 
-lateinit var featureLogger: Logger
-
 @Feature(
-    id = "whitelist_v2",
+    id = "whitelist",
     platform = Platform.VELOCITY,
+    requiredCapabilities = ["mongo", "charonflow", "geoip", "profile", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
-class WhitelistFeature : VelocityFeature(), KoinComponent {
-    private val config by inject<WhitelistConfig>()
-    private val service by inject<WhitelistService>()
+class WhitelistFeature : RuntimeModule {
+    private var playerListener: PlayerListener? = null
+    private var visitorListener: VisitorListener? = null
+    private var annotationParser: AnnotationParser<com.velocitypowered.api.command.CommandSource>? = null
+    private val commandRoots = linkedSetOf<String>()
 
-    private val configModule = module {
-        single<WhitelistConfig> { loadConfig(saveConfig()) }
+    override suspend fun onLoad(context: ModuleContext) {
+        context as VelocityModuleContext
+        val configFile = context.saveResource("config.conf")
+        val config = ConfigLoaderBuilder.empty()
+            .addDefaults()
+            .addParser("conf", HoconParser())
+            .addPropertySource(PropertySource.file(configFile.toFile()))
+            .build()
+            .loadConfigOrThrow<WhitelistConfig>()
+
+        context.importServiceToKoin<MongoConnection>()
+        context.importServiceToKoin<CharonFlowConnection>()
+        context.importServiceToKoin<GeoIpConnection>()
+        context.importServiceToKoin<ProfileLookup>()
+        context.loadKoinModuleDefinitions(
+            module {
+                single { config }
+                single<CoroutineScope> { context.coroutineScope }
+                single<Logger> { context.logger }
+            },
+            commonModule,
+        )
+
+        context.services.exportServiceFromKoin<WhitelistService>()
     }
 
-    override fun onEnable() {
-        // 先只依赖注入 Config，用于下面的 LuckPerms API 检测
-        globalKoin {
-            modules(configModule)
-        }
-
-        val isLuckPermsApiPresent = runCatching { LuckPermsProvider.get() }.isSuccess
-        if (config.visitorMode.enable && !isLuckPermsApiPresent) {
-            logger.severe("访客模式功能已启用，但未找到 LuckPerms API。模块将不会加载。")
-            return
-        }
-
-        globalKoin {
-            modules(commonModule)
+    override suspend fun onEnable(context: ModuleContext) {
+        context as VelocityModuleContext
+        val config = context.koinGet<WhitelistConfig>()
+        if (config.visitorMode.enable && runCatching { LuckPermsProvider.get() }.isFailure) {
+            error("访客模式功能已启用，但未找到 LuckPerms API")
         }
 
         VisitorState.setEnabled(config.visitorMode.enable)
-        featureLogger = logger
-        registerCommands()
-        server.eventManager.registerSuspend(plugin, PlayerListener)
-        server.eventManager.registerSuspend(plugin, VisitorListener)
+        registerCommands(context, config)
+        registerListeners(context)
 
-        service.registerHook(WhitelistHookType.GrantWhitelist, ::onWhitelistGrant)
-        service.registerHook(WhitelistHookType.RevokeWhitelist, ::onWhitelistRevoke)
+        val service = context.koinGet<WhitelistService>()
+        service.registerHook(WhitelistHookType.GrantWhitelist) { context.proxyServer.onWhitelistGrant(it) }
+        service.registerHook(WhitelistHookType.RevokeWhitelist) { context.proxyServer.onWhitelistRevoke(it) }
     }
 
-    private fun registerCommands() {
-        AnnotationParser.parse(WhitelistCommand)
-        AnnotationParser.parse(WhitelistVisitorCommand)
-        if (config.enableMigrator) {
-            AnnotationParser.parse(MigratorCommand)
+    private fun registerCommands(context: VelocityModuleContext, config: WhitelistConfig) {
+        val parser = context.services.getService<LegacyVelocityCloudCommands>().parser
+        val manager = parser.manager()
+        val rootsBefore = manager.rootCommands().toSet()
+        val containers = buildList {
+            add(WhitelistCommand)
+            add(WhitelistVisitorCommand)
+            if (config.enableMigrator) {
+                add(MigratorCommand)
+            }
         }
+
+        try {
+            val commands = parser.parse(*containers.toTypedArray())
+            val parsedRoots = commands.flatMap { command ->
+                val root = command.rootComponent()
+                listOf(root.name()) + root.aliases() + root.alternativeAliases()
+            }.toSet()
+            commandRoots += parsedRoots.intersect(manager.rootCommands().toSet() - rootsBefore)
+            annotationParser = parser
+        } catch (cause: Throwable) {
+            (manager.rootCommands().toSet() - rootsBefore).forEach(manager::deleteRootCommand)
+            throw cause
+        }
+    }
+
+    private fun registerListeners(context: VelocityModuleContext) {
+        visitorListener = VisitorListener.also {
+            context.proxyServer.eventManager.registerSuspend(context.pluginContainer, it)
+        }
+        playerListener = PlayerListener.also {
+            context.proxyServer.eventManager.registerSuspend(context.pluginContainer, it)
+        }
+    }
+
+    override suspend fun onDisable(context: ModuleContext) {
+        context as VelocityModuleContext
+
+        annotationParser?.manager()?.let { manager ->
+            commandRoots.forEach(manager::deleteRootCommand)
+        }
+        commandRoots.clear()
+        annotationParser = null
+
+        playerListener?.let { context.proxyServer.eventManager.unregisterListener(context.pluginContainer, it) }
+        playerListener = null
+        visitorListener?.let { context.proxyServer.eventManager.unregisterListener(context.pluginContainer, it) }
+        visitorListener = null
+        VisitorState.setEnabled(false)
     }
 }

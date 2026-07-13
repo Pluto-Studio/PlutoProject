@@ -1,19 +1,19 @@
-package plutoproject.feature.whitelist.adapter.velocity
+package plutoproject.feature.whitelist.velocity
 
-import plutoproject.feature.whitelist_v2.api.hook.WhitelistHookParam
-import plutoproject.framework.velocity.util.server
+import com.velocitypowered.api.proxy.ProxyServer
+import plutoproject.feature.whitelist.api.hook.WhitelistHookParam
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
-private fun kickWhenModified(uniqueId: UUID) {
-    val player = server.getPlayer(uniqueId).getOrNull() ?: return
+private fun ProxyServer.kickWhenModified(uniqueId: UUID) {
+    val player = getPlayer(uniqueId).getOrNull() ?: return
     player.disconnect(PLAYER_WHITELIST_STATE_MODIFIED)
 }
 
-fun onWhitelistGrant(param: WhitelistHookParam.GrantWhitelist) {
+fun ProxyServer.onWhitelistGrant(param: WhitelistHookParam.GrantWhitelist) {
     kickWhenModified(param.uniqueId)
 }
 
-fun onWhitelistRevoke(param: WhitelistHookParam.RevokeWhitelist) {
+fun ProxyServer.onWhitelistRevoke(param: WhitelistHookParam.RevokeWhitelist) {
     kickWhenModified(param.uniqueId)
 }

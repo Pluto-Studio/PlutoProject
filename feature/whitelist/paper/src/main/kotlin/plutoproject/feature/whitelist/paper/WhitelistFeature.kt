@@ -1,59 +1,81 @@
-package plutoproject.feature.whitelist.adapter.paper
+package plutoproject.feature.whitelist.paper
 
-import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
-import kotlinx.coroutines.runBlocking
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.PropertySource
+import com.sksamuel.hoplite.hocon.HoconParser
+import kotlinx.coroutines.CoroutineScope
+import org.bukkit.Server
+import org.bukkit.event.HandlerList
+import org.bukkit.plugin.Plugin
 import org.koin.dsl.module
-import plutoproject.feature.whitelist_v2.adapter.common.commonModule
-import plutoproject.framework.common.api.feature.Platform
-import plutoproject.framework.common.api.feature.annotation.Dependency
-import plutoproject.framework.common.api.feature.annotation.Feature
-import plutoproject.framework.common.util.config.loadConfig
-import plutoproject.framework.common.util.inject.globalKoin
-import plutoproject.framework.paper.api.feature.PaperFeature
-import plutoproject.framework.paper.util.plugin
-import plutoproject.framework.paper.util.server
+import plutoproject.capability.charonflow.api.CharonFlowConnection
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.feature.whitelist.api.WhitelistService
+import plutoproject.feature.whitelist.common.commonModule
+import plutoproject.kernel.api.*
+import plutoproject.kernel.api.paper.PaperModuleContext
 import java.util.logging.Logger
 
-internal lateinit var featureLogger: Logger
-
 @Feature(
-    id = "whitelist_v2",
+    id = "whitelist",
     platform = Platform.PAPER,
-    dependencies = [Dependency("warp", required = false)],
+    requiredCapabilities = ["mongo", "charonflow"],
 )
 @Suppress("UNUSED")
-class WhitelistFeature : PaperFeature(), KoinComponent {
-    private val config by inject<WhitelistConfig>()
+class WhitelistFeature : RuntimeModule {
+    private var visitorListener: VisitorListener? = null
+    private var restrictionListener: VisitorRestrictionListener? = null
+    private var notificationHandler: NotificationHandler? = null
 
-    private val module = module {
-        single<WhitelistConfig> { loadConfig(saveConfig()) }
+    override suspend fun onLoad(context: ModuleContext) {
+        context as PaperModuleContext
+
+        val configFile = context.saveResource("config.conf")
+        val config = ConfigLoaderBuilder.empty()
+            .addDefaults()
+            .addParser("conf", HoconParser())
+            .addPropertySource(PropertySource.file(configFile.toFile()))
+            .build()
+            .loadConfigOrThrow<WhitelistConfig>()
+
+        context.importServiceToKoin<MongoConnection>()
+        context.importServiceToKoin<CharonFlowConnection>()
+        context.loadKoinModuleDefinitions(
+            module {
+                single { config }
+                single<CoroutineScope> { context.coroutineScope }
+                single<Server> { context.plugin.server }
+                single<Plugin> { context.plugin }
+                single<Logger> { context.logger }
+            },
+            commonModule,
+        )
+        context.services.exportServiceFromKoin<WhitelistService>()
     }
 
-    override fun onEnable() {
-        globalKoin {
-            modules(commonModule, module)
-        }
+    override suspend fun onEnable(context: ModuleContext) {
+        context as PaperModuleContext
 
-        featureLogger = logger
-        registerListeners()
-        VisitorRestrictionListener.startVisitorSpeedLimitationJob()
-
-        runBlocking {
-            subscribeNotificationTopic()
+        val server = context.plugin.server
+        visitorListener = VisitorListener.also { server.pluginManager.registerEvents(it, context.plugin) }
+        restrictionListener = VisitorRestrictionListener.also {
+            server.pluginManager.registerEvents(it, context.plugin)
+            it.startVisitorSpeedLimitationJob()
         }
+        notificationHandler = NotificationHandler(
+            context.services.getService<CharonFlowConnection>(),
+            context.koinGet(),
+            visitorListener!!,
+        ).also { it.subscribe() }
     }
 
-    private fun registerListeners() {
-        server.pluginManager.registerSuspendingEvents(VisitorListener, plugin)
-        server.pluginManager.registerSuspendingEvents(VisitorRestrictionListener, plugin)
-    }
-
-    override fun onDisable() {
-        VisitorRestrictionListener.stopVisitorSpeedLimitationJob()
-        runBlocking {
-            unsubscribeNotificationTopic()
-        }
+    override suspend fun onDisable(context: ModuleContext) {
+        notificationHandler?.unsubscribe()
+        notificationHandler = null
+        restrictionListener?.stopVisitorSpeedLimitationJob()
+        restrictionListener?.let(HandlerList::unregisterAll)
+        restrictionListener = null
+        visitorListener?.let(HandlerList::unregisterAll)
+        visitorListener = null
     }
 }

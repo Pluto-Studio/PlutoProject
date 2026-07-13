@@ -12,11 +12,11 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import plutoproject.feature.whitelist_v2.core.VisitorRecord
-import plutoproject.feature.whitelist_v2.core.WhitelistRecord
-import plutoproject.feature.whitelist_v2.core.WhitelistOperator
-import plutoproject.feature.whitelist_v2.infra.mongo.model.VisitorRecordDocument
-import plutoproject.feature.whitelist_v2.infra.mongo.model.WhitelistRecordDocument
+import plutoproject.feature.whitelist.core.VisitorRecord
+import plutoproject.feature.whitelist.core.WhitelistRecord
+import plutoproject.feature.whitelist.core.WhitelistOperator
+import plutoproject.feature.whitelist.mongo.model.VisitorRecordDocument
+import plutoproject.feature.whitelist.mongo.model.WhitelistRecordDocument
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant

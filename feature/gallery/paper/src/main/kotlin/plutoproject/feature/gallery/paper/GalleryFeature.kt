@@ -1,15 +1,15 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import plutoproject.feature.gallery.adapter.common.*
-import plutoproject.feature.gallery.adapter.paper.listener.ChunkListener
-import plutoproject.feature.gallery.adapter.paper.listener.CraftListener
-import plutoproject.feature.gallery.adapter.paper.listener.ItemFrameListener
-import plutoproject.feature.gallery.adapter.paper.listener.PlayerListener
+import plutoproject.feature.gallery.common.*
+import plutoproject.feature.gallery.paper.listener.ChunkListener
+import plutoproject.feature.gallery.paper.listener.CraftListener
+import plutoproject.feature.gallery.paper.listener.ItemFrameListener
+import plutoproject.feature.gallery.paper.listener.PlayerListener
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
 import plutoproject.feature.paper.api.menu.MenuManager

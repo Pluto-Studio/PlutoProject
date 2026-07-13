@@ -1,12 +1,12 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.NamespacedKey
 import org.bukkit.persistence.PersistentDataType
-import plutoproject.feature.gallery.adapter.common.DisplayInstanceIndex
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.common.DisplayInstanceIndex
+import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.util.ChunkKey
 import plutoproject.framework.paper.util.coroutine.coroutineContext
 import plutoproject.framework.paper.util.server

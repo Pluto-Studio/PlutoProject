@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.listener
+package plutoproject.feature.gallery.paper.listener
 
 import org.bukkit.Material
 import org.bukkit.block.Crafter
@@ -10,8 +10,8 @@ import org.bukkit.event.block.CrafterCraftEvent
 import org.bukkit.event.inventory.CraftItemEvent
 import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.inventory.ItemStack
-import plutoproject.feature.gallery.adapter.paper.isImageItem
-import plutoproject.feature.gallery.adapter.paper.isImageItemCopyRecipe
+import plutoproject.feature.gallery.paper.isImageItem
+import plutoproject.feature.gallery.paper.isImageItemCopyRecipe
 
 @Suppress("UNUSED")
 object CraftListener : Listener {

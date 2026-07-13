@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.paper
+package plutoproject.feature.whitelist.paper
 
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
 import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent
@@ -8,26 +8,27 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bukkit.GameMode
+import org.bukkit.Server
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerTeleportEvent
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.framework.common.util.coroutine.PluginScope
-import plutoproject.framework.common.util.time.ticks
-import plutoproject.framework.paper.util.server
+import plutoproject.feature.whitelist.api.WhitelistService
+import kotlinx.coroutines.CoroutineScope
+import kotlin.time.Duration.Companion.milliseconds
+import plutoproject.kernel.api.koinGet
 
 @Suppress("UNUSED")
-object VisitorRestrictionListener : Listener, KoinComponent {
-    private val service by inject<WhitelistService>()
+object VisitorRestrictionListener : Listener {
+    private val service = koinGet<WhitelistService>()
+    private val coroutineScope = koinGet<CoroutineScope>()
+    private val server = koinGet<Server>()
 
     private var visitorSpeedLimitationJob: Job? = null
 
     fun startVisitorSpeedLimitationJob() {
-        visitorSpeedLimitationJob = PluginScope.launch {
+        visitorSpeedLimitationJob = coroutineScope.launch {
             while (isActive) {
-                delay(10.ticks)
+                delay(500.milliseconds)
                 runVisitorSpeedLimitation()
             }
         }

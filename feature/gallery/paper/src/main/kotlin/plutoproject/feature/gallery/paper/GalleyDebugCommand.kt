@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,11 +16,11 @@ import org.incendo.cloud.annotation.specifier.Quoted
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.Permission
-import plutoproject.feature.gallery.adapter.common.*
-import plutoproject.feature.gallery.adapter.common.upload.UploadService
-import plutoproject.feature.gallery.adapter.common.upload.UploadSession
-import plutoproject.feature.gallery.adapter.common.upload.UploadState
-import plutoproject.feature.gallery.adapter.common.upload.VerificationResult
+import plutoproject.feature.gallery.common.*
+import plutoproject.feature.gallery.common.upload.UploadService
+import plutoproject.feature.gallery.common.upload.UploadSession
+import plutoproject.feature.gallery.common.upload.UploadState
+import plutoproject.feature.gallery.common.upload.VerificationResult
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.decode.DecodeConstraints
 import plutoproject.feature.gallery.core.decode.DecodeResult

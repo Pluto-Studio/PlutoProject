@@ -1,3 +1,3 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 class GalleryServiceImpl : CommonGalleryService()

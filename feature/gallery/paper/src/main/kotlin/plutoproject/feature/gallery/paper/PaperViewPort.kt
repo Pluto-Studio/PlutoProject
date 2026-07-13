@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper
+package plutoproject.feature.gallery.paper
 
 import org.bukkit.Bukkit
 import plutoproject.feature.gallery.core.display.PlayerView

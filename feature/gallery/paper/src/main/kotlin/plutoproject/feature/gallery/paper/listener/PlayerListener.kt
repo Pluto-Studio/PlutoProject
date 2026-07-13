@@ -1,12 +1,12 @@
-package plutoproject.feature.gallery.adapter.paper.listener
+package plutoproject.feature.gallery.paper.listener
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import plutoproject.feature.gallery.adapter.common.koin
-import plutoproject.feature.gallery.adapter.common.upload.UploadService
-import plutoproject.feature.gallery.adapter.paper.unlockImageItemCopyRecipeFor
+import plutoproject.feature.gallery.common.koin
+import plutoproject.feature.gallery.common.upload.UploadService
+import plutoproject.feature.gallery.paper.unlockImageItemCopyRecipeFor
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
 

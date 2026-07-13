@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalPathApi::class)
 
-package plutoproject.feature.gallery.adapter.common.upload
+package plutoproject.feature.gallery.common.upload
 
 import io.ktor.http.*
 import kotlinx.coroutines.*
@@ -8,8 +8,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.time.onTimeout
-import plutoproject.feature.gallery.adapter.common.GalleryConfig
-import plutoproject.feature.gallery.adapter.common.koin
+import plutoproject.feature.gallery.common.GalleryConfig
+import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import java.nio.channels.FileChannel

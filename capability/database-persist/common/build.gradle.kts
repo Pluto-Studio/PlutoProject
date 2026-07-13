@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(projects.kernel.api)
+    implementation(projects.foundation.common)
     implementation(projects.capability.databasePersist.api)
     implementation(projects.capability.mongo.api)
     implementation(projects.capability.serverIdentifier.api)

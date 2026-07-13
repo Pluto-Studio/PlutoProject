@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.paper.screen
+package plutoproject.feature.gallery.paper.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,28 +12,28 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_OPERATION
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_TOO_MANY_IMAGES
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_TOO_MANY_IMAGES_HINT
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_UNAVAILABLE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_UNFINISHED_UPLOAD
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_CREATE_LORE_UNFINISHED_UPLOAD_HINT
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_LORE_OPERATION
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_LORE_SIZE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_LORE_TYPE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_NAME
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_TYPE_ANIMATED
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_ENTRY_TYPE_STATIC
-import plutoproject.feature.gallery.adapter.paper.IMAGE_LIST_TITLE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_PLACEHOLDER_HEIGHT
-import plutoproject.feature.gallery.adapter.paper.IMAGE_PLACEHOLDER_MAX_IMAGES_PER_PLAYER
-import plutoproject.feature.gallery.adapter.paper.IMAGE_PLACEHOLDER_NAME
-import plutoproject.feature.gallery.adapter.paper.IMAGE_PLACEHOLDER_TYPE
-import plutoproject.feature.gallery.adapter.paper.IMAGE_PLACEHOLDER_WIDTH
-import plutoproject.feature.gallery.adapter.paper.deleteOwnedImage
-import plutoproject.feature.gallery.adapter.paper.hasReachedImageLimit
-import plutoproject.feature.gallery.adapter.paper.hasUnfinishedImageCreateSession
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_OPERATION
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_TOO_MANY_IMAGES
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_TOO_MANY_IMAGES_HINT
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_UNAVAILABLE
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_UNFINISHED_UPLOAD
+import plutoproject.feature.gallery.paper.IMAGE_LIST_CREATE_LORE_UNFINISHED_UPLOAD_HINT
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_LORE_OPERATION
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_LORE_SIZE
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_LORE_TYPE
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_NAME
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_TYPE_ANIMATED
+import plutoproject.feature.gallery.paper.IMAGE_LIST_ENTRY_TYPE_STATIC
+import plutoproject.feature.gallery.paper.IMAGE_LIST_TITLE
+import plutoproject.feature.gallery.paper.IMAGE_PLACEHOLDER_HEIGHT
+import plutoproject.feature.gallery.paper.IMAGE_PLACEHOLDER_MAX_IMAGES_PER_PLAYER
+import plutoproject.feature.gallery.paper.IMAGE_PLACEHOLDER_NAME
+import plutoproject.feature.gallery.paper.IMAGE_PLACEHOLDER_TYPE
+import plutoproject.feature.gallery.paper.IMAGE_PLACEHOLDER_WIDTH
+import plutoproject.feature.gallery.paper.deleteOwnedImage
+import plutoproject.feature.gallery.paper.hasReachedImageLimit
+import plutoproject.feature.gallery.paper.hasUnfinishedImageCreateSession
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageType
 import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
@@ -71,7 +71,7 @@ class ImageListScreen : ListMenu<Image, ImageListScreenModel>() {
     private fun Create() {
         val player = LocalPlayer.current
         val navigator = LocalNavigator.currentOrThrow
-        val imageConfig = remember { plutoproject.feature.gallery.adapter.common.koin.get<plutoproject.feature.gallery.adapter.common.GalleryConfig>().image }
+        val imageConfig = remember { plutoproject.feature.gallery.common.koin.get<plutoproject.feature.gallery.common.GalleryConfig>().image }
         val model = LocalListMenuModel.current
         var hasUnfinishedUpload by remember { mutableStateOf(false) }
         var hasReachedLimit by remember { mutableStateOf(false) }

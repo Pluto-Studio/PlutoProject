@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.common
+package plutoproject.feature.whitelist.common
 
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.Dispatchers
@@ -6,25 +6,25 @@ import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import plutoproject.feature.whitelist_v2.adapter.common.impl.KnownVisitors
-import plutoproject.feature.whitelist_v2.adapter.common.impl.WhitelistServiceImpl
-import plutoproject.feature.whitelist_v2.api.WhitelistService
-import plutoproject.feature.whitelist_v2.core.VisitorRecordRepository
-import plutoproject.feature.whitelist_v2.core.WhitelistRecordRepository
-import plutoproject.feature.whitelist_v2.core.usecase.*
-import plutoproject.feature.whitelist_v2.infra.mongo.MongoVisitorRecordRepository
-import plutoproject.feature.whitelist_v2.infra.mongo.MongoWhitelistRecordRepository
-import plutoproject.framework.common.api.connection.MongoConnection
-import plutoproject.framework.common.api.connection.getCollection
-import plutoproject.framework.common.util.coroutine.PluginScope
+import plutoproject.feature.whitelist.common.impl.KnownVisitors
+import plutoproject.feature.whitelist.common.impl.WhitelistServiceImpl
+import plutoproject.feature.whitelist.api.WhitelistService
+import plutoproject.feature.whitelist.core.VisitorRecordRepository
+import plutoproject.feature.whitelist.core.WhitelistRecordRepository
+import plutoproject.feature.whitelist.core.usecase.*
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.capability.mongo.api.getCollection
+import plutoproject.feature.whitelist.infra.mongo.MongoVisitorRecordRepository
+import plutoproject.feature.whitelist.infra.mongo.MongoWhitelistRecordRepository
+import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
 
 private const val WHITELIST_PREFIX = "whitelist_v2_"
 private const val WHITELIST_RECORD_COLLECTION = "whitelist_records"
 private const val VISITOR_RECORD_COLLECTION = "visitor_records"
 
-private inline fun <reified T : Any> getCollection(name: String): MongoCollection<T> {
-    return MongoConnection.getCollection("$WHITELIST_PREFIX$name")
+private inline fun <reified T : Any> MongoConnection.whitelistCollection(name: String): MongoCollection<T> {
+    return getCollection("$WHITELIST_PREFIX$name")
 }
 
 val commonModule = module {
@@ -32,11 +32,11 @@ val commonModule = module {
     single { KnownVisitors() }
 
     single<WhitelistRecordRepository> {
-        MongoWhitelistRecordRepository(getCollection(WHITELIST_RECORD_COLLECTION))
+        MongoWhitelistRecordRepository(get<MongoConnection>().whitelistCollection(WHITELIST_RECORD_COLLECTION))
     }
     single<VisitorRecordRepository> {
-        val repo = MongoVisitorRecordRepository(getCollection(VISITOR_RECORD_COLLECTION))
-        PluginScope.launch(Dispatchers.IO) {
+        val repo = MongoVisitorRecordRepository(get<MongoConnection>().whitelistCollection(VISITOR_RECORD_COLLECTION))
+        get<CoroutineScope>().launch(Dispatchers.IO) {
             repo.ensureIndexes()
         }
         repo

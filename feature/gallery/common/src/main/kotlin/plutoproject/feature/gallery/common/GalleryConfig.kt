@@ -1,4 +1,4 @@
-package plutoproject.feature.gallery.adapter.common
+package plutoproject.feature.gallery.common
 
 import plutoproject.feature.gallery.core.render.RenderComponents
 import plutoproject.feature.gallery.core.render.dither.Ditherer

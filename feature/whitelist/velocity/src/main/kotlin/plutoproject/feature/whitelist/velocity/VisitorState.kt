@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.adapter.velocity
+package plutoproject.feature.whitelist.velocity
 
 object VisitorState {
     @Volatile

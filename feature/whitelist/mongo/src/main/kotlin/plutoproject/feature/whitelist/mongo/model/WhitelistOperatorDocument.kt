@@ -1,4 +1,4 @@
-package plutoproject.feature.whitelist.infra.mongo.model
+package plutoproject.feature.whitelist.mongo.model
 
 import kotlinx.serialization.Serializable
 import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
