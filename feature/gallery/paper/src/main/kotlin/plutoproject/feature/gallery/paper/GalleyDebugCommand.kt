@@ -1,6 +1,5 @@
 package plutoproject.feature.gallery.paper
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -9,8 +8,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.bukkit.Bukkit
-import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
-import org.bukkit.plugin.Plugin
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -58,8 +55,6 @@ object GalleyDebugCommand {
     private val displayInstanceStore = koinGet<DisplayInstanceStore>()
     private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
     private val uploadService = koinGet<UploadService>()
-    private val coroutineScope = koinGet<CoroutineScope>()
-    private val serverContext = koinGet<Plugin>().minecraftDispatcher
 
     @Command("gallery debug create <name> <url> <width> <height> [repositionMode] [scaleMode] [quantizeMode] [ditherMode]")
     @Permission(PERMISSION_GALLERY_DEBUG)
@@ -147,7 +142,7 @@ object GalleyDebugCommand {
                 "size=${request.width}x${request.height}, mapCount=${request.mapCount}, modes={reposition=${request.repositionMode}, scale=${request.scaleMode}, quantize=${request.quantizeMode}, dither=${request.ditherMode}}"
         )
 
-        coroutineScope.launch {
+        moduleScope.launch {
             monitorUploadSession(
                 playerId = player.uniqueId,
                 ownerId = player.uniqueId,

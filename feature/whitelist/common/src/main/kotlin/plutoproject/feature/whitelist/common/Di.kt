@@ -27,7 +27,7 @@ private inline fun <reified T : Any> MongoConnection.whitelistCollection(name: S
     return getCollection("$WHITELIST_PREFIX$name")
 }
 
-val commonModule = module {
+fun commonModule(coroutineScope: CoroutineScope) = module {
     single { Clock.systemUTC() }
     single { KnownVisitors() }
 
@@ -36,7 +36,7 @@ val commonModule = module {
     }
     single<VisitorRecordRepository> {
         val repo = MongoVisitorRecordRepository(get<MongoConnection>().whitelistCollection(VISITOR_RECORD_COLLECTION))
-        get<CoroutineScope>().launch(Dispatchers.IO) {
+        coroutineScope.launch(Dispatchers.IO) {
             repo.ensureIndexes()
         }
         repo

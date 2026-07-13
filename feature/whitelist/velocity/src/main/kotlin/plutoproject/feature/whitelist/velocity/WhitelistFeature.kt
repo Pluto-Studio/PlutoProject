@@ -5,7 +5,6 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
-import kotlinx.coroutines.CoroutineScope
 import net.luckperms.api.LuckPermsProvider
 import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.dsl.module
@@ -59,10 +58,9 @@ class WhitelistFeature : RuntimeModule {
         context.loadKoinModuleDefinitions(
             module {
                 single { config }
-                single<CoroutineScope> { context.coroutineScope }
                 single<Logger> { context.logger }
             },
-            commonModule,
+            commonModule(context.coroutineScope),
         )
 
         context.services.exportServiceFromKoin<WhitelistService>()

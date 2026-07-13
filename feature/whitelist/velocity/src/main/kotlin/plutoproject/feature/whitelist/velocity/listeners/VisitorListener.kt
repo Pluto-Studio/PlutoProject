@@ -23,7 +23,6 @@ import plutoproject.feature.whitelist.api.VisitorRecordParams
 import plutoproject.feature.whitelist.api.WhitelistService
 import plutoproject.feature.whitelist.common.VISITOR_NOTIFICATION_TOPIC
 import plutoproject.feature.whitelist.common.VisitorNotification
-import kotlinx.coroutines.CoroutineScope
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.time.Instant
@@ -35,6 +34,7 @@ import java.util.logging.Logger
 import plutoproject.capability.charonflow.api.CharonFlowConnection
 import plutoproject.capability.geoip.api.GeoIpConnection
 import plutoproject.kernel.api.koinGet
+import plutoproject.feature.whitelist.velocity.moduleScope
 
 @Suppress("UNUSED")
 object VisitorListener {
@@ -43,7 +43,6 @@ object VisitorListener {
     private val knownVisitors = koinGet<KnownVisitors>()
     private val charonFlow = koinGet<CharonFlowConnection>().client
     private val geoIpDatabase = koinGet<GeoIpConnection>().database
-    private val coroutineScope = koinGet<CoroutineScope>()
     private val logger = koinGet<Logger>()
     private val luckpermsApi: LuckPerms = LuckPermsProvider.get()
     private val visitorSessions = ConcurrentHashMap<UUID, VisitorSession>()
@@ -93,7 +92,7 @@ object VisitorListener {
         val isEnglish = shouldSendEnglishMessage(player)
         val actionbarMessage = if (isEnglish) PLAYER_VISITOR_ACTIONBAR_ENGLISH else PLAYER_VISITOR_ACTIONBAR
 
-        return coroutineScope.launch {
+        return moduleScope.launch {
             while (service.isKnownVisitor(player.uniqueId)) {
                 player.sendActionBar(actionbarMessage)
                 delay(1000)
@@ -167,7 +166,7 @@ object VisitorListener {
         )
     }
 
-    private fun createVisitorRecord(player: Player, session: VisitorSession) = coroutineScope.launch {
+    private fun createVisitorRecord(player: Player, session: VisitorSession) = moduleScope.launch {
         val duration = JavaDuration.between(session.joinTime, Instant.now()).toKotlinDuration()
         service.createVisitorRecord(
             player.uniqueId,

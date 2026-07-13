@@ -7,3 +7,7 @@ tasks.shadowJar {
     archiveClassifier.set(null as String?)
     mergeServiceFiles()
 }
+
+tasks.jar {
+    enabled = false
+}

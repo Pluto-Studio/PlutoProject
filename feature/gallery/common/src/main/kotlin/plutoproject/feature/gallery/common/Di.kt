@@ -33,6 +33,8 @@ import plutoproject.feature.gallery.infra.mongo.MongoImageDataRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoSystemInformationRepository
 import java.time.Clock
+import java.util.logging.Logger
+import kotlin.coroutines.CoroutineContext
 
 private const val GALLERY_PREFIX = "gallery_"
 private const val IMAGE_COLLECTION = "image"
@@ -46,18 +48,22 @@ private inline fun <reified T : Any> Scope.galleryCollection(name: String): Mong
     return get<MongoConnection>().getCollection("$GALLERY_PREFIX${serverId}_$name")
 }
 
-val commonModule = module {
+fun commonModule(
+    coroutineScope: CoroutineScope,
+    coroutineContext: CoroutineContext,
+    logger: Logger,
+) = module {
     single<Clock> { Clock.systemUTC() }
     single<ImageRepository> {
         MongoImageRepository(galleryCollection(IMAGE_COLLECTION)).also { repo ->
-            get<CoroutineScope>().launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }
         }
     }
     single<DisplayInstanceRepository> {
         MongoDisplayInstanceRepository(galleryCollection(DISPLAY_INSTANCE_COLLECTION)).also { repo ->
-            get<CoroutineScope>().launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }
         }
@@ -66,9 +72,9 @@ val commonModule = module {
         MongoImageDataRepository(
             manifestCollection = galleryCollection(IMAGE_DATA_MANIFEST_COLLECTION),
             chunkCollection = galleryCollection(IMAGE_DATA_CHUNK_COLLECTION),
-            logger = get(),
+            logger = logger,
         ).also { repo ->
-            get<CoroutineScope>().launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }
         }
@@ -79,7 +85,9 @@ val commonModule = module {
         )
     }
 
-    singleOf(::ChunkCallbacks)
+    single {
+        ChunkCallbacks(logger, get(), get(), get(), get(), get())
+    }
 
     singleOf(::ImageStore)
     singleOf(::ImageDataStore)
@@ -91,10 +99,10 @@ val commonModule = module {
     single(createdAtStart = true) {
         UploadService(
             clock = get(),
-            tempFolderHandle = initializeTempFolder(get()).getOrThrow(),
-            coroutineScope = get(),
+            tempFolderHandle = initializeTempFolder(logger).getOrThrow(),
+            coroutineScope = coroutineScope,
             config = get(),
-            logger = get(),
+            logger = logger,
         )
     }
 
@@ -113,8 +121,8 @@ val commonModule = module {
     single {
         SendJobFactory(
             clock = get(),
-            coroutineScope = get(),
-            loopContext = get(),
+            coroutineScope = coroutineScope,
+            loopContext = coroutineContext,
             mapUpdatePort = get(),
             maxQueueSize = get<GalleryConfig>().send.maxQueueSize,
             maxUpdatesInSpan = get<GalleryConfig>().send.maxUpdatesInSpan,

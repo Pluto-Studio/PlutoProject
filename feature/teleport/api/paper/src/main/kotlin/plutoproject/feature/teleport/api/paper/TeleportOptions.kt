@@ -1,0 +1,11 @@
+package plutoproject.feature.teleport.api.paper
+
+import org.bukkit.Material
+
+data class TeleportOptions(
+    val disableSafeCheck: Boolean,
+    val avoidVoid: Boolean,
+    val safeLocationSearchRadius: Int,
+    val chunkPrepareRadius: Int,
+    val blacklistedBlocks: Set<Material>
+)

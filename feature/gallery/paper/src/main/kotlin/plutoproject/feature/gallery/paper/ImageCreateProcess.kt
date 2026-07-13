@@ -1,8 +1,6 @@
 package plutoproject.feature.gallery.paper
 
-import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import ink.pmc.advkt.component.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -12,7 +10,6 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.bukkit.plugin.Plugin
 import plutoproject.feature.gallery.common.*
 import plutoproject.feature.gallery.common.upload.*
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
@@ -32,7 +29,6 @@ import plutoproject.foundation.common.text.UI_SUCCEED_SOUND
 import plutoproject.foundation.common.text.mochaLavender
 import plutoproject.foundation.common.text.replace
 import plutoproject.foundation.common.time.toFormattedComponent
-import plutoproject.kernel.api.koinGet
 import plutoproject.kernel.api.koinInject
 import java.nio.file.Path
 import java.util.*
@@ -46,8 +42,6 @@ private val imageDataStore by koinInject<ImageDataStore>()
 private val displayInstanceStore by koinInject<DisplayInstanceStore>()
 private val displayRuntime by koinInject<DisplayRuntimeRegistry>()
 private val uploadService by koinInject<UploadService>()
-private val coroutineScope by koinInject<CoroutineScope>()
-private val serverContext by lazy { koinGet<Plugin>().minecraftDispatcher }
 
 sealed interface ImageCreateSubmissionResult {
     data class Created(val session: UploadSession) : ImageCreateSubmissionResult
@@ -158,7 +152,7 @@ suspend fun submitImageCreate(
             )
             player.playSound(MESSAGE_SOUND)
 
-            coroutineScope.launch {
+            moduleScope.launch {
                 monitorUploadSession(
                     playerId = player.uniqueId,
                     ownerId = player.uniqueId,

@@ -59,7 +59,7 @@ tasks.register("verifyArchitecture") {
                 "foundation" -> segments.size == 1 ||
                     (segments.size == 2 && segments.last() in setOf("common", "paper", "velocity"))
                 "kernel" -> segments.size == 1 ||
-                    (segments.size == 2 && segments.last() in setOf("api", "common", "paper", "velocity")) ||
+                    (segments.size == 2 && segments.last() in setOf("api", "common", "paper", "velocity", "module-processor")) ||
                     (segments.size == 3 && segments[1] == "api" && segments.last() in setOf("paper", "velocity"))
                 "capability" -> segments.size <= 2 ||
                     (segments.size == 3 && segments.last() in setOf("api", "common", "paper", "velocity")) ||
@@ -68,10 +68,10 @@ tasks.register("verifyArchitecture") {
                     (segments.size == 3 && segments.last() in featureLeafProjects) ||
                     (segments.size == 4 && segments[2] == "api" && segments.last() in setOf("paper", "velocity"))
                 "platform" -> segments.size == 1 ||
-                    (segments.size == 2 && segments.last() in setOf("paper", "velocity"))
+                    (segments.size == 2 && segments.last() in setOf("common", "paper", "velocity"))
                 "build-support" -> segments.size == 1 ||
                     (segments.size == 2 && segments.last() == "module-processor")
-                else -> true // Flat legacy and ancillary projects remain valid during migration.
+                else -> true
             }
             if (!knownPath) {
                 errors += "${candidate.path} does not match a known runtime architecture project path"
@@ -98,13 +98,12 @@ tasks.register("verifyArchitecture") {
         val firstMigrationProjects = listOf(
             ":feature:gallery:api",
             ":feature:gallery:core",
-            ":feature:whitelist-v2:api",
-            ":feature:whitelist-v2:core",
+            ":feature:whitelist:api",
+            ":feature:whitelist:core",
         ).map(rootProject::project)
         val unrelatedPluginIds = listOf(
             "com.google.devtools.ksp",
             "org.jetbrains.kotlin.kapt",
-            "org.jetbrains.kotlin.plugin.serialization",
             "io.papermc.paperweight.userdev",
         )
         firstMigrationProjects.forEach { candidate ->

@@ -764,9 +764,9 @@ A Cloud root and all of its aliases may have only one feature owner. Multiple co
 
 This capability is transitional. It accepts no new commands, and it will be removed after all Cloud command consumers have migrated to native Brigadier.
 
-The migrated whitelist Paper module temporarily falls back to the current world's native spawn when a visitor disconnects. Its previous default-warp lookup remains disabled until the legacy warp feature has a new runtime API; whitelist must not depend on the flat legacy feature API in the interim.
+The Whitelist Paper module uses the default Warp spawn when the optional Warp feature is available and falls back to the current world's native spawn otherwise.
 
-The migrated gallery Paper module temporarily omits its legacy menu button registration. The original integration remains commented in `GalleryFeature.kt`, and the button implementation remains commented in `ImageListMenuButton.kt`, until the legacy menu feature exposes a runtime-module API. Gallery must not depend on the flat legacy menu API in the interim. Its standalone commands, upload server, display runtime, recipes, and listeners remain active.
+The Gallery Paper module registers its image-list button when the optional Menu feature is available. It resolves the Menu service through the current module context and remains usable without Menu.
 
 ## Runtime Manager Components
 

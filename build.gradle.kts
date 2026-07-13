@@ -3,9 +3,8 @@ import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("plutoproject.build-logic")
-    id("plutoproject.legacy-base-conventions")
+    id("plutoproject.distribution")
     id("plutoproject.dokka-conventions")
-    alias(libs.plugins.shadow)
 }
 
 allprojects {
@@ -66,7 +65,7 @@ val buildTimestampProvider = providers.provider {
     Instant.now().toEpochMilli()
 }
 
-tasks.jar {
+tasks.withType<Jar>().configureEach {
     manifest {
         attributes(
             "PlutoProject-Version" to project.version,

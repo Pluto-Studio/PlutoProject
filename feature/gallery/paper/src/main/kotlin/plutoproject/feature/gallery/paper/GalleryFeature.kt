@@ -6,12 +6,9 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
-import kotlinx.coroutines.CoroutineScope
-import org.bukkit.Server
 import org.bukkit.command.CommandSender
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
-import org.bukkit.plugin.Plugin
 import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -29,14 +26,14 @@ import plutoproject.feature.gallery.paper.listener.ChunkListener
 import plutoproject.feature.gallery.paper.listener.CraftListener
 import plutoproject.feature.gallery.paper.listener.ItemFrameListener
 import plutoproject.feature.gallery.paper.listener.PlayerListener
+import plutoproject.feature.menu.api.paper.MenuManager
 import plutoproject.kernel.api.*
 import plutoproject.kernel.api.paper.PaperModuleContext
-import java.util.logging.Logger
-import kotlin.coroutines.CoroutineContext
 
 @Feature(
     id = "gallery",
     platform = Platform.PAPER,
+    optionalFeatures = ["menu"],
     requiredCapabilities = ["mongo", "server_identifier", "interactive", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
@@ -65,11 +62,6 @@ class GalleryFeature : RuntimeModule {
         context.loadKoinModuleDefinitions(
             module {
                 single { config }
-                single<CoroutineScope> { context.coroutineScope }
-                single<CoroutineContext> { context.coroutineScope.coroutineContext }
-                single<Server> { context.plugin.server }
-                single<Plugin> { context.plugin }
-                single<Logger> { context.logger }
                 single { PaperGalleryServiceImpl() }
                 single<GalleryServiceImpl> { get<PaperGalleryServiceImpl>() }
                 single<GalleryService> { get<PaperGalleryServiceImpl>() }
@@ -79,19 +71,20 @@ class GalleryFeature : RuntimeModule {
                     PaperDisplayInstanceIndex(get(), get(), context.plugin.minecraftDispatcher)
                 }
             },
-            commonModule,
+            commonModule(
+                coroutineScope = context.coroutineScope,
+                coroutineContext = context.coroutineScope.coroutineContext,
+                logger = context.logger,
+            ),
         )
         context.services.exportServiceFromKoin<GalleryService>()
     }
 
     override suspend fun onEnable(context: ModuleContext) {
         context as PaperModuleContext
-        onFeatureEnable(context.koin)
-
-        // TODO(runtime-module): Restore after menu exposes a new feature API.
-        // if (isMenuAvailable) {
-        //     MenuManager.registerButton(ImageListMenuButtonDescriptor) { ImageListMenuButton() }
-        // }
+        onFeatureEnable(context.koin, context.logger)
+        context.services.getServiceOrNull<MenuManager>()
+            ?.registerButton(ImageListMenuButtonDescriptor) { ImageListMenuButton() }
 
         registerCommands(context)
         registerImageItemCopyRecipe(context.plugin.server)
@@ -131,7 +124,7 @@ class GalleryFeature : RuntimeModule {
 
         registeredListeners.forEach(HandlerList::unregisterAll)
         registeredListeners = emptyList()
-        context.koinGet<Server>().removeRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
+        (context as PaperModuleContext).plugin.server.removeRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
         onFeatureDisable(context.koin)
     }
 }

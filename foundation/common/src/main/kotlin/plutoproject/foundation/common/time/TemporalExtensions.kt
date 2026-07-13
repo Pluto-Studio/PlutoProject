@@ -51,3 +51,10 @@ fun Instant.formatTime(zoneId: ZoneId = LocalZoneId): String =
 
 fun Instant.formatDate(zoneId: ZoneId = LocalZoneId): String =
     atZone(zoneId).formatDate()
+
+fun ZoneId.toOffset(): ZoneOffset = rules.getOffset(Instant.now())
+
+fun Long.toInstant(): Instant = Instant.ofEpochMilli(this)
+
+val currentTimestampMillis: Long
+    get() = System.currentTimeMillis()

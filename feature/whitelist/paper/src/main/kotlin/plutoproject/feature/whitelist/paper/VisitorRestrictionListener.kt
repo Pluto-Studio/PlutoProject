@@ -8,25 +8,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bukkit.GameMode
-import org.bukkit.Server
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerTeleportEvent
 import plutoproject.feature.whitelist.api.WhitelistService
-import kotlinx.coroutines.CoroutineScope
 import kotlin.time.Duration.Companion.milliseconds
 import plutoproject.kernel.api.koinGet
 
 @Suppress("UNUSED")
 object VisitorRestrictionListener : Listener {
     private val service = koinGet<WhitelistService>()
-    private val coroutineScope = koinGet<CoroutineScope>()
-    private val server = koinGet<Server>()
 
     private var visitorSpeedLimitationJob: Job? = null
 
     fun startVisitorSpeedLimitationJob() {
-        visitorSpeedLimitationJob = coroutineScope.launch {
+        visitorSpeedLimitationJob = moduleScope.launch {
             while (isActive) {
                 delay(500.milliseconds)
                 runVisitorSpeedLimitation()

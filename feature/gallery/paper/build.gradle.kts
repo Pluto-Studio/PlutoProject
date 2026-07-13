@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.feature.gallery.core)
     implementation(projects.feature.gallery.mongo)
     implementation(projects.feature.gallery.common)
+    implementation(projects.feature.menu.api.paper)
     implementation(libs.adventureKt)
     implementation(libs.bundles.hoplite)
     implementation(libs.bundles.koin)

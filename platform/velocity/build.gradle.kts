@@ -1,6 +1,5 @@
 plugins {
-    id("plutoproject.platform-conventions")
-    id("plutoproject.velocity-conventions")
+    id("plutoproject.velocity")
     alias(libs.plugins.resourceFactory.velocity)
 }
 
@@ -23,6 +22,7 @@ dependencies {
     implementation(projects.feature.motd.velocity)
     implementation(projects.feature.playerCap.velocity)
     implementation(projects.feature.versionChecker.velocity)
+    implementation(libs.bundles.mccoroutine.velocity)
 }
 
 velocityPluginJson {

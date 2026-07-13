@@ -1,13 +1,11 @@
 package plutoproject.feature.whitelist.paper
 
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
-import kotlinx.coroutines.CoroutineScope
-import org.bukkit.Server
 import org.bukkit.event.HandlerList
-import org.bukkit.plugin.Plugin
 import org.koin.dsl.module
 import plutoproject.capability.charonflow.api.CharonFlowConnection
 import plutoproject.capability.mongo.api.MongoConnection
@@ -20,6 +18,7 @@ import java.util.logging.Logger
 @Feature(
     id = "whitelist",
     platform = Platform.PAPER,
+    optionalFeatures = ["warp"],
     requiredCapabilities = ["mongo", "charonflow"],
 )
 @Suppress("UNUSED")
@@ -48,12 +47,9 @@ class WhitelistFeature : RuntimeModule {
         context.loadKoinModuleDefinitions(
             module {
                 single { config }
-                single<CoroutineScope> { context.coroutineScope }
-                single<Server> { context.plugin.server }
-                single<Plugin> { context.plugin }
                 single<Logger> { context.logger }
             },
-            commonModule,
+            commonModule(context.coroutineScope),
         )
         context.services.exportServiceFromKoin<WhitelistService>()
     }
@@ -62,7 +58,9 @@ class WhitelistFeature : RuntimeModule {
         context as PaperModuleContext
 
         val server = context.plugin.server
-        visitorListener = VisitorListener.also { server.pluginManager.registerEvents(it, context.plugin) }
+        visitorListener = VisitorListener.also {
+            server.pluginManager.registerSuspendingEvents(it, context.plugin)
+        }
         restrictionListener = VisitorRestrictionListener.also {
             server.pluginManager.registerEvents(it, context.plugin)
             it.startVisitorSpeedLimitationJob()

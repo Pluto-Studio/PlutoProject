@@ -1,0 +1,43 @@
+package plutoproject.feature.daily.paper.listeners
+
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import plutoproject.feature.daily.api.paper.Daily
+import plutoproject.feature.daily.paper.NOT_CHECKED_IN_TODAY
+import plutoproject.feature.daily.paper.checkCheckInDate
+import java.time.LocalDate
+
+@Suppress("UNUSED")
+object PlayerListener : Listener {
+    @EventHandler
+    suspend fun PlayerJoinEvent.e() {
+        fun sendPrompt() {
+            player.sendMessage(NOT_CHECKED_IN_TODAY)
+        }
+
+        if (!player.hasPermission("plutoproject.daily.receive_checkin_reminder")) {
+            return
+        }
+
+        val user = plutoproject.kernel.api.koinGet<Daily>().getUser(player) ?: run {
+            sendPrompt()
+            return
+        }
+        val now = LocalDate.now()
+
+        if (user.isCheckedInToday()) return
+        user.checkCheckInDate()
+
+        if (user.lastCheckInDate?.month != now.month || !user.isCheckedInYesterday()) {
+            user.clearAccumulation()
+        }
+        sendPrompt()
+    }
+
+    @EventHandler
+    fun PlayerQuitEvent.e() {
+        plutoproject.kernel.api.koinGet<Daily>().unloadUser(player.uniqueId)
+    }
+}

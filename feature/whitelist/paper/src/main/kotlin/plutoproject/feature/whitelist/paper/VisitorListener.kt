@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.bukkit.GameMode
-import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -13,12 +12,8 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import plutoproject.feature.whitelist.common.impl.KnownVisitors
 import plutoproject.feature.whitelist.api.WhitelistService
-import org.bukkit.plugin.Plugin
-import kotlinx.coroutines.CoroutineScope
 import java.util.logging.Logger
 import plutoproject.kernel.api.koinGet
-// import plutoproject.feature.paper.api.warp.WarpManager
-// import plutoproject.framework.common.api.feature.FeatureManager
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
@@ -27,16 +22,13 @@ import kotlin.time.Duration.Companion.seconds
 object VisitorListener : Listener {
     private val service = koinGet<WhitelistService>()
     private val knownVisitors = koinGet<KnownVisitors>()
-    private val coroutineScope = koinGet<CoroutineScope>()
-    private val server = koinGet<Server>()
-    private val plugin = koinGet<Plugin>()
     private val logger = koinGet<Logger>()
     private val pendingVisitors = ConcurrentHashMap<UUID, Job>()
 
     fun onVisitorIncoming(uniqueId: UUID, username: String) {
         knownVisitors.add(uniqueId)
 
-        val timeoutJob = coroutineScope.launch {
+        val timeoutJob = moduleScope.launch {
             delay(30.seconds)
             if (service.isKnownVisitor(uniqueId)) {
                 knownVisitors.remove(uniqueId)
@@ -61,14 +53,11 @@ object VisitorListener : Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    fun onPlayerQuit(event: PlayerQuitEvent) {
+    suspend fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         if (service.isKnownVisitor(player.uniqueId)) {
-            // Restore these lines after the legacy warp feature has a new runtime API:
-            // val warpSpawn = if (FeatureManager.isEnabled("warp")) WarpManager.getDefaultSpawn()?.location else null
-            // val spawn = warpSpawn ?: player.world.spawnLocation
-            // player.teleport(spawn)
-            player.teleport(player.world.spawnLocation)
+            val spawn = warpManager?.getDefaultSpawn()?.location ?: player.world.spawnLocation
+            player.teleport(spawn)
             player.gameMode = GameMode.SURVIVAL
             knownVisitors.remove(player.uniqueId)
             pendingVisitors.remove(player.uniqueId)?.cancel()

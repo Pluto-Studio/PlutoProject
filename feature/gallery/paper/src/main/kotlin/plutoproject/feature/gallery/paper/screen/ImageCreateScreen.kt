@@ -1,6 +1,5 @@
 package plutoproject.feature.gallery.paper.screen
 
-import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -12,7 +11,6 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.event.ClickCallback
-import org.bukkit.plugin.Plugin
 import plutoproject.feature.gallery.common.DitherMode
 import plutoproject.feature.gallery.common.GalleryConfig
 import plutoproject.feature.gallery.common.RepositionMode
@@ -148,7 +146,7 @@ class ImageCreateScreen : InteractiveScreen() {
                     }
 
                     is ImageCreateSubmissionResult.Created -> {
-                        withContext(koinGet<Plugin>().minecraftDispatcher) {
+                        withContext(serverContext) {
                             player.clearDialog()
                             player.closeInventory()
                         }

@@ -4,6 +4,14 @@ import net.kyori.adventure.text.Component
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 import java.time.Duration as JavaDuration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+val Int.ticks: Duration
+    get() = (this * 50).toDuration(DurationUnit.MILLISECONDS)
+
+val Long.ticks: Duration
+    get() = (this * 50).toDuration(DurationUnit.MILLISECONDS)
 
 fun Duration.toFormattedString(): String {
     val totalNanoseconds = inWholeNanoseconds

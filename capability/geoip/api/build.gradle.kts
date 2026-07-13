@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.geoip2)
+    api(libs.geoip2)
 }

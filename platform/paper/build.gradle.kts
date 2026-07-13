@@ -1,8 +1,7 @@
 import xyz.jpenilla.resourcefactory.paper.PaperPluginYaml.Load
 
 plugins {
-    id("plutoproject.platform-conventions")
-    id("plutoproject.paper-conventions")
+    id("plutoproject.paper")
     alias(libs.plugins.resourceFactory.paper)
 }
 
@@ -13,6 +12,7 @@ dependencies {
     implementation(projects.foundation.paper)
     implementation(projects.capability.mongo.paper)
     implementation(projects.capability.charonflow.paper)
+    implementation(projects.capability.geoip.paper)
     implementation(projects.capability.serverIdentifier.paper)
     implementation(projects.capability.databasePersist.paper)
     implementation(projects.capability.profile.paper)
@@ -33,6 +33,28 @@ dependencies {
     implementation(projects.feature.head.paper)
     implementation(projects.feature.itemframeProtection.paper)
     implementation(projects.feature.lecternProtection.paper)
+    implementation(projects.feature.menu.paper)
+    implementation(projects.feature.teleport.paper)
+    implementation(projects.feature.home.paper)
+    implementation(projects.feature.warp.paper)
+    implementation(projects.feature.back.paper)
+    implementation(projects.feature.randomTeleport.paper)
+    implementation(projects.feature.daily.paper)
+    implementation(projects.feature.exchangeShop.paper)
+    implementation(projects.feature.dynamicScheduler.paper)
+    implementation(projects.feature.sit.paper)
+    implementation(projects.feature.pvpToggle.paper)
+    implementation(projects.feature.recipe.paper)
+    implementation(projects.feature.noPlayerCap.paper)
+    implementation(projects.feature.noJoinQuitMessage.paper)
+    implementation(projects.feature.overloadWarning.paper)
+    implementation(projects.feature.suicide.paper)
+    implementation(projects.feature.status.paper)
+    implementation(projects.feature.devWatermark.paper)
+    implementation(projects.feature.recipeUnlock.paper)
+    implementation(projects.feature.noCreeperBlockBreaks.paper)
+    implementation(libs.bundles.mccoroutine.paper)
+    implementation(libs.classgraph)
 }
 
 paperPluginYaml {

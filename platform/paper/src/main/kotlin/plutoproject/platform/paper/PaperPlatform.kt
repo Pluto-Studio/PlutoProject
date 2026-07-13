@@ -33,13 +33,6 @@ class PaperPlatform : SuspendingJavaPlugin() {
             "cafe.adriel.voyager",
             classLoader = pluginClassLoader
         )
-        loadClassesInPackages(
-            "plutoproject.framework.common",
-            "plutoproject.framework.paper",
-            "plutoproject.feature.common",
-            "plutoproject.feature.paper",
-            classLoader = pluginClassLoader
-        )
     }
 
     private fun loadClassesInPackages(

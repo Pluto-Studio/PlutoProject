@@ -12,7 +12,6 @@ import plutoproject.capability.mongo.api.getCollection
 import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import plutoproject.foundation.common.text.replace
 import java.util.logging.Level
-import java.util.logging.Logger
 import plutoproject.kernel.api.koinGet
 
 private const val COMMAND_GALLERY_MIGRATE_IMAGE_DATA_PERMISSION = "plutoproject.gallery.command.gallery.migrate_image_data"
@@ -22,7 +21,6 @@ private const val LEGACY_IMAGE_DATA_COLLECTION = "image_data"
 @Suppress("UNUSED")
 object GalleryMigrateImageDataCommand {
     private val imageDataRepository = koinGet<ImageDataRepository>()
-    private val logger = koinGet<Logger>()
     private val mongoConnection = koinGet<MongoConnection>()
     private val serverIdentifier = koinGet<ServerIdentifier>()
     private val legacyCollection = connectLegacyCollection()
@@ -58,7 +56,7 @@ object GalleryMigrateImageDataCommand {
 
             failureCount++
             val cause = migrated.exceptionOrNull()
-            logger.log(Level.WARNING, "Failed to migrate gallery image data ${legacyDocument.imageId}", cause)
+            moduleLogger.log(Level.WARNING, "Failed to migrate gallery image data ${legacyDocument.imageId}", cause)
             sendMessage(
                 getImageDataMigrationFailedMessage(
                     imageId = legacyDocument.imageId.toString(),

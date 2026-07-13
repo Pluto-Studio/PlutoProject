@@ -7,9 +7,10 @@ import plutoproject.feature.gallery.common.upload.stopWebServer
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
+import java.util.logging.Logger
 
-fun onFeatureEnable(koin: Koin) {
-    startWebServer(koin.get(), koin.get(), koin.get())
+fun onFeatureEnable(koin: Koin, logger: Logger) {
+    startWebServer(koin.get(), koin.get(), logger)
 }
 
 suspend fun onFeatureDisable(koin: Koin) {

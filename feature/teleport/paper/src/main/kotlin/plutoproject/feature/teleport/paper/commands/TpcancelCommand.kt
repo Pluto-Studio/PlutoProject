@@ -1,0 +1,47 @@
+package plutoproject.feature.teleport.paper.commands
+
+import plutoproject.feature.teleport.paper.teleportManager
+
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.incendo.cloud.annotations.Argument
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
+import plutoproject.feature.teleport.api.paper.TeleportManager
+import plutoproject.feature.teleport.paper.*
+import plutoproject.foundation.common.text.PERMISSION_DENIED
+import plutoproject.foundation.common.text.replace
+import plutoproject.foundation.paper.command.ensurePlayer
+
+@Suppress("UNUSED")
+object TpcancelCommand {
+    @Command("tpcancel [player]")
+    @Permission("plutoproject.teleport.command.tpcancel")
+    fun CommandSender.tpcancel(@Argument("player") player: Player?) = ensurePlayer {
+        val argRequest = player?.let { teleportManager.getUnfinishedRequest(it) }
+        if (player != null) {
+            if (!hasPermission("plutoproject.teleport.command.tpcancel.others")) {
+                sendMessage(PERMISSION_DENIED)
+                return
+            }
+            if (argRequest == null) {
+                sendMessage(COMMAND_TPCANCEL_NO_REQUEST_OTHER.replace("<player>", player.name))
+                return
+            }
+            argRequest.cancel()
+            sendMessage(
+                COMMAND_TPCANCEL_SUCCEED_OTHER
+                    .replace("<player>", player.name)
+                    .replace("<dest>", argRequest.destination.name)
+            )
+            sendMessage(COMMAND_TPCANCEL_OTHER_NOTIFY.replace("<player>", argRequest.destination.name))
+            return
+        }
+        val request = teleportManager.getUnfinishedRequest(this) ?: return run {
+            sendMessage(COMMAND_TPCANCEL_NO_REQUEST)
+        }
+        request.cancel()
+        sendMessage(COMMAND_TPCANCEL_SUCCEED.replace("<player>", request.destination.name))
+        playSound(TELEPORT_REQUEST_CANCELLED_SOUND)
+    }
+}

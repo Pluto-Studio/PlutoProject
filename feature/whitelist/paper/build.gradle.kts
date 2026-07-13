@@ -11,6 +11,8 @@ dependencies {
     implementation(projects.capability.mongo.api)
     implementation(projects.capability.charonflow.api)
     implementation(projects.feature.whitelist.common)
+    implementation(projects.feature.warp.api.paper)
     implementation(libs.koin.core)
     implementation(libs.bundles.hoplite)
+    implementation(libs.bundles.mccoroutine.paper)
 }

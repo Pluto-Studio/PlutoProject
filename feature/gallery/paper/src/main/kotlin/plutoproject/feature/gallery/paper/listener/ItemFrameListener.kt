@@ -45,7 +45,6 @@ import plutoproject.feature.gallery.core.util.ChunkKey
 import plutoproject.foundation.common.text.replace
 import plutoproject.kernel.api.koinGet
 import java.util.*
-import java.util.logging.Logger
 import kotlin.time.Duration.Companion.seconds
 import net.minecraft.world.item.ItemStack as NmsItemStack
 
@@ -61,14 +60,12 @@ private val PLACEMENT_FAILED_SOUND = sound {
 
 @Suppress("UNUSED", "UnstableApiUsage")
 object ItemFrameListener : Listener {
-    private val logger = koinGet<Logger>()
     private val imageStore = koinGet<ImageStore>()
     private val imageDataStore = koinGet<ImageDataStore>()
     private val displayInstanceStore = koinGet<DisplayInstanceStore>()
     private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
     private val displayIndex = koinGet<DisplayInstanceIndex>()
     private val galleryService = koinGet<GalleryServiceImpl>()
-    private val coroutineScope = koinGet<CoroutineScope>()
 
     @EventHandler
     suspend fun onItemFrameChange(event: PlayerItemFrameChangeEvent) {
@@ -89,12 +86,12 @@ object ItemFrameListener : Listener {
         }
 
         val imageItemData = itemStack.imageItemData() ?: return
-        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+        val imageDeferred = moduleScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 imageStore.get(imageItemData.imageId)
             }
         }
-        val imageDataDeferred = coroutineScope.async(Dispatchers.IO) {
+        val imageDataDeferred = moduleScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 imageDataStore.get(imageItemData.imageId)
             }
@@ -194,7 +191,7 @@ object ItemFrameListener : Listener {
 
         if (image == null || imageData == null) {
             if (image != null) {
-                logger.warning("Cannot find image data for existed image \"${image.name}\" (${image.id})")
+                moduleLogger.warning("Cannot find image data for existed image \"${image.name}\" (${image.id})")
             }
             player.playSound(PLACEMENT_FAILED_SOUND)
             player.sendMessage(IMAGE_ITEM_PLACEMENT_FAILED_INVALID)
@@ -202,7 +199,7 @@ object ItemFrameListener : Listener {
             return
         }
 
-        coroutineScope.launch(Dispatchers.IO) {
+        moduleScope.launch(Dispatchers.IO) {
             withTimeout(DISPLAY_INSTANCE_SAVE_TIMEOUT_SECONDS.seconds) {
                 displayInstanceStore.create(displayInstance)
             }
@@ -237,7 +234,7 @@ object ItemFrameListener : Listener {
         val displayInstance = displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
 
         val originFrame = event.itemFrame.world.getEntity(imageItemFrameData.originItemFrame)
-        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+        val imageDeferred = moduleScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 imageStore.get(imageItemFrameData.imageId)
             }
@@ -331,7 +328,7 @@ object ItemFrameListener : Listener {
         val displayInstance = displayRuntime.detach(imageItemFrameData.imageId, imageItemFrameData.displayInstanceId)
 
         val originFrame = itemFrame.world.getEntity(imageItemFrameData.originItemFrame)
-        val imageDeferred = coroutineScope.async(Dispatchers.IO) {
+        val imageDeferred = moduleScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 imageStore.get(imageItemFrameData.imageId)
             }
@@ -381,7 +378,7 @@ object ItemFrameListener : Listener {
     }
 
     private fun deleteDisplayInstance(displayInstanceId: UUID) {
-        coroutineScope.launch(Dispatchers.IO) {
+        moduleScope.launch(Dispatchers.IO) {
             displayInstanceStore.delete(displayInstanceId)
         }
     }
@@ -390,7 +387,7 @@ object ItemFrameListener : Listener {
         displayInstanceId: UUID,
         displayInstance: DisplayInstance?
     ): DisplayInstance? {
-        val displayInstanceDeferred = coroutineScope.async(Dispatchers.IO) {
+        val displayInstanceDeferred = moduleScope.async(Dispatchers.IO) {
             withTimeoutOrNull(IMAGE_LOOKUP_TIMEOUT_SECONDS.seconds) {
                 displayInstanceStore.delete(displayInstanceId)
             }

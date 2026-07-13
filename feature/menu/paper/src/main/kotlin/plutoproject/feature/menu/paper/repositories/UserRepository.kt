@@ -1,0 +1,11 @@
+package plutoproject.feature.menu.paper.repositories
+
+import com.mongodb.kotlin.client.coroutine.MongoCollection
+import kotlinx.coroutines.flow.toList
+import plutoproject.feature.menu.paper.models.UserModel
+
+class UserRepository(private val collection: MongoCollection<UserModel>) {
+    suspend fun find(): List<UserModel> {
+        return collection.find().toList()
+    }
+}
