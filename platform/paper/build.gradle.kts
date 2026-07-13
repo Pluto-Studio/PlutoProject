@@ -23,6 +23,16 @@ dependencies {
 
     implementation(projects.feature.whitelist.paper)
     implementation(projects.feature.gallery.paper)
+    implementation(projects.feature.afk.paper)
+    implementation(projects.feature.align.paper)
+    implementation(projects.feature.creeperFirework.paper)
+    implementation(projects.feature.elevator.paper)
+    implementation(projects.feature.farmProtection.paper)
+    implementation(projects.feature.gm.paper)
+    implementation(projects.feature.hat.paper)
+    implementation(projects.feature.head.paper)
+    implementation(projects.feature.itemframeProtection.paper)
+    implementation(projects.feature.lecternProtection.paper)
 }
 
 paperPluginYaml {

@@ -7,12 +7,10 @@ import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.scope.Scope
-import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.capability.mongo.api.getCollection
 import plutoproject.capability.serveridentifier.api.ServerIdentifier
-import plutoproject.feature.gallery.api.GalleryService
 import plutoproject.feature.gallery.common.upload.UploadService
 import plutoproject.feature.gallery.common.upload.initializeTempFolder
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
@@ -81,7 +79,6 @@ val commonModule = module {
         )
     }
 
-    singleOf(::GalleryServiceImpl) bind GalleryService::class
     singleOf(::ChunkCallbacks)
 
     singleOf(::ImageStore)

@@ -21,6 +21,7 @@ import plutoproject.capability.legacycloudcommands.api.paper.PaperLegacyCloudCom
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import plutoproject.feature.gallery.api.GalleryService
+import plutoproject.feature.gallery.common.GalleryServiceImpl
 import plutoproject.feature.gallery.common.*
 import plutoproject.feature.gallery.core.display.MapUpdatePort
 import plutoproject.feature.gallery.core.display.ViewPort
@@ -69,6 +70,9 @@ class GalleryFeature : RuntimeModule {
                 single<Server> { context.plugin.server }
                 single<Plugin> { context.plugin }
                 single<Logger> { context.logger }
+                single { PaperGalleryServiceImpl() }
+                single<GalleryServiceImpl> { get<PaperGalleryServiceImpl>() }
+                single<GalleryService> { get<PaperGalleryServiceImpl>() }
                 singleOf(::PaperViewPort) bind ViewPort::class
                 singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
                 single<DisplayInstanceIndex> {
