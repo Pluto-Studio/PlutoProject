@@ -19,6 +19,10 @@ dependencies {
     implementation(projects.capability.legacyCloudCommands.velocity)
 
     implementation(projects.feature.whitelist.velocity)
+    implementation(projects.feature.joinQuitMessage.velocity)
+    implementation(projects.feature.motd.velocity)
+    implementation(projects.feature.playerCap.velocity)
+    implementation(projects.feature.versionChecker.velocity)
 }
 
 velocityPluginJson {

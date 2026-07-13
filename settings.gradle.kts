@@ -32,10 +32,8 @@ include("framework-velocity")
 
 include("feature-common-api")
 include("feature-paper-api")
-include("feature-velocity-api")
 include("feature-common")
 include("feature-paper")
-include("feature-velocity")
 
 fun includeProject(path: String, projectDir: String? = null) {
     include(path)
@@ -71,6 +69,11 @@ includeProject(":feature:gallery:common")
 includeProject(":feature:gallery:mongo")
 includeProject(":feature:gallery:paper")
 includeProject(":feature:gallery:frontend")
+
+includeProject(":feature:join-quit-message:velocity")
+includeProject(":feature:motd:velocity")
+includeProject(":feature:player-cap:velocity")
+includeProject(":feature:version-checker:velocity")
 
 includeProject(":kernel:api")
 includeProject(":kernel:api:paper")
