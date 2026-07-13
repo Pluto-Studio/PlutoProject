@@ -5,10 +5,9 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
-import com.velocitypowered.api.command.CommandSource
-import org.incendo.cloud.annotations.AnnotationParser
 import plutoproject.capability.databasepersist.api.DatabasePersist
 import plutoproject.capability.legacycloudcommands.api.velocity.VelocityLegacyCloudCommands
+import plutoproject.foundation.velocity.command.CloudCommandRegistration
 import plutoproject.kernel.api.Feature
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.Platform
@@ -26,8 +25,7 @@ import plutoproject.kernel.api.velocity.VelocityModuleContext
 class VersionCheckerFeature : RuntimeModule {
     private lateinit var config: VersionCheckerConfig
     private var listener: PingListener? = null
-    private var annotationParser: AnnotationParser<CommandSource>? = null
-    private val commandRoots = linkedSetOf<String>()
+    private var commands: CloudCommandRegistration? = null
 
     override suspend fun onLoad(context: ModuleContext) {
         context.dataFolder.toFile().mkdirs()
@@ -56,27 +54,13 @@ class VersionCheckerFeature : RuntimeModule {
 
     private fun registerCommand(context: VelocityModuleContext, databasePersist: DatabasePersist) {
         val parser = context.services.getService<VelocityLegacyCloudCommands>().parser
-        val manager = parser.manager()
-        val rootsBefore = manager.rootCommands().toSet()
-        try {
-            val commands = parser.parse(IgnoreCommand(config, databasePersist))
-            val parsedRoots = commands.flatMap { command ->
-                val root = command.rootComponent()
-                listOf(root.name()) + root.aliases() + root.alternativeAliases()
-            }.toSet()
-            commandRoots += parsedRoots.intersect(manager.rootCommands().toSet() - rootsBefore)
-            annotationParser = parser
-        } catch (cause: Throwable) {
-            (manager.rootCommands().toSet() - rootsBefore).forEach(manager::deleteRootCommand)
-            throw cause
-        }
+        commands = CloudCommandRegistration.register(parser, IgnoreCommand(config, databasePersist))
     }
 
     override suspend fun onDisable(context: ModuleContext) {
         context as VelocityModuleContext
-        annotationParser?.manager()?.let { manager -> commandRoots.forEach(manager::deleteRootCommand) }
-        commandRoots.clear()
-        annotationParser = null
+        commands?.close()
+        commands = null
         listener?.let { context.proxyServer.eventManager.unregisterListener(context.pluginContainer, it) }
         listener = null
     }

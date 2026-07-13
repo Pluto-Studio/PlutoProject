@@ -6,10 +6,8 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
-import org.bukkit.command.CommandSender
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
-import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -27,6 +25,7 @@ import plutoproject.feature.gallery.paper.listener.CraftListener
 import plutoproject.feature.gallery.paper.listener.ItemFrameListener
 import plutoproject.feature.gallery.paper.listener.PlayerListener
 import plutoproject.feature.menu.api.paper.MenuManager
+import plutoproject.foundation.paper.command.CloudCommandRegistration
 import plutoproject.kernel.api.*
 import plutoproject.kernel.api.paper.PaperModuleContext
 
@@ -39,8 +38,7 @@ import plutoproject.kernel.api.paper.PaperModuleContext
 @Suppress("UNUSED")
 @OptIn(ExperimentalHoplite::class)
 class GalleryFeature : RuntimeModule {
-    private var annotationParser: AnnotationParser<CommandSender>? = null
-    private val commandRoots = linkedSetOf<String>()
+    private var commands: CloudCommandRegistration? = null
     private var registeredListeners: List<Listener> = emptyList()
 
     override suspend fun onLoad(context: ModuleContext) {
@@ -94,33 +92,17 @@ class GalleryFeature : RuntimeModule {
 
     private fun registerCommands(context: PaperModuleContext) {
         val parser = context.services.getService<PaperLegacyCloudCommands>().parser
-        val manager = parser.manager()
-        val rootsBefore = manager.rootCommands().toSet()
-
-        try {
-            val commands = parser.parse(
-                GalleyDebugCommand,
-                GalleryCancelUploadCommand,
-                GalleryMigrateImageDataCommand
-            )
-            val parsedRoots = commands.flatMap { command ->
-                val root = command.rootComponent()
-                listOf(root.name()) + root.aliases() + root.alternativeAliases()
-            }.toSet()
-            commandRoots += parsedRoots.intersect(manager.rootCommands().toSet() - rootsBefore)
-            annotationParser = parser
-        } catch (cause: Throwable) {
-            (manager.rootCommands().toSet() - rootsBefore).forEach(manager::deleteRootCommand)
-            throw cause
-        }
+        commands = CloudCommandRegistration.register(
+            parser,
+            GalleyDebugCommand,
+            GalleryCancelUploadCommand,
+            GalleryMigrateImageDataCommand,
+        )
     }
 
     override suspend fun onDisable(context: ModuleContext) {
-        annotationParser?.manager()?.let { manager ->
-            commandRoots.forEach(manager::deleteRootCommand)
-        }
-        commandRoots.clear()
-        annotationParser = null
+        commands?.close()
+        commands = null
 
         registeredListeners.forEach(HandlerList::unregisterAll)
         registeredListeners = emptyList()

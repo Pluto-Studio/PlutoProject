@@ -6,7 +6,6 @@ import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import net.luckperms.api.LuckPermsProvider
-import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.dsl.module
 import plutoproject.capability.charonflow.api.CharonFlowConnection
 import plutoproject.capability.geoip.api.GeoIpConnection
@@ -21,6 +20,7 @@ import plutoproject.feature.whitelist.velocity.commands.WhitelistCommand
 import plutoproject.feature.whitelist.velocity.commands.WhitelistVisitorCommand
 import plutoproject.feature.whitelist.velocity.listeners.PlayerListener
 import plutoproject.feature.whitelist.velocity.listeners.VisitorListener
+import plutoproject.foundation.velocity.command.CloudCommandRegistration
 import plutoproject.kernel.api.*
 import plutoproject.kernel.api.velocity.VelocityModuleContext
 import java.util.logging.Logger
@@ -35,8 +35,7 @@ import java.util.logging.Logger
 class WhitelistFeature : RuntimeModule {
     private var playerListener: PlayerListener? = null
     private var visitorListener: VisitorListener? = null
-    private var annotationParser: AnnotationParser<com.velocitypowered.api.command.CommandSource>? = null
-    private val commandRoots = linkedSetOf<String>()
+    private var commands: CloudCommandRegistration? = null
 
     override suspend fun onLoad(context: ModuleContext) {
         context as VelocityModuleContext
@@ -84,8 +83,6 @@ class WhitelistFeature : RuntimeModule {
 
     private fun registerCommands(context: VelocityModuleContext, config: WhitelistConfig) {
         val parser = context.services.getService<VelocityLegacyCloudCommands>().parser
-        val manager = parser.manager()
-        val rootsBefore = manager.rootCommands().toSet()
         val containers = buildList {
             add(WhitelistCommand)
             add(WhitelistVisitorCommand)
@@ -94,18 +91,7 @@ class WhitelistFeature : RuntimeModule {
             }
         }
 
-        try {
-            val commands = parser.parse(*containers.toTypedArray())
-            val parsedRoots = commands.flatMap { command ->
-                val root = command.rootComponent()
-                listOf(root.name()) + root.aliases() + root.alternativeAliases()
-            }.toSet()
-            commandRoots += parsedRoots.intersect(manager.rootCommands().toSet() - rootsBefore)
-            annotationParser = parser
-        } catch (cause: Throwable) {
-            (manager.rootCommands().toSet() - rootsBefore).forEach(manager::deleteRootCommand)
-            throw cause
-        }
+        commands = CloudCommandRegistration.register(parser, *containers.toTypedArray())
     }
 
     private fun registerListeners(context: VelocityModuleContext) {
@@ -120,11 +106,8 @@ class WhitelistFeature : RuntimeModule {
     override suspend fun onDisable(context: ModuleContext) {
         context as VelocityModuleContext
 
-        annotationParser?.manager()?.let { manager ->
-            commandRoots.forEach(manager::deleteRootCommand)
-        }
-        commandRoots.clear()
-        annotationParser = null
+        commands?.close()
+        commands = null
 
         playerListener?.let { context.proxyServer.eventManager.unregisterListener(context.pluginContainer, it) }
         playerListener = null
