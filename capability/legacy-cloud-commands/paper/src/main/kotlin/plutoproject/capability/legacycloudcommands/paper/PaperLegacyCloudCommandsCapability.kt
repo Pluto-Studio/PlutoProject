@@ -5,7 +5,7 @@ import org.incendo.cloud.annotations.AnnotationParser
 import org.incendo.cloud.execution.ExecutionCoordinator
 import org.incendo.cloud.kotlin.coroutines.annotations.installCoroutineSupport
 import org.incendo.cloud.paper.LegacyPaperCommandManager
-import plutoproject.capability.legacycloudcommands.api.paper.LegacyPaperCloudCommands
+import plutoproject.capability.legacycloudcommands.api.paper.PaperLegacyCloudCommands
 import plutoproject.kernel.api.Capability
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.Platform
@@ -28,7 +28,7 @@ class PaperLegacyCloudCommandsCapability : RuntimeModule {
         }
         val parser = AnnotationParser(manager, CommandSender::class.java).installCoroutineSupport()
 
-        context.services.exportService<LegacyPaperCloudCommands>(object : LegacyPaperCloudCommands {
+        context.services.exportService<PaperLegacyCloudCommands>(object : PaperLegacyCloudCommands {
             override val parser = parser
         })
     }

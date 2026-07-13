@@ -17,7 +17,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import plutoproject.capability.interactive.api.GuiManager
-import plutoproject.capability.legacycloudcommands.api.paper.LegacyPaperCloudCommands
+import plutoproject.capability.legacycloudcommands.api.paper.PaperLegacyCloudCommands
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import plutoproject.feature.gallery.api.GalleryService
@@ -96,7 +96,7 @@ class GalleryFeature : RuntimeModule {
     }
 
     private fun registerCommands(context: PaperModuleContext) {
-        val parser = context.services.getService<LegacyPaperCloudCommands>().parser
+        val parser = context.services.getService<PaperLegacyCloudCommands>().parser
         val manager = parser.manager()
         val rootsBefore = manager.rootCommands().toSet()
 

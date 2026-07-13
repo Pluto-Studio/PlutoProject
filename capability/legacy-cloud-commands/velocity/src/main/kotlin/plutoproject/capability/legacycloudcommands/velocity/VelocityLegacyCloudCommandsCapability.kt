@@ -6,7 +6,7 @@ import org.incendo.cloud.annotations.AnnotationParser
 import org.incendo.cloud.execution.ExecutionCoordinator
 import org.incendo.cloud.kotlin.coroutines.annotations.installCoroutineSupport
 import org.incendo.cloud.velocity.VelocityCommandManager
-import plutoproject.capability.legacycloudcommands.api.velocity.LegacyVelocityCloudCommands
+import plutoproject.capability.legacycloudcommands.api.velocity.VelocityLegacyCloudCommands
 import plutoproject.kernel.api.Capability
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.Platform
@@ -29,7 +29,7 @@ class VelocityLegacyCloudCommandsCapability : RuntimeModule {
         )
         val parser = AnnotationParser(manager, CommandSource::class.java).installCoroutineSupport()
 
-        context.services.exportService<LegacyVelocityCloudCommands>(object : LegacyVelocityCloudCommands {
+        context.services.exportService<VelocityLegacyCloudCommands>(object : VelocityLegacyCloudCommands {
             override val parser = parser
         })
     }

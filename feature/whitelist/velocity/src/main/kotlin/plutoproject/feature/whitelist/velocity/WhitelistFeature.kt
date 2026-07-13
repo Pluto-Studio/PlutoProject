@@ -11,7 +11,7 @@ import org.incendo.cloud.annotations.AnnotationParser
 import org.koin.dsl.module
 import plutoproject.capability.charonflow.api.CharonFlowConnection
 import plutoproject.capability.geoip.api.GeoIpConnection
-import plutoproject.capability.legacycloudcommands.api.velocity.LegacyVelocityCloudCommands
+import plutoproject.capability.legacycloudcommands.api.velocity.VelocityLegacyCloudCommands
 import plutoproject.capability.mongo.api.MongoConnection
 import plutoproject.capability.profile.api.ProfileLookup
 import plutoproject.feature.whitelist.api.WhitelistService
@@ -85,7 +85,7 @@ class WhitelistFeature : RuntimeModule {
     }
 
     private fun registerCommands(context: VelocityModuleContext, config: WhitelistConfig) {
-        val parser = context.services.getService<LegacyVelocityCloudCommands>().parser
+        val parser = context.services.getService<VelocityLegacyCloudCommands>().parser
         val manager = parser.manager()
         val rootsBefore = manager.rootCommands().toSet()
         val containers = buildList {
