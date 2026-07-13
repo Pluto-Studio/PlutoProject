@@ -7,9 +7,9 @@ import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
-import plutoproject.framework.common.util.chat.UI_PAGING_SOUND
-import plutoproject.framework.common.util.chat.palettes.mochaLavender
-import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.foundation.common.text.UI_PAGING_SOUND
+import plutoproject.foundation.common.text.mochaLavender
+import plutoproject.foundation.common.text.mochaText
 import plutoproject.capability.interactive.api.LocalPlayer
 import plutoproject.capability.interactive.api.click.clickable
 import plutoproject.capability.interactive.api.components.SeparatePageTunerMode.NEXT

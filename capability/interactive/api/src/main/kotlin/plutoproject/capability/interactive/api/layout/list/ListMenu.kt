@@ -9,7 +9,7 @@ import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
+import plutoproject.foundation.common.text.mochaSubtext0
 import plutoproject.capability.interactive.api.*
 import plutoproject.capability.interactive.api.animations.loadingIconAnimation
 import plutoproject.capability.interactive.api.animations.spinnerAnimation

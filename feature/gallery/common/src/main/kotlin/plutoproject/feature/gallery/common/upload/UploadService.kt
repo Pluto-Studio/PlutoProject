@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.time.onTimeout
 import plutoproject.feature.gallery.common.GalleryConfig
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.decode.ImageFormatSniffer
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
 import java.nio.channels.FileChannel
@@ -30,8 +29,6 @@ import kotlin.io.path.*
 import kotlin.time.toJavaDuration
 import plutoproject.feature.gallery.core.decode.ContentType as CoreContentType
 
-private val logger by lazy { koin.get<Logger>() }
-
 private const val TEMP_FOLDER_PREFIX = "plutoproject_gallery_"
 private const val TEMP_LOCK_FILE_NAME = ".lock"
 private val STALE_TEMP_FOLDER_AGE: Duration = Duration.ofMinutes(5)
@@ -40,6 +37,7 @@ class TempFolderHandle(
     val path: Path,
     private val lockChannel: FileChannel,
     private val lock: FileLock,
+    private val logger: Logger,
 ) {
     fun close() {
         listOf(
@@ -64,22 +62,22 @@ class TempFolderHandle(
     }
 }
 
-internal fun initializeTempFolder(): Result<TempFolderHandle> {
-    cleanupTempFolders()
-    return runCatching(::createTempFolderHandle).onFailure { exception ->
+internal fun initializeTempFolder(logger: Logger): Result<TempFolderHandle> {
+    cleanupTempFolders(logger)
+    return runCatching { createTempFolderHandle(logger) }.onFailure { exception ->
         logger.log(Level.SEVERE, "An error occurred while creating temp folder", exception)
     }
 }
 
-private fun createTempFolderHandle(): TempFolderHandle {
+private fun createTempFolderHandle(logger: Logger): TempFolderHandle {
     while (true) {
         val path = Files.createTempDirectory(TEMP_FOLDER_PREFIX)
-        tryAcquireTempFolderHandle(path)?.let { return it }
+        tryAcquireTempFolderHandle(path, logger)?.let { return it }
         runCatching { path.deleteRecursively() }
     }
 }
 
-private fun cleanupTempFolders() {
+private fun cleanupTempFolders(logger: Logger) {
     val tempParent = Path(System.getProperty("java.io.tmpdir"))
     runCatching {
         if (!tempParent.exists()) return@runCatching
@@ -87,12 +85,12 @@ private fun cleanupTempFolders() {
             .filter { it.isDirectory() && it.fileName.toString().startsWith(TEMP_FOLDER_PREFIX) }
             .filter { it.isReadable() && it.isWritable() }
             .filter { Duration.between(it.getLastModifiedTime().toInstant(), Instant.now()) > STALE_TEMP_FOLDER_AGE }
-            .forEach(::cleanupTempFolder)
+            .forEach { cleanupTempFolder(it, logger) }
     }
 }
 
-private fun cleanupTempFolder(path: Path) {
-    val handle = tryAcquireTempFolderHandle(path) ?: return
+private fun cleanupTempFolder(path: Path, logger: Logger) {
+    val handle = tryAcquireTempFolderHandle(path, logger) ?: return
 
     try {
         try {
@@ -105,7 +103,7 @@ private fun cleanupTempFolder(path: Path) {
     }
 }
 
-private fun tryAcquireTempFolderHandle(path: Path): TempFolderHandle? {
+private fun tryAcquireTempFolderHandle(path: Path, logger: Logger): TempFolderHandle? {
     val lockChannel = runCatching {
         FileChannel.open(
             path.resolve(TEMP_LOCK_FILE_NAME),
@@ -133,6 +131,7 @@ private fun tryAcquireTempFolderHandle(path: Path): TempFolderHandle? {
         path = path,
         lockChannel = lockChannel,
         lock = lock,
+        logger = logger,
     )
 }
 
@@ -194,7 +193,10 @@ class UploadSession(
 /**
  * 代表一个被上传的临时图像文件，没有线程安全保障。
  */
-class UploadedFile(private val tempFile: Path) {
+class UploadedFile(
+    private val tempFile: Path,
+    private val logger: Logger,
+) {
     init {
         check(tempFile.exists()) { "Temp file must be existed" }
         check(tempFile.isReadable()) { "Temp file must be readable" }
@@ -239,6 +241,8 @@ class UploadService(
     private val clock: Clock,
     private val tempFolderHandle: TempFolderHandle,
     coroutineScope: CoroutineScope,
+    private val config: GalleryConfig,
+    private val logger: Logger,
 ) {
     private val tempFolder = tempFolderHandle.path
 
@@ -247,7 +251,6 @@ class UploadService(
         check(tempFolder.isReadable() && tempFolder.isWritable()) { "Temp folder must be readable and writable" }
     }
 
-    private val config by koin.inject<GalleryConfig>()
     private val channel = Channel<Msg>(Channel.UNLIMITED)
     private val job = coroutineScope.launch { runLoop() }
 
@@ -371,7 +374,7 @@ class UploadService(
             verifyFile(msg.tempFile, msg.contentType, msg.originalFileName)
         }
         val nextState = when (verificationResult) {
-            VerificationResult.Ok -> UploadState.Completed(UploadedFile(msg.tempFile))
+            VerificationResult.Ok -> UploadState.Completed(UploadedFile(msg.tempFile, logger))
             is VerificationResult.Rejected -> UploadState.VerificationFailed(verificationResult)
         }
 

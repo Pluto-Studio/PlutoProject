@@ -1,7 +1,7 @@
 package plutoproject.capability.interactive.api.internal
 
 import org.bukkit.Material
-import plutoproject.framework.common.util.animation.SimpleObjectAnimation
+import plutoproject.foundation.common.animation.SimpleObjectAnimation
 
 class LoadingIconAnimation : SimpleObjectAnimation<Material>() {
     override val frames: Array<Material> = arrayOf(

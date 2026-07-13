@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import plutoproject.framework.common.util.chat.component.explicitRemoveItalic
+import plutoproject.foundation.common.text.explicitRemoveItalic
 import plutoproject.capability.interactive.api.canvas.Canvas
 import plutoproject.capability.interactive.api.layout.Layout
 import plutoproject.capability.interactive.api.measuring.MeasureResult

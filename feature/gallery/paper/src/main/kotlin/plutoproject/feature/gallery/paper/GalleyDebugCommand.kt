@@ -9,6 +9,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.bukkit.Bukkit
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
+import org.bukkit.plugin.Plugin
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -34,8 +36,7 @@ import plutoproject.feature.gallery.core.image.ImageData
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.feature.gallery.core.render.*
-import plutoproject.framework.common.util.coroutine.Loom
-import plutoproject.framework.paper.util.coroutine.coroutineContext
+import plutoproject.kernel.api.koinGet
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -50,14 +51,15 @@ private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
 @Suppress("UNUSED")
 object GalleyDebugCommand {
     private val httpClient = OkHttpClient()
-    private val galleryConfig = koin.get<GalleryConfig>()
-    private val allocateMapIdUseCase = koin.get<AllocateMapIdUseCase>()
-    private val imageStore = koin.get<ImageStore>()
-    private val imageDataStore = koin.get<ImageDataStore>()
-    private val displayInstanceStore = koin.get<DisplayInstanceStore>()
-    private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
-    private val uploadService = koin.get<UploadService>()
-    private val coroutineScope = koin.get<CoroutineScope>()
+    private val galleryConfig = koinGet<GalleryConfig>()
+    private val allocateMapIdUseCase = koinGet<AllocateMapIdUseCase>()
+    private val imageStore = koinGet<ImageStore>()
+    private val imageDataStore = koinGet<ImageDataStore>()
+    private val displayInstanceStore = koinGet<DisplayInstanceStore>()
+    private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
+    private val uploadService = koinGet<UploadService>()
+    private val coroutineScope = koinGet<CoroutineScope>()
+    private val serverContext = koinGet<Plugin>().minecraftDispatcher
 
     @Command("gallery debug create <name> <url> <width> <height> [repositionMode] [scaleMode] [quantizeMode] [ditherMode]")
     @Permission(PERMISSION_GALLERY_DEBUG)
@@ -89,7 +91,7 @@ object GalleyDebugCommand {
             ditherMode = ditherMode,
         ) ?: return
 
-        val createResult = withContext(Dispatchers.Loom) {
+        val createResult = withContext(Dispatchers.IO) {
             createImageFromUrl(
                 ownerId = player.uniqueId,
                 ownerName = player.name,
@@ -165,7 +167,7 @@ object GalleyDebugCommand {
             return
         }
 
-        val image = withContext(Dispatchers.Loom) {
+        val image = withContext(Dispatchers.IO) {
             imageStore.get(imageId)
         }
         if (image == null) {
@@ -173,17 +175,17 @@ object GalleyDebugCommand {
             return
         }
 
-        val instances = withContext(Dispatchers.Loom) {
+        val instances = withContext(Dispatchers.IO) {
             displayInstanceStore.findByImageId(imageId)
         }
         val cleanupSummary = cleanupDisplayInstances(imageId, instances)
-        val deletedInstanceCount = withContext(Dispatchers.Loom) {
+        val deletedInstanceCount = withContext(Dispatchers.IO) {
             instances.count { displayInstanceStore.delete(it.id) != null }
         }
-        val deletedImageData = withContext(Dispatchers.Loom) {
+        val deletedImageData = withContext(Dispatchers.IO) {
             imageDataStore.delete(imageId) != null
         }
-        val deletedImage = withContext(Dispatchers.Loom) {
+        val deletedImage = withContext(Dispatchers.IO) {
             imageStore.delete(imageId) != null
         }
 
@@ -209,7 +211,7 @@ object GalleyDebugCommand {
             return
         }
 
-        val image = withContext(Dispatchers.Loom) {
+        val image = withContext(Dispatchers.IO) {
             imageStore.get(imageId)
         }
         if (image == null) {
@@ -437,7 +439,7 @@ object GalleyDebugCommand {
                         "Create-upload session update: state=Success, sessionId=${session.id}. The file upload succeeded and image creation is starting."
                     )
 
-                    val createResult = withContext(Dispatchers.Loom) {
+                    val createResult = withContext(Dispatchers.IO) {
                         state.file.usePath { tempFile ->
                             createImageFromPath(
                                 ownerId = ownerId,
@@ -496,7 +498,7 @@ object GalleyDebugCommand {
     }
 
     private suspend fun sendPlayerMessage(playerId: UUID, message: String) {
-        withContext(Bukkit.getServer().coroutineContext) {
+        withContext(serverContext) {
             Bukkit.getPlayer(playerId)?.sendMessage(message)
         }
     }
@@ -508,7 +510,7 @@ object GalleyDebugCommand {
         request: CreateRequest,
         sourceDescription: String,
     ) {
-        withContext(Bukkit.getServer().coroutineContext) {
+        withContext(serverContext) {
             val player = Bukkit.getPlayer(playerId) ?: return@withContext
             val droppedItemCount = giveItem(player, createImageItem(result.image))
             player.sendMessage(

@@ -10,11 +10,15 @@ import org.bukkit.event.inventory.ClickType.*
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
-import plutoproject.framework.common.util.chat.catchInteractiveException
 import plutoproject.capability.interactive.api.GuiInventoryHolder
 import plutoproject.capability.interactive.api.click.ClickScope
+import plutoproject.capability.interactive.paper.catchInteractiveException
+import java.util.logging.Logger
 
-class InventoryListener(private val moduleScope: CoroutineScope) : Listener {
+class InventoryListener(
+    private val moduleScope: CoroutineScope,
+    private val logger: Logger,
+) : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         val invHolder = event.inventory.holder as? GuiInventoryHolder ?: return
@@ -33,7 +37,7 @@ class InventoryListener(private val moduleScope: CoroutineScope) : Listener {
             event.whoClicked,
         )
         moduleScope.launch {
-            catchInteractiveException(event.whoClicked) {
+            catchInteractiveException(logger, event.whoClicked) {
                 invHolder.processClick(scope, event)
             }
         }
@@ -68,7 +72,7 @@ class InventoryListener(private val moduleScope: CoroutineScope) : Listener {
                 event.whoClicked,
             )
             moduleScope.launch {
-                catchInteractiveException(event.whoClicked) {
+                catchInteractiveException(logger, event.whoClicked) {
                     invHolder.processClick(scope, event)
                 }
             }

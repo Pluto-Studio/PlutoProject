@@ -4,7 +4,6 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.koin.core.Koin
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -31,9 +30,9 @@ import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoSystemInformationRepository
-import plutoproject.framework.common.api.connection.MongoConnection
-import plutoproject.framework.common.api.connection.getCollection
-import plutoproject.framework.common.util.serverName
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.capability.mongo.api.getCollection
+import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import java.time.Clock
 
 private const val GALLERY_PREFIX = "gallery_"
@@ -43,23 +42,22 @@ private const val IMAGE_DATA_CHUNK_COLLECTION = "image_data_chunk"
 private const val DISPLAY_INSTANCE_COLLECTION = "display_instance"
 private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
 
-lateinit var koin: Koin
-
-private inline fun <reified T : Any> getCollection(name: String): MongoCollection<T> {
-    return MongoConnection.getCollection("$GALLERY_PREFIX${serverName}_$name")
+private inline fun <reified T : Any> org.koin.core.scope.Scope.galleryCollection(name: String): MongoCollection<T> {
+    val serverId = get<ServerIdentifier>().identifierOrThrow()
+    return get<MongoConnection>().getCollection("$GALLERY_PREFIX${serverId}_$name")
 }
 
 val commonModule = module {
     single<Clock> { Clock.systemUTC() }
     single<ImageRepository> {
-        MongoImageRepository(getCollection(IMAGE_COLLECTION)).also { repo ->
+        MongoImageRepository(galleryCollection(IMAGE_COLLECTION)).also { repo ->
             get<CoroutineScope>().launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }
         }
     }
     single<DisplayInstanceRepository> {
-        MongoDisplayInstanceRepository(getCollection(DISPLAY_INSTANCE_COLLECTION)).also { repo ->
+        MongoDisplayInstanceRepository(galleryCollection(DISPLAY_INSTANCE_COLLECTION)).also { repo ->
             get<CoroutineScope>().launch(Dispatchers.IO) {
                 repo.ensureIndexes()
             }
@@ -67,8 +65,8 @@ val commonModule = module {
     }
     single<ImageDataRepository> {
         MongoImageDataRepository(
-            manifestCollection = getCollection(IMAGE_DATA_MANIFEST_COLLECTION),
-            chunkCollection = getCollection(IMAGE_DATA_CHUNK_COLLECTION),
+            manifestCollection = galleryCollection(IMAGE_DATA_MANIFEST_COLLECTION),
+            chunkCollection = galleryCollection(IMAGE_DATA_CHUNK_COLLECTION),
             logger = get(),
         ).also { repo ->
             get<CoroutineScope>().launch(Dispatchers.IO) {
@@ -78,11 +76,12 @@ val commonModule = module {
     }
     single<SystemInformationRepository> {
         MongoSystemInformationRepository(
-            getCollection(SYSTEM_INFORMATION_COLLECTION)
+            galleryCollection(SYSTEM_INFORMATION_COLLECTION)
         )
     }
 
     singleOf(::GalleryServiceImpl) bind GalleryService::class
+    singleOf(::ChunkCallbacks)
 
     singleOf(::ImageStore)
     singleOf(::ImageDataStore)
@@ -94,8 +93,10 @@ val commonModule = module {
     single(createdAtStart = true) {
         UploadService(
             clock = get(),
-            tempFolderHandle = initializeTempFolder().getOrThrow(),
+            tempFolderHandle = initializeTempFolder(get()).getOrThrow(),
             coroutineScope = get(),
+            config = get(),
+            logger = get(),
         )
     }
 

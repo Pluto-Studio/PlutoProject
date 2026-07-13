@@ -32,7 +32,6 @@ import org.bukkit.inventory.ItemStack
 import plutoproject.feature.gallery.api.GalleryEvent
 import plutoproject.feature.gallery.common.DisplayInstanceIndex
 import plutoproject.feature.gallery.common.GalleryServiceImpl
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.common.toApi
 import plutoproject.feature.gallery.paper.*
 import plutoproject.feature.gallery.core.display.DisplayInstance
@@ -43,7 +42,8 @@ import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.feature.gallery.core.util.ChunkKey
-import plutoproject.framework.common.util.chat.component.replace
+import plutoproject.foundation.common.text.replace
+import plutoproject.kernel.api.koinGet
 import java.util.*
 import java.util.logging.Logger
 import kotlin.time.Duration.Companion.seconds
@@ -61,14 +61,14 @@ private val PLACEMENT_FAILED_SOUND = sound {
 
 @Suppress("UNUSED", "UnstableApiUsage")
 object ItemFrameListener : Listener {
-    private val logger = koin.get<Logger>()
-    private val imageStore = koin.get<ImageStore>()
-    private val imageDataStore = koin.get<ImageDataStore>()
-    private val displayInstanceStore = koin.get<DisplayInstanceStore>()
-    private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
-    private val displayIndex = koin.get<DisplayInstanceIndex>()
-    private val galleryService = koin.get<GalleryServiceImpl>()
-    private val coroutineScope = koin.get<CoroutineScope>()
+    private val logger = koinGet<Logger>()
+    private val imageStore = koinGet<ImageStore>()
+    private val imageDataStore = koinGet<ImageDataStore>()
+    private val displayInstanceStore = koinGet<DisplayInstanceStore>()
+    private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
+    private val displayIndex = koinGet<DisplayInstanceIndex>()
+    private val galleryService = koinGet<GalleryServiceImpl>()
+    private val coroutineScope = koinGet<CoroutineScope>()
 
     @EventHandler
     suspend fun onItemFrameChange(event: PlayerItemFrameChangeEvent) {

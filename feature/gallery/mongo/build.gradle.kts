@@ -11,5 +11,6 @@ dependencies {
     testImplementation(projects.foundation.common)
     testImplementation(libs.bundles.mongodb)
     testImplementation(libs.testcontainers.mongodb)
+    testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.zstdJni)
 }

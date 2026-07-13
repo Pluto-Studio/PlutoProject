@@ -6,8 +6,8 @@ import ink.pmc.advkt.component.newline
 import ink.pmc.advkt.component.text
 import ink.pmc.advkt.send
 import net.kyori.adventure.text.Component
-import plutoproject.framework.common.util.chat.palettes.mochaMaroon
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
+import plutoproject.foundation.common.text.mochaMaroon
+import plutoproject.foundation.common.text.mochaSubtext0
 import plutoproject.capability.interactive.api.ComposableFunction
 import plutoproject.capability.interactive.api.LocalPlayer
 import plutoproject.capability.interactive.api.components.Back

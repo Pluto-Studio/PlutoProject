@@ -12,9 +12,9 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickCallback
 import plutoproject.feature.gallery.paper.IMAGE_CREATE_CANCEL
 import plutoproject.feature.gallery.paper.IMAGE_CREATE_TITLE
-import plutoproject.framework.paper.api.interactive.InteractiveScreen
-import plutoproject.framework.paper.api.interactive.canvas.dialog.Dialog
-import plutoproject.framework.paper.api.interactive.canvas.dialog.body.PlainMessageBody
+import plutoproject.capability.interactive.api.InteractiveScreen
+import plutoproject.capability.interactive.api.canvas.dialog.Dialog
+import plutoproject.capability.interactive.api.canvas.dialog.body.PlainMessageBody
 import kotlin.time.Duration.Companion.seconds
 
 internal class ImageCreateFeedbackScreen(

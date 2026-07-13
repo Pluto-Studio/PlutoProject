@@ -7,11 +7,11 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
-import plutoproject.framework.common.util.chat.UI_SELECT_SOUND
-import plutoproject.framework.common.util.chat.palettes.mochaLavender
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
-import plutoproject.framework.common.util.chat.palettes.mochaText
-import plutoproject.framework.common.util.chat.palettes.mochaYellow
+import plutoproject.foundation.common.text.UI_SELECT_SOUND
+import plutoproject.foundation.common.text.mochaLavender
+import plutoproject.foundation.common.text.mochaSubtext0
+import plutoproject.foundation.common.text.mochaText
+import plutoproject.foundation.common.text.mochaYellow
 import plutoproject.capability.interactive.api.LocalPlayer
 import plutoproject.capability.interactive.api.click.clickable
 import plutoproject.capability.interactive.api.modifiers.Modifier

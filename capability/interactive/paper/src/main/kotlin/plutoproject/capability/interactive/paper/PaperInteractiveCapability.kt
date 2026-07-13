@@ -27,7 +27,7 @@ class PaperInteractiveCapability : RuntimeModule {
             single<Logger> { context.logger }
             single<GuiManager> { GuiManagerImpl(get(), get()) }
             single { GuiListener(get()) }
-            single { InventoryListener(get()) }
+            single { InventoryListener(get(), get()) }
         })
         context.services.exportServiceFromKoin<GuiManager>()
     }

@@ -1,38 +1,39 @@
 package plutoproject.feature.gallery.paper
 
 import kotlinx.coroutines.withContext
-import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.NamespacedKey
+import org.bukkit.Server
 import org.bukkit.persistence.PersistentDataType
 import plutoproject.feature.gallery.common.DisplayInstanceIndex
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.util.ChunkKey
-import plutoproject.framework.paper.util.coroutine.coroutineContext
-import plutoproject.framework.paper.util.server
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.coroutines.CoroutineContext
 
 private val DISPLAY_INSTANCE_INDEX_KEY = NamespacedKey("plutoproject_gallery", "display_instance_index")
 
-class PaperDisplayInstanceIndex : DisplayInstanceIndex {
-    private val logger = koin.get<Logger>()
+class PaperDisplayInstanceIndex(
+    private val server: Server,
+    private val logger: Logger,
+    private val serverContext: CoroutineContext,
+) : DisplayInstanceIndex {
 
-    override suspend fun get(world: String, chunkKey: ChunkKey): Set<UUID> = withContext(server.coroutineContext) {
+    override suspend fun get(world: String, chunkKey: ChunkKey): Set<UUID> = withContext(serverContext) {
         val chunk = getLoadedChunk(world, chunkKey) ?: return@withContext emptySet()
         currentSet(chunk)
     }
 
     override suspend fun add(world: String, chunkKey: ChunkKey, id: UUID) {
-        withContext(server.coroutineContext) {
+        withContext(serverContext) {
             mutate(world, chunkKey) { add(id) }
         }
     }
 
     override suspend fun remove(world: String, chunkKey: ChunkKey, id: UUID) {
-        withContext(server.coroutineContext) {
+        withContext(serverContext) {
             mutate(world, chunkKey) { remove(id) }
         }
     }
@@ -69,7 +70,7 @@ class PaperDisplayInstanceIndex : DisplayInstanceIndex {
     }
 
     private fun getLoadedChunk(worldName: String, chunkKey: ChunkKey): Chunk? {
-        val world = Bukkit.getWorld(worldName) ?: return null
+        val world = server.getWorld(worldName) ?: return null
         if (!world.isChunkLoaded(chunkKey.x, chunkKey.z)) return null
         return world.getChunkAt(chunkKey.x, chunkKey.z)
     }

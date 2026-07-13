@@ -760,6 +760,8 @@ This capability is transitional. It accepts no new commands, and it will be remo
 
 The migrated whitelist Paper module temporarily falls back to the current world's native spawn when a visitor disconnects. Its previous default-warp lookup remains disabled until the legacy warp feature has a new runtime API; whitelist must not depend on the flat legacy feature API in the interim.
 
+The migrated gallery Paper module temporarily omits its legacy menu button registration. The original integration remains commented in `GalleryFeature.kt`, and the button implementation remains commented in `ImageListMenuButton.kt`, until the legacy menu feature exposes a runtime-module API. Gallery must not depend on the flat legacy menu API in the interim. Its standalone commands, upload server, display runtime, recipes, and listeners remain active.
+
 ## Runtime Manager Components
 
 `FeatureManagerImplV2` is replaced rather than extended. The new implementation is split into:

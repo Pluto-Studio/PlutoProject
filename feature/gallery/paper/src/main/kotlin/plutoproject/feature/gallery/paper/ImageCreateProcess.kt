@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.paper
 
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import ink.pmc.advkt.component.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,7 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.plugin.Plugin
 import plutoproject.feature.gallery.common.*
 import plutoproject.feature.gallery.common.upload.*
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
@@ -24,28 +26,28 @@ import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageDataStore
 import plutoproject.feature.gallery.core.image.ImageStore
 import plutoproject.feature.gallery.core.render.*
-import plutoproject.framework.common.util.chat.MESSAGE_SOUND
-import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
-import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
-import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.common.util.chat.palettes.mochaLavender
-import plutoproject.framework.common.util.coroutine.Loom
-import plutoproject.framework.common.util.time.toFormattedComponent
-import plutoproject.framework.paper.util.coroutine.coroutineContext
-import plutoproject.framework.paper.util.server
+import plutoproject.foundation.common.text.MESSAGE_SOUND
+import plutoproject.foundation.common.text.UI_FAILED_SOUND
+import plutoproject.foundation.common.text.UI_SUCCEED_SOUND
+import plutoproject.foundation.common.text.mochaLavender
+import plutoproject.foundation.common.text.replace
+import plutoproject.foundation.common.time.toFormattedComponent
+import plutoproject.kernel.api.koinGet
+import plutoproject.kernel.api.koinInject
 import java.nio.file.Path
 import java.util.*
 
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
 
-private val config = koin.get<GalleryConfig>()
-private val allocateMapIdUseCase = koin.get<AllocateMapIdUseCase>()
-private val imageStore = koin.get<ImageStore>()
-private val imageDataStore = koin.get<ImageDataStore>()
-private val displayInstanceStore = koin.get<DisplayInstanceStore>()
-private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
-private val uploadService = koin.get<UploadService>()
-private val coroutineScope = koin.get<CoroutineScope>()
+private val config by koinInject<GalleryConfig>()
+private val allocateMapIdUseCase by koinInject<AllocateMapIdUseCase>()
+private val imageStore by koinInject<ImageStore>()
+private val imageDataStore by koinInject<ImageDataStore>()
+private val displayInstanceStore by koinInject<DisplayInstanceStore>()
+private val displayRuntime by koinInject<DisplayRuntimeRegistry>()
+private val uploadService by koinInject<UploadService>()
+private val coroutineScope by koinInject<CoroutineScope>()
+private val serverContext by lazy { koinGet<Plugin>().minecraftDispatcher }
 
 sealed interface ImageCreateSubmissionResult {
     data class Created(val session: UploadSession) : ImageCreateSubmissionResult
@@ -81,7 +83,7 @@ suspend fun hasReachedImageLimit(playerId: UUID): Boolean {
 }
 
 suspend fun deleteOwnedImage(playerId: UUID, imageId: UUID): Boolean {
-    return withContext(Dispatchers.Loom) {
+    return withContext(Dispatchers.IO) {
         val image = imageStore.get(imageId) ?: return@withContext false
         if (image.owner != playerId) {
             return@withContext false
@@ -221,7 +223,7 @@ private suspend fun handleUploadSessionState(
                 return true
             }
 
-            val createResult = withContext(Dispatchers.Loom) {
+            val createResult = withContext(Dispatchers.IO) {
                 state.file.usePath { tempFile ->
                     createImageFromPath(
                         ownerId = ownerId,
@@ -336,7 +338,7 @@ private suspend fun createImageFromPath(
 }
 
 private suspend fun sendCreateSuccessMessage(playerId: UUID, image: Image) {
-    withContext(Bukkit.getServer().coroutineContext) {
+    withContext(serverContext) {
         val player = Bukkit.getPlayer(playerId) ?: return@withContext
         giveItem(player, createImageItem(image))
         player.sendMessage(IMAGE_CREATE_SUCCEEDED.replace(IMAGE_PLACEHOLDER_NAME, image.name))
@@ -345,21 +347,21 @@ private suspend fun sendCreateSuccessMessage(playerId: UUID, image: Image) {
 }
 
 private suspend fun isPlayerOnline(playerId: UUID): Boolean {
-    return withContext(server.coroutineContext) {
+    return withContext(serverContext) {
         val player = Bukkit.getPlayer(playerId) ?: return@withContext false
         player.isOnline && player.isConnected
     }
 }
 
 private suspend fun deleteCreatedImage(imageId: UUID) {
-    withContext(Dispatchers.Loom) {
+    withContext(Dispatchers.IO) {
         imageDataStore.delete(imageId)
         imageStore.delete(imageId)
     }
 }
 
 private suspend fun sendPlayerMessage(playerId: UUID, message: Component, sound: Sound? = null) {
-    withContext(Bukkit.getServer().coroutineContext) {
+    withContext(serverContext) {
         val player = Bukkit.getPlayer(playerId) ?: return@withContext
         player.sendMessage(message)
         if (sound != null) {

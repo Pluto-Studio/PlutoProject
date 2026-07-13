@@ -1,6 +1,6 @@
 package plutoproject.feature.gallery.common
 
-import kotlinx.coroutines.runBlocking
+import org.koin.core.Koin
 import plutoproject.feature.gallery.common.upload.UploadService
 import plutoproject.feature.gallery.common.upload.startWebServer
 import plutoproject.feature.gallery.common.upload.stopWebServer
@@ -8,11 +8,11 @@ import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.DisplayScheduler
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
 
-fun onFeatureEnable() {
-    startWebServer()
+fun onFeatureEnable(koin: Koin) {
+    startWebServer(koin.get(), koin.get(), koin.get())
 }
 
-fun onFeatureDisable(): Unit = runBlocking {
+suspend fun onFeatureDisable(koin: Koin) {
     stopWebServer()
     koin.get<UploadService>().close()
     koin.get<DisplayScheduler>().stop()

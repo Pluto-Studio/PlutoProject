@@ -4,17 +4,17 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.common.upload.UploadService
 import plutoproject.feature.gallery.paper.unlockImageItemCopyRecipeFor
 import plutoproject.feature.gallery.core.display.DisplayRuntimeRegistry
 import plutoproject.feature.gallery.core.display.job.SendJobRegistry
+import plutoproject.kernel.api.koinGet
 
 @Suppress("UNUSED")
 object PlayerListener : Listener {
-    private val sendJobRegistry = koin.get<SendJobRegistry>()
-    private val displayRuntime = koin.get<DisplayRuntimeRegistry>()
-    private val uploadService = koin.get<UploadService>()
+    private val sendJobRegistry = koinGet<SendJobRegistry>()
+    private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
+    private val uploadService = koinGet<UploadService>()
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {

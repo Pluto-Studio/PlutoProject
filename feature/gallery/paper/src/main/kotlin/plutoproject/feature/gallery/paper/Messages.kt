@@ -2,7 +2,11 @@ package plutoproject.feature.gallery.paper
 
 import ink.pmc.advkt.component.*
 import net.kyori.adventure.text.Component
-import plutoproject.framework.common.util.chat.palettes.*
+import plutoproject.foundation.common.text.*
+
+val PLAYER_ONLY_COMMAND = component {
+    text("该命令只能由玩家执行") with mochaMaroon
+}
 
 const val IMAGE_PLACEHOLDER_NAME = "<name>"
 const val IMAGE_PLACEHOLDER_WIDTH = "<width>"

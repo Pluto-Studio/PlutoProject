@@ -3,7 +3,7 @@ package plutoproject.capability.interactive.api.animations
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import plutoproject.framework.common.util.animation.SpinnerAnimation
+import plutoproject.foundation.common.animation.SpinnerAnimation
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable

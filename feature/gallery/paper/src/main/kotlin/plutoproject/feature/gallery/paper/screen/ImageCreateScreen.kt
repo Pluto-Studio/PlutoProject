@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.paper.screen
 
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -11,22 +12,22 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.event.ClickCallback
+import org.bukkit.plugin.Plugin
 import plutoproject.feature.gallery.common.DitherMode
 import plutoproject.feature.gallery.common.GalleryConfig
 import plutoproject.feature.gallery.common.RepositionMode
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.paper.*
-import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
-import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.paper.api.interactive.InteractiveScreen
-import plutoproject.framework.paper.api.interactive.LocalPlayer
-import plutoproject.framework.paper.api.interactive.canvas.dialog.Dialog
-import plutoproject.framework.paper.api.interactive.canvas.dialog.body.PlainMessageBody
-import plutoproject.framework.paper.api.interactive.canvas.dialog.input.NumberRangeInput
-import plutoproject.framework.paper.api.interactive.canvas.dialog.input.SingleOptionInput
-import plutoproject.framework.paper.api.interactive.canvas.dialog.input.TextInput
-import plutoproject.framework.paper.util.coroutine.coroutineContext
-import plutoproject.framework.paper.util.entity.clearDialog
+import plutoproject.foundation.common.text.UI_FAILED_SOUND
+import plutoproject.foundation.common.text.replace
+import plutoproject.capability.interactive.api.InteractiveScreen
+import plutoproject.capability.interactive.api.LocalPlayer
+import plutoproject.capability.interactive.api.canvas.dialog.Dialog
+import plutoproject.capability.interactive.api.canvas.dialog.body.PlainMessageBody
+import plutoproject.capability.interactive.api.canvas.dialog.input.NumberRangeInput
+import plutoproject.capability.interactive.api.canvas.dialog.input.SingleOptionInput
+import plutoproject.capability.interactive.api.canvas.dialog.input.TextInput
+import plutoproject.capability.interactive.api.internal.clearDialog
+import plutoproject.kernel.api.koinGet
 
 private const val IMAGE_CREATE_NAME_INPUT_KEY = "name"
 private const val IMAGE_CREATE_WIDTH_INPUT_KEY = "width"
@@ -50,7 +51,7 @@ class ImageCreateScreen : InteractiveScreen() {
         val player = LocalPlayer.current
         val navigator = LocalNavigator.currentOrThrow
         val coroutineScope = rememberCoroutineScope()
-        val galleryConfig = remember { koin.get<GalleryConfig>() }
+        val galleryConfig = remember { koinGet<GalleryConfig>() }
         val imageConfig = remember(galleryConfig) { galleryConfig.image }
         val renderConfig = remember(galleryConfig) { galleryConfig.render }
 
@@ -147,7 +148,7 @@ class ImageCreateScreen : InteractiveScreen() {
                     }
 
                     is ImageCreateSubmissionResult.Created -> {
-                        withContext(player.coroutineContext) {
+                        withContext(koinGet<Plugin>().minecraftDispatcher) {
                             player.clearDialog()
                             player.closeInventory()
                         }

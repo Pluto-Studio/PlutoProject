@@ -36,18 +36,20 @@ import plutoproject.feature.gallery.paper.hasReachedImageLimit
 import plutoproject.feature.gallery.paper.hasUnfinishedImageCreateSession
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.feature.gallery.core.image.ImageType
-import plutoproject.framework.common.util.chat.UI_FAILED_SOUND
-import plutoproject.framework.common.util.chat.UI_SUCCEED_SOUND
-import plutoproject.framework.common.util.chat.component.replace
-import plutoproject.framework.paper.api.interactive.click.clickable
-import plutoproject.framework.paper.api.interactive.LocalPlayer
-import plutoproject.framework.paper.api.interactive.components.Item
-import plutoproject.framework.paper.api.interactive.jetpack.Arrangement
-import plutoproject.framework.paper.api.interactive.layout.Row
-import plutoproject.framework.paper.api.interactive.layout.list.ListMenu
-import plutoproject.framework.paper.api.interactive.modifiers.Modifier
-import plutoproject.framework.paper.api.interactive.modifiers.fillMaxSize
+import plutoproject.foundation.common.text.UI_FAILED_SOUND
+import plutoproject.foundation.common.text.UI_SUCCEED_SOUND
+import plutoproject.foundation.common.text.replace
+import plutoproject.capability.interactive.api.click.clickable
+import plutoproject.capability.interactive.api.LocalPlayer
+import plutoproject.capability.interactive.api.components.Item
+import plutoproject.capability.interactive.api.jetpack.Arrangement
+import plutoproject.capability.interactive.api.layout.Row
+import plutoproject.capability.interactive.api.layout.list.ListMenu
+import plutoproject.capability.interactive.api.modifiers.Modifier
+import plutoproject.capability.interactive.api.modifiers.fillMaxSize
 import net.kyori.adventure.text.Component
+import plutoproject.feature.gallery.common.GalleryConfig
+import plutoproject.kernel.api.koinGet
 
 class ImageListScreen : ListMenu<Image, ImageListScreenModel>() {
     @Composable
@@ -71,7 +73,7 @@ class ImageListScreen : ListMenu<Image, ImageListScreenModel>() {
     private fun Create() {
         val player = LocalPlayer.current
         val navigator = LocalNavigator.currentOrThrow
-        val imageConfig = remember { plutoproject.feature.gallery.common.koin.get<plutoproject.feature.gallery.common.GalleryConfig>().image }
+        val imageConfig = remember { koinGet<GalleryConfig>().image }
         val model = LocalListMenuModel.current
         var hasUnfinishedUpload by remember { mutableStateOf(false) }
         var hasReachedLimit by remember { mutableStateOf(false) }

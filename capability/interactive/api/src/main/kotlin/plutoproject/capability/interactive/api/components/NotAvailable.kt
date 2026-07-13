@@ -6,8 +6,8 @@ import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
-import plutoproject.framework.common.util.chat.palettes.mochaMaroon
-import plutoproject.framework.common.util.chat.palettes.mochaSubtext0
+import plutoproject.foundation.common.text.mochaMaroon
+import plutoproject.foundation.common.text.mochaSubtext0
 
 @Suppress("FunctionName")
 @Composable

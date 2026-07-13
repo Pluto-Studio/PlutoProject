@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.paper
 
+/* TODO(runtime-module): Restore after the legacy menu feature exposes a new API.
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -8,9 +9,9 @@ import org.bukkit.Material
 import org.bukkit.event.inventory.ClickType
 import plutoproject.feature.gallery.paper.screen.ImageListScreen
 import plutoproject.feature.paper.api.menu.dsl.ButtonDescriptor
-import plutoproject.framework.paper.api.interactive.click.clickable
-import plutoproject.framework.paper.api.interactive.components.Item
-import plutoproject.framework.paper.api.interactive.modifiers.Modifier
+import plutoproject.capability.interactive.api.click.clickable
+import plutoproject.capability.interactive.api.components.Item
+import plutoproject.capability.interactive.api.modifiers.Modifier
 
 val ImageListMenuButtonDescriptor = ButtonDescriptor {
     id = "gallery:image_list"
@@ -35,3 +36,4 @@ fun ImageListMenuButton() {
         }
     )
 }
+*/

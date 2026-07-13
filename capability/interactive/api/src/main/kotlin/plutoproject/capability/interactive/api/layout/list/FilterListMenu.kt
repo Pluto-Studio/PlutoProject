@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import ink.pmc.advkt.component.component
 import ink.pmc.advkt.component.italic
 import ink.pmc.advkt.component.text
-import plutoproject.framework.common.util.chat.palettes.mochaText
+import plutoproject.foundation.common.text.mochaText
 import plutoproject.capability.interactive.api.modifiers.Modifier
 import plutoproject.capability.interactive.api.components.Selector
 import plutoproject.capability.interactive.api.modifiers.fillMaxSize

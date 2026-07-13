@@ -16,18 +16,14 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import plutoproject.feature.gallery.common.GalleryConfig
-import plutoproject.feature.gallery.common.koin
 import plutoproject.feature.gallery.core.decode.SupportedImageFormat
-import plutoproject.framework.common.util.data.uuidOrNull
+import plutoproject.foundation.common.serialization.uuidOrNull
 import java.io.OutputStream
 import java.nio.file.Path
 import java.util.logging.Logger
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.outputStream
 
-private val config by lazy { koin.get<GalleryConfig>() }
-private val uploadService by lazy { koin.get<UploadService>() }
-private val logger by lazy { koin.get<Logger>() }
 private val resourceClassLoader = object {}.javaClass.classLoader
 private val json = Json {
     ignoreUnknownKeys = true
@@ -38,7 +34,7 @@ private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngin
 
 private const val GALLERY_RESOURCE_PREFIX = "/gallery_frontend"
 
-fun startWebServer() {
+fun startWebServer(config: GalleryConfig, uploadService: UploadService, logger: Logger) {
     if (engine != null) {
         return
     }
@@ -53,7 +49,7 @@ fun startWebServer() {
                 port = config.upload.port
             }
         },
-        module = webModule()
+        module = webModule(config, uploadService)
     )
     server.start(wait = false)
     engine = server
@@ -66,30 +62,30 @@ fun stopWebServer() {
     engine = null
 }
 
-private fun webModule(): Application.() -> Unit = {
+private fun webModule(config: GalleryConfig, uploadService: UploadService): Application.() -> Unit = {
     install(RequestBodyLimit) {
         bodyLimit { config.fileProcessing.maxBytes }
     }
 
     routing {
-        apiRoutes()
-        uploadPageRoute()
-        uploadAssetRoute()
+        apiRoutes(config, uploadService)
+        uploadPageRoute(uploadService)
+        uploadAssetRoute(uploadService)
     }
 }
 
-private fun Route.apiRoutes() {
+private fun Route.apiRoutes(config: GalleryConfig, uploadService: UploadService) {
     route("/api") {
         get("/config") {
-            call.respondJson(buildConfigResponse())
+            call.respondJson(buildConfigResponse(config))
         }
         route("/sessions/{id}") {
-            post("/upload", RoutingContext::handleUpload)
+            post("/upload") { handleUpload(config, uploadService) }
         }
     }
 }
 
-private suspend fun RoutingContext.handleUpload() {
+private suspend fun RoutingContext.handleUpload(config: GalleryConfig, uploadService: UploadService) {
     val id = call.parameters["id"]?.uuidOrNull()
         ?: return call.respond(HttpStatusCode.BadRequest)
     val session = uploadService.getSession(id)
@@ -115,7 +111,7 @@ private suspend fun RoutingContext.handleUpload() {
             }
 
             val isSizeAcceptable = tempFile.outputStream().use { output ->
-                readAndWriteFile(part.provider(), output)
+                readAndWriteFile(part.provider(), output, config)
             }
 
             if (!isSizeAcceptable) {
@@ -146,7 +142,11 @@ private suspend fun RoutingContext.handleUpload() {
     }
 }
 
-private suspend fun readAndWriteFile(channel: ByteReadChannel, output: OutputStream): Boolean {
+private suspend fun readAndWriteFile(
+    channel: ByteReadChannel,
+    output: OutputStream,
+    config: GalleryConfig,
+): Boolean {
     var total = 0L
     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
@@ -167,7 +167,7 @@ private suspend fun readAndWriteFile(channel: ByteReadChannel, output: OutputStr
     return true
 }
 
-private fun Route.uploadPageRoute() {
+private fun Route.uploadPageRoute(uploadService: UploadService) {
     get("/upload/{id}") {
         val id = call.parameters["id"]?.uuidOrNull()
             ?: return@get call.respond(HttpStatusCode.BadRequest)
@@ -175,14 +175,14 @@ private fun Route.uploadPageRoute() {
     }
 
     get("/upload/{id}/") {
-        validateUploadSession() ?: return@get
+        validateUploadSession(uploadService) ?: return@get
         call.respondResource("$GALLERY_RESOURCE_PREFIX/index.html")
     }
 }
 
-private fun Route.uploadAssetRoute() {
+private fun Route.uploadAssetRoute(uploadService: UploadService) {
     get("/upload/{id}/assets/{path...}") {
-        validateUploadSession() ?: return@get
+        validateUploadSession(uploadService) ?: return@get
 
         val resourcePath = call.parameters.getAll("path")
             ?.takeIf { it.isNotEmpty() }
@@ -197,7 +197,7 @@ private fun Route.uploadAssetRoute() {
     }
 }
 
-private suspend fun RoutingContext.validateUploadSession(): UploadSession? {
+private suspend fun RoutingContext.validateUploadSession(uploadService: UploadService): UploadSession? {
     val id = call.parameters["id"]?.uuidOrNull()
         ?: run {
             call.respond(HttpStatusCode.BadRequest)
@@ -232,7 +232,7 @@ data class UploadConfigResponse(
     val supportedFormatNames: List<String>,
 )
 
-private fun buildConfigResponse() = UploadConfigResponse(
+private fun buildConfigResponse(config: GalleryConfig) = UploadConfigResponse(
     maxBytes = config.fileProcessing.maxBytes,
     maxPixels = config.fileProcessing.maxPixels,
     suggestedMaxWidth = config.upload.suggestedMaxWidth,
