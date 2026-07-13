@@ -994,9 +994,8 @@ Status: Complete (2026-07-11). The orthogonal Kotlin, test, Paper, Velocity,
 and distribution conventions are available. Gallery and whitelist-v2 core/API
 projects are the first migrated projects; legacy conventions remain only for
 projects scheduled for later migration phases. Repository declarations are
-centralized in `settings.gradle.kts`, and `verifyArchitecture` establishes the
-initial project path, coordinate, plugin isolation, and dependency direction
-checks. Runtime-module processor wiring remains deferred to Phase 2.
+centralized in `settings.gradle.kts`. Runtime-module processor wiring remains
+deferred to Phase 2.
 
 Tasks:
 
