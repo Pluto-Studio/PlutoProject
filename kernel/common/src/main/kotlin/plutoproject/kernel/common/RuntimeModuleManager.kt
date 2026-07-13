@@ -30,6 +30,7 @@ fun interface ModuleContextFactory {
     fun create(descriptor: ModuleDescriptor, koin: Koin, services: ModuleServices): ModuleContext
 }
 
+@OptIn(InternalKernelApi::class)
 class RuntimeModuleManager(
     platform: Platform,
     descriptors: Collection<ModuleDescriptor>,
@@ -37,6 +38,7 @@ class RuntimeModuleManager(
     private val moduleFactory: RuntimeModuleFactory,
     private val contextFactory: ModuleContextFactory,
     private val reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
+    packageOwners: Map<String, String> = emptyMap(),
 ) : FeatureController {
     private data class LiveModule(
         val module: RuntimeModule,
@@ -51,7 +53,7 @@ class RuntimeModuleManager(
         val context: ModuleContext?,
         val koinApplication: KoinApplication?,
         val services: RuntimeServiceRegistry.OwnerServices?,
-        val entrypoint: String?,
+        val moduleId: String?,
     )
 
     private val validatedDescriptors = ModuleDescriptorValidator.validateForPlatform(platform, descriptors)
@@ -67,6 +69,10 @@ class RuntimeModuleManager(
     private var loadStarted = false
     private var enableStarted = false
     private var shutdownStarted = false
+
+    init {
+        ModuleContextBinding.configure(packageOwners)
+    }
 
     suspend fun loadStartup(): Map<String, ModuleOperationResult> = lifecycleMutex.withLock {
         if (loadStarted) return@withLock rejectPlan(ModuleOperation.LOAD, "Startup load already executed")
@@ -176,7 +182,7 @@ class RuntimeModuleManager(
             services = serviceRegistry.owner(descriptor.id, koinApplication.koin)
             context = contextFactory.create(descriptor, koinApplication.koin, services)
             koinApplication.logger(ModuleKoinLogger(context.logger))
-            ModuleContextBinding.register(context, descriptor.entrypoint)
+            ModuleContextBinding.register(context, descriptor.id)
             contextRegistered = true
             val module = ModuleContextBinding.withContext(context) { moduleFactory.create(descriptor) }
             services.activate()
@@ -218,7 +224,7 @@ class RuntimeModuleManager(
             context = context,
             koinApplication = koinApplication,
             services = services,
-            entrypoint = descriptor.entrypoint.takeIf { contextRegistered },
+            moduleId = descriptor.id.takeIf { contextRegistered },
         ),
     )
 
@@ -328,7 +334,7 @@ class RuntimeModuleManager(
                 context = live.context,
                 koinApplication = live.koinApplication,
                 services = live.services,
-                entrypoint = registry.descriptor(id)!!.entrypoint,
+                moduleId = id,
             ),
         )
         liveModules.remove(id, live)
@@ -350,7 +356,7 @@ class RuntimeModuleManager(
         runStep { resources.context?.cancelScope() }
         runStep { resources.koinApplication?.close() }
         runStep { resources.services?.close() }
-        runStep { resources.entrypoint?.let(ModuleContextBinding::close) }
+        runStep { resources.moduleId?.let(ModuleContextBinding::close) }
         return failure
     }
 

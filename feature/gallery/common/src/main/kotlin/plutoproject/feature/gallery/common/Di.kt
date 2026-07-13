@@ -6,11 +6,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.module
+import org.koin.core.scope.Scope
 import org.koin.dsl.bind
+import org.koin.dsl.module
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.capability.mongo.api.getCollection
+import plutoproject.capability.serveridentifier.api.ServerIdentifier
+import plutoproject.feature.gallery.api.GalleryService
 import plutoproject.feature.gallery.common.upload.UploadService
 import plutoproject.feature.gallery.common.upload.initializeTempFolder
-import plutoproject.feature.gallery.api.GalleryService
 import plutoproject.feature.gallery.core.AllocateMapIdUseCase
 import plutoproject.feature.gallery.core.MapIdRange
 import plutoproject.feature.gallery.core.SystemInformationRepository
@@ -30,9 +34,6 @@ import plutoproject.feature.gallery.infra.mongo.MongoDisplayInstanceRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageDataRepository
 import plutoproject.feature.gallery.infra.mongo.MongoImageRepository
 import plutoproject.feature.gallery.infra.mongo.MongoSystemInformationRepository
-import plutoproject.capability.mongo.api.MongoConnection
-import plutoproject.capability.mongo.api.getCollection
-import plutoproject.capability.serveridentifier.api.ServerIdentifier
 import java.time.Clock
 
 private const val GALLERY_PREFIX = "gallery_"
@@ -42,7 +43,7 @@ private const val IMAGE_DATA_CHUNK_COLLECTION = "image_data_chunk"
 private const val DISPLAY_INSTANCE_COLLECTION = "display_instance"
 private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
 
-private inline fun <reified T : Any> org.koin.core.scope.Scope.galleryCollection(name: String): MongoCollection<T> {
+private inline fun <reified T : Any> Scope.galleryCollection(name: String): MongoCollection<T> {
     val serverId = get<ServerIdentifier>().identifierOrThrow()
     return get<MongoConnection>().getCollection("$GALLERY_PREFIX${serverId}_$name")
 }

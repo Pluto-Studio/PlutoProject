@@ -31,6 +31,10 @@ dependencies {
 tasks.shadowJar {
     archiveClassifier.set(null as String?)
     mergeServiceFiles()
+    dependsOn("generateModulePackageIndex")
+    from(tasks.named("generateModulePackageIndex")) {
+        into("META-INF/plutoproject")
+    }
 }
 
 val jarIdentityFile = layout.buildDirectory.file("generated-resources/jar-identity/plutoproject_jar_identity")

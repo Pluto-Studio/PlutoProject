@@ -1,11 +1,10 @@
 package plutoproject.kernel.common
 
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.ModuleOperationResult
 import plutoproject.kernel.api.Platform
+import java.util.concurrent.atomic.AtomicReference
 
 class RuntimeKernel(
     platform: Platform,
@@ -34,6 +33,7 @@ class RuntimeKernel(
             moduleFactory = ReflectiveRuntimeModuleFactory(classLoader),
             contextFactory = contextFactory,
             reporter = reporter,
+            packageOwners = discovery.packageOwners,
         )
     }
 

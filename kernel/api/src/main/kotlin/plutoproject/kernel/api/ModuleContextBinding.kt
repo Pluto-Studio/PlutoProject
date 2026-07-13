@@ -11,26 +11,28 @@ import kotlinx.coroutines.ThreadContextElement
 )
 annotation class InternalKernelApi
 
-private sealed interface EntrypointOwner {
-    data class Active(val context: ModuleContext) : EntrypointOwner
-    data object Closed : EntrypointOwner
+private sealed interface ModuleOwner {
+    data class Active(val context: ModuleContext) : ModuleOwner
+    data object Closed : ModuleOwner
 }
 
 private object ModuleContextStorage {
     val current = ThreadLocal<ModuleContext?>()
-    val entrypoints = ConcurrentHashMap<String, EntrypointOwner>()
+    @Volatile
+    var packageOwners: Map<String, String> = emptyMap()
+    val modules = ConcurrentHashMap<String, ModuleOwner>()
 }
 
 fun currentModuleContextOrNull(): ModuleContext? {
     ModuleContextStorage.current.get()?.let { return it }
-    val owner = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk { frames ->
-        frames.map { it.declaringClass.name }
-            .map { ModuleContextStorage.entrypoints[it] }
+    val moduleId = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk { frames ->
+        frames.map { it.declaringClass.packageName }
+            .map { ModuleContextStorage.packageOwners[it] }
             .filter { it != null }
             .findFirst()
             .orElse(null)
     }
-    return (owner as? EntrypointOwner.Active)?.context
+    return moduleId?.let { (ModuleContextStorage.modules[it] as? ModuleOwner.Active)?.context }
 }
 
 fun currentModuleContext(): ModuleContext = currentModuleContextOrNull()
@@ -53,12 +55,17 @@ class ModuleContextElement(
 
 @InternalKernelApi
 object ModuleContextBinding {
-    fun register(context: ModuleContext, entrypoint: String) {
-        ModuleContextStorage.entrypoints[entrypoint] = EntrypointOwner.Active(context)
+    fun configure(packageOwners: Map<String, String>) {
+        ModuleContextStorage.packageOwners = packageOwners.toMap()
+        ModuleContextStorage.modules.clear()
     }
 
-    fun close(entrypoint: String) {
-        ModuleContextStorage.entrypoints[entrypoint] = EntrypointOwner.Closed
+    fun register(context: ModuleContext, moduleId: String) {
+        ModuleContextStorage.modules[moduleId] = ModuleOwner.Active(context)
+    }
+
+    fun close(moduleId: String) {
+        ModuleContextStorage.modules[moduleId] = ModuleOwner.Closed
     }
 
     fun <T> withContext(context: ModuleContext, block: () -> T): T {

@@ -591,7 +591,7 @@ The disable cleanup sequence is:
 2. Invoke module `onDisable` best-effort while service queries and the module Koin container remain available.
 3. Cancel and join the Kernel-created module coroutine scope even if the hook failed.
 4. Close the module-local Koin application.
-5. Close the service view and unregister current-context and entrypoint mappings.
+5. Close the service view and unregister current-context and module mappings.
 6. Remove the context and instance, then store and report the complete operation result.
 
 Every stage is attempted. The first ordinary cleanup failure remains primary
@@ -655,14 +655,20 @@ Explicit `ModuleContext` usage is preferred. No-receiver helpers are a
 convenience for entrypoint construction and lifecycle code. Resolution order is:
 
 1. The dynamically bound current module context.
-2. A `StackWalker` match for the nearest registered `RuntimeModule` entrypoint.
+2. A `StackWalker` match for the nearest class package recorded in the packaged module index.
 3. A descriptive failure, or null for `currentModuleContextOrNull`.
 
-Resolution never infers ownership from package names, the shared class loader,
-or the most recently active module. If the nearest entrypoint belongs to a
-closed module, resolution stops there instead of selecting an outer active
-module. Runtime descriptors are internal and are expected to use distinct
-entrypoint classes; the Kernel adds no duplicate-entrypoint validation.
+The root distribution JAR contains `META-INF/plutoproject/module-packages.idx`.
+Each line maps one exact JVM package name to a logical module ID. The index is
+generated from the main class outputs of every project in each module family,
+including shared API and implementation projects. Dependencies from other
+module families are not included in that family's package list.
+
+`StackWalker` checks declaring class packages in call-stack order. Once the
+first indexed package is found, its module ID is used directly. If that module
+is not loaded or is already closed, resolution stops and returns null instead
+of selecting an outer active module. Ownership is not inferred from arbitrary
+package prefixes, the shared class loader, or the most recently active module.
 
 Dynamic binding is nested, exception-safe, and restores the previous context in
 LIFO order. The Kernel binds it around entrypoint class initialization,
@@ -671,9 +677,9 @@ the binding through Kernel lifecycle calls, the default module scope, and
 inherited coroutine contexts such as `withContext(Dispatchers.IO)`.
 
 An `@InternalKernelApi` opt-in SPI, with `RequiresOptIn` error level, allows
-`kernel/common` to register and bind contexts for helpers implemented in
-`kernel/api`. It stores only active context and entrypoint mappings, never
-business services.
+`kernel/common` to install the package index and register contexts for helpers
+implemented in `kernel/api`. It stores only the package-to-module mapping and
+active/closed module contexts, never business services.
 
 ## Cross-Module Service Registry
 
@@ -1280,7 +1286,8 @@ Kernel implementation tasks:
 
 - Create one empty isolated `KoinApplication` per live module before entrypoint construction and bridge its logging to the module logger.
 - Keep the same application available through construction and every lifecycle hook, then close it on every cleanup path.
-- Implement nested dynamic context binding, nearest-entrypoint StackWalker fallback, and `ModuleContextElement` propagation.
+- Generate and package an exact class-package-to-module index for the unified distribution JAR.
+- Implement nested dynamic context binding, package-index StackWalker fallback, and `ModuleContextElement` propagation.
 - Create one thread-safe Service Registry per RuntimeKernel and expose only owner-bound views to modules.
 - Enforce `INITIALIZING`, `ACTIVE`, `CLOSING`, and `CLOSED` service-view states.
 - Make export, duplicate detection, unregister, owner close, and unregister/re-export races atomic.
@@ -1300,7 +1307,7 @@ Required tests:
 
 - Module Koin containers are isolated, start empty, forward qualifiers and parameters, apply definition override/eager defaults, and always close.
 - Dynamic current-context binding nests and restores correctly across success, failure, cancellation, suspension, and dispatcher switches.
-- StackWalker resolves only the nearest registered entrypoint and never skips a closed entrypoint.
+- StackWalker resolves the nearest indexed package and never skips a closed module mapping.
 - Independent callbacks and scopes require an explicit context, and closed modules are no longer discoverable.
 - A second RuntimeKernel cannot load while another holds the process slot; sequential Kernels work after complete shutdown.
 - Service export, query, nullable query, duplicate rejection, unregister, re-export, and registration identity behave deterministically.
