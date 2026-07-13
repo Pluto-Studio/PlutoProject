@@ -32,6 +32,8 @@ kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serializ
 paperweight-userdev = { group = "io.papermc.paperweight", name = "paperweight-userdev", version.ref = "paperweight-userdev" }
 compose = { group = "org.jetbrains.compose", name = "compose-gradle-plugin", version.ref = "compose" }
 compose-compiler = { group = "org.jetbrains.kotlin.plugin.compose", name = "org.jetbrains.kotlin.plugin.compose.gradle.plugin", version.ref = "kotlin" }
+jetbrains-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+jetbrains-compose-runtime-saveable = { module = "org.jetbrains.compose.runtime:runtime-saveable", version.ref = "compose" }
 ksp = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
 dokka = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version = "2.1.0" }
 shadow-gradle = { module = "com.gradleup.shadow:shadow-gradle-plugin", version = "9.0.0-rc3" }

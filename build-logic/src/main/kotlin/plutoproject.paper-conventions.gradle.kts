@@ -32,7 +32,7 @@ dependencies {
     }
     implementation(libs.cloud.paper)
     implementation(libs.bundles.mccoroutine.paper)
-    implementation(provider { compose.runtime })
-    implementation(provider { compose.runtimeSaveable })
+    implementation(libs.jetbrains.compose.runtime)
+    implementation(libs.jetbrains.compose.runtime.saveable)
     implementation(libs.bundles.voyager)
 }
