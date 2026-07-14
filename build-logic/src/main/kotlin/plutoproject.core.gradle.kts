@@ -11,7 +11,7 @@ val pathSegments = path.split(':').filter(String::isNotBlank)
 
 group = (listOf(baseGroup) + pathSegments.dropLast(1).map(::normalizeCoordinateSegment))
     .joinToString(".")
-version = "1.6.10"
+version = "1.6.11"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(25))
