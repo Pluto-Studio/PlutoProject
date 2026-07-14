@@ -1,6 +1,6 @@
 plugins {
     id("plutoproject.paper")
-    id("plutoproject.kotlin-test")
+    id("plutoproject.test")
 }
 
 dependencies {

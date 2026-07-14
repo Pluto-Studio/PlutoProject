@@ -4,7 +4,7 @@ import org.gradle.jvm.tasks.Jar
 plugins {
     id("plutoproject.build-logic")
     id("plutoproject.distribution")
-    id("plutoproject.dokka-conventions")
+    id("plutoproject.dokka")
 }
 
 allprojects {

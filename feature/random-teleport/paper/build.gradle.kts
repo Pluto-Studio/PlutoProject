@@ -1,8 +1,7 @@
 plugins {
-    id("plutoproject.paper")
+    id("plutoproject.paper-devbundle")
     id("plutoproject.runtime-module")
-    id("org.jetbrains.compose")
-    id("org.jetbrains.kotlin.plugin.compose")
+    id("plutoproject.compose")
 }
 
 dependencies {
@@ -21,8 +20,6 @@ dependencies {
     implementation(libs.bundles.cloud)
     implementation(libs.cloud.paper)
     implementation(libs.bundles.mccoroutine.paper)
-    implementation(libs.jetbrains.compose.runtime)
-    implementation(libs.jetbrains.compose.runtime.saveable)
     implementation(libs.bundles.voyager)
     implementation(libs.vaultApi)
 }

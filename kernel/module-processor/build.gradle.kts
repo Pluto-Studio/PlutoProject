@@ -1,7 +1,7 @@
 import java.io.File
 
 plugins {
-    id("plutoproject.kotlin-test")
+    id("plutoproject.test")
 }
 
 dependencies {

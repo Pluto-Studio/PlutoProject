@@ -1,6 +1,6 @@
 plugins {
     id("plutoproject.velocity")
-    id("plutoproject.kotlin-test")
+    id("plutoproject.test")
 }
 
 dependencies {

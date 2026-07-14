@@ -1,6 +1,7 @@
 plugins {
     id("plutoproject.paper")
     id("plutoproject.runtime-module")
+    id("plutoproject.compose")
 }
 
 dependencies {
@@ -10,6 +11,5 @@ dependencies {
     implementation(projects.capability.interactive.api)
     implementation(libs.adventureKt)
     implementation(libs.bundles.mccoroutine.paper)
-    implementation(libs.jetbrains.compose.runtime)
     implementation(libs.bundles.voyager)
 }

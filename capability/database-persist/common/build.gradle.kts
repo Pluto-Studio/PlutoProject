@@ -1,6 +1,6 @@
 plugins {
-    id("plutoproject.kotlin-library")
-    id("plutoproject.kotlin-test")
+    id("plutoproject.core")
+    id("plutoproject.test")
     kotlin("plugin.serialization")
 }
 

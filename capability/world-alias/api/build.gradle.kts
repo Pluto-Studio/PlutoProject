@@ -1,4 +1,4 @@
 plugins {
     id("plutoproject.paper")
-    id("plutoproject.dokka-conventions")
+    id("plutoproject.dokka")
 }

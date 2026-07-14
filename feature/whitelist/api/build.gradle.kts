@@ -1,3 +1,3 @@
 plugins {
-    id("plutoproject.kotlin-library")
+    id("plutoproject.core")
 }

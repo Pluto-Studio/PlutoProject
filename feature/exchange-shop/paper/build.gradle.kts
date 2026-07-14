@@ -1,8 +1,7 @@
 plugins {
     id("plutoproject.paper")
     id("plutoproject.runtime-module")
-    id("org.jetbrains.compose")
-    id("org.jetbrains.kotlin.plugin.compose")
+    id("plutoproject.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
@@ -24,7 +23,5 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(libs.bundles.mccoroutine.paper)
     implementation(libs.bundles.mongodb)
-    implementation(libs.jetbrains.compose.runtime)
-    implementation(libs.jetbrains.compose.runtime.saveable)
     implementation(libs.bundles.voyager)
 }

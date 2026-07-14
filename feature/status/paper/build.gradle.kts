@@ -1,8 +1,7 @@
 plugins {
-    id("plutoproject.paper")
+    id("plutoproject.paper-devbundle")
     id("plutoproject.runtime-module")
-    id("org.jetbrains.compose")
-    id("org.jetbrains.kotlin.plugin.compose")
+    id("plutoproject.compose")
 }
 
 dependencies {
@@ -20,5 +19,4 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(libs.bundles.mccoroutine.paper)
     implementation(libs.geoip2)
-    implementation(libs.jetbrains.compose.runtime)
 }
