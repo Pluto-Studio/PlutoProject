@@ -1,5 +1,3 @@
-# Project
-
 Core plugin for the PlutoProject Minecraft server.
 
 - Kotlin and Java; prefer Kotlin unless Java is required.
