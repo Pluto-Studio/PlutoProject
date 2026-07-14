@@ -16,7 +16,6 @@ import plutoproject.kernel.api.FeatureController
 import plutoproject.kernel.api.InternalKernelApi
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.ModuleContextBinding
-import plutoproject.kernel.api.ModuleContextElement
 import plutoproject.kernel.api.ModuleServices
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleOperation
@@ -184,11 +183,11 @@ class RuntimeModuleManager(
             koinApplication.logger(ModuleKoinLogger(context.logger))
             ModuleContextBinding.register(context, descriptor.id)
             contextRegistered = true
-            val module = ModuleContextBinding.withContext(context) { moduleFactory.create(descriptor) }
+            val module = moduleFactory.create(descriptor)
             services.activate()
             val live = LiveModule(module, context, koinApplication, services)
             liveModules[descriptor.id] = live
-            invokeInContext(context) { module.onLoad(context) }
+            module.onLoad(context)
             live.loadCompleted = true
             succeeded(descriptor.id, ModuleOperation.LOAD, ModuleState.DISCOVERED, ModuleState.LOADED)
         } catch (cause: CancellationException) {
@@ -245,7 +244,7 @@ class RuntimeModuleManager(
         registry.begin(descriptor.id, ModuleOperation.ENABLE)
         val live = liveModules.getValue(descriptor.id)
         return try {
-            invokeInContext(live.context) { live.module.onEnable(live.context) }
+            live.module.onEnable(live.context)
             succeeded(descriptor.id, ModuleOperation.ENABLE, ModuleState.LOADED, ModuleState.ENABLED)
         } catch (cause: Throwable) {
             if (cause is CancellationException) throw cause
@@ -364,22 +363,6 @@ class RuntimeModuleManager(
         coroutineScope.coroutineContext[Job]?.cancelAndJoin()
     }
 
-    private suspend fun <T> invokeInContext(context: ModuleContext, block: suspend () -> T): T {
-        var hookCancellation: CancellationException? = null
-        return try {
-            withContext(ModuleContextElement(context)) {
-                try {
-                    block()
-                } catch (cause: CancellationException) {
-                    hookCancellation = cause
-                    throw cause
-                }
-            }
-        } catch (cause: CancellationException) {
-            throw hookCancellation ?: cause
-        }
-    }
-
     private suspend fun terminateStartup(cause: CancellationException): Nothing {
         shutdownStarted = true
         withContext(NonCancellable) {
@@ -413,7 +396,7 @@ class RuntimeModuleManager(
     private suspend fun disableLive(live: LiveModule) {
         live.disableStarted = true
         live.services.beginClosing()
-        invokeInContext(live.context) { live.module.onDisable(live.context) }
+        live.module.onDisable(live.context)
     }
 
     private suspend fun runCleanup(id: String): Throwable? = try {

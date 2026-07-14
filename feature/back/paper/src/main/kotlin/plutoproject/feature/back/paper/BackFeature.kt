@@ -46,7 +46,7 @@ class BackFeature : RuntimeModule {
             single { config }
             single {
                 val serverId = get<ServerIdentifier>().identifierOrThrow()
-                BackRepository(get<MongoConnection>().getCollection<BackModel>("essentials_${serverId}_backs"))
+                BackRepository(get<MongoConnection>().getCollection<BackModel>("plutoproject_${serverId}_feature_back"))
             }
             single<BackManager> { BackManagerImpl() }
         })

@@ -151,7 +151,7 @@ class MenuScreen : InteractiveScreen() {
                     ItemSpacer()
                     return@forEach
                 }
-                val button = page.buttons.firstOrNull { it.pattern == pattern }
+                val button = page.buttons.firstOrNull { it.pattern.single() == pattern }
                     ?: error("Button with pattern $pattern not found in config")
                 Button(button)
             }

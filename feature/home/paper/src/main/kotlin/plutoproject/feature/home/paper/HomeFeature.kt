@@ -75,7 +75,7 @@ class HomeFeature : RuntimeModule {
             single { config }
             single {
                 val serverId = get<ServerIdentifier>().identifierOrThrow()
-                HomeRepository(get<MongoConnection>().getCollection<HomeModel>("essentials_${serverId}_homes"))
+                HomeRepository(get<MongoConnection>().getCollection<HomeModel>("plutoproject_${serverId}_feature_home"))
             }
             single<HomeManager> { HomeManagerImpl() }
         })

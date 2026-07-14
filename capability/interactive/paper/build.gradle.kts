@@ -8,6 +8,7 @@ dependencies {
     implementation(projects.kernel.api)
     implementation(projects.kernel.api.paper)
     implementation(projects.foundation.common)
+    implementation(projects.foundation.paper)
     implementation(projects.capability.interactive.api)
     implementation(libs.adventureKt)
     implementation(libs.bundles.mccoroutine.paper)

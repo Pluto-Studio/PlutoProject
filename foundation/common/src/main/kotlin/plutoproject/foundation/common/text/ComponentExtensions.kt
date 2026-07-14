@@ -64,5 +64,11 @@ fun Component.splitLines(): Iterable<Component> {
     }
 }
 
-fun Iterable<Component>.replaceInComponent(pattern: String, value: Any?): Iterable<Component> =
-    map { it.replace(pattern, value) }
+fun Iterable<Component>.replaceInComponent(pattern: String, str: String): Iterable<Component> =
+    map { it.replace(pattern, str) }
+
+fun Iterable<Component>.replaceInComponent(pattern: String, component: Component): Iterable<Component> =
+    map { it.replace(pattern, component) }
+
+fun Iterable<Component>.replaceInComponent(pattern: String, any: Any?): Iterable<Component> =
+    map { it.replace(pattern, any) }

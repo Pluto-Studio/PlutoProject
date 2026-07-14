@@ -1,12 +1,15 @@
 package plutoproject.capability.serverstatistics.paper.providers
 
 import me.lucko.spark.api.Spark
+import me.lucko.spark.api.SparkProvider
 import me.lucko.spark.api.statistic.StatisticWindow
 import plutoproject.capability.serverstatistics.api.statistic.MeasuringTime
 import plutoproject.capability.serverstatistics.api.statistic.MeasuringTime.*
 import plutoproject.capability.serverstatistics.api.statistic.StatisticProviderType
 
-class SparkStatisticProvider(private val spark: Spark) : AbstractStatisticProvider() {
+class SparkStatisticProvider : AbstractStatisticProvider() {
+    private val spark: Spark by lazy(SparkProvider::get)
+
     override val type: StatisticProviderType = StatisticProviderType.SPARK
 
     override fun getTicksPerSecond(time: MeasuringTime): Double? {

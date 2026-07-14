@@ -25,7 +25,6 @@ import plutoproject.foundation.common.text.ECONOMY_SYMBOL
 import plutoproject.foundation.common.text.replace
 import plutoproject.foundation.common.text.toCurrencyFormattedString
 import plutoproject.feature.randomteleport.paper.moduleScope
-import plutoproject.foundation.common.collection.mapKeysAndValues
 import plutoproject.foundation.common.time.toFormattedComponent
 import plutoproject.foundation.common.text.trimmedString
 import plutoproject.foundation.paper.hook.vaultEconomy
@@ -78,10 +77,8 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
         cost = config.default.cost,
         blacklistedBiomes = config.default.blacklistedBiomes.toSet()
     )
-    override val worldOptions: Map<World, RandomTeleportOptions> = config.worlds.filter { (key, _) ->
-        server.worlds.any { it.name == key }
-    }.mapKeysAndValues { (key, value) ->
-        server.getWorld(key)!! to RandomTeleportOptions(
+    private val configuredWorldOptions: Map<String, RandomTeleportOptions> = config.worlds.mapValues { (_, value) ->
+        RandomTeleportOptions(
             center = Position2D(value.center.x, value.center.z),
             spawnPointAsCenter = value.spawnpointAsCenter,
             chunkPreserveRadius = if (value.chunkPreserveRadius >= 0) value.chunkPreserveRadius else defaultOptions.chunkPreserveRadius,
@@ -96,9 +93,12 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
             blacklistedBiomes = value.blacklistedBiomes.toSet()
         )
     }
-    override val enabledWorlds: Collection<World> = config.enabledWorlds
-        .filter { name -> server.worlds.any { it.name == name } }
-        .map { server.getWorld(it)!! }
+    override val worldOptions: Map<World, RandomTeleportOptions>
+        get() = configuredWorldOptions.mapNotNull { (name, options) ->
+            server.getWorld(name)?.let { it to options }
+        }.toMap()
+    override val enabledWorlds: Collection<World>
+        get() = config.enabledWorlds.mapNotNull(server::getWorld)
     override var tickCount: Long = 0L
     override var lastTickTime: Long = 0L
     override var state: ManagerState = ManagerState.IDLE
@@ -107,7 +107,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
         get() = state == ManagerState.TICKING
 
     override fun getRandomTeleportOptions(world: World): RandomTeleportOptions {
-        return worldOptions[world] ?: defaultOptions
+        return configuredWorldOptions[world.name] ?: defaultOptions
     }
 
     override fun getCenterLocation(world: World, options: RandomTeleportOptions?): Position2D {
@@ -362,7 +362,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
     }
 
     override fun isEnabled(world: World): Boolean {
-        return enabledWorlds.contains(world)
+        return world.name in config.enabledWorlds
     }
 
     private suspend fun tickCacheTask() {

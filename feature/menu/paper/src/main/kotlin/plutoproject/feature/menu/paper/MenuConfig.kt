@@ -33,5 +33,9 @@ data class Page(
 
 data class Button(
     val id: String,
-    val pattern: Char
-)
+    val pattern: String,
+) {
+    init {
+        require(pattern.length == 1) { "Button pattern must be exactly one character" }
+    }
+}

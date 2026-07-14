@@ -6,7 +6,8 @@ import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.ObserverHandle
 import androidx.compose.runtime.snapshots.Snapshot
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -21,11 +22,13 @@ abstract class BaseScope<T>(
     override val owner: Player,
     private val contents: ComposableFunction,
     private val manager: GuiManager,
+    parentContext: CoroutineContext,
 ) : GuiScope<T> {
     var hasFrameWaiters: Boolean = false
     private var hasSnapshotNotifications: Boolean = false
     private val frameClock = BroadcastFrameClock { hasFrameWaiters = true }
-    private val coroutineContext: CoroutineContext = Dispatchers.Default + frameClock
+    private val coroutineContext: CoroutineContext =
+        parentContext + SupervisorJob(parentContext[Job]) + frameClock
     final override val coroutineScope = CoroutineScope(coroutineContext)
     private val observerHandle: ObserverHandle = Snapshot.registerGlobalWriteObserver {
         if (!hasSnapshotNotifications) {

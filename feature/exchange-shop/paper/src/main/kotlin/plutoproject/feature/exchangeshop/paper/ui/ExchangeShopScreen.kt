@@ -60,7 +60,7 @@ class ExchangeShopScreen : InteractiveScreen() {
                     ItemSpacer()
                     return@forEach
                 }
-                val categoryId = config.layout.icons.firstOrNull { it.pattern == pattern }?.category
+                val categoryId = config.layout.icons.firstOrNull { it.pattern.single() == pattern }?.category
                 if (categoryId == null) {
                     featureLogger.warning("Unable to find a icon defined for pattern '$pattern'")
                     ItemSpacer()

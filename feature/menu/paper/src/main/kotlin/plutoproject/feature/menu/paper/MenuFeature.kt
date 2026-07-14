@@ -2,6 +2,7 @@ package plutoproject.feature.menu.paper
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.bukkit.event.HandlerList
@@ -33,6 +34,7 @@ import plutoproject.kernel.api.paper.PaperModuleContext
     requiredCapabilities = ["mongo", "database_persist", "interactive", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class MenuFeature : RuntimeModule {
     private var commands: CloudCommandRegistration? = null
     private var itemListenerRegistered = false
@@ -43,6 +45,7 @@ class MenuFeature : RuntimeModule {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(MenuFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))

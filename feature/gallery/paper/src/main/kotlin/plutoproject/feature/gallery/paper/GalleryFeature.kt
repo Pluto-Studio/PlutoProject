@@ -66,7 +66,11 @@ class GalleryFeature : RuntimeModule {
                 singleOf(::PaperViewPort) bind ViewPort::class
                 singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
                 single<DisplayInstanceIndex> {
-                    PaperDisplayInstanceIndex(get(), get(), context.plugin.minecraftDispatcher)
+                    PaperDisplayInstanceIndex(
+                        server = context.plugin.server,
+                        logger = context.logger,
+                        serverContext = context.plugin.minecraftDispatcher,
+                    )
                 }
             },
             commonModule(

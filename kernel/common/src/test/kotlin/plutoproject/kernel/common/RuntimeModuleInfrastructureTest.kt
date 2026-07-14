@@ -3,11 +3,7 @@ package plutoproject.kernel.common
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -21,8 +17,6 @@ import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import plutoproject.kernel.api.ModuleContext
 import plutoproject.kernel.api.RuntimeModule
-import plutoproject.kernel.api.currentModuleContext
-import plutoproject.kernel.api.currentModuleContextOrNull
 import plutoproject.kernel.api.exportService
 import plutoproject.kernel.api.koinGet
 import plutoproject.kernel.api.getService
@@ -68,29 +62,6 @@ class RuntimeModuleInfrastructureTest {
         fixture.manager.shutdown()
 
         assertTrue(closed.values.all(AtomicBoolean::get))
-    }
-
-    @Test
-    fun `lifecycle and default module scope propagate current context`() = runTest {
-        val observed = CompletableDeferred<List<ModuleContext>>()
-        val fixture = infrastructureFixture(listOf(feature("context")), listOf("context")) {
-            object : RuntimeModule {
-                override suspend fun onLoad(context: ModuleContext) {
-                    val values = mutableListOf(currentModuleContext())
-                    withContext(Dispatchers.Default) { values += currentModuleContext() }
-                    context.coroutineScope.launch {
-                        values += currentModuleContext()
-                        observed.complete(values)
-                    }
-                }
-            }
-        }
-
-        fixture.manager.loadStartup()
-
-        assertTrue(observed.await().all { it === fixture.contexts.getValue("context") })
-        assertNull(currentModuleContextOrNull())
-        fixture.manager.shutdown()
     }
 
     @Test

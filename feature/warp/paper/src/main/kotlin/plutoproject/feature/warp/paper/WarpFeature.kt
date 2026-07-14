@@ -80,7 +80,7 @@ class WarpFeature : RuntimeModule {
             single { config }
             single {
                 val serverId = get<ServerIdentifier>().identifierOrThrow()
-                WarpRepository(get<MongoConnection>().getCollection<WarpModel>("essentials_${serverId}_warps"))
+                WarpRepository(get<MongoConnection>().getCollection<WarpModel>("plutoproject_${serverId}_feature_warp"))
             }
             single<WarpManager> { WarpManagerImpl() }
         })

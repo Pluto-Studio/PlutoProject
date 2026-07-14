@@ -1,10 +1,10 @@
 plugins {
-    id("plutoproject.paper")
+    id("plutoproject.paper-devbundle")
 }
 
 dependencies {
     implementation(projects.foundation.common)
     implementation(libs.bundles.mccoroutine.paper)
-    api(libs.vaultApi)
+    compileOnlyApi(libs.vaultApi)
     api(libs.cloud.annotations)
 }

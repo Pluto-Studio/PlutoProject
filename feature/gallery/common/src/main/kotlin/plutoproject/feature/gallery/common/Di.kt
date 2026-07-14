@@ -36,7 +36,6 @@ import java.time.Clock
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-private const val GALLERY_PREFIX = "gallery_"
 private const val IMAGE_COLLECTION = "image"
 private const val IMAGE_DATA_MANIFEST_COLLECTION = "image_data_manifest"
 private const val IMAGE_DATA_CHUNK_COLLECTION = "image_data_chunk"
@@ -45,7 +44,7 @@ private const val SYSTEM_INFORMATION_COLLECTION = "system_information"
 
 private inline fun <reified T : Any> Scope.galleryCollection(name: String): MongoCollection<T> {
     val serverId = get<ServerIdentifier>().identifierOrThrow()
-    return get<MongoConnection>().getCollection("$GALLERY_PREFIX${serverId}_$name")
+    return get<MongoConnection>().getCollection("plutoproject_${serverId}_feature_gallery_$name")
 }
 
 fun commonModule(
@@ -92,7 +91,14 @@ fun commonModule(
     singleOf(::ImageStore)
     singleOf(::ImageDataStore)
     singleOf(::DisplayInstanceStore)
-    singleOf(::DisplayScheduler) { createdAtStart() }
+    single(createdAtStart = true) {
+        DisplayScheduler(
+            clock = get(),
+            coroutineScope = coroutineScope,
+            schedulerContext = coroutineContext,
+            awakeContext = coroutineContext,
+        )
+    }
     singleOf(::DisplayResourceFactory)
     singleOf(::SendJobRegistry) { createdAtStart() }
     singleOf(::DisplayRuntimeRegistry) { createdAtStart() }

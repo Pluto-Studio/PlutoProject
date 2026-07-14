@@ -3,6 +3,7 @@ package plutoproject.feature.exchangeshop.paper
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.bukkit.event.HandlerList
@@ -39,13 +40,16 @@ lateinit var featureLogger: Logger
     requiredCapabilities = ["mongo", "server_identifier", "database_persist", "interactive", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class ExchangeShopFeature : RuntimeModule {
     private var commands: CloudCommandRegistration? = null
 
     override suspend fun onLoad(context: ModuleContext) {
+        featureLogger = context.logger
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(ExchangeShopFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))
@@ -58,8 +62,8 @@ class ExchangeShopFeature : RuntimeModule {
         context.loadKoinModuleDefinitions(module {
             single { config }
             single { ExchangeShopImpl() } binds arrayOf(ExchangeShop::class, InternalExchangeShop::class)
-            single { TransactionRepository(collection(context, serverId, "transactions")) }
-            single { UserRepository(collection(context, serverId, "users")) }
+            single { TransactionRepository(collection(context, serverId, "transaction")) }
+            single { UserRepository(collection(context, serverId, "user")) }
         })
         context.services.exportServiceFromKoin<ExchangeShop>()
     }
@@ -69,11 +73,10 @@ class ExchangeShopFeature : RuntimeModule {
         serverId: String,
         name: String,
     ): MongoCollection<T> = context.koinGet<MongoConnection>()
-        .getCollection("exchange_shop_${serverId}_$name")
+        .getCollection("plutoproject_${serverId}_feature_exchange_shop_${name}")
 
     override suspend fun onEnable(context: ModuleContext) {
         val paper = context as PaperModuleContext
-        featureLogger = context.logger
         paper.plugin.server.pluginManager.registerSuspendingEvents(PlayerListener, paper.plugin)
         val parser = context.services.getService<PaperLegacyCloudCommands>().parser
         parser.manager().parserRegistry().apply {

@@ -1,6 +1,5 @@
 package plutoproject.feature.exchangeshop.paper
 
-import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import java.math.BigDecimal
 import java.time.DayOfWeek
@@ -42,15 +41,19 @@ data class LayoutConfig(
 }
 
 data class LayoutIconConfig(
-    val pattern: Char,
+    val pattern: String,
     val category: String,
-)
+) {
+    init {
+        require(pattern.length == 1) { "Layout icon pattern must be exactly one character" }
+    }
+}
 
 data class ShopCategoryConfig(
     val id: String,
     val icon: Material = Material.PAPER,
-    val name: Component = Component.empty(),
-    val description: List<Component> = emptyList(),
+    val name: String = "",
+    val description: List<String> = emptyList(),
 )
 
 data class ShopItemConfig(

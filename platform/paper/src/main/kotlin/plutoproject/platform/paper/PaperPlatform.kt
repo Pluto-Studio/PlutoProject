@@ -18,12 +18,15 @@ class PaperPlatform : SuspendingJavaPlugin() {
         dataFolder.mkdirs()
         dataFolder.resolve("module${File.separator}")
         server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
-        saveResource("config.conf", false)
+        val configFile = dataFolder.resolve("config.conf")
+        if (!configFile.exists()) {
+            saveResource("config.conf", false)
+        }
         preloadClasses()
         kernel = PaperKernel(
             plugin = this,
             dataFolder = dataFolder.toPath(),
-            featureRoots = resolvePlatformConfig(dataFolder.toPath().resolve("config.conf")).enableFeatures,
+            featureRoots = resolvePlatformConfig(configFile.toPath()).enableFeatures,
         )
         runBlocking { kernel.load() }
     }

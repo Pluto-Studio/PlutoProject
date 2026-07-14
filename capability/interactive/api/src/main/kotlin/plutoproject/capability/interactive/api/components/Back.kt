@@ -3,9 +3,9 @@ package plutoproject.capability.interactive.api.components
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.navigator.LocalNavigator
 import org.bukkit.Material
-import plutoproject.capability.interactive.api.UI_BACK
 import plutoproject.capability.interactive.api.click.clickable
 import plutoproject.capability.interactive.api.modifiers.Modifier
+import plutoproject.foundation.common.text.UI_BACK
 
 @Composable
 @Suppress("FunctionName")

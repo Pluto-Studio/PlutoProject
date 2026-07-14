@@ -1,6 +1,5 @@
 package plutoproject.capability.serverstatistics.paper
 
-import me.lucko.spark.api.SparkProvider
 import org.bukkit.Bukkit
 import org.koin.dsl.module
 import plutoproject.capability.serverstatistics.api.statistic.StatisticProvider
@@ -19,7 +18,7 @@ class PaperServerStatisticsCapability : RuntimeModule {
         val provider = if (Bukkit.getPluginManager().getPlugin("spark") == null) {
             NativeStatisticProvider()
         } else {
-            SparkStatisticProvider(SparkProvider.get())
+            SparkStatisticProvider()
         }
         context.loadKoinModuleDefinitions(module {
             single<StatisticProvider> { provider }

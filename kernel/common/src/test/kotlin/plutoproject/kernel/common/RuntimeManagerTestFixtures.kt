@@ -7,7 +7,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.Koin
 import plutoproject.kernel.api.ModuleContext
-import plutoproject.kernel.api.ModuleContextElement
 import plutoproject.kernel.api.ModuleDescriptor
 import plutoproject.kernel.api.ModuleServices
 import plutoproject.kernel.api.ModuleType
@@ -72,7 +71,7 @@ internal class TestContext(
 ) : ModuleContext {
     override val logger: Logger = Logger.getLogger("test.$id")
     override val dataFolder: Path = Path.of("build/test-data", id)
-    override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + ModuleContextElement(this))
+    override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob())
 
     override fun saveResource(path: String, output: Path, resourcePrefix: String?, replace: Boolean): Path =
         error("Resource saving is not available in lifecycle test contexts")

@@ -14,5 +14,5 @@ dependencies {
     implementation(libs.aedile)
     implementation(libs.bundles.hoplite)
     implementation(libs.bundles.koin)
-    implementation(libs.vaultApi)
+    compileOnly(libs.vaultApi)
 }

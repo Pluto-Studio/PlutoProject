@@ -1,9 +1,6 @@
 package plutoproject.kernel.api
 
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.ThreadContextElement
 
 @RequiresOptIn(
     message = "This API is reserved for Runtime Kernel implementations.",
@@ -17,15 +14,14 @@ private sealed interface ModuleOwner {
 }
 
 private object ModuleContextStorage {
-    val current = ThreadLocal<ModuleContext?>()
+    val stackWalker: StackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
     @Volatile
     var packageOwners: Map<String, String> = emptyMap()
     val modules = ConcurrentHashMap<String, ModuleOwner>()
 }
 
 fun currentModuleContextOrNull(): ModuleContext? {
-    ModuleContextStorage.current.get()?.let { return it }
-    val moduleId = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).walk { frames ->
+    val moduleId = ModuleContextStorage.stackWalker.walk { frames ->
         frames.map { it.declaringClass.packageName }
             .map { ModuleContextStorage.packageOwners[it] }
             .filter { it != null }
@@ -37,21 +33,6 @@ fun currentModuleContextOrNull(): ModuleContext? {
 
 fun currentModuleContext(): ModuleContext = currentModuleContextOrNull()
     ?: error("No active Runtime Module context is available on the current call path")
-
-@OptIn(InternalKernelApi::class)
-class ModuleContextElement(
-    private val context: ModuleContext,
-) : ThreadContextElement<ModuleContext?>,
-    AbstractCoroutineContextElement(Key) {
-    companion object Key : CoroutineContext.Key<ModuleContextElement>
-
-    override fun updateThreadContext(context: CoroutineContext): ModuleContext? =
-        ModuleContextBinding.replace(this.context)
-
-    override fun restoreThreadContext(context: CoroutineContext, oldState: ModuleContext?) {
-        ModuleContextBinding.replace(oldState)
-    }
-}
 
 @InternalKernelApi
 object ModuleContextBinding {
@@ -66,20 +47,5 @@ object ModuleContextBinding {
 
     fun close(moduleId: String) {
         ModuleContextStorage.modules[moduleId] = ModuleOwner.Closed
-    }
-
-    fun <T> withContext(context: ModuleContext, block: () -> T): T {
-        val previous = replace(context)
-        return try {
-            block()
-        } finally {
-            replace(previous)
-        }
-    }
-
-    internal fun replace(context: ModuleContext?): ModuleContext? {
-        val previous = ModuleContextStorage.current.get()
-        if (context == null) ModuleContextStorage.current.remove() else ModuleContextStorage.current.set(context)
-        return previous
     }
 }

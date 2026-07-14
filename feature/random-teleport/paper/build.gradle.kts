@@ -21,5 +21,5 @@ dependencies {
     implementation(libs.cloud.paper)
     implementation(libs.bundles.mccoroutine.paper)
     implementation(libs.bundles.voyager)
-    implementation(libs.vaultApi)
+    compileOnly(libs.vaultApi)
 }

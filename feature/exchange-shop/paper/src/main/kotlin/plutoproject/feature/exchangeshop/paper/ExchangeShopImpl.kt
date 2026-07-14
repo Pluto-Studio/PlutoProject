@@ -3,6 +3,7 @@ package plutoproject.feature.exchangeshop.paper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
 import org.bukkit.inventory.ItemStack
@@ -80,8 +81,8 @@ class ExchangeShopImpl : InternalExchangeShop {
         createCategory(
             id = config.id,
             icon = config.icon,
-            name = config.name,
-            description = config.description
+            name = MiniMessage.miniMessage().deserialize(config.name),
+            description = config.description.map(MiniMessage.miniMessage()::deserialize),
         )
     }
 

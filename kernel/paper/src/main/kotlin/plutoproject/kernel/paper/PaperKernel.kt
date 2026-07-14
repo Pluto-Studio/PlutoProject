@@ -98,7 +98,7 @@ private class PaperContext(
     override val logger: Logger = Logger.getLogger("PlutoProject/$id")
     override val coroutineScope: CoroutineScope by lazy {
         CoroutineScope(
-            SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id") + ModuleContextElement(this),
+            SupervisorJob() + Dispatchers.Default + CoroutineName("PlutoProject/$id"),
         )
     }
 

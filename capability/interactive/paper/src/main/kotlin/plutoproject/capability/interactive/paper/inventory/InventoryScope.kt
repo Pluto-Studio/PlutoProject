@@ -30,7 +30,7 @@ class InventoryScope(
     manager: GuiManagerImpl,
     private val moduleScope: CoroutineScope,
     private val logger: Logger,
-) : BaseScope<InventoryNode>(owner, contents, manager) {
+) : BaseScope<InventoryNode>(owner, contents, manager, moduleScope.coroutineContext) {
     override val rootNode = InventoryNode()
     override val nodeApplier: Applier<InventoryNode> = InventoryNodeApplier(rootNode) {
         if (isDisposed) return@InventoryNodeApplier

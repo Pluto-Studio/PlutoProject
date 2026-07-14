@@ -2,6 +2,7 @@ package plutoproject.feature.daily.paper
 
 import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.PropertySource
 import com.sksamuel.hoplite.hocon.HoconParser
 import org.bukkit.event.HandlerList
@@ -25,7 +26,7 @@ import plutoproject.kernel.api.*
 import plutoproject.kernel.api.paper.PaperModuleContext
 import java.util.logging.Logger
 
-private const val COLLECTION_PREFIX = "daily_"
+private const val COLLECTION_PREFIX = "plutoproject_feature_daily_"
 internal lateinit var featureLogger: Logger
 
 @Feature(
@@ -35,6 +36,7 @@ internal lateinit var featureLogger: Logger
     requiredCapabilities = ["mongo", "database_persist", "interactive", "legacy_cloud_commands"],
 )
 @Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
 class DailyFeature : RuntimeModule {
     private var commands: CloudCommandRegistration? = null
 
@@ -42,6 +44,7 @@ class DailyFeature : RuntimeModule {
         val configFile = context.saveResource("config.conf")
         val config = ConfigLoaderBuilder.empty()
             .withClassLoader(DailyFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
             .addDefaults()
             .addParser("conf", HoconParser())
             .addPropertySource(PropertySource.file(configFile.toFile()))
@@ -53,7 +56,7 @@ class DailyFeature : RuntimeModule {
         context.loadKoinModuleDefinitions(module {
             single { config }
             single<Daily> { DailyImpl() }
-            single { DailyUserRepository(get<MongoConnection>().getCollection("${COLLECTION_PREFIX}users")) }
+            single { DailyUserRepository(get<MongoConnection>().getCollection("${COLLECTION_PREFIX}user")) }
             single { DailyHistoryRepository(get<MongoConnection>().getCollection("${COLLECTION_PREFIX}history")) }
         })
         context.services.exportServiceFromKoin<Daily>()

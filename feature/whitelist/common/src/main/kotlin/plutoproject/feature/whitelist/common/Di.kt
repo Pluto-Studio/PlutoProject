@@ -19,9 +19,9 @@ import plutoproject.feature.whitelist.infra.mongo.MongoWhitelistRecordRepository
 import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
 
-private const val WHITELIST_PREFIX = "whitelist_v2_"
-private const val WHITELIST_RECORD_COLLECTION = "whitelist_records"
-private const val VISITOR_RECORD_COLLECTION = "visitor_records"
+private const val WHITELIST_PREFIX = "plutoproject_feature_whitelist_"
+private const val WHITELIST_RECORD_COLLECTION = "whitelist"
+private const val VISITOR_RECORD_COLLECTION = "visitor"
 
 private inline fun <reified T : Any> MongoConnection.whitelistCollection(name: String): MongoCollection<T> {
     return getCollection("$WHITELIST_PREFIX$name")
