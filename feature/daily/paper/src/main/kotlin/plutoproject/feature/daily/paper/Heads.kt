@@ -1,0 +1,21 @@
+package plutoproject.feature.daily.paper
+
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
+import plutoproject.foundation.paper.inventory.setHeadTexture
+
+internal val redCrossHead = ItemStack(Material.PLAYER_HEAD).setHeadTexture(
+    "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ=="
+)
+
+internal val yellowExclamationHead = ItemStack(Material.PLAYER_HEAD).setHeadTexture(
+    "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWI5MzRhYjk0YjU2YzM0OGFkYTQyZTIxMjZmNGY5NzQzMjkxYzJiNmVmNDQ5ZGM0ZTM4MzE1ZGM3YjFhYyJ9fX0="
+)
+
+internal val greenCheckHead = ItemStack(Material.PLAYER_HEAD).setHeadTexture(
+    "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDMxMmNhNDYzMmRlZjVmZmFmMmViMGQ5ZDdjYzdiNTVhNTBjNGUzOTIwZDkwMzcyYWFiMTQwNzgxZjVkZmJjNCJ9fX0="
+)
+
+internal val grayQuestionHead = ItemStack(Material.PLAYER_HEAD).setHeadTexture(
+    "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODlhOTk1OTI4MDkwZDg0MmQ0YWZkYjIyOTZmZmUyNGYyZTk0NDI3MjIwNWNlYmE4NDhlZTQwNDZlMDFmMzE2OCJ9fX0="
+)

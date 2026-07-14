@@ -10,13 +10,13 @@ repositories {
 dependencies {
     implementation(libs.kotlin)
     implementation(libs.kotlin.serialization)
-    implementation(libs.gremlin.gradle)
     implementation(libs.paperweight.userdev)
     // implementation(libs.resourceFactory)
     implementation(libs.compose)
     implementation(libs.compose.compiler)
     implementation(libs.ksp)
     implementation(libs.dokka)
+    implementation(libs.shadow.gradle)
     // https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }

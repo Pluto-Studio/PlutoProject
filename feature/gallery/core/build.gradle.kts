@@ -1,10 +1,11 @@
 plugins {
-    id("plutoproject.test-conventions")
+    id("plutoproject.test")
 }
 
 dependencies {
-    compileOnly(libs.hash4j)
-    compileOnly(libs.imageioWebp)
+    implementation(libs.kotlinx.coroutine.core)
+    implementation(libs.hash4j)
+    implementation(libs.imageioWebp)
 
     testImplementation(libs.hash4j)
     testImplementation(libs.imageioWebp)

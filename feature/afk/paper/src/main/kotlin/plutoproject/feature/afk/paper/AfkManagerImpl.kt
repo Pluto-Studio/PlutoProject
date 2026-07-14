@@ -1,0 +1,78 @@
+package plutoproject.feature.afk.paper
+
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.bukkit.Bukkit
+import org.bukkit.entity.Player
+import plutoproject.feature.afk.api.paper.AfkManager
+import plutoproject.foundation.common.text.replace
+import plutoproject.kernel.api.currentModuleContext
+import plutoproject.kernel.api.koinInject
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toKotlinDuration
+
+class AfkManagerImpl : AfkManager {
+    private val conf by koinInject<AfkConfig>()
+    private val coroutineScope = currentModuleContext().coroutineScope
+    private val manuallyAfkSet = ConcurrentHashMap.newKeySet<Player>()
+
+    override val afkSet: MutableSet<Player> = ConcurrentHashMap.newKeySet()
+    override val idleDuration: Duration = conf.idleDuration
+
+    init {
+        coroutineScope.launch {
+            while (true) {
+                Bukkit.getOnlinePlayers().forEach {
+                    val idle = it.idleDuration.toKotlinDuration()
+                    if (idle >= idleDuration && it.hasPermission("plutoproject.afk.auto_afk")) {
+                        set(it, true)
+                    }
+                }
+                afkSet.removeIf { !it.isOnline }
+                delay(1.seconds)
+            }
+        }
+    }
+
+    private fun isManually(player: Player): Boolean {
+        return manuallyAfkSet.contains(player)
+    }
+
+    private fun addManually(player: Player) {
+        manuallyAfkSet.add(player)
+    }
+
+    private fun removeManually(player: Player) {
+        manuallyAfkSet.remove(player)
+    }
+
+    override fun isAfk(player: Player): Boolean {
+        return afkSet.contains(player)
+    }
+
+    override fun set(player: Player, state: Boolean, manually: Boolean) {
+        if (state && !isAfk(player)) {
+            val idle = player.idleDuration.toKotlinDuration()
+            if (idle < idleDuration) {
+                player.resetIdleDuration()
+            }
+            afkSet.add(player)
+            if (manually) addManually(player)
+            Bukkit.broadcast(PLAYER_ENTER_AFK_BROADCAST.replace("<player>", player.name))
+            return
+        }
+
+        if (!state && isAfk(player)) {
+            afkSet.remove(player)
+            Bukkit.broadcast(PLAYER_EXIT_AFK_BROADCAST.replace("<player>", player.name))
+            removeManually(player)
+            return
+        }
+    }
+
+    override fun toggle(player: Player, manually: Boolean) {
+        set(player, !isAfk(player), manually)
+    }
+}

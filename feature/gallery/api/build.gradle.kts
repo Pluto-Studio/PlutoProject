@@ -1,7 +1,7 @@
 plugins {
-    id("plutoproject.core-conventions")
+    id("plutoproject.core")
 }
 
 dependencies {
-    api(project(":feature:gallery:core"))
+    implementation(libs.kotlinx.coroutine.core)
 }

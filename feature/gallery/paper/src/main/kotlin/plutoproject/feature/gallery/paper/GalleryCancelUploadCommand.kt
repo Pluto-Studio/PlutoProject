@@ -1,0 +1,31 @@
+package plutoproject.feature.gallery.paper
+
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
+import plutoproject.feature.gallery.common.upload.UploadService
+import plutoproject.kernel.api.koinGet
+import plutoproject.feature.gallery.paper.PLAYER_ONLY_COMMAND
+
+private const val COMMAND_GALLERY_CANCEL_UPLOAD_PERMISSION = "plutoproject.gallery.command.gallery.cancel_upload"
+
+@Suppress("UNUSED")
+object GalleryCancelUploadCommand {
+    private val uploadService = koinGet<UploadService>()
+
+    @Command("gallery cancel-upload")
+    @Permission(COMMAND_GALLERY_CANCEL_UPLOAD_PERMISSION)
+    suspend fun CommandSender.cancelUpload() {
+        val player = this as? Player
+        if (player == null) {
+            sendMessage(PLAYER_ONLY_COMMAND)
+            return
+        }
+
+        val cancelled = uploadService.cancelUnfinishedSession(player.uniqueId)
+        if (cancelled == null) {
+            player.sendMessage(IMAGE_CANCEL_UPLOAD_NO_SESSION)
+        }
+    }
+}

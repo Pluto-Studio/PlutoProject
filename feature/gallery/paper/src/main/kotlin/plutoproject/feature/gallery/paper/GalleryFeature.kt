@@ -1,0 +1,116 @@
+package plutoproject.feature.gallery.paper
+
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
+import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ExperimentalHoplite
+import com.sksamuel.hoplite.PropertySource
+import com.sksamuel.hoplite.hocon.HoconParser
+import org.bukkit.event.HandlerList
+import org.bukkit.event.Listener
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
+import plutoproject.capability.interactive.api.GuiManager
+import plutoproject.capability.legacycloudcommands.api.paper.PaperLegacyCloudCommands
+import plutoproject.capability.mongo.api.MongoConnection
+import plutoproject.capability.serveridentifier.api.ServerIdentifier
+import plutoproject.feature.gallery.api.GalleryService
+import plutoproject.feature.gallery.common.GalleryServiceImpl
+import plutoproject.feature.gallery.common.*
+import plutoproject.feature.gallery.core.display.MapUpdatePort
+import plutoproject.feature.gallery.core.display.ViewPort
+import plutoproject.feature.gallery.paper.listener.ChunkListener
+import plutoproject.feature.gallery.paper.listener.CraftListener
+import plutoproject.feature.gallery.paper.listener.ItemFrameListener
+import plutoproject.feature.gallery.paper.listener.PlayerListener
+import plutoproject.feature.menu.api.paper.MenuManager
+import plutoproject.foundation.paper.command.CloudCommandRegistration
+import plutoproject.kernel.api.*
+import plutoproject.kernel.api.paper.PaperModuleContext
+
+@Feature(
+    id = "gallery",
+    platform = Platform.PAPER,
+    optionalFeatures = ["menu"],
+    requiredCapabilities = ["mongo", "server_identifier", "interactive", "legacy_cloud_commands"],
+)
+@Suppress("UNUSED")
+@OptIn(ExperimentalHoplite::class)
+class GalleryFeature : RuntimeModule {
+    private var commands: CloudCommandRegistration? = null
+    private var registeredListeners: List<Listener> = emptyList()
+
+    override suspend fun onLoad(context: ModuleContext) {
+        context as PaperModuleContext
+        context.dataFolder.toFile().mkdirs()
+        val configFile = context.saveResource("config.conf")
+        val config = ConfigLoaderBuilder.empty()
+            .withClassLoader(GalleryFeature::class.java.classLoader)
+            .withExplicitSealedTypes()
+            .addDefaults()
+            .addParser("conf", HoconParser())
+            .addPropertySource(PropertySource.file(configFile.toFile()))
+            .build()
+            .loadConfigOrThrow<GalleryConfig>()
+
+        context.importServiceToKoin<MongoConnection>()
+        context.importServiceToKoin<ServerIdentifier>()
+        context.importServiceToKoin<GuiManager>()
+        context.loadKoinModuleDefinitions(
+            module {
+                single { config }
+                single { PaperGalleryServiceImpl() }
+                single<GalleryServiceImpl> { get<PaperGalleryServiceImpl>() }
+                single<GalleryService> { get<PaperGalleryServiceImpl>() }
+                singleOf(::PaperViewPort) bind ViewPort::class
+                singleOf(::PaperMapUpdatePort) bind MapUpdatePort::class
+                single<DisplayInstanceIndex> {
+                    PaperDisplayInstanceIndex(
+                        server = context.plugin.server,
+                        logger = context.logger,
+                        serverContext = context.plugin.minecraftDispatcher,
+                    )
+                }
+            },
+            commonModule(
+                coroutineScope = context.coroutineScope,
+                coroutineContext = context.coroutineScope.coroutineContext,
+                logger = context.logger,
+            ),
+        )
+        context.services.exportServiceFromKoin<GalleryService>()
+    }
+
+    override suspend fun onEnable(context: ModuleContext) {
+        context as PaperModuleContext
+        onFeatureEnable(context.koin, context.logger)
+        context.services.getServiceOrNull<MenuManager>()
+            ?.registerButton(ImageListMenuButtonDescriptor) { ImageListMenuButton() }
+
+        registerCommands(context)
+        registerImageItemCopyRecipe(context.plugin.server)
+        registeredListeners = listOf(PlayerListener, ChunkListener, ItemFrameListener, CraftListener)
+            .onEach { context.plugin.server.pluginManager.registerSuspendingEvents(it, context.plugin) }
+    }
+
+    private fun registerCommands(context: PaperModuleContext) {
+        val parser = context.services.getService<PaperLegacyCloudCommands>().parser
+        commands = CloudCommandRegistration.register(
+            parser,
+            GalleyDebugCommand,
+            GalleryCancelUploadCommand,
+            GalleryMigrateImageDataCommand,
+        )
+    }
+
+    override suspend fun onDisable(context: ModuleContext) {
+        commands?.close()
+        commands = null
+
+        registeredListeners.forEach(HandlerList::unregisterAll)
+        registeredListeners = emptyList()
+        (context as PaperModuleContext).plugin.server.removeRecipe(IMAGE_ITEM_COPY_RECIPE_KEY)
+        onFeatureDisable(context.koin)
+    }
+}

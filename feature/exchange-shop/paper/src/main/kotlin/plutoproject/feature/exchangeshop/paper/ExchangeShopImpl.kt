@@ -1,0 +1,243 @@
+package plutoproject.feature.exchangeshop.paper
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Material
+import org.bukkit.OfflinePlayer
+import org.bukkit.inventory.ItemStack
+import plutoproject.kernel.api.koinInject
+import plutoproject.feature.exchangeshop.api.paper.ShopCategory
+import plutoproject.feature.exchangeshop.api.paper.ShopItem
+import plutoproject.feature.exchangeshop.api.paper.ShopUser
+import plutoproject.feature.exchangeshop.paper.models.UserModel
+import plutoproject.feature.exchangeshop.paper.repositories.UserRepository
+import plutoproject.foundation.common.coroutine.ConfinementExecutor
+import plutoproject.feature.exchangeshop.paper.moduleScope
+import plutoproject.foundation.common.coroutine.createSupervisorChild
+import plutoproject.foundation.common.collection.toImmutable
+import plutoproject.foundation.common.flow.getValue
+import plutoproject.foundation.common.flow.setValue
+import plutoproject.foundation.common.collection.mutableConcurrentMapOf
+import plutoproject.feature.exchangeshop.paper.server
+import java.time.Instant
+import java.util.*
+import kotlin.time.Duration.Companion.seconds
+
+class ExchangeShopImpl : InternalExchangeShop {
+    private val userRepo by koinInject<UserRepository>()
+    private val config by koinInject<ExchangeShopConfig>()
+    private val internalCategories = mutableMapOf<String, ShopCategory>()
+    private val loadedUsers = mutableConcurrentMapOf<UUID, InternalShopUser>()
+    private val usersLoadedAt = mutableConcurrentMapOf<ShopUser, Instant>()
+    private val autoUnloadJob: Job
+    private var isValid by MutableStateFlow(true)
+
+    override val categories: Collection<ShopCategory> = internalCategories.values.toImmutable()
+    override val items: Collection<ShopItem>
+        get() = categories.flatMap { it.items }
+    override val coroutineScope: CoroutineScope = moduleScope.createSupervisorChild()
+    private val confinementExecutor = ConfinementExecutor(coroutineScope)
+
+    init {
+        loadConfigDeclaration()
+        autoUnloadJob = runAutoUnloadDaemonJob()
+    }
+
+    private fun runAutoUnloadDaemonJob(): Job = coroutineScope.launch {
+        while (isActive) {
+            delay(AUTO_UNLOAD_INTERVAL_SECONDS.seconds)
+            unloadUnusedUsers()
+        }
+    }
+
+    private suspend fun unloadUnusedUsers() = confinementExecutor.execute {
+        val currentTimestamp = Instant.now()
+        loadedUsers.forEach { (uniqueId, user) ->
+            val loadedAt = usersLoadedAt.getValue(user)
+            if (loadedAt.plusSeconds(UNLOAD_AFTER_SECONDS).isBefore(currentTimestamp)
+                && server.getPlayer(uniqueId) == null
+            ) {
+                unloadUser(uniqueId)
+            }
+        }
+    }
+
+    private fun loadConfigDeclaration() {
+        config.categories.forEach { addConfigCategory(it) }
+        config.items.forEach { addConfigItem(it) }
+        val categoryWord = if (categories.size <= 1) "category" else "categories"
+        val itemWord = if (items.size <= 1) "item" else "items"
+        featureLogger.info("Added ${categories.size} $categoryWord from config")
+        featureLogger.info("Added ${items.size} $itemWord from config")
+    }
+
+    private fun addConfigCategory(config: ShopCategoryConfig) {
+        if (!config.id.isValidIdentifier()) {
+            featureLogger.severe("Invalid category ID in config: '${config.id}'")
+            return
+        }
+        createCategory(
+            id = config.id,
+            icon = config.icon,
+            name = MiniMessage.miniMessage().deserialize(config.name),
+            description = config.description.map(MiniMessage.miniMessage()::deserialize),
+        )
+    }
+
+    private fun addConfigItem(config: ShopItemConfig) {
+        if (!config.id.isValidIdentifier()) {
+            featureLogger.severe("Invalid shop item ID in config: '${config.id}'")
+            return
+        }
+        val category = getCategory(config.category)
+        if (category == null) {
+            featureLogger.severe("Invalid category '${config.category}' in config for item ID: ${config.id}")
+            return
+        }
+        category.addItem(
+            id = config.id,
+            itemStack = ItemStack(config.material),
+            ticketConsumption = config.ticketConsumption,
+            price = config.price,
+            quantity = config.quantity,
+            availableDays = config.availableDays
+        )
+    }
+
+    override suspend fun getUser(player: OfflinePlayer): ShopUser? {
+        check(isValid) { "Instance is not valid" }
+        return getUser(player.uniqueId)
+    }
+
+    override suspend fun getUser(uniqueId: UUID): ShopUser? {
+        check(isValid) { "Instance is not valid" }
+        return confinementExecutor.execute {
+            if (loadedUsers.containsKey(uniqueId)) {
+                return@execute loadedUsers.getValue(uniqueId)
+            }
+
+            val model = userRepo.find(uniqueId) ?: return@execute null
+            val user = ShopUserImpl(model)
+
+            loadUser(user)
+            user
+        }
+    }
+
+    override suspend fun hasUser(player: OfflinePlayer): Boolean {
+        check(isValid) { "Instance is not valid" }
+        return hasUser(player.uniqueId)
+    }
+
+    override suspend fun hasUser(uniqueId: UUID): Boolean {
+        check(isValid) { "Instance is not valid" }
+        return confinementExecutor.execute {
+            if (loadedUsers.containsKey(uniqueId)) return@execute true
+            userRepo.has(uniqueId)
+        }
+    }
+
+    override suspend fun createUser(player: OfflinePlayer): ShopUser {
+        check(isValid) { "Instance is not valid" }
+        return createUser(player.uniqueId)
+    }
+
+    override suspend fun createUser(uniqueId: UUID): ShopUser = confinementExecutor.execute {
+        check(isValid) { "Instance is not valid" }
+        require(!hasUser(uniqueId)) { "Shop user with ID `$uniqueId` already exists" }
+
+        val model = UserModel(
+            uniqueId = uniqueId,
+            createTime = Instant.now(),
+            ticket = config.ticket.recoveryCap,
+            lastTicketRecoveryTime = null,
+            scheduledTicketRecoveryTime = null,
+        )
+        val user = ShopUserImpl(model)
+
+        userRepo.insert(model)
+        loadUser(user)
+        user
+    }
+
+    override suspend fun getUserOrCreate(player: OfflinePlayer): ShopUser {
+        check(isValid) { "Instance is not valid" }
+        return getUserOrCreate(player.uniqueId)
+    }
+
+    override suspend fun getUserOrCreate(uniqueId: UUID): ShopUser {
+        check(isValid) { "Instance is not valid" }
+        return getUser(uniqueId) ?: createUser(uniqueId)
+    }
+
+    override fun isUserLoaded(id: UUID): Boolean {
+        check(isValid) { "Instance is not valid" }
+        return loadedUsers.containsKey(id)
+    }
+
+    override suspend fun loadUser(user: InternalShopUser) {
+        check(isValid) { "Instance is not valid" }
+        confinementExecutor.execute {
+            loadedUsers[user.uniqueId] = user
+            usersLoadedAt[user] = Instant.now()
+        }
+    }
+
+    override suspend fun unloadUser(id: UUID) {
+        check(isValid) { "Instance is not valid" }
+        confinementExecutor.execute {
+            val user = loadedUsers.remove(id) ?: return@execute
+            user.close()
+            usersLoadedAt.remove(user)
+        }
+    }
+
+    override fun createCategory(
+        id: String,
+        icon: Material,
+        name: Component,
+        description: List<Component>
+    ): ShopCategory {
+        check(isValid) { "Instance is not valid" }
+        require(id.isValidIdentifier()) { "ID must contain only English letters, numbers and underscores: $id" }
+        require(!hasCategory(id)) { "Shop category with ID `$id` already exists" }
+
+        val category = ShopCategoryImpl(
+            id = id,
+            icon = icon,
+            name = name,
+            description = description,
+        )
+
+        internalCategories[id] = category
+        return category
+    }
+
+    override fun getCategory(id: String): ShopCategory? {
+        check(isValid) { "Instance is not valid" }
+        return internalCategories[id]
+    }
+
+    override fun hasCategory(id: String): Boolean {
+        check(isValid) { "Instance is not valid" }
+        return internalCategories.containsKey(id)
+    }
+
+    override fun removeCategory(id: String): ShopCategory? {
+        check(isValid) { "Instance is not valid" }
+        return internalCategories.remove(id)
+    }
+
+    override suspend fun shutdown() {
+        check(isValid) { "Instance is not valid" }
+        loadedUsers.forEach { (_, user) -> user.close() }
+        loadedUsers.clear()
+        usersLoadedAt.clear()
+        autoUnloadJob.cancelAndJoin()
+        confinementExecutor.cancelAndJoin()
+        coroutineScope.coroutineContext[Job]?.cancelAndJoin()
+        isValid = false
+    }
+}

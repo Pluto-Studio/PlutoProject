@@ -1,0 +1,33 @@
+plugins {
+    id("plutoproject.paper")
+    id("plutoproject.runtime-module")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("plutoproject.compose")
+}
+
+dependencies {
+    implementation(projects.kernel.api)
+    implementation(projects.kernel.api.paper)
+    implementation(projects.foundation.common)
+    implementation(projects.foundation.paper)
+    implementation(projects.capability.mongo.api)
+    implementation(projects.capability.geoip.api)
+    implementation(projects.capability.serverIdentifier.api)
+    implementation(projects.capability.profile.api)
+    implementation(projects.capability.interactive.api)
+    implementation(projects.capability.worldAlias.api)
+    implementation(projects.capability.legacyCloudCommands.api.paper)
+    implementation(projects.feature.menu.api.paper)
+    implementation(projects.feature.teleport.api.paper)
+    implementation(projects.feature.home.api.paper)
+    implementation(libs.adventureKt)
+    implementation(libs.bundles.hoplite)
+    implementation(libs.bundles.koin)
+    implementation(libs.bundles.cloud)
+    implementation(libs.cloud.paper)
+    implementation(libs.geoip2)
+    implementation(libs.bundles.mongodb)
+    implementation(libs.bundles.mccoroutine.paper)
+    implementation(libs.bundles.voyager)
+    implementation(libs.caffeine)
+}
