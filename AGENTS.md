@@ -15,6 +15,8 @@ Core plugin for the PlutoProject Minecraft server.
 ## Workflow Rules
 
 - Do not design or write tests unless explicitly requested.
+- Build with `./gradlew shadowJar`; artifacts are written to `build/libs/`. Run tests with `./gradlew test`.
+- Do not run a full build or test suite after every change. Skip verification for trivial edits; when needed, run build or test tasks only for affected Gradle modules.
 - Write Git commit messages in Chinese using Conventional Commits and the existing repository style.
 
 ## Coding Conventions
