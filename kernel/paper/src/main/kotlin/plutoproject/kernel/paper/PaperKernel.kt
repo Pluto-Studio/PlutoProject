@@ -13,8 +13,11 @@ import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
+import plutoproject.kernel.common.formatModuleLifecycleSummary
+import plutoproject.kernel.common.isDependencyBlocked
 import java.nio.file.Path
 import java.util.logging.Logger
+import kotlin.time.TimeSource
 
 class PaperKernel(
     private val plugin: Plugin,
@@ -38,11 +41,21 @@ class PaperKernel(
         kernel.warnings.forEach(plugin.logger::warning)
     }
 
-    suspend fun load(): Map<String, ModuleOperationResult> = kernel.load()
+    suspend fun load(): Map<String, ModuleOperationResult> {
+        val startedAt = TimeSource.Monotonic.markNow()
+        val results = kernel.load()
+        formatModuleLifecycleSummary(ModuleOperation.LOAD, results.values, startedAt.elapsedNow())
+            .forEach(plugin.logger::info)
+        return results
+    }
 
     suspend fun enable(): Map<String, ModuleOperationResult> {
         registerCommands()
-        return kernel.enable()
+        val startedAt = TimeSource.Monotonic.markNow()
+        val results = kernel.enable()
+        formatModuleLifecycleSummary(ModuleOperation.ENABLE, results.values, startedAt.elapsedNow())
+            .forEach(plugin.logger::info)
+        return results
     }
 
     suspend fun shutdown() = kernel.shutdown()
@@ -76,13 +89,15 @@ class PaperKernel(
                 result.cause,
             )
 
-            is ModuleOperationResult.Rejected -> plugin.logger.warning(
-                "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
-            )
+            is ModuleOperationResult.Rejected -> if (!result.isDependencyBlocked()) {
+                plugin.logger.warning(
+                    "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
+                )
+            }
 
-            is ModuleOperationResult.Success -> plugin.logger.info(
-                "Runtime module '${result.id}' completed ${result.operation}",
-            )
+            is ModuleOperationResult.Success -> if (result.operation == ModuleOperation.DISABLE) {
+                plugin.logger.info("Runtime module '${result.id}' completed ${result.operation}")
+            }
         }
     }
 }

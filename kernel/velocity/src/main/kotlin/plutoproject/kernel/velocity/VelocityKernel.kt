@@ -14,9 +14,12 @@ import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
 import plutoproject.kernel.common.RuntimeKernel
+import plutoproject.kernel.common.formatModuleLifecycleSummary
+import plutoproject.kernel.common.isDependencyBlocked
 import java.nio.file.Path
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.time.TimeSource
 
 class VelocityKernel(
     private val proxyServer: ProxyServer,
@@ -48,9 +51,21 @@ class VelocityKernel(
         }
     }
 
-    suspend fun load(): Map<String, ModuleOperationResult> = kernel.load()
+    suspend fun load(): Map<String, ModuleOperationResult> {
+        val startedAt = TimeSource.Monotonic.markNow()
+        val results = kernel.load()
+        formatModuleLifecycleSummary(ModuleOperation.LOAD, results.values, startedAt.elapsedNow())
+            .forEach(logger::info)
+        return results
+    }
 
-    suspend fun enable(): Map<String, ModuleOperationResult> = kernel.enable()
+    suspend fun enable(): Map<String, ModuleOperationResult> {
+        val startedAt = TimeSource.Monotonic.markNow()
+        val results = kernel.enable()
+        formatModuleLifecycleSummary(ModuleOperation.ENABLE, results.values, startedAt.elapsedNow())
+            .forEach(logger::info)
+        return results
+    }
 
     suspend fun shutdown() = kernel.shutdown()
 
@@ -80,13 +95,15 @@ class VelocityKernel(
                 result.cause,
             )
 
-            is ModuleOperationResult.Rejected -> logger.warning(
-                "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
-            )
+            is ModuleOperationResult.Rejected -> if (!result.isDependencyBlocked()) {
+                logger.warning(
+                    "Runtime module '${result.id}' operation ${result.operation} was rejected: ${result.reason}",
+                )
+            }
 
-            is ModuleOperationResult.Success -> logger.info(
-                "Runtime module '${result.id}' completed ${result.operation}",
-            )
+            is ModuleOperationResult.Success -> if (result.operation == ModuleOperation.DISABLE) {
+                logger.info("Runtime module '${result.id}' completed ${result.operation}")
+            }
         }
     }
 }

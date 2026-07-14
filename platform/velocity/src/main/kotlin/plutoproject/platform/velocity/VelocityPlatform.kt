@@ -11,6 +11,7 @@ import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import plutoproject.kernel.velocity.VelocityKernel
+import plutoproject.platform.common.PLUTOPROJECT_CONSOLE_BANNER
 import plutoproject.platform.common.resolvePlatformConfig
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,15 +19,16 @@ import java.util.logging.Logger
 
 @Suppress("UNUSED")
 class VelocityPlatform {
+    private val logger = Logger.getLogger("PlutoProject")
     private var kernel: VelocityKernel
 
     @Inject
     constructor(
         plugin: PluginContainer,
         server: ProxyServer,
-        logger: Logger,
         @DataDirectory dataDirectory: Path
     ) {
+        logger.info("\n$PLUTOPROJECT_CONSOLE_BANNER")
         Files.createDirectories(dataDirectory)
         val configPath = dataDirectory.resolve("config.conf")
         if (Files.notExists(configPath)) {

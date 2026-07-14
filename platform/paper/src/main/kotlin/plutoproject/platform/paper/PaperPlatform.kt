@@ -4,6 +4,7 @@ import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin
 import io.github.classgraph.ClassGraph
 import kotlinx.coroutines.runBlocking
 import plutoproject.kernel.paper.PaperKernel
+import plutoproject.platform.common.PLUTOPROJECT_CONSOLE_BANNER
 import plutoproject.platform.common.PlatformConfig
 import plutoproject.platform.common.resolvePlatformConfig
 import java.io.File
@@ -13,6 +14,7 @@ class PaperPlatform : SuspendingJavaPlugin() {
     private lateinit var kernel: PaperKernel
 
     override fun onLoad() {
+        logger.info("\n$PLUTOPROJECT_CONSOLE_BANNER")
         dataFolder.mkdirs()
         dataFolder.resolve("module${File.separator}")
         server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
