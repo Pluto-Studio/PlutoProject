@@ -28,7 +28,6 @@ class PaperKernelTest {
             plugin = paperPlugin(),
             dataFolder = Path.of("build/test-data/paper-kernel"),
             featureRoots = listOf("paper_test"),
-            registerCommands = false,
             classLoader = javaClass.classLoader,
         )
 
@@ -60,7 +59,6 @@ class PaperKernelTest {
         plugin = paperPlugin(),
         dataFolder = Path.of("build/test-data/paper-kernel-$name"),
         featureRoots = listOf("paper_test"),
-        registerCommands = false,
         classLoader = javaClass.classLoader,
     )
 

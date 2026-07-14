@@ -1,6 +1,5 @@
 package plutoproject.kernel.velocity
 
-import com.velocitypowered.api.command.BrigadierCommand
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.coroutines.CoroutineName
@@ -27,7 +26,6 @@ class VelocityKernel(
     private val logger: Logger,
     dataFolder: Path,
     featureRoots: Collection<String>,
-    registerCommands: Boolean = true,
     private val classLoader: ClassLoader = VelocityKernel::class.java.classLoader,
 ) {
     private val kernel = RuntimeKernel(
@@ -42,13 +40,6 @@ class VelocityKernel(
 
     init {
         kernel.warnings.forEach(logger::warning)
-        if (registerCommands) {
-            val command = BrigadierCommand(createManagementCommand(kernel.management).build())
-            proxyServer.commandManager.register(
-                proxyServer.commandManager.metaBuilder(command).plugin(pluginContainer).build(),
-                command,
-            )
-        }
     }
 
     suspend fun load(): Map<String, ModuleOperationResult> {

@@ -1,6 +1,5 @@
 package plutoproject.kernel.paper
 
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +22,6 @@ class PaperKernel(
     private val plugin: Plugin,
     dataFolder: Path,
     featureRoots: Collection<String>,
-    private val registerCommands: Boolean = true,
     private val classLoader: ClassLoader = PaperKernel::class.java.classLoader,
 ) {
     private val kernel = RuntimeKernel(
@@ -35,8 +33,6 @@ class PaperKernel(
         },
         reporter = ModuleOperationReporter(::report),
     )
-    private var commandsRegistered = false
-
     init {
         kernel.warnings.forEach(plugin.logger::warning)
     }
@@ -50,7 +46,6 @@ class PaperKernel(
     }
 
     suspend fun enable(): Map<String, ModuleOperationResult> {
-        registerCommands()
         val startedAt = TimeSource.Monotonic.markNow()
         val results = kernel.enable()
         formatModuleLifecycleSummary(ModuleOperation.ENABLE, results.values, startedAt.elapsedNow())
@@ -59,17 +54,6 @@ class PaperKernel(
     }
 
     suspend fun shutdown() = kernel.shutdown()
-
-    private fun registerCommands() {
-        if (!registerCommands || commandsRegistered) return
-        plugin.lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) { event ->
-            event.registrar().register(
-                createManagementCommand(kernel.management).build(),
-                "Inspect and manage PlutoProject runtime modules",
-            )
-        }
-        commandsRegistered = true
-    }
 
     private fun createContext(
         descriptor: ModuleDescriptor,
