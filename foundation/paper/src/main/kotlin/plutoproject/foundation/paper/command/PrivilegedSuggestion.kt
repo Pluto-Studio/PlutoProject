@@ -9,12 +9,8 @@ import java.util.concurrent.CompletableFuture
 
 fun <T : CommandSender> SuggestionProvider<T>.withPermission(permission: String): SuggestionProvider<T> {
     val delegate = this
-    return object : SuggestionProvider<T> {
-        override fun suggestionsFuture(
-            context: CommandContext<T>,
-            input: CommandInput,
-        ): CompletableFuture<out MutableIterable<Suggestion>> =
-            if (context.sender().hasPermission(permission)) delegate.suggestionsFuture(context, input)
-            else CompletableFuture.completedFuture(mutableListOf())
+    return SuggestionProvider<T> { context, input ->
+        if (context.sender().hasPermission(permission)) delegate.suggestionsFuture(context, input)
+        else CompletableFuture.completedFuture(mutableListOf())
     }
 }
