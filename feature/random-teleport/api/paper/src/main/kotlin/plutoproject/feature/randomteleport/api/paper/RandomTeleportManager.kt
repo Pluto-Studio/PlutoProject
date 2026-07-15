@@ -23,6 +23,10 @@ interface RandomTeleportManager {
 
     fun getRandomTeleportOptions(world: World): RandomTeleportOptions
 
+    fun getCooldownDuration(player: Player): Duration
+
+    fun getCost(player: Player, world: World): Double
+
     fun getCenterLocation(world: World, options: RandomTeleportOptions? = null): Position2D
 
     fun getCaches(world: World): Collection<RandomTeleportCache>

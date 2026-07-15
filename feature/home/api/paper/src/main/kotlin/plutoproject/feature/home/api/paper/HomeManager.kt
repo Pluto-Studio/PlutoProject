@@ -13,6 +13,8 @@ interface HomeManager {
     val blacklistedWorlds: Collection<World>
     val loadedHomes: ListMultimap<OfflinePlayer, Home>
 
+    suspend fun maxHomes(player: OfflinePlayer): Int
+
     fun isLoaded(id: UUID): Boolean
 
     fun isLoaded(player: OfflinePlayer, name: String): Boolean

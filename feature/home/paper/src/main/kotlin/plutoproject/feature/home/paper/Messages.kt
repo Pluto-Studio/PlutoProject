@@ -9,14 +9,13 @@ import net.kyori.adventure.text.Component
 import plutoproject.feature.home.api.paper.HomeManager
 import plutoproject.foundation.common.text.*
 
-val COMMAND_SETHOME_FAILED_AMOUNT_LIMIT
-    get() = component {
-        text("你当前设置的家数量已经到达上限，请删除一些再试") with mochaMaroon
-        newline()
-        text("当前家上限数量为 ") with mochaSubtext0
-        text("${homeManager.maxHomes} ") with mochaText
-        text("个") with mochaSubtext0
-    }
+val COMMAND_SETHOME_FAILED_AMOUNT_LIMIT = component {
+    text("你当前设置的家数量已经到达上限，请删除一些再试") with mochaMaroon
+    newline()
+    text("当前家上限数量为 ") with mochaSubtext0
+    text("<max_homes> ") with mochaText
+    text("个") with mochaSubtext0
+}
 
 val COMMAND_SETHOME_FAILED_EXISTED = component {
     text("你已经有一个名为 ") with mochaMaroon

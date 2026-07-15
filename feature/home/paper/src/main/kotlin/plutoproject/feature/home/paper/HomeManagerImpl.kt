@@ -23,6 +23,11 @@ internal fun loadFailed(id: UUID, reason: String): String {
     return "Failed to load Home $id: $reason"
 }
 
+internal fun UUID.isInGrayTest(percentage: Int): Boolean {
+    require(percentage in 0..100) { "percentage must be between 0 and 100" }
+    return Math.floorMod(hashCode(), 100) < percentage
+}
+
 class HomeManagerImpl : HomeManager {
     private val config by koinInject<HomeConfig>()
     private val repo by koinInject<HomeRepository>()
@@ -34,6 +39,16 @@ class HomeManagerImpl : HomeManager {
         .map { server.getWorld(it)!! }
     override val loadedHomes: ListMultimap<OfflinePlayer, Home> =
         Multimaps.synchronizedListMultimap<OfflinePlayer, Home>(ArrayListMultimap.create())
+
+    override suspend fun maxHomes(player: OfflinePlayer): Int {
+        val grayTest = config.maxHomesGrayTest
+        if (!grayTest.enabled) return maxHomes
+
+        val isGrayTestPlayer = !hasHome(player) ||
+            grayTest.existingPlayersEnabled &&
+            player.uniqueId.isInGrayTest(grayTest.existingPlayersPercentage)
+        return if (isGrayTestPlayer) grayTest.maxHomes else maxHomes
+    }
 
     init {
         moduleScope.launch {

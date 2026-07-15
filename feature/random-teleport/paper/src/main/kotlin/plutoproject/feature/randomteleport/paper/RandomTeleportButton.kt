@@ -62,7 +62,7 @@ fun RandomTeleport() {
 
     val economySymbol = economy.currencyNameSingular() ?: ECONOMY_SYMBOL
     val balance = economy.getBalance(player)
-    val cost = randomTeleportManager.getRandomTeleportOptions(world).cost
+    val cost = randomTeleportManager.getCost(player, world)
     val costMessage = "${cost.trimmedString()}$economySymbol"
 
     var cooldownRemaining by remember { mutableStateOf(player.cooldownRemaining) }

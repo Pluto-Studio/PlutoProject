@@ -52,6 +52,11 @@ internal fun Chunk.hasTeleportTicket(): Boolean {
     return pluginChunkTickets.contains(plugin)
 }
 
+internal fun UUID.isInGrayTest(percentage: Int): Boolean {
+    require(percentage in 0..100) { "percentage must be between 0 and 100" }
+    return Math.floorMod(hashCode(), 100) < percentage
+}
+
 class RandomTeleportManagerImpl : RandomTeleportManager {
     private val config by koinInject<RandomTeleportConfig>()
     private val teleportManager by koinInject<TeleportManager>()
@@ -108,6 +113,22 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
 
     override fun getRandomTeleportOptions(world: World): RandomTeleportOptions {
         return configuredWorldOptions[world.name] ?: defaultOptions
+    }
+
+    private fun isInGrayTest(player: Player): Boolean {
+        val grayTest = config.grayTest
+        if (!grayTest.enabled) return false
+        if (!player.hasPlayedBefore()) return true
+        return grayTest.existingPlayersEnabled && player.uniqueId.isInGrayTest(grayTest.existingPlayersPercentage)
+    }
+
+    override fun getCooldownDuration(player: Player): Duration {
+        return if (isInGrayTest(player)) config.grayTest.cooldown else cooldown
+    }
+
+    override fun getCost(player: Player, world: World): Double {
+        if (!isInGrayTest(player)) return getRandomTeleportOptions(world).cost
+        return config.grayTest.worldCosts[world.name] ?: config.grayTest.defaultCost
     }
 
     override fun getCenterLocation(world: World, options: RandomTeleportOptions?): Position2D {
@@ -298,7 +319,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
             val economy = server.vaultEconomy
             val plural = economy?.currencyNamePlural() ?: ECONOMY_SYMBOL
             val singular = economy?.currencyNameSingular() ?: ECONOMY_SYMBOL
-            val cost = opt.cost
+            val cost = if (isInGrayTest(player)) getCost(player, world) else opt.cost
             val symbol = if (cost <= 1) singular else plural
             var costed = false
 
@@ -353,7 +374,7 @@ class RandomTeleportManagerImpl : RandomTeleportManager {
             val time = timer.end()
             notifyPlayerOfTeleport(player, location, attempts, time, costed, cost, symbol, prompt)
             if (!player.hasPermission(RANDOM_TELEPORT_COOLDOWN_BYPASS_PERMISSION)) {
-                cooldownMap[player] = CooldownImpl(cooldown) {
+                cooldownMap[player] = CooldownImpl(getCooldownDuration(player)) {
                     cooldownMap.remove(player)
                 }
             }

@@ -22,3 +22,4 @@ Core plugin for the PlutoProject Minecraft server.
 ## Coding Conventions
 
 - Put player-facing in-game text (commands, interactions, menus, etc.) in `Messages.kt`, not at usage sites. Search the codebase for existing `Messages.kt` files and follow their patterns.
+- Never use functions to obtain messages from `Messages.kt`; always define messages as values and inject dynamic content through placeholders, even if existing code uses function-based messages.
