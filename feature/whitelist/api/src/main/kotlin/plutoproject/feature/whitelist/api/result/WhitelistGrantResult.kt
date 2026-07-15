@@ -4,5 +4,6 @@ sealed class WhitelistGrantResult {
     object Ok : WhitelistGrantResult()
     object AlreadyGranted : WhitelistGrantResult()
 
-    val isSuccessful: Boolean = this == Ok
+    val isSuccessful: Boolean
+        get() = this == Ok
 }

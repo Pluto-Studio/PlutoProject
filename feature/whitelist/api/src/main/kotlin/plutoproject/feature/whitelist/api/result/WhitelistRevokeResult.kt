@@ -4,5 +4,6 @@ sealed class WhitelistRevokeResult {
     object Ok : WhitelistRevokeResult()
     object NotGranted : WhitelistRevokeResult()
 
-    val isSuccessful: Boolean = this == Ok
+    val isSuccessful: Boolean
+        get() = this == Ok
 }
