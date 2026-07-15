@@ -44,7 +44,7 @@ class HomeManagerImpl : HomeManager {
         val grayTest = config.maxHomesGrayTest
         if (!grayTest.enabled) return maxHomes
 
-        val isGrayTestPlayer = !hasHome(player) ||
+        val isGrayTestPlayer = !player.hasPlayedBefore() ||
             grayTest.existingPlayersEnabled &&
             player.uniqueId.isInGrayTest(grayTest.existingPlayersPercentage)
         return if (isGrayTestPlayer) grayTest.maxHomes else maxHomes
