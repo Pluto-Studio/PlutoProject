@@ -1,7 +1,9 @@
 package plutoproject.feature.whip.paper
 
 import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.ItemLore
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
@@ -49,6 +51,18 @@ sealed interface WhipIdentity {
 }
 
 @Suppress("UnstableApiUsage")
+internal fun ItemStack.configureWhipUse() {
+    setData(
+        DataComponentTypes.CONSUMABLE,
+        Consumable.consumable()
+            .consumeSeconds(1_000_000.0f)
+            .animation(ItemUseAnimation.TRIDENT)
+            .hasConsumeParticles(false)
+            .build(),
+    )
+}
+
+@Suppress("UnstableApiUsage")
 fun createWhipItem(level: WhipLevel, config: WhipConfig): ItemStack {
     val item = ItemStack(Material.LEAD)
     item.setData(DataComponentTypes.MAX_STACK_SIZE, 1)
@@ -67,6 +81,7 @@ fun createWhipItem(level: WhipLevel, config: WhipConfig): ItemStack {
         persistentDataContainer.set(WHIP_DATA_VERSION_KEY, PersistentDataType.INTEGER, WHIP_DATA_VERSION)
         persistentDataContainer.set(WHIP_LEVEL_KEY, PersistentDataType.INTEGER, level.number)
     }
+    item.configureWhipUse()
     return item
 }
 

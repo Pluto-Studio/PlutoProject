@@ -5,7 +5,7 @@
 
 ## Progress
 - [x] Slice 1 — Players and administrators can obtain and upgrade valid whips
-- [ ] Slice 2 — Holding use deploys a terrain-aware physical whip
+- [x] Slice 2 — Holding use deploys a terrain-aware physical whip
 - [ ] Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
 
 ## Current codebase state
@@ -62,7 +62,7 @@ A levelled whip exists as a safely identified custom lead. Players can craft and
 **Deviations:** None.
 
 ### Slice 2 — Holding use deploys a terrain-aware physical whip
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 Using a whip from either hand shows one continuous vanilla-material chain anchored near that hand. It hangs, trails, collides with solid terrain, and retracts without leaking entities or tasks as soon as the item is no longer actively used.
@@ -96,6 +96,19 @@ Using a whip from either hand shows one continuous vanilla-material chain anchor
 
 **Dependencies**
 - Slice 1.
+
+**Completed work**
+- Added identity-guarded custom whip interaction/use handling, trident animation data, and lifecycle termination listeners without changing ordinary lead behavior.
+- Added one-session-per-player structured coroutine loops on `player.coroutineDispatcher`, including active-use validation, ownership-paused ticks, and module-safe concurrent shutdown tracking.
+- Added uniformly segmented Verlet/position-based simulation with gravity, damping, constraints, hand anchoring, motion-history resets, and collision-shape terrain resolution.
+- Added interpolated oriented vanilla-material `BlockDisplay` links with a thinner darker tip and dispatcher-routed idempotent cleanup.
+
+**Validation**
+- `JAVA_HOME=/home/nostalfinals/.local/share/mise/installs/java/25.0.2 PATH=/home/nostalfinals/.local/share/mise/installs/java/25.0.2/bin:$PATH ./gradlew :feature:whip:paper:compileKotlin` — passed.
+- `git diff --check` — passed.
+- No runtime server/client harness is available; visual behavior and live Paper/Folia ownership transitions were not observed.
+
+**Deviations:** None.
 
 ### Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
 **Status:** Pending

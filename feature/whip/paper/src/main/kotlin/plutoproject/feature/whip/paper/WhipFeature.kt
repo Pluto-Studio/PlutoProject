@@ -28,6 +28,7 @@ import org.koin.dsl.module
 class WhipFeature : RuntimeModule {
     private val config by koinInject<WhipConfig>()
     private var commands: CloudCommandRegistration? = null
+    private var sessionManager: WhipSessionManager? = null
     private var registeredListeners: List<Listener> = emptyList()
 
     override suspend fun onLoad(context: ModuleContext) {
@@ -47,9 +48,13 @@ class WhipFeature : RuntimeModule {
     override suspend fun onEnable(context: ModuleContext) {
         context as PaperModuleContext
         registerWhipRecipes(context.plugin.server, config)
-        val listener = WhipCraftListener(config)
-        context.plugin.server.pluginManager.registerEvents(listener, context.plugin)
-        registeredListeners = listOf(listener)
+        val sessionManager = WhipSessionManager(context.coroutineScope, config)
+        val craftListener = WhipCraftListener(config)
+        val interactionListener = WhipInteractionListener(sessionManager)
+        context.plugin.server.pluginManager.registerEvents(craftListener, context.plugin)
+        context.plugin.server.pluginManager.registerEvents(interactionListener, context.plugin)
+        this.sessionManager = sessionManager
+        registeredListeners = listOf(craftListener, interactionListener)
         context.plugin.server.onlinePlayers.forEach { it.discoverRecipes(WHIP_RECIPE_KEYS) }
 
         val parser = context.services.getService<PaperLegacyCloudCommands>().parser
@@ -57,6 +62,10 @@ class WhipFeature : RuntimeModule {
     }
 
     override suspend fun onDisable(context: ModuleContext) {
+        val sessionManager = this.sessionManager
+        this.sessionManager = null
+        sessionManager?.stopAll()
+
         commands?.close()
         commands = null
         registeredListeners.forEach(HandlerList::unregisterAll)
