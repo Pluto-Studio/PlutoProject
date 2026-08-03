@@ -4,7 +4,7 @@
 - Specification: `SPEC.md`
 
 ## Progress
-- [ ] Slice 1 — Players and administrators can obtain and upgrade valid whips
+- [x] Slice 1 — Players and administrators can obtain and upgrade valid whips
 - [ ] Slice 2 — Holding use deploys a terrain-aware physical whip
 - [ ] Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
 
@@ -23,7 +23,7 @@
 ## Slices
 
 ### Slice 1 — Players and administrators can obtain and upgrade valid whips
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 A levelled whip exists as a safely identified custom lead. Players can craft and upgrade it through level V, automatic crafters follow the same rules, and authorized administrators can grant any level without affecting ordinary leads.
@@ -51,6 +51,15 @@ A levelled whip exists as a safely identified custom lead. Players can craft and
 
 **Dependencies**
 - None.
+
+**Completed work**
+- Added the Paper feature module, validated configuration, versioned lead identity, current-config presentation, recipes, exact crafting validation/consumption, automatic crafter handling, recipe discovery, `/whip give`, and disable-time cleanup.
+
+**Validation**
+- `./gradlew :feature:whip:paper:compileKotlin :feature:whip:paper:processResources` — passed with Java 25 configured via `JAVA_HOME`.
+- `git diff --check` — passed.
+
+**Deviations:** None.
 
 ### Slice 2 — Holding use deploys a terrain-aware physical whip
 **Status:** Pending
