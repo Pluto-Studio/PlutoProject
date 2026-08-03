@@ -10,6 +10,7 @@ import kotlin.math.min
 internal data class WhipSimulationFrame(
     val previous: List<Vector>,
     val current: List<Vector>,
+    val velocities: List<Vector>,
     val hasMotionHistory: Boolean,
 )
 
@@ -69,9 +70,14 @@ internal class WhipChain(
         }
         positions[0].copy(anchor)
 
+        val frameCurrent = positions.map(Vector::clone)
+        val velocities = frameCurrent.zip(framePrevious) { current, previous ->
+            current.subtract(previous)
+        }
         return WhipSimulationFrame(
             previous = framePrevious,
-            current = positions.map(Vector::clone),
+            current = frameCurrent,
+            velocities = velocities,
             hasMotionHistory = hasMotionHistory,
         )
     }

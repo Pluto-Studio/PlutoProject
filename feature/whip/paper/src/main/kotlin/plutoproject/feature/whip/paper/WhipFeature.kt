@@ -48,13 +48,15 @@ class WhipFeature : RuntimeModule {
     override suspend fun onEnable(context: ModuleContext) {
         context as PaperModuleContext
         registerWhipRecipes(context.plugin.server, config)
-        val sessionManager = WhipSessionManager(context.coroutineScope, config)
+        val damageObserver = WhipDamageObserver()
+        val sessionManager = WhipSessionManager(context.coroutineScope, config, damageObserver)
         val craftListener = WhipCraftListener(config)
         val interactionListener = WhipInteractionListener(sessionManager)
         context.plugin.server.pluginManager.registerEvents(craftListener, context.plugin)
         context.plugin.server.pluginManager.registerEvents(interactionListener, context.plugin)
+        context.plugin.server.pluginManager.registerEvents(damageObserver, context.plugin)
         this.sessionManager = sessionManager
-        registeredListeners = listOf(craftListener, interactionListener)
+        registeredListeners = listOf(craftListener, interactionListener, damageObserver)
         context.plugin.server.onlinePlayers.forEach { it.discoverRecipes(WHIP_RECIPE_KEYS) }
 
         val parser = context.services.getService<PaperLegacyCloudCommands>().parser

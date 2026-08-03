@@ -23,6 +23,7 @@ import kotlin.math.ceil
 internal class WhipSessionManager(
     private val scope: CoroutineScope,
     private val config: WhipConfig,
+    private val damageObserver: WhipDamageObserver,
 ) {
     private val sessions = ConcurrentHashMap<UUID, WhipSession>()
     private val trackedSessions = ConcurrentHashMap.newKeySet<WhipSession>()
@@ -50,6 +51,7 @@ internal class WhipSessionManager(
             level = identity.level,
             ownershipRadius = ownershipRadius,
             config = config,
+            damageObserver = damageObserver,
             onFinished = ::onFinished,
         )
         val previous = synchronized(lock) {
@@ -127,6 +129,7 @@ private class WhipSession(
     private val level: WhipLevel,
     private val ownershipRadius: Int,
     config: WhipConfig,
+    damageObserver: WhipDamageObserver,
     private val onFinished: (WhipSession) -> Unit,
 ) {
     private val initialItem = item.clone()
@@ -136,6 +139,7 @@ private class WhipSession(
     private val renderer = WhipRenderer(scope, cleanupJobs::add)
     private val chain = WhipChain(config.length(level))
     private val simulation = config.simulation
+    private val combat = WhipCombat(player, config, damageObserver)
     @Volatile
     private var job: Job? = null
 
@@ -192,6 +196,7 @@ private class WhipSession(
                 val playerLocation = player.location
                 if (!Bukkit.isOwnedByCurrentRegion(playerLocation, ownershipRadius)) {
                     chain.resetMotionHistory()
+                    combat.resetMotionHistory()
                     delay(TICK_DELAY_MILLIS)
                     continue
                 }
@@ -201,10 +206,12 @@ private class WhipSession(
                 val direction = player.eyeLocation.direction
                 val frame = chain.step(anchor, direction, world, simulation)
                 renderer.render(world, frame.current)
+                combat.process(world, frame)
                 delay(TICK_DELAY_MILLIS)
             }
         } finally {
             withContext(NonCancellable) {
+                combat.clear()
                 renderer.cleanup()
                 awaitCleanupJobs()
                 onFinished(this@WhipSession)

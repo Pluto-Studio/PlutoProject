@@ -6,7 +6,7 @@
 ## Progress
 - [x] Slice 1 — Players and administrators can obtain and upgrade valid whips
 - [x] Slice 2 — Holding use deploys a terrain-aware physical whip
-- [ ] Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
+- [x] Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
 
 ## Current codebase state
 - `settings.gradle.kts` registers runtime Features through `includeFeature`; no `whip` Gradle project exists yet.
@@ -111,7 +111,7 @@ Using a whip from either hand shows one continuous vanilla-material chain anchor
 **Deviations:** None.
 
 ### Slice 3 — Swept whip motion damages and knocks back multiple targets with audio feedback
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 Fast whip motion can strike every eligible living target swept in a tick. Damage rises with effective acceleration and distance from the handle without a Feature cap, while accepted hits receive bounded sweep-direction knockback and controlled vanilla sound feedback.
@@ -141,6 +141,19 @@ Fast whip motion can strike every eligible living target swept in a tick. Damage
 
 **Dependencies**
 - Slice 2.
+
+**Completed work**
+- Added per-frame link velocities and gravity-compensated acceleration history with discontinuity resets.
+- Added ownership-guarded swept link geometry, nearby living-target collection, same-tick per-target strongest-hit aggregation, cooldowns, attributed damage observation, and bounded directional knockback.
+- Added edge-triggered crack audio and coalesced accepted-hit audio, with vanilla-only sound identifier validation and session cleanup.
+
+**Validation**
+- `JAVA_HOME=/home/nostalfinals/.local/share/mise/installs/java/25.0.2 PATH=/home/nostalfinals/.local/share/mise/installs/java/25.0.2/bin:$PATH ./gradlew :feature:whip:paper:compileKotlin` — passed.
+- `./gradlew shadowJar` — passed.
+- `git diff --check` — passed.
+- No runtime server/protection-plugin harness is available; live combat, Folia ownership transitions, and third-party cancellation behavior were not observed.
+
+**Deviations:** None.
 
 ## Final verification
 - `./gradlew shadowJar` — builds the complete distribution, runs runtime-module indexing dependencies, and proves the new Feature integrates into the assembled plugin.

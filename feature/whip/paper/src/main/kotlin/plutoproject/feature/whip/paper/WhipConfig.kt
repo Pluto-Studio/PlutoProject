@@ -1,6 +1,6 @@
 package plutoproject.feature.whip.paper
 
-private val NAMESPACED_SOUND_ID = Regex("[a-z0-9._-]+:[a-z0-9._/-]+")
+private val VANILLA_SOUND_ID = Regex("minecraft:[a-z0-9._/-]+")
 
 data class WhipConfig(
     val lengths: List<Double> = listOf(4.0, 5.5, 7.0, 8.5, 10.0),
@@ -104,8 +104,8 @@ data class WhipSoundConfig(
     val pitch: Double = 1.0,
 ) {
     init {
-        require(NAMESPACED_SOUND_ID.matches(sound)) {
-            "sounds sound must be a namespaced sound id, got '$sound'"
+        require(VANILLA_SOUND_ID.matches(sound)) {
+            "sounds sound must be a vanilla namespaced sound id, got '$sound'"
         }
         require(volume.isFinite() && volume >= 0.0) {
             "sound volume must be finite and non-negative"
