@@ -5,7 +5,7 @@
 
 ## Progress
 - [x] Slice 1 — The whip opens forward and responds naturally to view motion
-- [ ] Slice 2 — Fast chain motion remains stable against terrain
+- [x] Slice 2 — Fast chain motion remains stable against terrain
 - [ ] Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
 
 ## Current codebase state
@@ -72,7 +72,7 @@ A deployed whip starts in a forward-drooping shape, follows yaw and bounded pitc
 **Deviations:** None.
 
 ### Slice 2 — Fast chain motion remains stable against terrain
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 Each server tick advances the chain through two anchor-interpolated physical steps, and fast-moving points resolve solid terrain along their path instead of only after ending inside a block.
@@ -99,6 +99,18 @@ Each server tick advances the chain through two anchor-interpolated physical ste
 
 **Dependencies**
 - Slice 1.
+
+**Completed work**
+- Advanced the chain through two anchor-interpolated Verlet/PBD substeps while preserving outer-tick physical snapshots and combat-facing velocities.
+- Scaled substep gravity and damping to retain full-tick configuration meaning, and repeated constraints and contact restoration within each substep.
+- Replaced endpoint-only terrain resolution with earliest-contact swept point collision against local solid collision shapes, retaining penetration fallback and liquid exclusion.
+
+**Validation**
+- `./gradlew :feature:whip:paper:compileKotlin` — Passed.
+- `git diff --check` — Passed.
+- Live fast-motion terrain behavior — Not run; no Minecraft client/server harness is available.
+
+**Deviations:** None.
 
 ### Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
 **Status:** Pending
