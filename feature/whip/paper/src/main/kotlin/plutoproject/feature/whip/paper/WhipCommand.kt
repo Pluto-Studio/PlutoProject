@@ -14,8 +14,8 @@ class WhipCommand(
     @Command("whip give [player] [level]")
     @Permission("plutoproject.whip.command.give")
     fun CommandSender.give(
-        @Argument("player") player: Player? = null,
-        @Argument("level") level: String? = null,
+        @Argument("player") player: Player?,
+        @Argument("level") level: String?,
     ) {
         val target = player ?: (this as? Player)
         if (target == null) {
