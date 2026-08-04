@@ -53,6 +53,7 @@ dependencies {
     implementation(projects.feature.devWatermark.paper)
     implementation(projects.feature.recipeUnlock.paper)
     implementation(projects.feature.noCreeperBlockBreaks.paper)
+    implementation(projects.feature.whip.paper)
     implementation(libs.bundles.mccoroutine.paper)
     implementation(libs.classgraph)
 }
