@@ -145,9 +145,11 @@ internal class WhipCombat(
                     targetBox = target.boundingBox,
                     thickness = config.simulation.sweepThickness,
                 ) ?: continue
+                val flexibleDistance = frame.flexibleSegmentLength *
+                    (sweep.flexibleIndex + intersection.linkProgress)
                 val positionAlongWhip = (
-                    sweep.index + intersection.linkProgress
-                    ) / frame.current.lastIndex.toDouble()
+                    (frame.handleLength + flexibleDistance) / frame.totalLength
+                    ).coerceIn(0.0, 1.0)
                 val rawDamage = (sweep.acceleration - config.combat.minAcceleration)
                     .coerceAtLeast(0.0) *
                     config.combat.damageScale *
@@ -245,7 +247,7 @@ internal class WhipCombat(
                 .union(currentEnd)
                 .expand(config.simulation.sweepThickness / 2.0)
             sweeps += WhipLinkSweep(
-                index = index,
+                flexibleIndex = index,
                 previousStart = previousStart.clone(),
                 previousEnd = previousEnd.clone(),
                 currentStart = currentStart.clone(),
@@ -378,7 +380,7 @@ private data class WhipHitCandidate(
 )
 
 private data class WhipLinkSweep(
-    val index: Int,
+    val flexibleIndex: Int,
     val previousStart: Vector,
     val previousEnd: Vector,
     val currentStart: Vector,

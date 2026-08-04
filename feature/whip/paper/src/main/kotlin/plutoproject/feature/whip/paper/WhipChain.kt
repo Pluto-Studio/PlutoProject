@@ -13,9 +13,13 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 internal data class WhipSimulationFrame(
+    val grip: Vector,
     val previous: List<Vector>,
     val current: List<Vector>,
     val velocities: List<Vector>,
+    val totalLength: Double,
+    val handleLength: Double,
+    val flexibleSegmentLength: Double,
     val hasMotionHistory: Boolean,
 )
 
@@ -58,7 +62,7 @@ internal class WhipChain(
             initialize(handleTip, currentDirection)
             previousGrip = grip.clone()
             previousDirection = currentDirection.clone()
-            return stationaryFrame()
+            return stationaryFrame(grip)
         }
 
         val framePrevious = positions.map(Vector::clone)
@@ -100,19 +104,27 @@ internal class WhipChain(
             current.clone().subtract(previous)
         }
         return WhipSimulationFrame(
+            grip = grip.clone(),
             previous = framePrevious,
             current = frameCurrent,
             velocities = velocities,
+            totalLength = totalLength,
+            handleLength = handleLength,
+            flexibleSegmentLength = spacing,
             hasMotionHistory = true,
         )
     }
 
-    private fun stationaryFrame(): WhipSimulationFrame {
+    private fun stationaryFrame(grip: Vector): WhipSimulationFrame {
         val snapshot = positions.map(Vector::clone)
         return WhipSimulationFrame(
+            grip = grip.clone(),
             previous = snapshot.map(Vector::clone),
             current = snapshot,
             velocities = List(snapshot.size) { Vector() },
+            totalLength = totalLength,
+            handleLength = handleLength,
+            flexibleSegmentLength = spacing,
             hasMotionHistory = false,
         )
     }

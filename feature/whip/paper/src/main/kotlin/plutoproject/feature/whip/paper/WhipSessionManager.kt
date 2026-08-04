@@ -137,8 +137,8 @@ private class WhipSession(
     private val stopRequested = AtomicBoolean(false)
     private val lifecycleLock = Any()
     private val cleanupJobs = CopyOnWriteArrayList<Job>()
-    private val renderer = WhipRenderer(scope, cleanupJobs::add)
     private val simulation = config.simulation
+    private val renderer = WhipRenderer(scope, simulation.handleLength, cleanupJobs::add)
     private val chain = WhipChain(
         totalLength = config.length(level),
         handleLength = simulation.handleLength,
@@ -210,7 +210,7 @@ private class WhipSession(
                 val grip = handAnchor(player, hand, eye)
                 val direction = eye.direction.normalize()
                 val frame = chain.step(grip, direction, world, simulation)
-                renderer.render(world, frame.current)
+                renderer.render(world, frame.grip, frame.current)
                 combat.process(world, frame)
                 delay(TICK_DELAY_MILLIS)
             }

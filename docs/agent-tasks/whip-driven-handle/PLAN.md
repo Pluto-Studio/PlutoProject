@@ -5,7 +5,7 @@
 
 ## Progress
 - [x] Slice 1 — View rotation physically drives the flexible lash through a rigid handle
-- [ ] Slice 2 — Rendering and combat honor the rigid/flexible boundary
+- [x] Slice 2 — Rendering and combat honor the rigid/flexible boundary
 
 ## Current codebase state
 - The working tree is clean before this task, and the completed `whip-feature` and `whip-motion-polish` task documents must remain unchanged.
@@ -58,7 +58,13 @@ The player's complete view pose moves a one-block rigid handle tip, and that mov
 - None.
 
 ### Slice 2 — Rendering and combat honor the rigid/flexible boundary
-**Status:** Pending
+**Status:** Complete
+
+**Completed work:** Added the sampled grip and exact flexible-distance metadata to simulation frames, rendered a fixed-count subdivided rigid handle before terrain-aware flexible smoothing, and normalized flexible-only hit intersections over the complete configured whip length.
+
+**Validation results:** `./gradlew :feature:whip:paper:compileKotlin` and `./gradlew shadowJar` passed; `git diff --check` passed; prior task document diffs were empty; static configuration and boundary review confirmed only `handle-length` remains active, render subdivisions stay outside physics/combat, and combat sweeps contain only flexible links. Live visual continuity and runtime hit exclusion remain outside the available automated harness.
+
+**Deviations:** None.
 
 **Outcome**
 Nearby players still see one continuous, consistently styled whip from hand to tip, while only the flexible lash can hit targets and hit position retains its total-length meaning.

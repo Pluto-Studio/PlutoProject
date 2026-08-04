@@ -16,21 +16,24 @@ import org.joml.Vector3f
 import plutoproject.foundation.paper.coroutine.coroutineDispatcher
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
 
 /** Visual-only BlockDisplay view of a simulated whip chain. */
 internal class WhipRenderer(
     private val scope: CoroutineScope,
+    handleLength: Double,
     private val registerCleanupJob: (Job) -> Unit,
 ) {
+    private val handleSegmentCount = ceil(handleLength / MAX_RENDER_SPACING).toInt().coerceAtLeast(1)
     private val displays = CopyOnWriteArrayList<BlockDisplay>()
     private val visualPoints = ArrayList<Vector>()
     private val displayLock = Any()
     private val cleanupStarted = AtomicBoolean(false)
 
-    fun render(world: World, points: List<Vector>) {
-        if (points.size < 2 || cleanupStarted.get()) {
+    fun render(world: World, grip: Vector, flexiblePoints: List<Vector>) {
+        if (flexiblePoints.size < 2 || cleanupStarted.get()) {
             return
         }
 
@@ -38,7 +41,7 @@ internal class WhipRenderer(
             if (cleanupStarted.get()) {
                 return
             }
-            deriveVisualTrajectory(world, points)
+            deriveVisualTrajectory(world, grip, flexiblePoints)
             ensureDisplays(world, visualPoints)
             for (index in 0 until visualPoints.lastIndex) {
                 val display = displays.getOrNull(index) ?: continue
@@ -77,30 +80,44 @@ internal class WhipRenderer(
         }
     }
 
-    private fun deriveVisualTrajectory(world: World, physicalPoints: List<Vector>) {
-        if (visualPoints.size != physicalPoints.size) {
+    private fun deriveVisualTrajectory(
+        world: World,
+        grip: Vector,
+        flexiblePoints: List<Vector>,
+    ) {
+        val requiredPointCount = handleSegmentCount + flexiblePoints.size
+        if (visualPoints.size != requiredPointCount) {
             visualPoints.clear()
-            repeat(physicalPoints.size) { visualPoints += Vector() }
+            repeat(requiredPointCount) { visualPoints += Vector() }
         }
 
-        visualPoints.first().copy(physicalPoints.first())
-        visualPoints.last().copy(physicalPoints.last())
-        for (index in 1 until physicalPoints.lastIndex) {
-            val physical = physicalPoints[index]
-            val neighborAverage = physicalPoints[index - 1].clone()
-                .add(physicalPoints[index + 1])
+        val handleTip = flexiblePoints.first()
+        val handleDelta = handleTip.clone().subtract(grip)
+        for (index in 0..handleSegmentCount) {
+            visualPoints[index].copy(grip).add(
+                handleDelta.clone().multiply(index.toDouble() / handleSegmentCount),
+            )
+        }
+
+        visualPoints.last().copy(flexiblePoints.last())
+        for (index in 1 until flexiblePoints.lastIndex) {
+            val physical = flexiblePoints[index]
+            val neighborAverage = flexiblePoints[index - 1].clone()
+                .add(flexiblePoints[index + 1])
                 .multiply(0.5)
             val displacement = neighborAverage.subtract(physical).multiply(SMOOTHING_STRENGTH)
             val maximumDisplacement = min(
-                physical.distance(physicalPoints[index - 1]),
-                physical.distance(physicalPoints[index + 1]),
+                physical.distance(flexiblePoints[index - 1]),
+                physical.distance(flexiblePoints[index + 1]),
             ) * MAX_SMOOTHING_DISPLACEMENT_FRACTION
             if (displacement.lengthSquared() > maximumDisplacement * maximumDisplacement) {
                 displacement.normalize().multiply(maximumDisplacement)
             }
 
             val candidate = physical.clone().add(displacement)
-            visualPoints[index].copy(retractFromTerrain(world, physical, candidate))
+            visualPoints[handleSegmentCount + index].copy(
+                retractFromTerrain(world, physical, candidate),
+            )
         }
     }
 
@@ -265,6 +282,7 @@ internal class WhipRenderer(
 
     private companion object {
         const val INTERPOLATION_DURATION_TICKS = 2
+        const val MAX_RENDER_SPACING = 0.5
         const val SMOOTHING_STRENGTH = 0.5
         const val MAX_SMOOTHING_DISPLACEMENT_FRACTION = 0.2
         const val TERRAIN_RETRACTION_STEPS = 4
