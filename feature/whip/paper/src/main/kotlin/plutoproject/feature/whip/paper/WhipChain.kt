@@ -4,10 +4,12 @@ import org.bukkit.World
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Vector
 import kotlin.math.abs
+import kotlin.math.acos
 import kotlin.math.ceil
+import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.min
-import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 internal data class WhipSimulationFrame(
@@ -22,59 +24,60 @@ internal data class WhipSimulationFrame(
  * neither of them needs to know how the points are integrated.
  */
 internal class WhipChain(
-    private val length: Double,
+    val totalLength: Double,
+    val handleLength: Double,
 ) {
-    val segmentCount: Int = ceil(length / MAX_REST_SPACING).toInt().coerceAtLeast(1)
-    private val spacing: Double = length / segmentCount
-    private val discontinuityThreshold: Double = length * DISCONTINUITY_LENGTH_FRACTION
+    val flexibleLength: Double = totalLength - handleLength
+    val segmentCount: Int = ceil(flexibleLength / MAX_REST_SPACING).toInt().coerceAtLeast(1)
+    private val spacing: Double = flexibleLength / segmentCount
+    private val discontinuityThreshold: Double = totalLength * DISCONTINUITY_LENGTH_FRACTION
     private val positions = MutableList(segmentCount + 1) { Vector() }
     private val verletPrevious = MutableList(segmentCount + 1) { Vector() }
     private val substepPrevious = MutableList(segmentCount + 1) { Vector() }
-    private var previousAnchor: Vector? = null
+    private var previousGrip: Vector? = null
+    private var previousDirection: Vector? = null
     private var initialized = false
 
     fun resetMotionHistory() {
         initialized = false
-        previousAnchor = null
+        previousGrip = null
+        previousDirection = null
     }
 
     fun step(
-        anchor: Vector,
+        grip: Vector,
         direction: Vector,
         world: World,
         simulation: WhipSimulationConfig,
     ): WhipSimulationFrame {
-        val guideDirection = normalizedDirection(direction)
-        val continuousAnchor = previousAnchor?.clone()
-        var hasMotionHistory = initialized
-        if (!initialized || isDiscontinuous(anchor)) {
-            initialize(anchor, guideDirection)
-            hasMotionHistory = false
+        val currentDirection = normalizedDirection(direction)
+        val startGrip = previousGrip?.clone() ?: grip.clone()
+        val startDirection = previousDirection?.clone() ?: currentDirection.clone()
+        if (!initialized || isDiscontinuous(grip)) {
+            val handleTip = handleTip(grip, currentDirection)
+            initialize(handleTip, currentDirection)
+            previousGrip = grip.clone()
+            previousDirection = currentDirection.clone()
+            return stationaryFrame()
         }
 
         val framePrevious = positions.map(Vector::clone)
         prepareSubstepHistory()
-        val startAnchor = if (hasMotionHistory) continuousAnchor ?: anchor else anchor
         val substepDamping = sqrt(simulation.damping)
         val substepGravity = simulation.gravity * SUBSTEP_DURATION * SUBSTEP_DURATION
-        val guideStrengthPerIteration = 1.0 - (1.0 - simulation.guideStrength).pow(
-            1.0 / simulation.constraintIterations,
-        )
 
         for (substep in 1..SUBSTEP_COUNT) {
-            val substepAnchor = interpolate(
-                start = startAnchor,
-                end = anchor,
-                progress = substep.toDouble() / SUBSTEP_COUNT,
-            )
-            positions[0].copy(substepAnchor)
+            val progress = substep.toDouble() / SUBSTEP_COUNT
+            val substepGrip = interpolate(startGrip, grip, progress)
+            val substepDirection = interpolateDirection(startDirection, currentDirection, progress)
+            val substepHandleTip = handleTip(substepGrip, substepDirection)
+            positions[0].copy(substepHandleTip)
             integrateFreePoints(substepDamping, substepGravity)
 
             repeat(simulation.constraintIterations) {
-                positions[0].copy(substepAnchor)
-                applyRootGuide(substepAnchor, guideDirection, guideStrengthPerIteration)
+                positions[0].copy(substepHandleTip)
                 enforceLinkConstraints()
-                positions[0].copy(substepAnchor)
+                positions[0].copy(substepHandleTip)
                 for (index in 1 until positions.size) {
                     TerrainCollision.resolve(
                         position = positions[index],
@@ -84,12 +87,13 @@ internal class WhipChain(
                     )
                 }
             }
-            positions[0].copy(substepAnchor)
+            positions[0].copy(substepHandleTip)
         }
 
-        positions[0].copy(anchor)
+        positions[0].copy(handleTip(grip, currentDirection))
         verletPrevious.zip(framePrevious).forEach { (previous, frameStart) -> previous.copy(frameStart) }
-        previousAnchor = anchor.clone()
+        previousGrip = grip.clone()
+        previousDirection = currentDirection.clone()
 
         val frameCurrent = positions.map(Vector::clone)
         val velocities = frameCurrent.zip(framePrevious) { current, previous ->
@@ -99,7 +103,17 @@ internal class WhipChain(
             previous = framePrevious,
             current = frameCurrent,
             velocities = velocities,
-            hasMotionHistory = hasMotionHistory,
+            hasMotionHistory = true,
+        )
+    }
+
+    private fun stationaryFrame(): WhipSimulationFrame {
+        val snapshot = positions.map(Vector::clone)
+        return WhipSimulationFrame(
+            previous = snapshot.map(Vector::clone),
+            current = snapshot,
+            velocities = List(snapshot.size) { Vector() },
+            hasMotionHistory = false,
         )
     }
 
@@ -123,48 +137,87 @@ internal class WhipChain(
         }
     }
 
-    private fun isDiscontinuous(anchor: Vector): Boolean {
-        val previous = previousAnchor ?: return false
-        return previous.distanceSquared(anchor) > discontinuityThreshold * discontinuityThreshold
+    private fun isDiscontinuous(grip: Vector): Boolean {
+        val previous = previousGrip ?: return false
+        return previous.distanceSquared(grip) > discontinuityThreshold * discontinuityThreshold
     }
 
-    private fun initialize(anchor: Vector, guideDirection: Vector) {
-        positions[0].copy(anchor)
-        verletPrevious[0].copy(anchor)
-        substepPrevious[0].copy(anchor)
+    private fun initialize(handleTip: Vector, direction: Vector) {
+        positions[0].copy(handleTip)
+        verletPrevious[0].copy(handleTip)
+        substepPrevious[0].copy(handleTip)
 
-        var point = anchor.clone()
+        var point = handleTip.clone()
         for (index in 1 until positions.size) {
             val droopProgress = (index - 1).toDouble() / (segmentCount - 1).coerceAtLeast(1)
-            val segmentDirection = guideDirection.clone()
-                .multiply(1.0 - INITIAL_TIP_DROOP * droopProgress)
-                .add(DOWNWARD_DIRECTION.clone().multiply(INITIAL_TIP_DROOP * droopProgress))
-                .normalize()
+            val segmentDirection = interpolateDirection(
+                direction,
+                DOWNWARD_DIRECTION,
+                INITIAL_TIP_DROOP * droopProgress,
+            )
             point.add(segmentDirection.multiply(spacing))
             positions[index].copy(point)
             verletPrevious[index].copy(point)
             substepPrevious[index].copy(point)
         }
-        previousAnchor = anchor.clone()
         initialized = true
     }
 
-    private fun applyRootGuide(anchor: Vector, direction: Vector, strength: Double) {
-        if (strength <= 0.0) {
-            return
-        }
-        val target = anchor.clone().add(direction.clone().multiply(spacing))
-        positions[1].add(target.subtract(positions[1]).multiply(strength))
-    }
+    private fun handleTip(grip: Vector, direction: Vector): Vector = grip.clone().add(
+        direction.clone().multiply(handleLength),
+    )
 
     private fun normalizedDirection(direction: Vector): Vector {
         val normalized = direction.clone()
-        return if (normalized.lengthSquared() < DIRECTION_EPSILON) {
+        return if (!isFinite(normalized) || normalized.lengthSquared() < DIRECTION_EPSILON) {
             DEFAULT_DIRECTION.clone()
         } else {
             normalized.normalize()
         }
     }
+
+    private fun interpolateDirection(start: Vector, end: Vector, progress: Double): Vector {
+        if (progress <= 0.0) {
+            return normalizedDirection(start)
+        }
+        if (progress >= 1.0) {
+            return normalizedDirection(end)
+        }
+
+        val from = normalizedDirection(start)
+        val to = normalizedDirection(end)
+        val dot = from.dot(to).coerceIn(-1.0, 1.0)
+        if (dot > PARALLEL_DIRECTION_DOT) {
+            return normalizedDirection(
+                from.multiply(1.0 - progress).add(to.multiply(progress)),
+            )
+        }
+
+        val angle = acos(dot)
+        var tangent = to.clone().subtract(from.clone().multiply(dot))
+        if (!isFinite(tangent) || tangent.lengthSquared() < DIRECTION_EPSILON) {
+            tangent = deterministicPerpendicular(from)
+        } else {
+            tangent.normalize()
+        }
+        return normalizedDirection(
+            from.multiply(cos(angle * progress))
+                .add(tangent.multiply(sin(angle * progress))),
+        )
+    }
+
+    private fun deterministicPerpendicular(direction: Vector): Vector {
+        val basis = when {
+            abs(direction.x) <= abs(direction.y) && abs(direction.x) <= abs(direction.z) ->
+                Vector(1.0, 0.0, 0.0)
+            abs(direction.y) <= abs(direction.z) -> Vector(0.0, 1.0, 0.0)
+            else -> Vector(0.0, 0.0, 1.0)
+        }
+        return basis.subtract(direction.clone().multiply(basis.dot(direction))).normalize()
+    }
+
+    private fun isFinite(vector: Vector): Boolean =
+        vector.x.isFinite() && vector.y.isFinite() && vector.z.isFinite()
 
     private fun enforceLinkConstraints() {
         for (index in 1 until positions.size) {
@@ -199,6 +252,7 @@ internal class WhipChain(
         const val SUBSTEP_COUNT = 2
         const val SUBSTEP_DURATION = 1.0 / SUBSTEP_COUNT
         const val DIRECTION_EPSILON = 1.0E-8
+        const val PARALLEL_DIRECTION_DOT = 0.9995
         val DEFAULT_DIRECTION = Vector(0.0, 0.0, 1.0)
         val DOWNWARD_DIRECTION = Vector(0.0, -1.0, 0.0)
     }

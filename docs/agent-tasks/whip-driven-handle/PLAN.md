@@ -4,7 +4,7 @@
 - Specification: `SPEC.md`
 
 ## Progress
-- [ ] Slice 1 — View rotation physically drives the flexible lash through a rigid handle
+- [x] Slice 1 — View rotation physically drives the flexible lash through a rigid handle
 - [ ] Slice 2 — Rendering and combat honor the rigid/flexible boundary
 
 ## Current codebase state
@@ -21,7 +21,13 @@
 ## Slices
 
 ### Slice 1 — View rotation physically drives the flexible lash through a rigid handle
-**Status:** Pending
+**Status:** Complete
+
+**Completed work:** Replaced the guide controls with validated handle length configuration, sampled the full eye direction, and refactored the chain around a rigid handle-tip boundary with grip-only discontinuity detection, robust shortest-path direction interpolation, preserved Verlet response, and stationary exact-length initialization/reset frames.
+
+**Validation results:** `./gradlew :feature:whip:paper:compileKotlin :feature:whip:paper:processResources` passed; `git diff --check` passed. Live cast feel and runtime arc appearance remain outside the available automated harness.
+
+**Deviations:** None.
 
 **Outcome**
 The player's complete view pose moves a one-block rigid handle tip, and that moving boundary pulls the flexible lash with preserved inertia. Continuous lift-and-sweep gestures drive the whip, while stopping input lets it hang naturally.

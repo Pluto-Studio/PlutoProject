@@ -19,6 +19,9 @@ data class WhipConfig(
         require(lengths.zipWithNext().all { (left, right) -> left < right }) {
             "lengths must be strictly increasing"
         }
+        require(simulation.handleLength < lengths.first()) {
+            "simulation.handleLength must be less than every configured whip length"
+        }
     }
 
     fun length(level: WhipLevel): Double = lengths[level.ordinal]
@@ -29,8 +32,7 @@ data class WhipSimulationConfig(
     val damping: Double = 0.92,
     val constraintIterations: Int = 4,
     val sweepThickness: Double = 0.15,
-    val guideStrength: Double = 0.35,
-    val maxGuidePitch: Double = 55.0,
+    val handleLength: Double = 1.0,
 ) {
     init {
         require(gravity.isFinite() && gravity >= 0.0) {
@@ -45,11 +47,8 @@ data class WhipSimulationConfig(
         require(sweepThickness.isFinite() && sweepThickness > 0.0) {
             "simulation.sweepThickness must be finite and positive"
         }
-        require(guideStrength.isFinite() && guideStrength in 0.0..1.0) {
-            "simulation.guideStrength must be finite and between 0 and 1"
-        }
-        require(maxGuidePitch.isFinite() && maxGuidePitch in 0.0..89.0) {
-            "simulation.maxGuidePitch must be finite and between 0 and 89"
+        require(handleLength.isFinite() && handleLength > 0.0) {
+            "simulation.handleLength must be finite and positive"
         }
     }
 }
