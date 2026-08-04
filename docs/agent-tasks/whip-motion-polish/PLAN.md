@@ -6,7 +6,7 @@
 ## Progress
 - [x] Slice 1 — The whip opens forward and responds naturally to view motion
 - [x] Slice 2 — Fast chain motion remains stable against terrain
-- [ ] Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
+- [x] Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
 
 ## Current codebase state
 - `feature/whip/paper/src/main/kotlin/plutoproject/feature/whip/paper/WhipChain.kt` implements a one-step Verlet/PBD chain with a hard point-zero anchor, straight view-direction initialization, four configurable constraint iterations, and endpoint overlap terrain resolution.
@@ -113,7 +113,7 @@ Each server tick advances the chain through two anchor-interpolated physical ste
 **Deviations:** None.
 
 ### Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 Every rendered segment spans its intended portion of a bounded smoothed curve, neighboring links hide seams, thickness tapers toward the tip, and segment position and shape interpolate together without adding Display entities.
@@ -140,6 +140,18 @@ Every rendered segment spans its intended portion of a bounded smoothed curve, n
 
 **Dependencies**
 - None. It consumes the existing physical-point interface and can be implemented in parallel with Slices 1–2.
+
+**Completed work**
+- Derived a bounded, endpoint-preserving visual trajectory in `WhipRenderer` without mutating combat-facing physical frame points; unsafe smoothing candidates retract toward their physical points after local solid collision-shape checks.
+- Centered transformed native block bounds on each visual segment, added internal-only segment overlap and continuous root-to-tip thickness taper, and retained one reused Display per physical segment.
+- Matched Display teleport and transformation interpolation durations at two ticks.
+
+**Validation**
+- `./gradlew :feature:whip:paper:compileKotlin` — Passed.
+- `git diff --check` — Passed.
+- Live rendering, interpolation, and terrain-smoothing behavior — Not run; no Minecraft client/server harness is available.
+
+**Deviations:** None.
 
 ## Final verification
 - `./gradlew shadowJar` — assembles the complete plugin and proves the polished whip integrates with runtime-module indexing and the rest of the project.
