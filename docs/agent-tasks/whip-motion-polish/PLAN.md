@@ -4,7 +4,7 @@
 - Specification: `SPEC.md`
 
 ## Progress
-- [ ] Slice 1 — The whip opens forward and responds naturally to view motion
+- [x] Slice 1 — The whip opens forward and responds naturally to view motion
 - [ ] Slice 2 — Fast chain motion remains stable against terrain
 - [ ] Slice 3 — The rendered whip is continuous, tapered, and temporally smooth
 
@@ -32,7 +32,7 @@ flowchart LR
 ## Slices
 
 ### Slice 1 — The whip opens forward and responds naturally to view motion
-**Status:** Pending
+**Status:** Complete
 
 **Outcome**
 A deployed whip starts in a forward-drooping shape, follows yaw and bounded pitch through a compliant root, and converts rapid view changes into chain motion without treating discontinuous anchor movement as a strike.
@@ -58,6 +58,18 @@ A deployed whip starts in a forward-drooping shape, follows yaw and bounded pitc
 
 **Dependencies**
 - None.
+
+**Completed work**
+- Added validated guide-strength and maximum guide-pitch configuration, with clamped yaw/pitch guide sampling.
+- Added a forward-drooping exact-length reset shape, compliant first-link guide constraint, and chain-length-relative anchor discontinuity reset.
+- Preserved no-history handling and clone-before-subtract frame velocity snapshots.
+
+**Validation**
+- `./gradlew :feature:whip:paper:compileKotlin :feature:whip:paper:processResources` — Passed.
+- `git diff --check` — Passed.
+- Live client responsiveness and visual behavior — Not run; no Minecraft client/server harness is available.
+
+**Deviations:** None.
 
 ### Slice 2 — Fast chain motion remains stable against terrain
 **Status:** Pending

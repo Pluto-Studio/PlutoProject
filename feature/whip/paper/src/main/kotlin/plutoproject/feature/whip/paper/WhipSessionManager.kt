@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -19,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.sin
 
 internal class WhipSessionManager(
     private val scope: CoroutineScope,
@@ -202,8 +205,9 @@ private class WhipSession(
                 }
 
                 val world = player.world
-                val anchor = handAnchor(player, hand)
-                val direction = player.eyeLocation.direction
+                val eye = player.eyeLocation
+                val anchor = handAnchor(player, hand, eye)
+                val direction = guideDirection(eye.yaw, eye.pitch)
                 val frame = chain.step(anchor, direction, world, simulation)
                 renderer.render(world, frame.current)
                 combat.process(world, frame)
@@ -247,8 +251,7 @@ private class WhipSession(
             initialItem.isSimilar(heldItem)
     }
 
-    private fun handAnchor(player: Player, hand: EquipmentSlot): Vector {
-        val eye = player.eyeLocation
+    private fun handAnchor(player: Player, hand: EquipmentSlot, eye: Location): Vector {
         val view = eye.direction.normalize()
         val right = view.clone().crossProduct(Vector(0.0, 1.0, 0.0))
         if (right.lengthSquared() < 1.0E-8) {
@@ -262,6 +265,21 @@ private class WhipSession(
             .add(view.multiply(HAND_FORWARD_OFFSET))
             .add(right.multiply(if (rightSide) HAND_SIDE_OFFSET else -HAND_SIDE_OFFSET))
             .add(Vector(0.0, -HAND_VERTICAL_OFFSET, 0.0))
+    }
+
+    private fun guideDirection(yaw: Float, pitch: Float): Vector {
+        val clampedPitch = pitch.toDouble().coerceIn(
+            -simulation.maxGuidePitch,
+            simulation.maxGuidePitch,
+        )
+        val yawRadians = Math.toRadians(yaw.toDouble())
+        val pitchRadians = Math.toRadians(clampedPitch)
+        val horizontal = cos(pitchRadians)
+        return Vector(
+            -horizontal * sin(yawRadians),
+            -sin(pitchRadians),
+            horizontal * cos(yawRadians),
+        )
     }
 
     private companion object {

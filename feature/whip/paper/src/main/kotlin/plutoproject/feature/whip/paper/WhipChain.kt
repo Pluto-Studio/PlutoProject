@@ -6,6 +6,7 @@ import org.bukkit.util.Vector
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
+import kotlin.math.pow
 
 internal data class WhipSimulationFrame(
     val previous: List<Vector>,
@@ -19,16 +20,19 @@ internal data class WhipSimulationFrame(
  * neither of them needs to know how the points are integrated.
  */
 internal class WhipChain(
-    length: Double,
+    private val length: Double,
 ) {
     val segmentCount: Int = ceil(length / MAX_REST_SPACING).toInt().coerceAtLeast(1)
     private val spacing: Double = length / segmentCount
+    private val discontinuityThreshold: Double = length * DISCONTINUITY_LENGTH_FRACTION
     private val positions = MutableList(segmentCount + 1) { Vector() }
     private val verletPrevious = MutableList(segmentCount + 1) { Vector() }
+    private var previousAnchor: Vector? = null
     private var initialized = false
 
     fun resetMotionHistory() {
         initialized = false
+        previousAnchor = null
     }
 
     fun step(
@@ -37,9 +41,11 @@ internal class WhipChain(
         world: World,
         simulation: WhipSimulationConfig,
     ): WhipSimulationFrame {
-        val hasMotionHistory = initialized
-        if (!initialized) {
-            initialize(anchor, direction)
+        val guideDirection = normalizedDirection(direction)
+        var hasMotionHistory = initialized
+        if (!initialized || isDiscontinuous(anchor)) {
+            initialize(anchor, guideDirection)
+            hasMotionHistory = false
         }
 
         val framePrevious = positions.map(Vector::clone)
@@ -55,8 +61,12 @@ internal class WhipChain(
             position.setY(position.y - simulation.gravity)
         }
 
+        val guideStrengthPerIteration = 1.0 - (1.0 - simulation.guideStrength).pow(
+            1.0 / simulation.constraintIterations,
+        )
         repeat(simulation.constraintIterations) {
             positions[0].copy(anchor)
+            applyRootGuide(anchor, guideDirection, guideStrengthPerIteration)
             enforceLinkConstraints()
             positions[0].copy(anchor)
             for (index in 1 until positions.size) {
@@ -69,6 +79,7 @@ internal class WhipChain(
             }
         }
         positions[0].copy(anchor)
+        previousAnchor = anchor.clone()
 
         val frameCurrent = positions.map(Vector::clone)
         val velocities = frameCurrent.zip(framePrevious) { current, previous ->
@@ -82,19 +93,45 @@ internal class WhipChain(
         )
     }
 
-    private fun initialize(anchor: Vector, direction: Vector) {
-        val normalizedDirection = direction.clone()
-        if (normalizedDirection.lengthSquared() < DIRECTION_EPSILON) {
-            normalizedDirection.copy(Vector(0.0, 0.0, 1.0))
-        } else {
-            normalizedDirection.normalize()
-        }
+    private fun isDiscontinuous(anchor: Vector): Boolean {
+        val previous = previousAnchor ?: return false
+        return previous.distanceSquared(anchor) > discontinuityThreshold * discontinuityThreshold
+    }
 
-        positions.forEachIndexed { index, position ->
-            position.copy(anchor).add(normalizedDirection.clone().multiply(spacing * index))
-            verletPrevious[index].copy(position)
+    private fun initialize(anchor: Vector, guideDirection: Vector) {
+        positions[0].copy(anchor)
+        verletPrevious[0].copy(anchor)
+
+        var point = anchor.clone()
+        for (index in 1 until positions.size) {
+            val droopProgress = (index - 1).toDouble() / (segmentCount - 1).coerceAtLeast(1)
+            val segmentDirection = guideDirection.clone()
+                .multiply(1.0 - INITIAL_TIP_DROOP * droopProgress)
+                .add(DOWNWARD_DIRECTION.clone().multiply(INITIAL_TIP_DROOP * droopProgress))
+                .normalize()
+            point.add(segmentDirection.multiply(spacing))
+            positions[index].copy(point)
+            verletPrevious[index].copy(point)
         }
+        previousAnchor = anchor.clone()
         initialized = true
+    }
+
+    private fun applyRootGuide(anchor: Vector, direction: Vector, strength: Double) {
+        if (strength <= 0.0) {
+            return
+        }
+        val target = anchor.clone().add(direction.clone().multiply(spacing))
+        positions[1].add(target.subtract(positions[1]).multiply(strength))
+    }
+
+    private fun normalizedDirection(direction: Vector): Vector {
+        val normalized = direction.clone()
+        return if (normalized.lengthSquared() < DIRECTION_EPSILON) {
+            DEFAULT_DIRECTION.clone()
+        } else {
+            normalized.normalize()
+        }
     }
 
     private fun enforceLinkConstraints() {
@@ -121,7 +158,11 @@ internal class WhipChain(
 
     private companion object {
         const val MAX_REST_SPACING = 0.5
+        const val DISCONTINUITY_LENGTH_FRACTION = 0.5
+        const val INITIAL_TIP_DROOP = 0.65
         const val DIRECTION_EPSILON = 1.0E-8
+        val DEFAULT_DIRECTION = Vector(0.0, 0.0, 1.0)
+        val DOWNWARD_DIRECTION = Vector(0.0, -1.0, 0.0)
     }
 }
 
