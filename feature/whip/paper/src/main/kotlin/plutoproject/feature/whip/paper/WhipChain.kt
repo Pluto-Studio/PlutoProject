@@ -72,7 +72,7 @@ internal class WhipChain(
 
         val frameCurrent = positions.map(Vector::clone)
         val velocities = frameCurrent.zip(framePrevious) { current, previous ->
-            current.subtract(previous)
+            current.clone().subtract(previous)
         }
         return WhipSimulationFrame(
             previous = framePrevious,
