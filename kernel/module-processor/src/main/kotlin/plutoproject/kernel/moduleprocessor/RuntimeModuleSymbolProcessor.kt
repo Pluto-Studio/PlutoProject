@@ -1,11 +1,11 @@
 package plutoproject.kernel.moduleprocessor
 
+import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
-import com.google.devtools.ksp.getConstructors
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
@@ -71,6 +71,11 @@ internal class RuntimeModuleSymbolProcessor(
             type = type,
             platform = annotation.enumArgument("platform"),
             entrypoint = qualifiedName,
+            bootstrapEntrypoint = (annotation.argument("bootstrap") as? KSType)
+                ?.declaration
+                ?.qualifiedName
+                ?.asString()
+                ?.takeUnless { it == "kotlin.Nothing" || it == "java.lang.Void" },
             requiredFeatures = annotation.stringListArgument("requiredFeatures"),
             optionalFeatures = annotation.stringListArgument("optionalFeatures"),
             requiredCapabilities = annotation.stringListArgument("requiredCapabilities"),

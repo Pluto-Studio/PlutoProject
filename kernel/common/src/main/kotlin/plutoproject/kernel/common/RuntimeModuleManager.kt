@@ -31,14 +31,26 @@ fun interface ModuleContextFactory {
 
 @OptIn(InternalKernelApi::class)
 class RuntimeModuleManager(
-    platform: Platform,
-    descriptors: Collection<ModuleDescriptor>,
-    featureRoots: Collection<String>,
+    prepared: PreparedRuntimeModules,
     private val moduleFactory: RuntimeModuleFactory,
     private val contextFactory: ModuleContextFactory,
     private val reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
-    packageOwners: Map<String, String> = emptyMap(),
 ) : FeatureController {
+    constructor(
+        platform: Platform,
+        descriptors: Collection<ModuleDescriptor>,
+        featureRoots: Collection<String>,
+        moduleFactory: RuntimeModuleFactory,
+        contextFactory: ModuleContextFactory,
+        reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
+        packageOwners: Map<String, String> = emptyMap(),
+    ) : this(
+        prepared = RuntimeModulePreparation.prepare(platform, descriptors, featureRoots, packageOwners),
+        moduleFactory = moduleFactory,
+        contextFactory = contextFactory,
+        reporter = reporter,
+    )
+
     private data class LiveModule(
         val module: RuntimeModule,
         val context: ModuleContext,
@@ -55,10 +67,9 @@ class RuntimeModuleManager(
         val moduleId: String?,
     )
 
-    private val validatedDescriptors = ModuleDescriptorValidator.validateForPlatform(platform, descriptors)
-    private val graph = ModuleGraph(validatedDescriptors)
-    val plan: ActivationPlan = ModulePlanner(graph).plan(featureRoots)
-    val registry = ModuleRegistry(validatedDescriptors)
+    private val graph = ModuleGraph(prepared.descriptors)
+    val plan: ActivationPlan = prepared.plan
+    val registry = ModuleRegistry(prepared.descriptors)
 
     private val lifecycleMutex = Mutex()
     private val serviceRegistry = RuntimeServiceRegistry()
@@ -70,7 +81,7 @@ class RuntimeModuleManager(
     private var shutdownStarted = false
 
     init {
-        ModuleContextBinding.configure(packageOwners)
+        ModuleContextBinding.configure(prepared.packageOwners)
     }
 
     suspend fun loadStartup(): Map<String, ModuleOperationResult> = lifecycleMutex.withLock {

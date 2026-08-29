@@ -1,5 +1,6 @@
 package plutoproject.kernel.api
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 
 const val MODULE_DESCRIPTOR_SCHEMA_VERSION = 1
@@ -11,6 +12,8 @@ data class ModuleDescriptor(
     val type: ModuleType,
     val platform: Platform,
     val entrypoint: String,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val bootstrapEntrypoint: String? = null,
     val requiredFeatures: List<String> = emptyList(),
     val optionalFeatures: List<String> = emptyList(),
     val requiredCapabilities: List<String> = emptyList(),

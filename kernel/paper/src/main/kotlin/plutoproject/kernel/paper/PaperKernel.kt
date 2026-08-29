@@ -6,12 +6,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.bukkit.plugin.Plugin
 import org.koin.core.Koin
-import plutoproject.kernel.api.*
+import plutoproject.kernel.api.ModuleContext
+import plutoproject.kernel.api.ModuleDescriptor
+import plutoproject.kernel.api.ModuleOperation
+import plutoproject.kernel.api.ModuleOperationResult
+import plutoproject.kernel.api.ModuleServices
+import plutoproject.kernel.api.Platform
 import plutoproject.kernel.api.paper.PaperModuleContext
 import plutoproject.kernel.common.ModuleContextFactory
 import plutoproject.kernel.common.ModuleOperationReporter
 import plutoproject.kernel.common.ModuleResourceSaver
+import plutoproject.kernel.common.PreparedRuntimeModules
 import plutoproject.kernel.common.RuntimeKernel
+import plutoproject.kernel.common.RuntimeModulePreparation
 import plutoproject.kernel.common.formatModuleLifecycleSummary
 import plutoproject.kernel.common.isDependencyBlocked
 import java.nio.file.Path
@@ -21,18 +28,30 @@ import kotlin.time.TimeSource
 class PaperKernel(
     private val plugin: Plugin,
     dataFolder: Path,
-    featureRoots: Collection<String>,
+    prepared: PreparedRuntimeModules,
     private val classLoader: ClassLoader = PaperKernel::class.java.classLoader,
 ) {
+    constructor(
+        plugin: Plugin,
+        dataFolder: Path,
+        featureRoots: Collection<String>,
+        classLoader: ClassLoader = PaperKernel::class.java.classLoader,
+    ) : this(
+        plugin = plugin,
+        dataFolder = dataFolder,
+        prepared = RuntimeModulePreparation.discover(Platform.PAPER, featureRoots, classLoader),
+        classLoader = classLoader,
+    )
+
     private val kernel = RuntimeKernel(
-        platform = Platform.PAPER,
-        featureRoots = featureRoots,
+        prepared = prepared,
         classLoader = classLoader,
         contextFactory = ModuleContextFactory { descriptor, koin, services ->
             createContext(descriptor, dataFolder, koin, services)
         },
         reporter = ModuleOperationReporter(::report),
     )
+
     init {
         kernel.warnings.forEach(plugin.logger::warning)
     }

@@ -60,6 +60,7 @@ dependencies {
 paperPluginYaml {
     name = "PlutoProject"
     main = "plutoproject.platform.paper.PaperPlatform"
+    bootstrapper = "plutoproject.platform.paper.PaperBootstrap"
     apiVersion = "26.2"
     author = "Pluto Studio"
     description = "A collection of framework and feature components for the PlutoProject server."

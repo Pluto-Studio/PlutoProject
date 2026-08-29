@@ -7,35 +7,34 @@ import plutoproject.kernel.api.Platform
 import java.util.concurrent.atomic.AtomicReference
 
 class RuntimeKernel(
-    platform: Platform,
-    featureRoots: Collection<String>,
+    prepared: PreparedRuntimeModules,
     contextFactory: ModuleContextFactory,
     classLoader: ClassLoader,
     reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
 ) {
+    constructor(
+        platform: Platform,
+        featureRoots: Collection<String>,
+        contextFactory: ModuleContextFactory,
+        classLoader: ClassLoader,
+        reporter: ModuleOperationReporter = ModuleOperationReporter.NONE,
+    ) : this(
+        prepared = RuntimeModulePreparation.discover(platform, featureRoots, classLoader),
+        contextFactory = contextFactory,
+        classLoader = classLoader,
+        reporter = reporter,
+    )
+
     companion object {
         private val activeKernel = AtomicReference<RuntimeKernel?>()
     }
 
-    private val manager: RuntimeModuleManager
-
-    init {
-        val discovery = ModuleDiscovery(classLoader).discover(platform)
-        require(discovery.errors.isEmpty()) {
-            discovery.errors.joinToString("\n") { error ->
-                "${error.source}: ${error.message}${error.cause?.message?.let { ": $it" }.orEmpty()}"
-            }
-        }
-        manager = RuntimeModuleManager(
-            platform = platform,
-            descriptors = discovery.modules.map(DiscoveredModule::descriptor),
-            featureRoots = featureRoots,
-            moduleFactory = ReflectiveRuntimeModuleFactory(classLoader),
-            contextFactory = contextFactory,
-            reporter = reporter,
-            packageOwners = discovery.packageOwners,
-        )
-    }
+    private val manager = RuntimeModuleManager(
+        prepared = prepared,
+        moduleFactory = ReflectiveRuntimeModuleFactory(classLoader),
+        contextFactory = contextFactory,
+        reporter = reporter,
+    )
 
     val registry: ModuleRegistry
         get() = manager.registry

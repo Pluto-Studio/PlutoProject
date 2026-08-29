@@ -55,6 +55,9 @@ object ModuleDescriptorValidator {
             if (descriptor.entrypoint.isBlank()) {
                 errors.add(platform, descriptor.id, "Module '${descriptor.id}' has a blank entrypoint")
             }
+            if (descriptor.bootstrapEntrypoint != null && platform != Platform.PAPER) {
+                errors.add(platform, descriptor.id, "Module '${descriptor.id}' declares a Paper bootstrap entrypoint for $platform")
+            }
         }
         descriptors.groupBy(ModuleDescriptor::id).filterValues { it.size > 1 }.forEach { (id) ->
             errors.add(platform, id, "Duplicate module ID '$id' for $platform")
