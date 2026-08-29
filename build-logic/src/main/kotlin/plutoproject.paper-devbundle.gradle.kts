@@ -7,6 +7,6 @@ plugins {
 
 dependencies {
     with(extensions.getByType<PaperweightUserDependenciesExtension>()) {
-        paperDevBundle(libs.versions.paper.get())
+        paperDevBundle(group = "club.plutoproject.nix", version = libs.versions.nix.get())
     }
 }
