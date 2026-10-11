@@ -19,6 +19,7 @@ import org.bukkit.block.BlockFace
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.entity.CraftItemFrame
 import org.bukkit.craftbukkit.entity.CraftPlayer
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemFrame
@@ -46,7 +47,6 @@ import plutoproject.foundation.common.text.replace
 import plutoproject.kernel.api.koinGet
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
-import net.minecraft.world.item.ItemStack as NmsItemStack
 
 private const val IMAGE_LOOKUP_TIMEOUT_SECONDS = 5
 private const val DISPLAY_INSTANCE_SAVE_TIMEOUT_SECONDS = 10
@@ -718,5 +718,5 @@ private fun ItemFrame.dropItem(item: ItemStack, breaker: Entity?) {
 
     val nmsItemFrame = (this as CraftItemFrame).handle
     val nmsWorld = (world as CraftWorld).handle
-    nmsItemFrame.spawnAtLocation(nmsWorld, NmsItemStack.fromBukkitCopy(item))
+    nmsItemFrame.spawnAtLocation(nmsWorld, CraftItemStack.asNMSCopy(item))
 }
