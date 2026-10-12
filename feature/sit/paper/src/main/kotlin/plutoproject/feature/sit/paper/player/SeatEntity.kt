@@ -16,7 +16,7 @@ class SeatEntity(location: Location) : AreaEffectCloud(
         duration = -1
         isNoGravity = true
         isInvisible = true
-        isInvulnerable = true
+        isPermanentlyInvulnerable = true
     }
 
     override fun tick() {}

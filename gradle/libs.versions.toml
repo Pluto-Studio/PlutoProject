@@ -4,9 +4,9 @@ ktor = "3.4.2"
 kotlinx-coroutine = "1.10.2"
 kotlinx-serialization = "1.10.0"
 mongodb = "5.4.0"
-mccoroutine = "2.22.0"
-paperweight-userdev = "2.0.0-beta.23"
-nix = "26.2.local-SNAPSHOT"
+mccoroutine = "2.23.0"
+paperweight-userdev = "2.0.0-beta.24"
+nix = "26.3.local-SNAPSHOT"
 resource-factory = "1.3.1"
 cloud = "2.0.0"
 cloud-minecraft = "2.0.0-SNAPSHOT"
@@ -90,8 +90,8 @@ testcontainers-mongodb = { module = "org.testcontainers:mongodb", version.ref = 
 
 # External Minecraft
 sparkApi = { module = "me.lucko:spark-api", version = "0.1-SNAPSHOT" }
-vaultApi = { module = "net.milkbowl.vault:VaultUnlockedAPI", version = "2.11" }
-coreprotect = { module = "net.coreprotect:coreprotect", version = "22.4" }
+vaultApi = { module = "net.milkbowl.vault:VaultUnlockedAPI", version = "2.20" }
+coreprotect = { module = "net.coreprotect:coreprotect", version = "24.1" }
 
 # Platform - Common
 adventureKt = { module = "ink.pmc.advkt:core", version = "1.0.0-SNAPSHOT" }
@@ -113,7 +113,7 @@ mccoroutine-bukkit-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-
 mccoroutine-bukkit-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-bukkit-core", version.ref = "mccoroutine" }
 
 # Platform - Velocity
-velocity-api = { module = "com.velocitypowered:velocity-api", version = "3.4.0-SNAPSHOT" }
+velocity-api = { module = "com.velocitypowered:velocity-api", version = "4.2.0" }
 cloud-velocity = { module = "org.incendo:cloud-velocity", version.ref = "cloud-minecraft" }
 mccoroutine-velocity-api = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
 mccoroutine-velocity-core = { module = "com.github.shynixn.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }

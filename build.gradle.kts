@@ -18,6 +18,9 @@ allprojects {
         maven("https://maven.playpro.com/")
         maven("https://repo.opencollab.dev/main/")
         maven("https://repo.codemc.org/repository/maven-public")
+        maven("https://repo.codemc.io/repository/creatorfromhell/") {
+            content { includeGroup("net.milkbowl.vault") }
+        }
     }
 }
 
