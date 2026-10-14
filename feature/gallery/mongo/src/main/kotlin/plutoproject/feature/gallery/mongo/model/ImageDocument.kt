@@ -2,6 +2,8 @@ package plutoproject.feature.gallery.infra.mongo.model
 
 import kotlinx.serialization.Serializable
 import plutoproject.foundation.common.bson.UuidAsBsonBinarySerializer
+import plutoproject.foundation.common.serialization.InstantAsBsonDateTimeSerializer
+import java.time.Instant
 import java.util.UUID
 
 @Serializable
@@ -14,6 +16,7 @@ data class ImageDocument(
     val mapWidthBlocks: Int,
     val mapHeightBlocks: Int,
     val tileMapIds: IntArray,
+    val createdAt: @Serializable(InstantAsBsonDateTimeSerializer::class) Instant? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -29,6 +32,7 @@ data class ImageDocument(
         if (ownerName != other.ownerName) return false
         if (name != other.name) return false
         if (!tileMapIds.contentEquals(other.tileMapIds)) return false
+        if (createdAt != other.createdAt) return false
 
         return true
     }
@@ -42,6 +46,7 @@ data class ImageDocument(
         result = 31 * result + ownerName.hashCode()
         result = 31 * result + name.hashCode()
         result = 31 * result + tileMapIds.contentHashCode()
+        result = 31 * result + (createdAt?.hashCode() ?: 0)
         return result
     }
 }

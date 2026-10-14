@@ -31,6 +31,7 @@ import plutoproject.foundation.common.text.replace
 import plutoproject.foundation.common.time.toFormattedComponent
 import plutoproject.kernel.api.koinInject
 import java.nio.file.Path
+import java.time.Clock
 import java.util.*
 
 private const val DEFAULT_BACKGROUND_RGB24 = 0x000000
@@ -42,6 +43,7 @@ private val imageDataStore by koinInject<ImageDataStore>()
 private val displayInstanceStore by koinInject<DisplayInstanceStore>()
 private val displayRuntime by koinInject<DisplayRuntimeRegistry>()
 private val uploadService by koinInject<UploadService>()
+private val clock by koinInject<Clock>()
 
 sealed interface ImageCreateSubmissionResult {
     data class Created(val session: UploadSession) : ImageCreateSubmissionResult
@@ -315,6 +317,7 @@ private suspend fun createImageFromPath(
         widthBlocks = request.width,
         heightBlocks = request.height,
         tileMapIds = allocatedMapIds,
+        createdAt = clock.instant(),
     )
 
     if (!imageStore.create(image)) {

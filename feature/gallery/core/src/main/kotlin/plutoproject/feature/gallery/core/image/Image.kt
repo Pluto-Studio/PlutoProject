@@ -1,5 +1,6 @@
 package plutoproject.feature.gallery.core.image
 
+import java.time.Instant
 import java.util.*
 
 private val USERNAME_REGEX = Regex("^[A-Za-z0-9_]{3,16}$")
@@ -13,6 +14,7 @@ class Image(
     val widthBlocks: Int,
     val heightBlocks: Int,
     val tileMapIds: IntArray,
+    val createdAt: Instant? = null,
 ) {
     fun withOwnerName(name: String): Image {
         require(USERNAME_REGEX.matches(name)) { "Owner username $name must be a valid Minecraft username" }
@@ -40,6 +42,7 @@ class Image(
             widthBlocks = widthBlocks,
             heightBlocks = heightBlocks,
             tileMapIds = tileMapIds,
+            createdAt = createdAt,
         )
     }
 

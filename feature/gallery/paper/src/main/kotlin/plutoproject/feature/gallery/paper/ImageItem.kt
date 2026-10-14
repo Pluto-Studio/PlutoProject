@@ -14,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import plutoproject.feature.gallery.core.image.Image
 import plutoproject.foundation.common.text.replace
+import plutoproject.foundation.common.time.formatDate
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -109,9 +110,21 @@ fun createImageItem(image: Image): ItemStack {
     val itemStack = ItemStack(Material.PAPER)
 
     itemStack.setData(DataComponentTypes.ITEM_NAME, IMAGE_ITEM_NAME.resolveImagePlaceholders(image))
+    val lore = buildList {
+        add(IMAGE_ITEM_LORE_CREATOR)
+        if (image.createdAt != null) {
+            add(IMAGE_ITEM_LORE_CREATED_AT)
+        }
+        add(Component.empty())
+        add(IMAGE_ITEM_LORE_DESCRIPTION)
+        add(IMAGE_ITEM_LORE_PLACEMENT)
+        add(Component.empty())
+        add(IMAGE_ITEM_LORE_OPERATION)
+    }.map { it.resolveImagePlaceholders(image) }
+
     itemStack.setData(
         DataComponentTypes.LORE,
-        ItemLore.lore(IMAGE_ITEM_LORE.map { it.resolveImagePlaceholders(image) })
+        ItemLore.lore(lore)
     )
     itemStack.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
     itemStack.itemMeta = itemStack.itemMeta.apply { setImageItemData(image) } // getItemMeta 怎么拿的是 copy。。
@@ -154,7 +167,7 @@ private fun createImageItemCopyRecipeResult(): ItemStack {
 private fun Component.resolveImagePlaceholders(image: Image): Component {
     return replace(IMAGE_PLACEHOLDER_NAME, image.name)
         .replace(IMAGE_PLACEHOLDER_CREATOR, image.ownerName)
-        .replace(IMAGE_PLACEHOLDER_TIME, "TODO")
+        .replace(IMAGE_PLACEHOLDER_TIME, image.createdAt?.formatDate().orEmpty())
         .replace(IMAGE_PLACEHOLDER_WIDTH, image.widthBlocks)
         .replace(IMAGE_PLACEHOLDER_HEIGHT, image.heightBlocks)
 }

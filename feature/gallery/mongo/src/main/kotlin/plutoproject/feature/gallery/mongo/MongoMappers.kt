@@ -54,6 +54,7 @@ internal fun ImageDocument.toDomain(): Image {
         widthBlocks = mapWidthBlocks,
         heightBlocks = mapHeightBlocks,
         tileMapIds = tileMapIds,
+        createdAt = createdAt,
     )
 }
 
@@ -67,6 +68,7 @@ internal fun Image.toDocument(): ImageDocument {
         mapWidthBlocks = widthBlocks,
         mapHeightBlocks = heightBlocks,
         tileMapIds = tileMapIds,
+        createdAt = createdAt,
     )
 }
 

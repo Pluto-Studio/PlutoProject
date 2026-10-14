@@ -320,22 +320,28 @@ val IMAGE_ITEM_COPY_RECIPE_RESULT_NAME = component {
     text("复制地图画") with mochaText
 }
 
-val IMAGE_ITEM_LORE = listOf(
-    component { text("由 $IMAGE_PLACEHOLDER_CREATOR") with mochaSubtext0 without italic() },
-    component { text("创建于 $IMAGE_PLACEHOLDER_TIME") with mochaSubtext0 without italic() },
-    component { empty() },
-    component { text("这是一幅地图画！") with mochaFlamingo without italic() },
-    component {
-        text("你可以把它放入一面 ") with mochaText without italic()
-        text("$IMAGE_PLACEHOLDER_WIDTH × $IMAGE_PLACEHOLDER_HEIGHT ") with mochaLavender without italic()
-        text("的展示框内") with mochaText without italic()
-    },
-    component { empty() },
-    component {
-        keybind("key.use") with mochaLavender without italic()
-        text(" 放入展示框") with mochaText without italic()
-    }
-)
+val IMAGE_ITEM_LORE_CREATOR = component {
+    text("由 $IMAGE_PLACEHOLDER_CREATOR") with mochaSubtext0 without italic()
+}
+
+val IMAGE_ITEM_LORE_CREATED_AT = component {
+    text("创建于 $IMAGE_PLACEHOLDER_TIME") with mochaSubtext0 without italic()
+}
+
+val IMAGE_ITEM_LORE_DESCRIPTION = component {
+    text("这是一幅地图画！") with mochaFlamingo without italic()
+}
+
+val IMAGE_ITEM_LORE_PLACEMENT = component {
+    text("你可以把它放入一面 ") with mochaText without italic()
+    text("$IMAGE_PLACEHOLDER_WIDTH × $IMAGE_PLACEHOLDER_HEIGHT ") with mochaLavender without italic()
+    text("的展示框内") with mochaText without italic()
+}
+
+val IMAGE_ITEM_LORE_OPERATION = component {
+    keybind("key.use") with mochaLavender without italic()
+    text(" 放入展示框") with mochaText without italic()
+}
 
 val IMAGE_ITEM_PLACEMENT_FAILED_INVALID = component {
     newline()

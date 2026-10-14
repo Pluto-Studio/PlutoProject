@@ -36,6 +36,7 @@ import plutoproject.feature.gallery.core.render.*
 import plutoproject.kernel.api.koinGet
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Clock
 import java.util.*
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.fileSize
@@ -55,6 +56,7 @@ object GalleyDebugCommand {
     private val displayInstanceStore = koinGet<DisplayInstanceStore>()
     private val displayRuntime = koinGet<DisplayRuntimeRegistry>()
     private val uploadService = koinGet<UploadService>()
+    private val clock = koinGet<Clock>()
 
     @Command("gallery debug create <name> <url> <width> <height> [repositionMode] [scaleMode] [quantizeMode] [ditherMode]")
     @Permission(PERMISSION_GALLERY_DEBUG)
@@ -314,6 +316,7 @@ object GalleyDebugCommand {
             widthBlocks = request.width,
             heightBlocks = request.height,
             tileMapIds = allocatedMapIds,
+            createdAt = clock.instant(),
         )
 
         val imageCreated = imageStore.create(image)
