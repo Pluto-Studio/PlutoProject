@@ -115,9 +115,9 @@ object PlayerListener {
     ) {
         val location = try {
             val response = geoIpDatabase.city(ip)
-            val city = response.city.name ?: "未知城市"
-            val subdivision = response.mostSpecificSubdivision.name ?: "未知省份"
-            val country = response.country.name ?: "未知国家"
+            val city = response.city().name() ?: "未知城市"
+            val subdivision = response.mostSpecificSubdivision().name() ?: "未知省份"
+            val country = response.country().name() ?: "未知国家"
             "$city, $subdivision, $country"
         } catch (e: Exception) {
             "未知位置"

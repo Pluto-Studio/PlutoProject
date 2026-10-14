@@ -33,7 +33,7 @@ private val serverContext
 
 private fun Player.timezone(): ZoneId = address?.let { address ->
     currentModuleContext().services.getService<GeoIpConnection>()
-        .database.tryCity(address.address).getOrNull()?.location?.timeZone?.let(ZoneId::of)
+        .database.tryCity(address.address).getOrNull()?.location()?.timeZone()?.let(ZoneId::of)
 } ?: LocalZoneId
 
 @Composable

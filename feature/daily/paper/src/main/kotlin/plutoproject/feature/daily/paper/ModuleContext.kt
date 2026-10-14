@@ -22,7 +22,7 @@ internal val Player.timezone: TimeZone
         currentModuleContext().services.getService<GeoIpConnection>().database
             .tryCity(address.address)
             .getOrNull()
-            ?.location
-            ?.timeZone
+            ?.location()
+            ?.timeZone()
             ?.let(TimeZone::getTimeZone)
     } ?: LocalTimeZone

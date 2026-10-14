@@ -116,7 +116,7 @@ object VisitorListener {
             val session = visitorSessions[player.uniqueId]
             if (session != null) {
                 val response = geoIpDatabase.country(session.ip)
-                val countryIso = response.country.isoCode
+                val countryIso = response.country().isoCode()
                 val isInChina = countryIso == "CN" || countryIso == "HK" || countryIso == "MO" || countryIso == "TW"
                 !isInChina
             } else {
